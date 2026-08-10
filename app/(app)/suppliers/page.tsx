@@ -101,10 +101,19 @@ export default function SuppliersPage() {
   const { can } = usePermissions();
   const [sortBy, setSortBy] = useState<'rating' | 'total_spend' | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterType, setFilterType] = useState<string>('All');
+  const [filterLocation, setFilterLocation] = useState<string>('All');
+  const [filterCategory, setFilterCategory] = useState<string>('All');
+  const [filterStatus, setFilterStatus] = useState<'All' | 'Active' | 'Inactive'>('All');
+  const [codeFrom, setCodeFrom] = useState('');
+  const [codeTo, setCodeTo] = useState('');
   const { data: supplierList } = useSuppliers({
     limit: 200,
     sort_by: sortBy ?? undefined,
     sort_dir: sortBy ? sortDir : undefined,
+    code_from: codeFrom.trim() || undefined,
+    code_to: codeTo.trim() || undefined,
   });
   const suppliers = supplierList?.items ?? [];
   const { data: purchaseStockLogs = [] } = useStockLogs({ type: 'PURCHASE' });
@@ -119,11 +128,6 @@ export default function SuppliersPage() {
   const updateIssue = useUpdateSupplierIssue();
 
   const [showAddModal, setShowAddModal] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState<string>('All');
-  const [filterLocation, setFilterLocation] = useState<string>('All');
-  const [filterCategory, setFilterCategory] = useState<string>('All');
-  const [filterStatus, setFilterStatus] = useState<'All' | 'Active' | 'Inactive'>('All');
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
   const [detailTab, setDetailTab] = useState<DetailTab>('overview');
   const [isEditing, setIsEditing] = useState(false);
@@ -216,18 +220,37 @@ export default function SuppliersPage() {
   const maxSpend = topBySpend[0]?.spend || 1;
 
   // --- Filtering ---
-  const filtered = useMemo(() => suppliers.filter((s) => {
-    const q = searchTerm.toLowerCase();
-    const matchSearch = s.name.toLowerCase().includes(q) ||
-      (s.businessName || '').toLowerCase().includes(q) ||
-      (s.contactPerson || '').toLowerCase().includes(q) ||
-      (s.email || '').toLowerCase().includes(q);
-    const matchType = filterType === 'All' || s.businessType === filterType;
-    const matchLoc = filterLocation === 'All' || s.location === filterLocation;
-    const matchCat = filterCategory === 'All' || s.categories?.includes(filterCategory as ProductCategory);
-    const matchStatus = filterStatus === 'All' || (filterStatus === 'Active' ? s.isActive : !s.isActive);
-    return matchSearch && matchType && matchLoc && matchCat && matchStatus;
-  }), [suppliers, searchTerm, filterType, filterLocation, filterCategory, filterStatus]);
+  const parseSupplierCodeNum = (raw?: string): number | null => {
+    if (!raw?.trim()) return null;
+    const t = raw.trim().toUpperCase();
+    const withPrefix = t.match(/^SUP-(\d+)$/);
+    if (withPrefix) return parseInt(withPrefix[1], 10);
+    const digitsOnly = t.match(/^(\d+)$/);
+    if (digitsOnly) return parseInt(digitsOnly[1], 10);
+    return null;
+  };
+
+  const filtered = useMemo(() => {
+    const fromNum = parseSupplierCodeNum(codeFrom);
+    const toNum = parseSupplierCodeNum(codeTo);
+    return suppliers.filter((s) => {
+      const q = searchTerm.toLowerCase();
+      const matchSearch = s.name.toLowerCase().includes(q) ||
+        (s.businessName || '').toLowerCase().includes(q) ||
+        (s.contactPerson || '').toLowerCase().includes(q) ||
+        (s.email || '').toLowerCase().includes(q) ||
+        (s.code || '').toLowerCase().includes(q);
+      const matchType = filterType === 'All' || s.businessType === filterType;
+      const matchLoc = filterLocation === 'All' || s.location === filterLocation;
+      const matchCat = filterCategory === 'All' || s.categories?.includes(filterCategory as ProductCategory);
+      const matchStatus = filterStatus === 'All' || (filterStatus === 'Active' ? s.isActive : !s.isActive);
+      const codeNum = parseSupplierCodeNum(s.code);
+      const matchCodeRange =
+        (fromNum === null || (codeNum !== null && codeNum >= fromNum)) &&
+        (toNum === null || (codeNum !== null && codeNum <= toNum));
+      return matchSearch && matchType && matchLoc && matchCat && matchStatus && matchCodeRange;
+    });
+  }, [suppliers, searchTerm, filterType, filterLocation, filterCategory, filterStatus, codeFrom, codeTo]);
 
   // --- Products supplied (derived from purchases) ---
   const productsSupplied = useMemo(() => {
@@ -351,6 +374,7 @@ export default function SuppliersPage() {
   });
 
   const handleSaveSupplier = () => {
+    if (createSupplier.isPending) return;
     if (!newSupplier.name?.trim()) { toast.error('Supplier name is required.'); return; }
     if (suppliers.some((s) => s.name.toLowerCase() === newSupplier.name!.trim().toLowerCase())) {
       toast.error(`A supplier named "${newSupplier.name}" already exists.`); return;
@@ -516,9 +540,27 @@ export default function SuppliersPage() {
       <div className="flex flex-col sm:flex-row gap-3 items-center bg-card p-4 rounded-lg border">
         <div className="relative w-full sm:max-w-xs">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <input type="text" placeholder="Search name, business, contact..." className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 pl-9 text-sm focus:outline-none focus:ring-2 focus:ring-ring" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+          <input type="text" placeholder="Search name, code, contact..." className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 pl-9 text-sm focus:outline-none focus:ring-2 focus:ring-ring" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
         </div>
         <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+          <div className="flex items-center gap-1.5 border rounded-md px-2 py-1.5 bg-background">
+            <span className="text-[10px] font-semibold text-muted-foreground uppercase whitespace-nowrap">Code</span>
+            <input
+              type="text"
+              placeholder="SUP-001"
+              value={codeFrom}
+              onChange={(e) => setCodeFrom(e.target.value)}
+              className="w-[5.5rem] bg-transparent border-none text-sm font-medium focus:outline-none"
+            />
+            <span className="text-xs text-muted-foreground">–</span>
+            <input
+              type="text"
+              placeholder="SUP-005"
+              value={codeTo}
+              onChange={(e) => setCodeTo(e.target.value)}
+              className="w-[5.5rem] bg-transparent border-none text-sm font-medium focus:outline-none"
+            />
+          </div>
           <div className="flex items-center gap-2 border rounded-md px-3 py-2 bg-background">
             <Filter size={14} className="text-muted-foreground" />
             <select value={filterType} onChange={(e) => setFilterType(e.target.value)} className="bg-transparent border-none text-sm font-medium focus:outline-none">
@@ -558,6 +600,7 @@ export default function SuppliersPage() {
           <table className="w-full text-sm">
             <thead className="[&_tr]:border-b">
               <tr className="border-b">
+                <th className="h-12 px-4 text-left font-medium text-muted-foreground">Code</th>
                 <th className="h-12 px-4 text-left font-medium text-muted-foreground">Supplier</th>
                 <th className="h-12 px-4 text-left font-medium text-muted-foreground">Contact</th>
                 <th className="h-12 px-4 text-left font-medium text-muted-foreground">Type / Location</th>
@@ -592,6 +635,9 @@ export default function SuppliersPage() {
                 const open = openIssuesBySupplier[s.id] || 0;
                 return (
                   <tr key={s.id} onClick={() => handleViewDetails(s)} className={`border-b hover:bg-muted/50 cursor-pointer group ${!s.isActive ? 'opacity-60' : ''}`}>
+                    <td className="p-4">
+                      <span className="font-mono text-xs font-semibold text-muted-foreground">{s.code || '—'}</span>
+                    </td>
                     <td className="p-4">
                       <div className="flex items-center gap-3">
                         <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/20 shrink-0">
@@ -637,7 +683,7 @@ export default function SuppliersPage() {
                   </tr>
                 );
               })}
-              {filtered.length === 0 && <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">No suppliers found matching your filters.</td></tr>}
+              {filtered.length === 0 && <tr><td colSpan={9} className="p-8 text-center text-muted-foreground">No suppliers found matching your filters.</td></tr>}
             </tbody>
           </table>
         </div>
@@ -649,6 +695,10 @@ export default function SuppliersPage() {
           <div className="w-full max-w-2xl rounded-lg border bg-card p-6 shadow-xl animate-in fade-in zoom-in-95 duration-200 overflow-y-auto max-h-[90vh]">
             <div className="flex justify-between items-center mb-6"><h2 className="text-xl font-bold">Add New Supplier</h2><button onClick={() => setShowAddModal(false)} className="text-muted-foreground hover:text-foreground"><X size={20} /></button></div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2 md:col-span-2">
+                <label className="text-sm font-medium">Supplier Code</label>
+                <input type="text" value="Auto-assigned (SUP-001, SUP-002, …)" disabled className={`${inputCls} opacity-70 cursor-not-allowed`} />
+              </div>
               <div className="space-y-2"><label className="text-sm font-medium">Supplier Name *</label><input type="text" value={newSupplier.name} onChange={(e) => setNewSupplier({ ...newSupplier, name: e.target.value })} className={inputCls} /></div>
               <div className="space-y-2"><label className="text-sm font-medium">Business Name</label><input type="text" value={newSupplier.businessName} onChange={(e) => setNewSupplier({ ...newSupplier, businessName: e.target.value })} className={inputCls} /></div>
               <div className="space-y-2"><label className="text-sm font-medium">Business Type</label><select value={newSupplier.businessType} onChange={(e) => setNewSupplier({ ...newSupplier, businessType: e.target.value as SupplierBusinessType })} className={inputCls}>{BUSINESS_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}</select></div>
@@ -679,8 +729,14 @@ export default function SuppliersPage() {
             </div>
             <div className="mt-4 space-y-2"><label className="text-sm font-medium">Notes</label><textarea value={newSupplier.notes} onChange={(e) => setNewSupplier({ ...newSupplier, notes: e.target.value })} rows={2} className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" /></div>
             <div className="mt-6 flex justify-end gap-3">
-              <button onClick={() => setShowAddModal(false)} className="inline-flex items-center rounded-md text-sm font-medium border border-input bg-background hover:bg-accent h-9 px-4 py-2">Cancel</button>
-              <button onClick={handleSaveSupplier} className="inline-flex items-center rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2">Save Supplier</button>
+              <button onClick={() => setShowAddModal(false)} disabled={createSupplier.isPending} className="inline-flex items-center rounded-md text-sm font-medium border border-input bg-background hover:bg-accent h-9 px-4 py-2 disabled:opacity-50">Cancel</button>
+              <button
+                onClick={handleSaveSupplier}
+                disabled={createSupplier.isPending}
+                className="inline-flex items-center rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {createSupplier.isPending ? 'Submitting…' : 'Save Supplier'}
+              </button>
             </div>
           </div>
         </div>
@@ -699,6 +755,7 @@ export default function SuppliersPage() {
                   <div>
                     <h2 className="text-xl font-bold flex items-center gap-2">{selectedSupplier.name}{!selectedSupplier.isActive && <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold text-muted-foreground">INACTIVE</span>}</h2>
                     <div className="flex items-center gap-2 mt-0.5">
+                      {selectedSupplier.code && <span className="font-mono text-xs font-semibold text-primary">{selectedSupplier.code}</span>}
                       {selectedSupplier.businessName && <span className="text-sm text-muted-foreground">{selectedSupplier.businessName}</span>}
                       {selectedSupplier.businessType && <span className="inline-flex items-center gap-1 rounded-full bg-secondary text-secondary-foreground px-2 py-0.5 text-[10px] font-semibold">{selectedSupplier.businessType}</span>}
                     </div>

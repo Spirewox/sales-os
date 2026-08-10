@@ -1519,6 +1519,8 @@ export function useSuppliers(filters?: {
   hub_id?: string;
   category?: string;
   is_active?: boolean;
+  code_from?: string;
+  code_to?: string;
   page?: number;
   limit?: number;
   sort_by?: 'rating' | 'total_spend';

@@ -306,6 +306,7 @@ export function mapSupplier(s: ApiSupplier, hubMap?: Record<string, string>): Su
   const addedBy = typeof s.added_by === 'object' && s.added_by ? s.added_by : null;
   return {
     id: s._id,
+    code: s.code || '',
     name: s.name,
     businessName: s.business_name,
     businessType: s.business_type as Supplier['businessType'],

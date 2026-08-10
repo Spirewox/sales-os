@@ -505,6 +505,7 @@ export enum SupplierIssueType {
 
 export interface Supplier {
   id: string;
+  code: string;
   name: string;
   businessName?: string;
   businessType?: SupplierBusinessType;

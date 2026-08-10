@@ -315,6 +315,7 @@ export interface ApiStockLog {
 
 export interface ApiSupplier {
   _id: string;
+  code?: string;
   name: string;
   business_name?: string;
   business_type?: string;
