@@ -491,8 +491,8 @@ export default function InventoryPage() {
   /* ──────── CREATE SKU ──────── */
 
   const handleSaveProduct = () => {
-    if (!newProduct.sku || !newProduct.name) {
-      toast.error('Please fill in SKU and Name.');
+    if (!newProduct.name?.trim()) {
+      toast.error('Please fill in Product Name.');
       return;
     }
     if (newProduct.unitOfMeasure === 'Cartons') {
@@ -512,14 +512,8 @@ export default function InventoryPage() {
       toast.error('Selling price is required.');
       return;
     }
-    const existingSku = items.find((i) => i.sku.toLowerCase() === newProduct.sku!.toLowerCase());
-    if (existingSku) {
-      toast.error(`Duplicate SKU — "${newProduct.sku}" already exists (${existingSku.name}).`);
-      return;
-    }
     const hub = activeHubs.find((h) => h.name === (newProduct.location || user?.location || activeHubs[0]?.name));
     createProduct.mutate({
-      sku: newProduct.sku!,
       name: newProduct.name!,
       category: newProduct.category,
       unit_of_measure: newProduct.unitOfMeasure,
@@ -534,7 +528,7 @@ export default function InventoryPage() {
       purchased_date: newProduct.purchasedDate || undefined,
       expiry_date: newProduct.expiryDate || undefined,
     }, {
-      onSuccess: () => {
+      onSuccess: (created) => {
         setShowAddProductModal(false);
         setNewProduct({
           sku: '', name: '', category: 'Fish', unitOfMeasure: 'Cartons',
@@ -544,7 +538,7 @@ export default function InventoryPage() {
           purchasedDate: '',
           expiryDate: '',
         });
-        toast.success('Product created successfully.');
+        toast.success(created?.sku ? `Product created (${created.sku}).` : 'Product created successfully.');
       },
       onError: (err) => toast.error(err.message),
     });
@@ -1973,11 +1967,19 @@ export default function InventoryPage() {
               <button onClick={() => setShowAddProductModal(false)} className="text-muted-foreground hover:text-foreground"><X size={20} /></button>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className={labelCls}>SKU Code *</label>
-                <input type="text" value={newProduct.sku || ''} onChange={(e) => setNewProduct({ ...newProduct, sku: e.target.value })} className={inputCls} placeholder="e.g. FIS-TIL-001" />
+              <div className="space-y-2 col-span-2">
+                <label className={labelCls}>Product code</label>
+                <input
+                  type="text"
+                  value="Auto-assigned on save"
+                  disabled
+                  className={`${inputCls} bg-muted/40 text-muted-foreground`}
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  Format: SUPPLIER/LOCATION/CATEGORY-NNNN (supplier omitted if none). Based on supplier, location, and category.
+                </p>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2 col-span-2">
                 <label className={labelCls}>Product Name *</label>
                 <input type="text" value={newProduct.name || ''} onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })} className={inputCls} />
               </div>
@@ -2114,11 +2116,14 @@ export default function InventoryPage() {
               <button onClick={() => { setShowEditModal(false); setEditProduct({}); }} className="text-muted-foreground hover:text-foreground"><X size={20} /></button>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className={labelCls}>SKU Code (locked)</label>
-                <input type="text" value={editProduct.sku || ''} disabled className={`${inputCls} bg-muted cursor-not-allowed opacity-60`} />
+              <div className="space-y-2 col-span-2">
+                <label className={labelCls}>Product code</label>
+                <input type="text" value={editProduct.sku || 'N/A'} disabled className={`${inputCls} bg-muted cursor-not-allowed opacity-60 font-mono text-xs`} />
+                <p className="text-[11px] text-muted-foreground">
+                  Regenerates automatically if supplier, location, or category changes.
+                </p>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2 col-span-2">
                 <label className={labelCls}>Product Name</label>
                 <input type="text" value={editProduct.name || ''} onChange={(e) => setEditProduct({ ...editProduct, name: e.target.value })} className={inputCls} />
               </div>
