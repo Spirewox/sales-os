@@ -294,7 +294,12 @@ export function AddSaleModal({
                 {isCartonProduct && selectedInventoryItem.cartonWeight ? (
                   <span>&middot; {selectedInventoryItem.cartonWeight} Kg / carton</span>
                 ) : null}
-                <span>&middot; {fmt(selectedInventoryItem.cartonPrice ?? selectedInventoryItem.baseSellingPrice)}/{isCartonProduct ? 'Carton' : selectedInventoryItem.unitOfMeasure}</span>
+                <span>
+                  &middot;{' '}
+                  {isCartonProduct
+                    ? `${fmt(selectedInventoryItem.cartonPrice ?? 0)}/Carton · ${fmt(selectedInventoryItem.baseSellingPrice)}/Kg`
+                    : `${fmt(selectedInventoryItem.baseSellingPrice)}/${selectedInventoryItem.unitOfMeasure}`}
+                </span>
                 {selectedInventoryItem.currentStock <= selectedInventoryItem.minStockLevel && (
                   <span className="text-red-500 font-medium flex items-center gap-1"><AlertTriangle size={10} /> Low stock</span>
                 )}
@@ -348,11 +353,10 @@ export function AddSaleModal({
             <div className="text-xs text-muted-foreground bg-muted/30 rounded-md px-3 py-2 flex items-center gap-3 flex-wrap">
               {(() => {
                 const unitPrice =
-                  isCartonProduct && saleUnit === 'Kg' && selectedInventoryItem.cartonWeight
-                    ? (selectedInventoryItem.cartonPrice ?? selectedInventoryItem.baseSellingPrice) /
-                      selectedInventoryItem.cartonWeight
+                  isCartonProduct && saleUnit === 'Kg'
+                    ? selectedInventoryItem.baseSellingPrice
                     : isCartonProduct
-                      ? (selectedInventoryItem.cartonPrice ?? selectedInventoryItem.baseSellingPrice)
+                      ? (selectedInventoryItem.cartonPrice ?? 0)
                       : selectedInventoryItem.baseSellingPrice;
                 const suggested = unitPrice * quantity;
                 return (

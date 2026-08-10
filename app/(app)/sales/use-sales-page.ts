@@ -255,13 +255,13 @@ export function useSalesPage() {
 
   const computeSaleAmount = (item: typeof selectedInventoryItem, qty: number, unit: 'Carton' | 'Kg' | '') => {
     if (!item || qty <= 0) return 0;
-    const cartonPrice = item.cartonPrice ?? item.baseSellingPrice;
     if (item.unitOfMeasure === 'Cartons') {
       if (unit === 'Kg') {
-        if (!item.cartonWeight || item.cartonWeight <= 0) return 0;
-        return (cartonPrice / item.cartonWeight) * qty;
+        if (!(item.baseSellingPrice > 0)) return 0;
+        return item.baseSellingPrice * qty;
       }
-      return cartonPrice * qty;
+      if (!(item.cartonPrice && item.cartonPrice > 0)) return 0;
+      return item.cartonPrice * qty;
     }
     return item.baseSellingPrice * qty;
   };
@@ -296,6 +296,10 @@ export function useSalesPage() {
         if (!saleUnit) errors.saleUnit = 'Select Carton or Kg.';
         if (!selectedInventoryItem?.cartonWeight || selectedInventoryItem.cartonWeight <= 0) {
           errors.saleUnit = 'Set carton weight on this product before recording a sale.';
+        } else if (saleUnit === 'Carton' && !(selectedInventoryItem.cartonPrice && selectedInventoryItem.cartonPrice > 0)) {
+          errors.saleUnit = 'Set carton selling price on this product before selling by Carton.';
+        } else if (saleUnit === 'Kg' && !(selectedInventoryItem.baseSellingPrice > 0)) {
+          errors.saleUnit = 'Set unit selling price on this product before selling by Kg.';
         }
       }
     } else {

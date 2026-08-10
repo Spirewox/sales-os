@@ -495,8 +495,21 @@ export default function InventoryPage() {
       toast.error('Please fill in SKU and Name.');
       return;
     }
-    if (newProduct.unitOfMeasure === 'Cartons' && !(newProduct.cartonWeight && newProduct.cartonWeight > 0)) {
-      toast.error('Carton weight (Kg) is required when unit of measure is Cartons.');
+    if (newProduct.unitOfMeasure === 'Cartons') {
+      if (!(newProduct.cartonWeight && newProduct.cartonWeight > 0)) {
+        toast.error('Carton weight (Kg) is required when unit of measure is Cartons.');
+        return;
+      }
+      if (!(newProduct.cartonPrice && newProduct.cartonPrice > 0)) {
+        toast.error('Carton selling price is required when unit of measure is Cartons.');
+        return;
+      }
+      if (!(newProduct.baseSellingPrice && newProduct.baseSellingPrice > 0)) {
+        toast.error('Unit selling price is required when unit of measure is Cartons (used for Kg sales).');
+        return;
+      }
+    } else if (!(newProduct.baseSellingPrice && newProduct.baseSellingPrice > 0)) {
+      toast.error('Selling price is required.');
       return;
     }
     const existingSku = items.find((i) => i.sku.toLowerCase() === newProduct.sku!.toLowerCase());
@@ -544,8 +557,21 @@ export default function InventoryPage() {
     const original = items.find((i) => i.id === editProduct.id);
     if (!original) return;
 
-    if (editProduct.unitOfMeasure === 'Cartons' && !(editProduct.cartonWeight && editProduct.cartonWeight > 0)) {
-      toast.error('Carton weight (Kg) is required when unit of measure is Cartons.');
+    if (editProduct.unitOfMeasure === 'Cartons') {
+      if (!(editProduct.cartonWeight && editProduct.cartonWeight > 0)) {
+        toast.error('Carton weight (Kg) is required when unit of measure is Cartons.');
+        return;
+      }
+      if (!(editProduct.cartonPrice && editProduct.cartonPrice > 0)) {
+        toast.error('Carton selling price is required when unit of measure is Cartons.');
+        return;
+      }
+      if (!(editProduct.baseSellingPrice && editProduct.baseSellingPrice > 0)) {
+        toast.error('Unit selling price is required when unit of measure is Cartons (used for Kg sales).');
+        return;
+      }
+    } else if (!(editProduct.baseSellingPrice && editProduct.baseSellingPrice > 0)) {
+      toast.error('Selling price is required.');
       return;
     }
 
@@ -1507,9 +1533,17 @@ export default function InventoryPage() {
                       <p className="text-lg font-bold">&#8358;{viewingDetailsItem.avgUnitCost.toLocaleString()}</p>
                     </div>
                     <div className="p-4 rounded-md border bg-muted/20">
-                      <p className="text-xs font-medium text-muted-foreground mb-1">Selling Price</p>
+                      <p className="text-xs font-medium text-muted-foreground mb-1">
+                        {viewingDetailsItem.unitOfMeasure === 'Cartons' ? 'Unit Selling Price' : 'Selling Price'}
+                      </p>
                       <p className="text-lg font-bold">&#8358;{viewingDetailsItem.baseSellingPrice.toLocaleString()}</p>
                     </div>
+                    {viewingDetailsItem.unitOfMeasure === 'Cartons' && viewingDetailsItem.cartonPrice != null && (
+                      <div className="p-4 rounded-md border bg-muted/20">
+                        <p className="text-xs font-medium text-muted-foreground mb-1">Carton Selling Price</p>
+                        <p className="text-lg font-bold">&#8358;{viewingDetailsItem.cartonPrice.toLocaleString()}</p>
+                      </div>
+                    )}
                   </div>
 
                   {/* Margin */}
@@ -1532,7 +1566,7 @@ export default function InventoryPage() {
                     <div className="flex items-center gap-2"><Package size={14} /> <span className="text-muted-foreground">Min Level:</span> <span className="font-bold">{viewingDetailsItem.minStockLevel}</span></div>
                     <div className="flex items-center gap-2"><Calendar size={14} /> <span className="text-muted-foreground">Updated:</span> <span className="font-bold">{viewingDetailsItem.lastStockUpdate}</span></div>
                     {viewingDetailsItem.cartonPrice != null && (
-                      <div className="flex items-center gap-2"><Package size={14} /> <span className="text-muted-foreground">Carton:</span> <span className="font-bold">&#8358;{viewingDetailsItem.cartonPrice.toLocaleString()}</span></div>
+                      <div className="flex items-center gap-2"><Package size={14} /> <span className="text-muted-foreground">Carton selling:</span> <span className="font-bold">&#8358;{viewingDetailsItem.cartonPrice.toLocaleString()}</span></div>
                     )}
                     {viewingDetailsItem.cartonWeight != null && (
                       <div className="flex items-center gap-2"><Activity size={14} /> <span className="text-muted-foreground">Weight:</span> <span className="font-bold">{viewingDetailsItem.cartonWeight} Kg</span></div>
@@ -1990,27 +2024,45 @@ export default function InventoryPage() {
                 <input type="number" value={newProduct.avgUnitCost || ''} onChange={(e) => setNewProduct({ ...newProduct, avgUnitCost: parseInt(e.target.value) || 0 })} className={inputCls} />
               </div>
               <div className="space-y-2">
-                <label className={labelCls}>Selling Price (&#8358;)</label>
-                <input type="number" value={newProduct.baseSellingPrice || ''} onChange={(e) => setNewProduct({ ...newProduct, baseSellingPrice: parseInt(e.target.value) || 0 })} className={inputCls} />
-              </div>
-              <div className="space-y-2">
-                <label className={labelCls}>Carton Price (&#8358;)</label>
-                <input type="number" value={newProduct.cartonPrice || ''} onChange={(e) => setNewProduct({ ...newProduct, cartonPrice: parseInt(e.target.value) || undefined })} placeholder="Optional" className={inputCls} />
-              </div>
-              <div className="space-y-2">
                 <label className={labelCls}>
-                  Carton Weight (Kg){newProduct.unitOfMeasure === 'Cartons' ? ' *' : ''}
+                  {newProduct.unitOfMeasure === 'Cartons' ? 'Unit selling price (₦) *' : 'Selling Price (₦) *'}
                 </label>
                 <input
                   type="number"
                   min={0.01}
-                  step="0.01"
-                  value={newProduct.cartonWeight || ''}
-                  onChange={(e) => setNewProduct({ ...newProduct, cartonWeight: parseFloat(e.target.value) || undefined })}
-                  placeholder={newProduct.unitOfMeasure === 'Cartons' ? 'Required for Cartons' : 'Optional'}
+                  value={newProduct.baseSellingPrice || ''}
+                  onChange={(e) => setNewProduct({ ...newProduct, baseSellingPrice: parseInt(e.target.value) || 0 })}
+                  placeholder={newProduct.unitOfMeasure === 'Cartons' ? 'Price per Kg' : 'Required'}
                   className={inputCls}
                 />
               </div>
+              {newProduct.unitOfMeasure === 'Cartons' && (
+                <>
+                  <div className="space-y-2">
+                    <label className={labelCls}>Carton selling price (₦) *</label>
+                    <input
+                      type="number"
+                      min={0.01}
+                      value={newProduct.cartonPrice || ''}
+                      onChange={(e) => setNewProduct({ ...newProduct, cartonPrice: parseInt(e.target.value) || undefined })}
+                      placeholder="Required for Cartons"
+                      className={inputCls}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className={labelCls}>Carton Weight (Kg) *</label>
+                    <input
+                      type="number"
+                      min={0.01}
+                      step="0.01"
+                      value={newProduct.cartonWeight || ''}
+                      onChange={(e) => setNewProduct({ ...newProduct, cartonWeight: parseFloat(e.target.value) || undefined })}
+                      placeholder="Required for Cartons"
+                      className={inputCls}
+                    />
+                  </div>
+                </>
+              )}
               <div className="space-y-2 col-span-2">
                 <label className={labelCls}>Supplier (optional)</label>
                 <select
@@ -2142,27 +2194,45 @@ export default function InventoryPage() {
                 <input type="number" value={editProduct.avgUnitCost ?? ''} onChange={(e) => setEditProduct({ ...editProduct, avgUnitCost: parseInt(e.target.value) || 0 })} className={inputCls} />
               </div>
               <div className="space-y-2">
-                <label className={labelCls}>Selling Price (&#8358;)</label>
-                <input type="number" value={editProduct.baseSellingPrice ?? ''} onChange={(e) => setEditProduct({ ...editProduct, baseSellingPrice: parseInt(e.target.value) || 0 })} className={inputCls} />
-              </div>
-              <div className="space-y-2">
-                <label className={labelCls}>Carton Price (&#8358;)</label>
-                <input type="number" value={editProduct.cartonPrice ?? ''} onChange={(e) => setEditProduct({ ...editProduct, cartonPrice: parseInt(e.target.value) || undefined })} placeholder="Optional" className={inputCls} />
-              </div>
-              <div className="space-y-2">
                 <label className={labelCls}>
-                  Carton Weight (Kg){editProduct.unitOfMeasure === 'Cartons' ? ' *' : ''}
+                  {editProduct.unitOfMeasure === 'Cartons' ? 'Unit selling price (₦) *' : 'Selling Price (₦) *'}
                 </label>
                 <input
                   type="number"
                   min={0.01}
-                  step="0.01"
-                  value={editProduct.cartonWeight ?? ''}
-                  onChange={(e) => setEditProduct({ ...editProduct, cartonWeight: parseFloat(e.target.value) || undefined })}
-                  placeholder={editProduct.unitOfMeasure === 'Cartons' ? 'Required for Cartons' : 'Optional'}
+                  value={editProduct.baseSellingPrice ?? ''}
+                  onChange={(e) => setEditProduct({ ...editProduct, baseSellingPrice: parseInt(e.target.value) || 0 })}
+                  placeholder={editProduct.unitOfMeasure === 'Cartons' ? 'Price per Kg' : 'Required'}
                   className={inputCls}
                 />
               </div>
+              {editProduct.unitOfMeasure === 'Cartons' && (
+                <>
+                  <div className="space-y-2">
+                    <label className={labelCls}>Carton selling price (₦) *</label>
+                    <input
+                      type="number"
+                      min={0.01}
+                      value={editProduct.cartonPrice ?? ''}
+                      onChange={(e) => setEditProduct({ ...editProduct, cartonPrice: parseInt(e.target.value) || undefined })}
+                      placeholder="Required for Cartons"
+                      className={inputCls}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className={labelCls}>Carton Weight (Kg) *</label>
+                    <input
+                      type="number"
+                      min={0.01}
+                      step="0.01"
+                      value={editProduct.cartonWeight ?? ''}
+                      onChange={(e) => setEditProduct({ ...editProduct, cartonWeight: parseFloat(e.target.value) || undefined })}
+                      placeholder="Required for Cartons"
+                      className={inputCls}
+                    />
+                  </div>
+                </>
+              )}
             </div>
             {/* Margin warning */}
             {(editProduct.avgUnitCost ?? 0) > 0
