@@ -143,15 +143,23 @@ export default function SuppliersPage() {
   const supplierPurchases = purchaseData?.items ?? [];
   const { data: supplierIssueList = [] } = useSupplierIssues(selectedSupplier?.id ?? null);
 
-  const agentName = (id?: string) => agents.find((a) => a.id === id)?.name || id || '—';
+  const agentName = (id?: string) => agents.find((a) => a.id === id)?.name || id || 'N/A';
 
-  const emptySupplier = (): Partial<Supplier> => ({
-    name: '', businessName: '', businessType: SupplierBusinessType.DISTRIBUTOR,
-    location: activeHubs[0]?.name || 'Lagos', address: '', contactPerson: '',
-    phone: '', email: '', categories: [], paymentTerms: PaymentTerms.COD,
-    leadTimeDays: 3, rating: 3, notes: '',
-  });
+  const emptySupplier = (): Partial<Supplier> => {
+    const defaultHub = activeHubs[0];
+    return {
+      name: '', businessName: '', businessType: SupplierBusinessType.DISTRIBUTOR,
+      hubId: defaultHub?.id, location: defaultHub?.name || '', address: '', contactPerson: '',
+      phone: '', email: '', categories: [], paymentTerms: PaymentTerms.COD,
+      leadTimeDays: 3, rating: 3, notes: '',
+    };
+  };
   const [newSupplier, setNewSupplier] = useState<Partial<Supplier>>(emptySupplier());
+
+  const resolveHubId = (form: Partial<Supplier>) =>
+    form.hubId || hubs.find((h) => h.name === form.location)?.id;
+
+  const fmtSpend = (n: number) => (n > 0 ? fmt(n) : 'N/A');
 
   const copyToClipboard = (text: string, field: string) => {
     navigator.clipboard.writeText(text);
@@ -361,7 +369,7 @@ export default function SuppliersPage() {
     name: form.name?.trim(),
     business_name: form.businessName?.trim() || undefined,
     business_type: form.businessType,
-    hub_id: hubs.find((h) => h.name === form.location)?.id,
+    hub_id: resolveHubId(form),
     address: form.address?.trim() || undefined,
     contact_person: form.contactPerson?.trim() || undefined,
     phone: form.phone?.trim() || undefined,
@@ -376,6 +384,7 @@ export default function SuppliersPage() {
   const handleSaveSupplier = () => {
     if (createSupplier.isPending) return;
     if (!newSupplier.name?.trim()) { toast.error('Supplier name is required.'); return; }
+    if (!resolveHubId(newSupplier)) { toast.error('Location is required.'); return; }
     if (suppliers.some((s) => s.name.toLowerCase() === newSupplier.name!.trim().toLowerCase())) {
       toast.error(`A supplier named "${newSupplier.name}" already exists.`); return;
     }
@@ -392,12 +401,14 @@ export default function SuppliersPage() {
   // --- Edit supplier ---
   const startEditing = () => {
     if (!selectedSupplier) return;
-    setEditForm({ ...selectedSupplier });
+    const hubId = selectedSupplier.hubId || hubs.find((h) => h.name === selectedSupplier.location)?.id;
+    setEditForm({ ...selectedSupplier, hubId });
     setIsEditing(true);
   };
   const handleUpdateSupplier = () => {
     if (!selectedSupplier) return;
     if (!editForm.name?.trim()) { toast.error('Supplier name is required.'); return; }
+    if (!resolveHubId(editForm)) { toast.error('Location is required.'); return; }
     updateSupplier.mutate({ id: selectedSupplier.id, ...supplierPayload(editForm) }, {
       onSuccess: (updated) => {
         setSelectedSupplier(updated);
@@ -504,7 +515,7 @@ export default function SuppliersPage() {
         </div>
         <div className="rounded-xl border bg-card p-4">
           <div className="flex items-center gap-2 mb-1"><CircleDollarSign size={14} className="text-emerald-600" /><span className="text-[10px] font-bold uppercase text-muted-foreground">Total Spend</span></div>
-          <p className="text-lg font-black">{fmt(kpis.totalSpend)}</p>
+          <p className="text-lg font-black">{fmtSpend(kpis.totalSpend)}</p>
         </div>
         <div className="rounded-xl border bg-card p-4">
           <div className="flex items-center gap-2 mb-1"><AlertTriangle size={14} className="text-red-600" /><span className="text-[10px] font-bold uppercase text-muted-foreground">Open Issues</span></div>
@@ -636,7 +647,7 @@ export default function SuppliersPage() {
                 return (
                   <tr key={s.id} onClick={() => handleViewDetails(s)} className={`border-b hover:bg-muted/50 cursor-pointer group ${!s.isActive ? 'opacity-60' : ''}`}>
                     <td className="p-4">
-                      <span className="font-mono text-xs font-semibold text-muted-foreground">{s.code || '—'}</span>
+                      <span className="font-mono text-xs font-semibold text-muted-foreground">{s.code || 'N/A'}</span>
                     </td>
                     <td className="p-4">
                       <div className="flex items-center gap-3">
@@ -651,14 +662,14 @@ export default function SuppliersPage() {
                     </td>
                     <td className="p-4">
                       <div className="flex flex-col text-sm">
-                        <span className="text-muted-foreground">{s.contactPerson || 'ΓÇö'}</span>
+                        <span className="text-muted-foreground">{s.contactPerson || 'N/A'}</span>
                         <span className="text-xs text-muted-foreground">{s.phone || s.email || ''}</span>
                       </div>
                     </td>
                     <td className="p-4">
                       <div className="flex flex-col gap-1">
-                        <span className="inline-flex items-center gap-1 text-xs font-medium"><Building2 size={11} className="text-muted-foreground" /> {s.businessType || 'ΓÇö'}</span>
-                        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground"><MapPin size={10} /> {s.location || 'ΓÇö'}</span>
+                        <span className="inline-flex items-center gap-1 text-xs font-medium"><Building2 size={11} className="text-muted-foreground" /> {s.businessType || 'N/A'}</span>
+                        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground"><MapPin size={10} /> {s.location || 'N/A'}</span>
                       </div>
                     </td>
                     <td className="p-4">
@@ -667,10 +678,10 @@ export default function SuppliersPage() {
                           <span key={c} className="inline-flex items-center rounded-sm border px-2 py-0.5 text-[10px] font-medium text-muted-foreground">{c}</span>
                         ))}
                         {(s.categories?.length || 0) > 3 && <span className="text-[10px] text-muted-foreground">+{s.categories!.length - 3}</span>}
-                        {(!s.categories || s.categories.length === 0) && <span className="text-xs text-muted-foreground/50">ΓÇö</span>}
+                        {(!s.categories || s.categories.length === 0) && <span className="text-xs text-muted-foreground/50">N/A</span>}
                       </div>
                     </td>
-                    <td className="p-4 text-right"><span className="font-medium">{spend > 0 ? fmt(spend) : 'ΓÇö'}</span></td>
+                    <td className="p-4 text-right"><span className="font-medium">{fmtSpend(spend)}</span></td>
                     <td className="p-4 text-center"><StarRating value={s.rating} /></td>
                     <td className="p-4 text-center">
                       {open > 0 ? (
@@ -702,7 +713,7 @@ export default function SuppliersPage() {
               <div className="space-y-2"><label className="text-sm font-medium">Supplier Name *</label><input type="text" value={newSupplier.name} onChange={(e) => setNewSupplier({ ...newSupplier, name: e.target.value })} className={inputCls} /></div>
               <div className="space-y-2"><label className="text-sm font-medium">Business Name</label><input type="text" value={newSupplier.businessName} onChange={(e) => setNewSupplier({ ...newSupplier, businessName: e.target.value })} className={inputCls} /></div>
               <div className="space-y-2"><label className="text-sm font-medium">Business Type</label><select value={newSupplier.businessType} onChange={(e) => setNewSupplier({ ...newSupplier, businessType: e.target.value as SupplierBusinessType })} className={inputCls}>{BUSINESS_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}</select></div>
-              <div className="space-y-2"><label className="text-sm font-medium">Location</label><select value={newSupplier.location} onChange={(e) => setNewSupplier({ ...newSupplier, location: e.target.value })} className={inputCls}>{activeHubs.map((h) => <option key={h.id} value={h.name}>{h.name}</option>)}</select></div>
+              <div className="space-y-2"><label className="text-sm font-medium">Location</label><select value={newSupplier.hubId || ''} onChange={(e) => { const hub = activeHubs.find((h) => h.id === e.target.value); setNewSupplier({ ...newSupplier, hubId: hub?.id, location: hub?.name || '' }); }} className={inputCls}>{activeHubs.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}</select></div>
               <div className="space-y-2"><label className="text-sm font-medium">Contact Person</label><input type="text" value={newSupplier.contactPerson} onChange={(e) => setNewSupplier({ ...newSupplier, contactPerson: e.target.value })} className={inputCls} /></div>
               <div className="space-y-2"><label className="text-sm font-medium">Phone</label><input type="text" value={newSupplier.phone} onChange={(e) => setNewSupplier({ ...newSupplier, phone: e.target.value })} className={inputCls} /></div>
               <div className="space-y-2"><label className="text-sm font-medium">Email</label><input type="email" value={newSupplier.email} onChange={(e) => setNewSupplier({ ...newSupplier, email: e.target.value })} className={inputCls} /></div>
@@ -808,7 +819,7 @@ export default function SuppliersPage() {
                 <div className="space-y-6">
                   <div className="space-y-3 text-sm">
                     <h4 className="text-xs font-bold uppercase text-muted-foreground">Contact Information</h4>
-                    {selectedSupplier.contactPerson && <div className="flex items-center gap-2"><User size={14} className="text-muted-foreground" /> {selectedSupplier.contactPerson}</div>}
+                    <div className="flex items-center gap-2"><User size={14} className="text-muted-foreground" /> {selectedSupplier.contactPerson || 'N/A'}</div>
                     <div className="flex items-center gap-2 justify-between">
                       <div className="flex items-center gap-2"><Phone size={14} className="text-muted-foreground" /> {selectedSupplier.phone || 'N/A'}</div>
                       {selectedSupplier.phone && <button onClick={() => copyToClipboard(selectedSupplier.phone!, 'phone')} className="p-1 rounded hover:bg-accent">{copiedField === 'phone' ? <Check size={14} className="text-green-600" /> : <Copy size={14} className="text-muted-foreground" />}</button>}
@@ -817,12 +828,12 @@ export default function SuppliersPage() {
                       <div className="flex items-center gap-2"><Mail size={14} className="text-muted-foreground" /> {selectedSupplier.email || 'N/A'}</div>
                       {selectedSupplier.email && <button onClick={() => copyToClipboard(selectedSupplier.email!, 'email')} className="p-1 rounded hover:bg-accent">{copiedField === 'email' ? <Check size={14} className="text-green-600" /> : <Copy size={14} className="text-muted-foreground" />}</button>}
                     </div>
-                    <div className="flex items-center gap-2"><MapPin size={14} className="text-muted-foreground" /> {selectedSupplier.location}{selectedSupplier.address ? ` ΓÇö ${selectedSupplier.address}` : ''}</div>
+                    <div className="flex items-center gap-2"><MapPin size={14} className="text-muted-foreground" /> {selectedSupplier.location || 'N/A'}{selectedSupplier.address ? ` — ${selectedSupplier.address}` : ''}</div>
                     <div className="flex items-center gap-2"><Calendar size={14} className="text-muted-foreground" /> Added: {selectedSupplier.createdDate}{selectedSupplier.addedByAgentName ? ` by ${selectedSupplier.addedByAgentName}` : ''}</div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="p-4 rounded-xl border bg-muted/20"><p className="text-[10px] font-bold uppercase text-muted-foreground">Total Spend</p><p className="text-2xl font-black">{fmt(selectedSpend)}</p></div>
+                    <div className="p-4 rounded-xl border bg-muted/20"><p className="text-[10px] font-bold uppercase text-muted-foreground">Total Spend</p><p className="text-2xl font-black">{fmtSpend(selectedSpend)}</p></div>
                     <div className="p-4 rounded-xl border bg-muted/20"><p className="text-[10px] font-bold uppercase text-muted-foreground">Purchase Orders</p><p className="text-2xl font-black">{selectedOrders}</p></div>
                     <div className="p-4 rounded-xl border bg-muted/20"><p className="text-[10px] font-bold uppercase text-muted-foreground">Products Supplied</p><p className="text-2xl font-black">{productsSupplied.length}</p></div>
                     <div className="p-4 rounded-xl border bg-muted/20"><p className="text-[10px] font-bold uppercase text-muted-foreground">Last Order</p><p className="text-lg font-black">{selectedLast || 'None'}</p></div>
@@ -866,7 +877,7 @@ export default function SuppliersPage() {
                     <div className="space-y-1.5"><label className="text-xs font-medium text-muted-foreground">Supplier Name *</label><input type="text" value={editForm.name || ''} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} className={editInputCls} /></div>
                     <div className="space-y-1.5"><label className="text-xs font-medium text-muted-foreground">Business Name</label><input type="text" value={editForm.businessName || ''} onChange={(e) => setEditForm({ ...editForm, businessName: e.target.value })} className={editInputCls} /></div>
                     <div className="space-y-1.5"><label className="text-xs font-medium text-muted-foreground">Business Type</label><select value={editForm.businessType} onChange={(e) => setEditForm({ ...editForm, businessType: e.target.value as SupplierBusinessType })} className={editInputCls}>{BUSINESS_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}</select></div>
-                    <div className="space-y-1.5"><label className="text-xs font-medium text-muted-foreground">Location</label><select value={editForm.location} onChange={(e) => setEditForm({ ...editForm, location: e.target.value })} className={editInputCls}>{activeHubs.map((h) => <option key={h.id} value={h.name}>{h.name}</option>)}</select></div>
+                    <div className="space-y-1.5"><label className="text-xs font-medium text-muted-foreground">Location</label><select value={editForm.hubId || ''} onChange={(e) => { const hub = activeHubs.find((h) => h.id === e.target.value); setEditForm({ ...editForm, hubId: hub?.id, location: hub?.name || '' }); }} className={editInputCls}>{activeHubs.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}</select></div>
                     <div className="space-y-1.5"><label className="text-xs font-medium text-muted-foreground">Contact Person</label><input type="text" value={editForm.contactPerson || ''} onChange={(e) => setEditForm({ ...editForm, contactPerson: e.target.value })} className={editInputCls} /></div>
                     <div className="space-y-1.5"><label className="text-xs font-medium text-muted-foreground">Phone</label><input type="text" value={editForm.phone || ''} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} className={editInputCls} /></div>
                     <div className="space-y-1.5"><label className="text-xs font-medium text-muted-foreground">Email</label><input type="email" value={editForm.email || ''} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} className={editInputCls} /></div>
@@ -899,8 +910,8 @@ export default function SuppliersPage() {
                 <div className="space-y-5">
                   <div className="grid grid-cols-3 gap-3">
                     <div className="p-3 rounded-lg border bg-muted/20 text-center"><p className="text-[10px] font-bold uppercase text-muted-foreground">Orders</p><p className="text-xl font-black">{supplierPurchases.length}</p></div>
-                    <div className="p-3 rounded-lg border bg-muted/20 text-center"><p className="text-[10px] font-bold uppercase text-muted-foreground">Total Spend</p><p className="text-lg font-black">{fmt(selectedSpend)}</p></div>
-                    <div className="p-3 rounded-lg border bg-muted/20 text-center"><p className="text-[10px] font-bold uppercase text-muted-foreground">Avg Order</p><p className="text-lg font-black">{fmt(supplierPurchases.length ? selectedSpend / supplierPurchases.length : 0)}</p></div>
+                    <div className="p-3 rounded-lg border bg-muted/20 text-center"><p className="text-[10px] font-bold uppercase text-muted-foreground">Total Spend</p><p className="text-lg font-black">{fmtSpend(selectedSpend)}</p></div>
+                    <div className="p-3 rounded-lg border bg-muted/20 text-center"><p className="text-[10px] font-bold uppercase text-muted-foreground">Avg Order</p><p className="text-lg font-black">{fmtSpend(supplierPurchases.length ? selectedSpend / supplierPurchases.length : 0)}</p></div>
                   </div>
                   <div>
                     <div className="flex items-center justify-between mb-3">
@@ -943,9 +954,9 @@ export default function SuppliersPage() {
                                     <tr className="border-b bg-muted/10">
                                       <td colSpan={6} className="px-4 py-4">
                                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-3">
-                                          <div><p className="text-[10px] font-bold uppercase text-muted-foreground flex items-center gap-1"><Tag size={10} /> SKU</p><p className="text-sm font-medium">{item?.sku || 'ΓÇö'}</p></div>
-                                          <div><p className="text-[10px] font-bold uppercase text-muted-foreground flex items-center gap-1"><Package2 size={10} /> Batch No.</p><p className="text-sm font-medium">{l.batchNumber || 'ΓÇö'}</p></div>
-                                          <div><p className="text-[10px] font-bold uppercase text-muted-foreground flex items-center gap-1"><CalendarClock size={10} /> Expiry</p><p className="text-sm font-medium">{l.expiryDate || 'ΓÇö'}</p></div>
+                                          <div><p className="text-[10px] font-bold uppercase text-muted-foreground flex items-center gap-1"><Tag size={10} /> SKU</p><p className="text-sm font-medium">{item?.sku || 'N/A'}</p></div>
+                                          <div><p className="text-[10px] font-bold uppercase text-muted-foreground flex items-center gap-1"><Package2 size={10} /> Batch No.</p><p className="text-sm font-medium">{l.batchNumber || 'N/A'}</p></div>
+                                          <div><p className="text-[10px] font-bold uppercase text-muted-foreground flex items-center gap-1"><CalendarClock size={10} /> Expiry</p><p className="text-sm font-medium">{l.expiryDate || 'N/A'}</p></div>
                                           <div><p className="text-[10px] font-bold uppercase text-muted-foreground flex items-center gap-1"><CircleDollarSign size={10} /> Sell Price</p><p className="text-sm font-medium">{fmt(l.unitPrice)}<span className="text-[10px] text-muted-foreground">/{l.uom}</span></p></div>
                                           <div><p className="text-[10px] font-bold uppercase text-muted-foreground flex items-center gap-1"><Percent size={10} /> Markup</p><p className={`text-sm font-medium ${margin >= 0 ? 'text-green-600' : 'text-red-600'}`}>{margin}%</p></div>
                                           <div><p className="text-[10px] font-bold uppercase text-muted-foreground flex items-center gap-1"><User size={10} /> Recorded By</p><p className="text-sm font-medium">{agentName(l.agentId)}</p></div>
@@ -965,7 +976,7 @@ export default function SuppliersPage() {
                           <tfoot>
                             <tr className="bg-muted/20 border-t-2 border-dashed">
                               <td colSpan={4} className="px-3 py-2.5 text-sm font-medium text-muted-foreground">Total across {supplierPurchases.length} order{supplierPurchases.length !== 1 ? 's' : ''}</td>
-                              <td className="px-3 py-2.5 text-right text-base font-black whitespace-nowrap">{fmt(selectedSpend)}</td>
+                              <td className="px-3 py-2.5 text-right text-base font-black whitespace-nowrap">{fmtSpend(selectedSpend)}</td>
                               <td></td>
                             </tr>
                           </tfoot>
@@ -1010,7 +1021,7 @@ export default function SuppliersPage() {
                               </div>
                             </div>
                             {!isCheapest && best && (
-                              <p className="text-[11px] text-muted-foreground mt-2 border-t pt-2">Cheapest source: <span className="font-medium">{best.name || 'ΓÇö'}</span> at {fmt(best.cost)}/{p.uom}</p>
+                              <p className="text-[11px] text-muted-foreground mt-2 border-t pt-2">Cheapest source: <span className="font-medium">{best.name || 'N/A'}</span> at {fmt(best.cost)}/{p.uom}</p>
                             )}
                           </div>
                         );
@@ -1047,7 +1058,7 @@ export default function SuppliersPage() {
                       <div className="grid grid-cols-3 gap-3">
                         <div className="p-3 rounded-lg border bg-muted/20 text-center"><p className="text-[10px] font-bold uppercase text-muted-foreground">Sell-through</p><p className="text-lg font-black">{retailPerf.sellThrough}%</p><p className="text-[9px] text-muted-foreground">of purchased</p></div>
                         <div className="p-3 rounded-lg border bg-muted/20 text-center"><p className="text-[10px] font-bold uppercase text-muted-foreground">COGS</p><p className="text-lg font-black">{fmt(retailPerf.cogs)}</p></div>
-                        <div className="p-3 rounded-lg border bg-muted/20 text-center"><p className="text-[10px] font-bold uppercase text-muted-foreground">Last Sold</p><p className="text-sm font-black">{retailPerf.lastSold || 'ΓÇö'}</p></div>
+                        <div className="p-3 rounded-lg border bg-muted/20 text-center"><p className="text-[10px] font-bold uppercase text-muted-foreground">Last Sold</p><p className="text-sm font-black">{retailPerf.lastSold || 'N/A'}</p></div>
                       </div>
 
                       {/* Best seller callout */}
@@ -1131,7 +1142,7 @@ export default function SuppliersPage() {
                         <div className="space-y-1"><label className="text-xs font-medium text-muted-foreground">Type</label><select value={issueForm.type} onChange={(e) => setIssueForm({ ...issueForm, type: e.target.value as SupplierIssueType })} className={editInputCls}>{ISSUE_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}</select></div>
                         <div className="space-y-1"><label className="text-xs font-medium text-muted-foreground">Severity</label><select value={issueForm.severity} onChange={(e) => setIssueForm({ ...issueForm, severity: e.target.value as SupplierIssue['severity'] })} className={editInputCls}>{SEVERITIES.map((s) => <option key={s} value={s}>{s}</option>)}</select></div>
                       </div>
-                      <div className="space-y-1"><label className="text-xs font-medium text-muted-foreground">Related Product (optional)</label><select value={issueForm.relatedItemId || ''} onChange={(e) => setIssueForm({ ...issueForm, relatedItemId: e.target.value })} className={editInputCls}><option value="">ΓÇö None ΓÇö</option>{inventory.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}</select></div>
+                      <div className="space-y-1"><label className="text-xs font-medium text-muted-foreground">Related Product (optional)</label><select value={issueForm.relatedItemId || ''} onChange={(e) => setIssueForm({ ...issueForm, relatedItemId: e.target.value })} className={editInputCls}><option value="">N/A</option>{inventory.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}</select></div>
                       <div className="space-y-1"><label className="text-xs font-medium text-muted-foreground">Description</label><textarea value={issueForm.description} onChange={(e) => setIssueForm({ ...issueForm, description: e.target.value })} rows={3} placeholder="Describe the issue or complaint..." className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" /></div>
                       <div className="flex justify-end gap-2">
                         <button onClick={() => { setShowIssueForm(false); setIssueForm({ type: SupplierIssueType.QUALITY, severity: 'Medium', description: '', relatedItemId: '' }); }} className="inline-flex items-center rounded-md text-xs font-medium border border-input bg-background hover:bg-accent h-8 px-3">Cancel</button>
