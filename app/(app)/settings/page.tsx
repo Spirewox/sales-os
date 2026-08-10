@@ -37,7 +37,7 @@ import {
   type ConfirmActionType,
 } from '@/lib/settings-helpers';
 import { ApiRole } from '@/types/api';
-import { Agent, Hub } from '@/types';
+import { Agent, Hub, OwnershipType } from '@/types';
 import { hubOptionLabel } from '@/lib/api-mappers';
 import { toast } from 'sonner';
 import { SubmitButton } from '@/components/submit-button';
@@ -121,6 +121,7 @@ export default function SettingsPage() {
   const [downgradeManagerAction, setDowngradeManagerAction] = useState<'keep' | 'reassign'>('keep');
   const [downgradeReassignHubId, setDowngradeReassignHubId] = useState('');
   const [downgradeParentHubId, setDowngradeParentHubId] = useState('');
+  const [downgradeOwnershipType, setDowngradeOwnershipType] = useState<OwnershipType>('RO');
   const [childRspActions, setChildRspActions] = useState<Record<string, { action: 'reassign' | 'standalone'; target_hub_id?: string }>>({});
 
   const filteredHubs = useMemo(() => {
@@ -269,6 +270,10 @@ export default function SettingsPage() {
     if (!editingHub.name) { toast.error('Hub name is required.'); return; }
     const duplicate = hubs.find((h) => h.name.toLowerCase() === editingHub.name!.toLowerCase() && h.id !== editingHub.id);
     if (duplicate) { toast.error('A hub with that name already exists.'); return; }
+    if (editingHub.locationType === 'rsp' && !editingHub.ownershipType) {
+      toast.error('Select ownership type for this RSP (Retail Owned or Retail Franchise).');
+      return;
+    }
 
     try {
       const hubManager = editingHub.hubManagerId || null;
@@ -282,6 +287,7 @@ export default function SettingsPage() {
           is_active: editingHub.isActive,
           location_type: editingHub.locationType,
           parent_hub: editingHub.locationType === 'rsp' ? (editingHub.parentHubId || null) : null,
+          ownership_type: editingHub.locationType === 'rsp' ? editingHub.ownershipType ?? undefined : undefined,
         });
       } else {
         const hubName = editingHub.name ?? '';
@@ -293,6 +299,7 @@ export default function SettingsPage() {
           is_active: editingHub.isActive !== false,
           location_type: editingHub.locationType ?? 'hub',
           parent_hub: editingHub.locationType === 'rsp' ? (editingHub.parentHubId || null) : null,
+          ownership_type: editingHub.locationType === 'rsp' ? editingHub.ownershipType ?? undefined : undefined,
         });
       }
       setShowHubModal(false);
@@ -326,6 +333,7 @@ export default function SettingsPage() {
     setDowngradeManagerAction('keep');
     setDowngradeReassignHubId('');
     setDowngradeParentHubId('');
+    setDowngradeOwnershipType('RO');
     setDowngradingHub(hub);
   };
 
@@ -343,6 +351,7 @@ export default function SettingsPage() {
         manager_action: downgradeManagerAction,
         reassign_hub_id: downgradeManagerAction === 'reassign' ? downgradeReassignHubId : undefined,
         parent_hub_id: downgradeParentHubId || null,
+        ownership_type: downgradeOwnershipType,
       });
       setDowngradingHub(null);
       toast.success(`"${downgradingHub.name}" downgraded to RSP.`);
@@ -599,6 +608,7 @@ export default function SettingsPage() {
                 <thead>
                   <tr className="border-b bg-muted/40 text-left text-xs text-muted-foreground">
                     <th className="p-3 font-medium">Name</th>
+                    <th className="p-3 font-medium">Code</th>
                     <th className="p-3 font-medium">Type</th>
                     <th className="p-3 font-medium">Parent Hub</th>
                     <th className="p-3 font-medium">Manager</th>
@@ -615,6 +625,14 @@ export default function SettingsPage() {
                         <td className="p-3">
                           <div className="font-medium">{hub.name}</div>
                           {hub.address && <div className="text-xs text-muted-foreground">{hub.address}</div>}
+                        </td>
+                        <td className="p-3">
+                          <span className="font-mono text-xs font-semibold text-muted-foreground">{hub.code || 'N/A'}</span>
+                          {hub.locationType === 'rsp' && hub.ownershipType && (
+                            <div className="text-[10px] text-muted-foreground mt-0.5">
+                              {hub.ownershipType === 'RO' ? 'Retail Owned' : 'Retail Franchise'}
+                            </div>
+                          )}
                         </td>
                         <td className="p-3">
                           <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${hub.locationType === 'hub' ? 'bg-cyan-100 text-cyan-800' : 'bg-slate-100 text-slate-700'}`}>
@@ -938,6 +956,7 @@ export default function SettingsPage() {
                       ...editingHub,
                       locationType: e.target.value as Hub['locationType'],
                       parentHubId: e.target.value === 'hub' ? undefined : editingHub.parentHubId,
+                      ownershipType: e.target.value === 'hub' ? undefined : (editingHub.ownershipType ?? 'RO'),
                     })}
                     className={inputCls}
                   >
@@ -961,6 +980,34 @@ export default function SettingsPage() {
                     </select>
                   </div>
                 )}
+              </div>
+              {editingHub.locationType === 'rsp' && (
+                <div className="space-y-2">
+                  <label htmlFor="hub-ownership" className={labelCls}>Ownership *</label>
+                  <select
+                    id="hub-ownership"
+                    value={editingHub.ownershipType ?? ''}
+                    onChange={(e) => setEditingHub({
+                      ...editingHub,
+                      ownershipType: (e.target.value || undefined) as OwnershipType | undefined,
+                    })}
+                    className={inputCls}
+                  >
+                    <option value="">Select ownership</option>
+                    <option value="RO">Retail Owned (RO)</option>
+                    <option value="RF">Retail Franchise (RF)</option>
+                  </select>
+                </div>
+              )}
+              <div className="space-y-2">
+                <label htmlFor="hub-code" className={labelCls}>Code</label>
+                <input
+                  id="hub-code"
+                  type="text"
+                  value={editingHub.id ? (editingHub.code || 'N/A') : 'Auto-assigned on save'}
+                  disabled
+                  className={`${inputCls} bg-muted/40 text-muted-foreground`}
+                />
               </div>
               <div className="space-y-2">
                 <label htmlFor="hub-name" className={labelCls}>Location Name *</label>
@@ -1077,6 +1124,18 @@ export default function SettingsPage() {
                   ))}
                 </select>
               )}
+            </div>
+
+            <div className="space-y-2">
+              <label className={labelCls}>Ownership *</label>
+              <select
+                value={downgradeOwnershipType}
+                onChange={(e) => setDowngradeOwnershipType(e.target.value as OwnershipType)}
+                className={inputCls}
+              >
+                <option value="RO">Retail Owned (RO)</option>
+                <option value="RF">Retail Franchise (RF)</option>
+              </select>
             </div>
 
             <div className="space-y-2">

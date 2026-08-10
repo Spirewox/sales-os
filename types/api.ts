@@ -127,6 +127,8 @@ export interface ApiHub {
   parent_hub?: string | { _id: string; hub_name?: string } | null;
   parent_hub_name?: string;
   child_rsp_count?: number;
+  code?: string;
+  ownership_type?: 'RO' | 'RF' | null;
 }
 
 export type InventoryRequestStatus =

@@ -94,13 +94,14 @@ export function buildHubMap(hubs: Hub[]): Record<string, string> {
   return Object.fromEntries(hubs.map((h) => [h.id, h.name]));
 }
 
-/** Native <option> label: "Lagos (Hub)" / "Ife (RSP)". Value stays hub.name or hub.id. */
+/** Native <option> label: "Lagos (Hub · HB-001)" / "Ife (RSP · RO-0001)". Value stays hub.name or hub.id. */
 export function hubOptionLabel(
-  hub: Pick<Hub, 'name' | 'locationType'> | { name: string; locationType?: string },
+  hub: Pick<Hub, 'name' | 'locationType' | 'code'> | { name: string; locationType?: string; code?: string },
   extras?: string,
 ): string {
   const typeLabel = hub.locationType === 'rsp' ? 'RSP' : 'Hub';
-  const base = `${hub.name} (${typeLabel})`;
+  const codePart = hub.code ? ` · ${hub.code}` : '';
+  const base = `${hub.name} (${typeLabel}${codePart})`;
   return extras ? `${base} ${extras}` : base;
 }
 
@@ -157,6 +158,8 @@ export function mapHub(h: ApiHub): Hub {
       (typeof h.parent_hub === 'string' ? h.parent_hub : undefined),
     parentHubName: parentHub?.hub_name ?? h.parent_hub_name,
     childRspCount: h.child_rsp_count ?? 0,
+    code: h.code,
+    ownershipType: h.ownership_type === 'RO' || h.ownership_type === 'RF' ? h.ownership_type : null,
   };
 }
 

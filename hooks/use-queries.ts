@@ -459,6 +459,7 @@ export function useCreateHub() {
       is_active?: boolean;
       location_type?: 'hub' | 'rsp';
       parent_hub?: string | null;
+      ownership_type?: 'RO' | 'RF';
     }) => {
       requireApi();
       const res = await axiosPost(
@@ -471,6 +472,7 @@ export function useCreateHub() {
           is_active: dto.is_active ?? true,
           location_type: dto.location_type,
           parent_hub: dto.parent_hub,
+          ownership_type: dto.ownership_type,
         },
         true,
       ) as ApiListResponse<ApiHub>;
@@ -495,6 +497,7 @@ export function useUpdateHub() {
       is_active?: boolean;
       location_type?: 'hub' | 'rsp';
       parent_hub?: string | null;
+      ownership_type?: 'RO' | 'RF';
     }) => {
       requireApi();
       const res = await axiosPatch(`hub/${id}`, dto, true) as ApiListResponse<ApiHub>;
@@ -525,17 +528,19 @@ export function useDowngradeHub() {
       manager_action,
       reassign_hub_id,
       parent_hub_id,
+      ownership_type,
     }: {
       id: string;
       child_rsp_actions: { rsp_id: string; action: 'reassign' | 'standalone'; target_hub_id?: string }[];
       manager_action: 'keep' | 'reassign';
       reassign_hub_id?: string;
       parent_hub_id?: string | null;
+      ownership_type: 'RO' | 'RF';
     }) => {
       requireApi();
       const res = await axiosPatch(
         `hub/${id}/downgrade`,
-        { child_rsp_actions, manager_action, reassign_hub_id, parent_hub_id },
+        { child_rsp_actions, manager_action, reassign_hub_id, parent_hub_id, ownership_type },
         true,
       ) as ApiListResponse<ApiHub>;
       return mapHub(res.data);

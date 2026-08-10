@@ -51,6 +51,7 @@ export enum Location {
 }
 
 export type LocationType = 'hub' | 'rsp';
+export type OwnershipType = 'RO' | 'RF';
 
 export interface Hub {
   id: string;
@@ -65,6 +66,8 @@ export interface Hub {
   parentHubId?: string | null;
   parentHubName?: string;
   childRspCount?: number;
+  code?: string;
+  ownershipType?: OwnershipType | null;
 }
 
 export enum SalesChannel {
