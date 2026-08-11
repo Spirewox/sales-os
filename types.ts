@@ -230,6 +230,12 @@ export interface InventoryItem {
   lastPurchasePrice?: number;
   isActive?: boolean;
   priceHistory?: { date: string; cost: number; price: number }[];
+  isExpensed?: boolean;
+  expenseMode?: 'percent' | 'count';
+  expenseValue?: number;
+  expenseCountUnit?: 'carton' | 'kg';
+  expenseQty?: number;
+  expenseValueAmount?: number;
 }
 
 export interface StockLog {

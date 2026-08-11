@@ -282,7 +282,25 @@ export default function InventoryPage() {
     location: hubScope.defaultHubName || activeHubs[0]?.name || 'Lagos',
     purchasedDate: '',
     expiryDate: '',
+    isExpensed: false,
+    expenseMode: 'percent',
+    expenseValue: undefined,
+    expenseCountUnit: 'carton',
   });
+
+  const resetNewProduct = () =>
+    setNewProduct({
+      sku: '', name: '', category: 'Fish', unitOfMeasure: 'Cartons',
+      minStockLevel: 5, currentStock: 0, avgUnitCost: 0, baseSellingPrice: 0,
+      location: user?.location || activeHubs[0]?.name || 'Lagos',
+      supplierId: '',
+      purchasedDate: '',
+      expiryDate: '',
+      isExpensed: false,
+      expenseMode: 'percent',
+      expenseValue: undefined,
+      expenseCountUnit: 'carton',
+    });
 
   // Edit product
   const [editProduct, setEditProduct] = useState<Partial<InventoryItem> & {
@@ -512,6 +530,35 @@ export default function InventoryPage() {
       toast.error('Selling price is required.');
       return;
     }
+    if (newProduct.isExpensed) {
+      if (!(newProduct.currentStock && newProduct.currentStock > 0)) {
+        toast.error('Initial (purchased) stock is required when marking as expensed.');
+        return;
+      }
+      if (!newProduct.expenseMode) {
+        toast.error('Select expense mode (percent or count).');
+        return;
+      }
+      if (!(newProduct.expenseValue && newProduct.expenseValue > 0)) {
+        toast.error('Expense value must be greater than 0.');
+        return;
+      }
+      if (
+        newProduct.expenseMode === 'percent' &&
+        newProduct.expenseValue > 100
+      ) {
+        toast.error('Expense percent cannot exceed 100.');
+        return;
+      }
+      if (
+        newProduct.unitOfMeasure === 'Cartons' &&
+        newProduct.expenseMode === 'count' &&
+        !newProduct.expenseCountUnit
+      ) {
+        toast.error('Select whether the expense count is in cartons or kg.');
+        return;
+      }
+    }
     const hub = activeHubs.find((h) => h.name === (newProduct.location || user?.location || activeHubs[0]?.name));
     createProduct.mutate({
       name: newProduct.name!,
@@ -527,17 +574,21 @@ export default function InventoryPage() {
       supplier_id: newProduct.supplierId || undefined,
       purchased_date: newProduct.purchasedDate || undefined,
       expiry_date: newProduct.expiryDate || undefined,
+      ...(newProduct.isExpensed
+        ? {
+            is_expensed: true,
+            expense_mode: newProduct.expenseMode,
+            expense_value: newProduct.expenseValue,
+            ...(newProduct.unitOfMeasure === 'Cartons' &&
+            newProduct.expenseMode === 'count'
+              ? { expense_count_unit: newProduct.expenseCountUnit }
+              : {}),
+          }
+        : {}),
     }, {
       onSuccess: (created) => {
         setShowAddProductModal(false);
-        setNewProduct({
-          sku: '', name: '', category: 'Fish', unitOfMeasure: 'Cartons',
-          minStockLevel: 5, currentStock: 0, avgUnitCost: 0, baseSellingPrice: 0,
-          location: user?.location || activeHubs[0]?.name || 'Lagos',
-          supplierId: '',
-          purchasedDate: '',
-          expiryDate: '',
-        });
+        resetNewProduct();
         toast.success(created?.sku ? `Product created (${created.sku}).` : 'Product created successfully.');
       },
       onError: (err) => toast.error(err.message),
@@ -1578,6 +1629,20 @@ export default function InventoryPage() {
                         )}
                       </div>
                     )}
+                    {viewingDetailsItem.isExpensed ? (
+                      <div className="flex items-center gap-2 col-span-2">
+                        <ShieldAlert size={14} />
+                        <span className="text-muted-foreground">Expensed opening:</span>
+                        <span className="font-bold">
+                          {viewingDetailsItem.expenseQty != null
+                            ? `${viewingDetailsItem.expenseQty} ${viewingDetailsItem.unitOfMeasure}`
+                            : 'Yes'}
+                          {viewingDetailsItem.expenseValueAmount != null
+                            ? ` (₦${viewingDetailsItem.expenseValueAmount.toLocaleString()})`
+                            : ''}
+                        </span>
+                      </div>
+                    ) : null}
                     {viewingDetailsItem.lastPurchasePrice != null && (
                       <div className="flex items-center gap-2 col-span-2"><span className="text-sm font-bold">₦</span> <span className="text-muted-foreground">Last Purchase Price:</span> <span className="font-bold">&#8358;{viewingDetailsItem.lastPurchasePrice.toLocaleString()}</span></div>
                     )}
@@ -2089,6 +2154,84 @@ export default function InventoryPage() {
                 ) : (
                   <input type="text" readOnly disabled value={hubScope.hubName} className={`${inputCls} opacity-80 cursor-not-allowed`} />
                 )}
+              </div>
+              <div className="col-span-2 space-y-3 rounded-lg border border-border/60 p-3">
+                <label className="flex items-center gap-2 text-sm font-medium">
+                  <input
+                    type="checkbox"
+                    checked={!!newProduct.isExpensed}
+                    onChange={(e) =>
+                      setNewProduct({
+                        ...newProduct,
+                        isExpensed: e.target.checked,
+                        expenseMode: newProduct.expenseMode || 'percent',
+                        expenseCountUnit: newProduct.expenseCountUnit || 'carton',
+                      })
+                    }
+                  />
+                  Mark opening stock as expensed
+                </label>
+                <p className="text-[11px] text-muted-foreground">
+                  Deducts loss from initial stock, redistributes cost onto remaining, creates a write-off sale, and attaches the expense to the oldest sales at this hub. Requires existing hub sales.
+                </p>
+                {newProduct.isExpensed ? (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <label className={labelCls}>Expense mode</label>
+                      <select
+                        value={newProduct.expenseMode || 'percent'}
+                        onChange={(e) =>
+                          setNewProduct({
+                            ...newProduct,
+                            expenseMode: e.target.value as 'percent' | 'count',
+                          })
+                        }
+                        className={inputCls}
+                      >
+                        <option value="percent">Percent of purchased</option>
+                        <option value="count">Count</option>
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className={labelCls}>
+                        {newProduct.expenseMode === 'count' ? 'Expense count *' : 'Expense percent *'}
+                      </label>
+                      <input
+                        type="number"
+                        min={0.01}
+                        max={newProduct.expenseMode === 'percent' ? 100 : undefined}
+                        step="0.01"
+                        value={newProduct.expenseValue ?? ''}
+                        onChange={(e) =>
+                          setNewProduct({
+                            ...newProduct,
+                            expenseValue: parseFloat(e.target.value) || undefined,
+                          })
+                        }
+                        className={inputCls}
+                        placeholder={newProduct.expenseMode === 'percent' ? 'e.g. 10' : 'e.g. 2'}
+                      />
+                    </div>
+                    {newProduct.unitOfMeasure === 'Cartons' && newProduct.expenseMode === 'count' ? (
+                      <div className="space-y-2 col-span-2">
+                        <label className={labelCls}>Count unit *</label>
+                        <select
+                          value={newProduct.expenseCountUnit || 'carton'}
+                          onChange={(e) =>
+                            setNewProduct({
+                              ...newProduct,
+                              expenseCountUnit: e.target.value as 'carton' | 'kg',
+                            })
+                          }
+                          className={inputCls}
+                        >
+                          <option value="carton">Cartons</option>
+                          <option value="kg">Kg</option>
+                        </select>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
             </div>
             {/* Margin warning */}

@@ -274,6 +274,12 @@ export function mapInventoryItem(p: ApiProduct, hubMap?: Record<string, string>)
     supplierId: typeof p.supplier_id === 'string' ? p.supplier_id : refId(p.supplier_id),
     lastPurchasePrice: p.last_purchase_price,
     priceHistory: p.price_history,
+    isExpensed: p.is_expensed === true,
+    expenseMode: p.expense_mode,
+    expenseValue: p.expense_value,
+    expenseCountUnit: p.expense_count_unit,
+    expenseQty: p.expense_qty,
+    expenseValueAmount: p.expense_value_amount,
   };
 }
 

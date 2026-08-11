@@ -291,6 +291,14 @@ export interface ApiProduct {
   supplier_id?: string;
   last_purchase_price?: number;
   price_history?: { date: string; cost: number; price: number }[];
+  is_expensed?: boolean;
+  expense_mode?: 'percent' | 'count';
+  expense_value?: number;
+  expense_count_unit?: 'carton' | 'kg';
+  expense_qty?: number;
+  expense_value_amount?: number;
+  expense_write_off_sale_id?: string;
+  expense_allocated_to?: { sale_id: string; amount: number }[];
 }
 
 export interface ApiStockLog {
