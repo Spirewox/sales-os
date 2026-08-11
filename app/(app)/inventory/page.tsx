@@ -21,6 +21,10 @@ import { PRODUCT_CATEGORIES } from '@/lib/product-categories';
 import { InventoryImportModal } from './inventory-import-modal';
 import { InventoryRequestsPanel } from './inventory-requests-panel';
 import { hubOptionLabel } from '@/lib/api-mappers';
+import {
+  formatInventoryStockDisplay,
+  formatStockLogReference,
+} from '@/lib/format-carton-stock';
 import { toast } from 'sonner';
 import {
   Plus, Box, Search, History, Package, AlertTriangle, Truck, Layers,
@@ -1276,8 +1280,9 @@ export default function InventoryPage() {
                         </td>
                         <td className="p-4">
                           <div className="flex flex-col items-center">
-                            <span className={`font-bold ${isLow ? 'text-red-600' : ''}`}>{item.currentStock}</span>
-                            <span className="text-[10px] text-muted-foreground">{item.unitOfMeasure}</span>
+                            <span className={`font-bold text-center ${isLow ? 'text-red-600' : ''}`}>
+                              {formatInventoryStockDisplay(item)}
+                            </span>
                           </div>
                         </td>
                         <td className="p-4 text-right">
@@ -1587,7 +1592,9 @@ export default function InventoryPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="p-4 rounded-md border bg-muted/20">
                       <p className="text-xs font-medium text-muted-foreground mb-1">Current Stock</p>
-                      <p className="text-xl font-bold">{viewingDetailsItem.currentStock} <span className="text-sm font-medium text-muted-foreground">{viewingDetailsItem.unitOfMeasure}</span></p>
+                      <p className="text-xl font-bold">
+                        {formatInventoryStockDisplay(viewingDetailsItem)}
+                      </p>
                     </div>
                     <div className="p-4 rounded-md border bg-muted/20">
                       <p className="text-xs font-medium text-muted-foreground mb-1">Stock Value</p>
@@ -2036,7 +2043,11 @@ export default function InventoryPage() {
                           <div className="text-xs text-purple-600 mt-1 font-medium">{log.fromLocation} → {log.toLocation}</div>
                         )}
                         {log.supplier && <div className="text-xs text-muted-foreground mt-0.5">Supplier: {log.supplier}</div>}
-                        {log.notes && <div className="text-xs text-muted-foreground mt-0.5">{log.notes}</div>}
+                        {(() => {
+                          const desc = formatStockLogReference({ notes: log.notes, referenceId: log.referenceId });
+                          return desc ? <div className="text-xs text-muted-foreground mt-0.5">{desc}</div> : null;
+                        })()}
+                        {log.uom ? <div className="text-[10px] text-muted-foreground mt-0.5">{Math.abs(log.quantity)} {log.uom}</div> : null}
                       </div>
                     ))}
                     {itemLogs.length === 0 && <p className="text-sm text-muted-foreground italic">No activity yet.</p>}
@@ -2203,7 +2214,7 @@ export default function InventoryPage() {
                   Mark opening stock as expensed
                 </label>
                 <p className="text-[11px] text-muted-foreground">
-                  Deducts loss from initial stock, redistributes cost onto remaining, and attaches the expense quantity FIFO to existing sales with the same product name and category. Rejected if matched sales do not cover the expense qty.
+                  Deducts loss from initial stock (cost on remaining stays as entered). Attaches the expense quantity FIFO to oldest matching name+category sales that have no stock log yet. Rejected if matched sales do not cover the expense qty.
                 </p>
                 {newProduct.isExpensed ? (
                   <div className="grid grid-cols-2 gap-3">
@@ -2461,7 +2472,7 @@ export default function InventoryPage() {
               <div>
                 <h2 className="text-lg font-bold">Stock Movement</h2>
                 <p className="text-sm text-muted-foreground">{selectedProduct.name} <span className="font-mono text-xs">({selectedProduct.sku})</span></p>
-                <p className="text-xs text-muted-foreground mt-0.5">Current stock: <span className="font-bold">{selectedProduct.currentStock} {selectedProduct.unitOfMeasure}</span> in {selectedProduct.location}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Current stock: <span className="font-bold">{formatInventoryStockDisplay(selectedProduct)}</span> in {selectedProduct.location}</p>
               </div>
               <button onClick={() => { setShowStockMoveModal(false); setSelectedProduct(null); }} className="text-muted-foreground hover:text-foreground"><X size={20} /></button>
             </div>
