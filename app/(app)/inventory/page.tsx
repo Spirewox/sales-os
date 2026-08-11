@@ -276,6 +276,7 @@ export default function InventoryPage() {
   const [newProduct, setNewProduct] = useState<Partial<InventoryItem> & {
     purchasedDate?: string;
     expiryDate?: string;
+    expenseMatchScope?: 'hub' | 'all';
   }>({
     sku: '', name: '', category: 'Fish', unitOfMeasure: 'Cartons',
     minStockLevel: 5, currentStock: 0, avgUnitCost: 0, baseSellingPrice: 0,
@@ -286,6 +287,7 @@ export default function InventoryPage() {
     expenseMode: 'percent',
     expenseValue: undefined,
     expenseCountUnit: 'carton',
+    expenseMatchScope: 'hub',
   });
 
   const resetNewProduct = () =>
@@ -300,6 +302,7 @@ export default function InventoryPage() {
       expenseMode: 'percent',
       expenseValue: undefined,
       expenseCountUnit: 'carton',
+      expenseMatchScope: 'hub',
     });
 
   // Edit product
@@ -571,6 +574,10 @@ export default function InventoryPage() {
         toast.error('Select whether the expense count is in cartons or kg.');
         return;
       }
+      if (!newProduct.expenseMatchScope) {
+        toast.error('Select whether to match sales in this hub only or all hubs.');
+        return;
+      }
     }
     const hub = activeHubs.find((h) => h.name === (newProduct.location || user?.location || activeHubs[0]?.name));
     createProduct.mutate({
@@ -592,6 +599,7 @@ export default function InventoryPage() {
             is_expensed: true,
             expense_mode: newProduct.expenseMode,
             expense_value: newProduct.expenseValue,
+            expense_match_scope: newProduct.expenseMatchScope,
             ...(newProduct.unitOfMeasure === 'Cartons' &&
             newProduct.expenseMode === 'count'
               ? { expense_count_unit: newProduct.expenseCountUnit }
@@ -2188,16 +2196,36 @@ export default function InventoryPage() {
                         isExpensed: e.target.checked,
                         expenseMode: newProduct.expenseMode || 'percent',
                         expenseCountUnit: newProduct.expenseCountUnit || 'carton',
+                        expenseMatchScope: newProduct.expenseMatchScope || 'hub',
                       })
                     }
                   />
                   Mark opening stock as expensed
                 </label>
                 <p className="text-[11px] text-muted-foreground">
-                  Deducts loss from initial stock, redistributes cost onto remaining, creates a write-off sale, and attaches the expense to the oldest sales at this hub. Requires existing hub sales.
+                  Deducts loss from initial stock, redistributes cost onto remaining, and attaches the expense quantity FIFO to existing sales with the same product name and category. Rejected if matched sales do not cover the expense qty.
                 </p>
                 {newProduct.isExpensed ? (
                   <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2 col-span-2">
+                      <label className={labelCls}>Match sales scope *</label>
+                      <select
+                        value={newProduct.expenseMatchScope || 'hub'}
+                        onChange={(e) =>
+                          setNewProduct({
+                            ...newProduct,
+                            expenseMatchScope: e.target.value as 'hub' | 'all',
+                          })
+                        }
+                        className={inputCls}
+                      >
+                        <option value="hub">This hub only</option>
+                        <option value="all">All hubs</option>
+                      </select>
+                      <p className="text-[11px] text-muted-foreground">
+                        Finds sales by product name + category (case-insensitive), oldest first.
+                      </p>
+                    </div>
                     <div className="space-y-2">
                       <label className={labelCls}>Expense mode</label>
                       <select
