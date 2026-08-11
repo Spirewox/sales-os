@@ -444,9 +444,22 @@ export default function InventoryPage() {
     });
   }, [viewingDetailsItem, logs]);
 
+  const sellingPriceForMargin = (item: {
+    unitOfMeasure?: string;
+    baseSellingPrice?: number;
+    cartonPrice?: number;
+  }) => {
+    if (item.unitOfMeasure === 'Cartons' && item.cartonPrice != null && item.cartonPrice > 0) {
+      return item.cartonPrice;
+    }
+    return item.baseSellingPrice ?? 0;
+  };
+
   const itemMargin = useMemo(() => {
-    if (!viewingDetailsItem || !viewingDetailsItem.baseSellingPrice) return 0;
-    return ((viewingDetailsItem.baseSellingPrice - viewingDetailsItem.avgUnitCost) / viewingDetailsItem.baseSellingPrice) * 100;
+    if (!viewingDetailsItem) return 0;
+    const sell = sellingPriceForMargin(viewingDetailsItem);
+    if (!sell) return 0;
+    return ((sell - viewingDetailsItem.avgUnitCost) / sell) * 100;
   }, [viewingDetailsItem]);
 
   const detailProductId = viewingDetailsItem?.id ?? null;
@@ -620,7 +633,8 @@ export default function InventoryPage() {
       return;
     }
 
-    if (editProduct.avgUnitCost && editProduct.baseSellingPrice && editProduct.avgUnitCost > editProduct.baseSellingPrice) {
+    if (editProduct.avgUnitCost && sellingPriceForMargin(editProduct) > 0
+      && editProduct.avgUnitCost > sellingPriceForMargin(editProduct)) {
       toast.warning('Warning: Cost exceeds selling price — negative margin!');
     }
 
@@ -1217,7 +1231,8 @@ export default function InventoryPage() {
                     const isLow = item.currentStock <= item.minStockLevel;
                     const isSelected = selectedIds.has(item.id);
                     const status = getStockStatus(item);
-                    const margin = item.baseSellingPrice > 0 ? ((item.baseSellingPrice - item.avgUnitCost) / item.baseSellingPrice * 100) : 0;
+                    const sellForMargin = sellingPriceForMargin(item);
+                    const margin = sellForMargin > 0 ? ((sellForMargin - item.avgUnitCost) / sellForMargin * 100) : 0;
                     return (
                       <tr
                         key={item.id}
@@ -1258,7 +1273,7 @@ export default function InventoryPage() {
                           </div>
                         </td>
                         <td className="p-4 text-right">
-                          <div className="text-xs text-muted-foreground">&#8358;{item.avgUnitCost.toLocaleString()} / &#8358;{item.baseSellingPrice.toLocaleString()}</div>
+                          <div className="text-xs text-muted-foreground">&#8358;{item.avgUnitCost.toLocaleString()} / &#8358;{sellForMargin.toLocaleString()}</div>
                           <div className={`text-[10px] font-medium ${margin < 0 ? 'text-red-600' : margin < 15 ? 'text-amber-600' : 'text-green-600'}`}>
                             {margin.toFixed(1)}% margin
                           </div>
@@ -1574,7 +1589,9 @@ export default function InventoryPage() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="p-4 rounded-md border bg-muted/20">
-                      <p className="text-xs font-medium text-muted-foreground mb-1">Avg Unit Cost</p>
+                      <p className="text-xs font-medium text-muted-foreground mb-1">
+                        {viewingDetailsItem.unitOfMeasure === 'Cartons' ? 'Avg Carton Cost' : 'Avg Unit Cost'}
+                      </p>
                       <p className="text-lg font-bold">&#8358;{viewingDetailsItem.avgUnitCost.toLocaleString()}</p>
                     </div>
                     <div className="p-4 rounded-md border bg-muted/20">
@@ -2087,8 +2104,13 @@ export default function InventoryPage() {
                 />
               </div>
               <div className="space-y-2">
-                <label className={labelCls}>Avg Unit Cost (&#8358;)</label>
+                <label className={labelCls}>
+                  {newProduct.unitOfMeasure === 'Cartons' ? 'Avg carton cost (₦)' : 'Avg Unit Cost (₦)'}
+                </label>
                 <input type="number" value={newProduct.avgUnitCost || ''} onChange={(e) => setNewProduct({ ...newProduct, avgUnitCost: parseInt(e.target.value) || 0 })} className={inputCls} />
+                {newProduct.unitOfMeasure === 'Cartons' ? (
+                  <p className="text-[11px] text-muted-foreground">Cost per carton (same unit as stock).</p>
+                ) : null}
               </div>
               <div className="space-y-2">
                 <label className={labelCls}>
@@ -2236,8 +2258,8 @@ export default function InventoryPage() {
             </div>
             {/* Margin warning */}
             {(newProduct.avgUnitCost ?? 0) > 0
-              && (newProduct.baseSellingPrice ?? 0) > 0
-              && (newProduct.avgUnitCost ?? 0) > (newProduct.baseSellingPrice ?? 0) ? (
+              && sellingPriceForMargin(newProduct) > 0
+              && (newProduct.avgUnitCost ?? 0) > sellingPriceForMargin(newProduct) ? (
               <div className="mt-3 p-3 rounded-lg bg-amber-50 border border-amber-200 flex items-center gap-2 text-sm text-amber-700">
                 <ShieldAlert size={16} /> Cost exceeds selling price — negative margin!
               </div>
@@ -2338,8 +2360,13 @@ export default function InventoryPage() {
                 )}
               </div>
               <div className="space-y-2">
-                <label className={labelCls}>Avg Unit Cost (&#8358;)</label>
+                <label className={labelCls}>
+                  {editProduct.unitOfMeasure === 'Cartons' ? 'Avg carton cost (₦)' : 'Avg Unit Cost (₦)'}
+                </label>
                 <input type="number" value={editProduct.avgUnitCost ?? ''} onChange={(e) => setEditProduct({ ...editProduct, avgUnitCost: parseInt(e.target.value) || 0 })} className={inputCls} />
+                {editProduct.unitOfMeasure === 'Cartons' ? (
+                  <p className="text-[11px] text-muted-foreground">Cost per carton (same unit as stock).</p>
+                ) : null}
               </div>
               <div className="space-y-2">
                 <label className={labelCls}>
@@ -2384,8 +2411,8 @@ export default function InventoryPage() {
             </div>
             {/* Margin warning */}
             {(editProduct.avgUnitCost ?? 0) > 0
-              && (editProduct.baseSellingPrice ?? 0) > 0
-              && (editProduct.avgUnitCost ?? 0) > (editProduct.baseSellingPrice ?? 0) ? (
+              && sellingPriceForMargin(editProduct) > 0
+              && (editProduct.avgUnitCost ?? 0) > sellingPriceForMargin(editProduct) ? (
               <div className="mt-3 p-3 rounded-lg bg-amber-50 border border-amber-200 flex items-center gap-2 text-sm text-amber-700">
                 <ShieldAlert size={16} /> Warning: Cost exceeds selling price — negative margin!
               </div>
