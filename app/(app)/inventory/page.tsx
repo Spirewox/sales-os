@@ -2214,7 +2214,7 @@ export default function InventoryPage() {
                   Mark opening stock as expensed
                 </label>
                 <p className="text-[11px] text-muted-foreground">
-                  Deducts loss from initial stock (cost on remaining stays as entered). Attaches the expense quantity FIFO to oldest matching name+category sales that have no stock log yet. Rejected if matched sales do not cover the expense qty.
+                  Deducts loss from initial stock (cost on remaining stays as entered). Attaches expense only to whole matching name+category sales (no stock log yet) whose quantities add up exactly to the expense — e.g. 2kg via one 2kg sale or 1kg+1kg. Stock logs show the sale description and date for lookup in Sales.
                 </p>
                 {newProduct.isExpensed ? (
                   <div className="grid grid-cols-2 gap-3">
