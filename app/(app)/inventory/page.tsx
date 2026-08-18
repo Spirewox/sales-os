@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
-import { useAuth } from '@/contexts/auth-context';
 import { useHubScopeFilter } from '@/hooks/use-hub-scope';
 import { HubScopeFilterBar } from '@/components/hub-scope-filter';
 import { MetricsPeriodBar, useMetricsPeriod } from '@/components/metrics-period-bar';
@@ -172,7 +171,6 @@ function getUniqueSuppliers(logs: StockLog[]): string[] {
 /* ────────────────── MAIN COMPONENT ────────────────── */
 
 export default function InventoryPage() {
-  const { user } = useAuth();
   const router = useRouter();
   const { can, isAdmin } = usePermissions();
   const hubScope = useHubScopeFilter();
