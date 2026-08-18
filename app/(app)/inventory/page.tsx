@@ -276,15 +276,19 @@ export default function InventoryPage() {
     return uniqueSuppliers.filter((s) => s.toLowerCase().includes(moveData.supplier.toLowerCase()));
   }, [moveData.supplier, uniqueSuppliers]);
 
-  // New product
-  const [newProduct, setNewProduct] = useState<Partial<InventoryItem> & {
+  type NewProductForm = Partial<InventoryItem> & {
+    hubId?: string;
     purchasedDate?: string;
     expiryDate?: string;
     expenseMatchScope?: 'hub' | 'all';
-  }>({
+  };
+
+  const emptyNewProduct = (hubId?: string, hubName?: string): NewProductForm => ({
     sku: '', name: '', category: 'Fish', unitOfMeasure: 'Cartons',
     minStockLevel: 5, currentStock: 0, avgUnitCost: 0, baseSellingPrice: 0,
-    location: hubScope.defaultHubName || activeHubs[0]?.name || 'Lagos',
+    hubId: hubId || undefined,
+    location: hubName || '',
+    supplierId: '',
     purchasedDate: '',
     expiryDate: '',
     isExpensed: false,
@@ -294,20 +298,25 @@ export default function InventoryPage() {
     expenseMatchScope: 'hub',
   });
 
+  const [newProduct, setNewProduct] = useState<NewProductForm>(() =>
+    emptyNewProduct(hubScope.defaultHubId, hubScope.defaultHubName),
+  );
+
   const resetNewProduct = () =>
-    setNewProduct({
-      sku: '', name: '', category: 'Fish', unitOfMeasure: 'Cartons',
-      minStockLevel: 5, currentStock: 0, avgUnitCost: 0, baseSellingPrice: 0,
-      location: user?.location || activeHubs[0]?.name || 'Lagos',
-      supplierId: '',
-      purchasedDate: '',
-      expiryDate: '',
-      isExpensed: false,
-      expenseMode: 'percent',
-      expenseValue: undefined,
-      expenseCountUnit: 'carton',
-      expenseMatchScope: 'hub',
+    setNewProduct(emptyNewProduct(
+      hubScope.defaultHubId || activeHubs[0]?.id,
+      hubScope.defaultHubName || activeHubs[0]?.name,
+    ));
+
+  useEffect(() => {
+    const id = hubScope.defaultHubId;
+    const name = hubScope.defaultHubName;
+    if (!id) return;
+    setNewProduct((prev) => {
+      if (prev.hubId) return prev;
+      return { ...prev, hubId: id, location: name };
     });
+  }, [hubScope.defaultHubId, hubScope.defaultHubName]);
 
   // Edit product
   const [editProduct, setEditProduct] = useState<Partial<InventoryItem> & {
@@ -583,7 +592,15 @@ export default function InventoryPage() {
         return;
       }
     }
-    const hub = activeHubs.find((h) => h.name === (newProduct.location || user?.location || activeHubs[0]?.name));
+    const hubId =
+      newProduct.hubId ||
+      hubScope.defaultHubId ||
+      activeHubs.find((h) => h.name === newProduct.location)?.id ||
+      activeHubs[0]?.id;
+    if (!hubId) {
+      toast.error('Select a location hub.');
+      return;
+    }
     createProduct.mutate({
       name: newProduct.name!,
       category: newProduct.category,
@@ -594,7 +611,7 @@ export default function InventoryPage() {
       base_selling_price: newProduct.baseSellingPrice || 0,
       carton_price: newProduct.cartonPrice,
       carton_weight: newProduct.cartonWeight,
-      hub_id: hub?.id,
+      hub_id: hubId,
       supplier_id: newProduct.supplierId || undefined,
       purchased_date: newProduct.purchasedDate || undefined,
       expiry_date: newProduct.expiryDate || undefined,
@@ -2187,9 +2204,16 @@ export default function InventoryPage() {
               <div className="space-y-2 col-span-2">
                 <label className={labelCls}>Location Hub</label>
                 {hubScope.canSwitchHubs ? (
-                  <select value={newProduct.location} onChange={(e) => setNewProduct({ ...newProduct, location: e.target.value })} className={inputCls}>
+                  <select
+                    value={newProduct.hubId || ''}
+                    onChange={(e) => {
+                      const hub = hubScope.activeHubs.find((h) => h.id === e.target.value);
+                      setNewProduct({ ...newProduct, hubId: hub?.id, location: hub?.name || '' });
+                    }}
+                    className={inputCls}
+                  >
                     {hubScope.activeHubs.map((h) => (
-                      <option key={h.id} value={h.name}>{hubOptionLabel(h)}</option>
+                      <option key={h.id} value={h.id}>{hubOptionLabel(h)}</option>
                     ))}
                   </select>
                 ) : (
