@@ -1426,11 +1426,14 @@ export function useCreateProduct() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (dto: object) => {
-      const res = await axiosPost('inventory', dto, true) as ApiListResponse<ApiProduct>;
+      const res = await axiosPost('inventory', dto, true, 120_000) as ApiListResponse<ApiProduct>;
       const hubMap = await fetchHubMap();
       return mapInventoryItem(res.data, hubMap);
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['inventory'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['inventory'] });
+      qc.invalidateQueries({ queryKey: ['stockLogs'] });
+    },
   });
 }
 
