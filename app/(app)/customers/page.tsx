@@ -22,7 +22,7 @@ import {
 } from '@/types/api';
 import { CustomerImportModal } from './customer-import-modal';
 import { toast } from 'sonner';
-import { isB2bCustomerType, customerPhoneForApi, customerEmailForApi } from '@/lib/customer-helpers';
+import { isB2bCustomerType, customerPhoneForApi, customerEmailForApi, optionalStringForApi } from '@/lib/customer-helpers';
 import { hubOptionLabel } from '@/lib/api-mappers';
 import { deriveSegments, SEGMENT_GROUP_OF, SEGMENT_TAXONOMY } from '@/lib/segmentation';
 import { usePermissions } from '@/hooks/use-permissions';
@@ -423,16 +423,16 @@ export default function CustomersPage() {
       customer_type: newCustomer.type as CustomerType,
       customer_location: hub?.id || activeHubs[0]?.id || '',
       company_name: newCustomer.companyName,
-      assigned_agent: newCustomer.addedByAgentId,
-      business_category: isB2b ? newCustomer.businessCategory : undefined,
-      gender: !isB2b ? newCustomer.gender : undefined,
-      family_type: !isB2b ? newCustomer.familyType : undefined,
-      marital_status: !isB2b ? newCustomer.maritalStatus : undefined,
-      age_group: !isB2b ? newCustomer.ageGroup : undefined,
-      lifestyle: !isB2b ? newCustomer.lifestyle : undefined,
-      employment_status: !isB2b ? newCustomer.employmentStatus : undefined,
-      job_type: !isB2b ? newCustomer.jobType : undefined,
-      religion: !isB2b ? newCustomer.religion : undefined,
+      assigned_agent: optionalStringForApi(newCustomer.addedByAgentId),
+      business_category: isB2b ? optionalStringForApi(newCustomer.businessCategory) : undefined,
+      gender: !isB2b ? optionalStringForApi(newCustomer.gender) : undefined,
+      family_type: !isB2b ? optionalStringForApi(newCustomer.familyType) : undefined,
+      marital_status: !isB2b ? optionalStringForApi(newCustomer.maritalStatus) : undefined,
+      age_group: !isB2b ? optionalStringForApi(newCustomer.ageGroup) : undefined,
+      lifestyle: !isB2b ? optionalStringForApi(newCustomer.lifestyle) : undefined,
+      employment_status: !isB2b ? optionalStringForApi(newCustomer.employmentStatus) : undefined,
+      job_type: !isB2b ? optionalStringForApi(newCustomer.jobType) : undefined,
+      religion: !isB2b ? optionalStringForApi(newCustomer.religion) : undefined,
     }, {
       onSuccess: () => {
         setShowAddModal(false);
@@ -466,15 +466,15 @@ export default function CustomersPage() {
       customer_type: editForm.type,
       customer_location: hub?.id,
       company_name: editForm.companyName,
-      business_category: isB2b ? editForm.businessCategory : undefined,
-      gender: !isB2b ? editForm.gender : undefined,
-      family_type: !isB2b ? editForm.familyType : undefined,
-      marital_status: !isB2b ? editForm.maritalStatus : undefined,
-      age_group: !isB2b ? editForm.ageGroup : undefined,
-      lifestyle: !isB2b ? editForm.lifestyle : undefined,
-      employment_status: !isB2b ? editForm.employmentStatus : undefined,
-      job_type: !isB2b ? editForm.jobType : undefined,
-      religion: !isB2b ? editForm.religion : undefined,
+      business_category: isB2b ? optionalStringForApi(editForm.businessCategory) : undefined,
+      gender: !isB2b ? optionalStringForApi(editForm.gender) : undefined,
+      family_type: !isB2b ? optionalStringForApi(editForm.familyType) : undefined,
+      marital_status: !isB2b ? optionalStringForApi(editForm.maritalStatus) : undefined,
+      age_group: !isB2b ? optionalStringForApi(editForm.ageGroup) : undefined,
+      lifestyle: !isB2b ? optionalStringForApi(editForm.lifestyle) : undefined,
+      employment_status: !isB2b ? optionalStringForApi(editForm.employmentStatus) : undefined,
+      job_type: !isB2b ? optionalStringForApi(editForm.jobType) : undefined,
+      religion: !isB2b ? optionalStringForApi(editForm.religion) : undefined,
     }, {
       onSuccess: (updated) => {
         setSelectedCustomer(updated);

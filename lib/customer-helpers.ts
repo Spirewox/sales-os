@@ -39,6 +39,13 @@ export function customerPhoneForApi(phone?: string | null): string {
   return isPlaceholderPhone(trimmed) ? 'N/A' : trimmed;
 }
 
+/** Empty / "-- Select --" style values must be omitted so @IsOptional + @IsIn pass. */
+export function optionalStringForApi(value?: string | null): string | undefined {
+  const trimmed = (value ?? '').trim();
+  if (!trimmed || trimmed === '-- Select --') return undefined;
+  return trimmed;
+}
+
 export function customerCompanyNameForApi(
   customerType: string | undefined,
   companyName?: string | null,

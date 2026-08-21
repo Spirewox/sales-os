@@ -73,7 +73,7 @@ export const axiosPatch = async (
     return res.data;
   } catch (error) {
     if (isAxiosError(error)) {
-      throw new Error(error.response?.data?.message[0].split('_').map((word : string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') || error.message);
+      throw new Error(axiosErrorMessage(error));
     }
     throw error;
   }
@@ -89,8 +89,7 @@ export const axiosPut = async (
     return res.data;
   } catch (error) {
     if (isAxiosError(error)) {
-      console.log(error.response?.data?.message)
-      throw new Error(error.response?.data?.message[0].split('_').map((word : string) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')|| error.message);
+      throw new Error(axiosErrorMessage(error));
     }
     throw error;
   }
@@ -102,8 +101,7 @@ export const axiosDelete = async (endpoint: string, withAuth?: boolean) => {
     return res.data;
   } catch (error) {
     if (isAxiosError(error)) {
-      
-      throw new Error(error.response?.data?.message || error.message);
+      throw new Error(axiosErrorMessage(error));
     }
     throw error;
   }
@@ -118,7 +116,7 @@ export const axiosGetBlob = async (endpoint: string, withAuth?: boolean) => {
     return res.data as ArrayBuffer;
   } catch (error) {
     if (isAxiosError(error)) {
-      throw new Error(error.response?.data?.message || error.message);
+      throw new Error(axiosErrorMessage(error));
     }
     throw error;
   }
