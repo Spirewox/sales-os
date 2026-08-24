@@ -2,10 +2,9 @@
 
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  useCustomers, useSales, useSuppliers, useSupplierIssues,
-  useStockLogs, useInventory, useCredits, useAgents,
-} from '@/hooks/use-queries';
+import { useInsightDataBundle } from '@/hooks/use-insight-data-bundle';
+import { HubScopeFilterBar } from '@/components/hub-scope-filter';
+import { MetricsPeriodBar } from '@/components/metrics-period-bar';
 import { EntityKind, ENTITY_KINDS, DataBundle, listEntities, compare } from '@/lib/insights';
 import { DATASETS, Dataset, Filter, fieldValues, runQuery } from '@/lib/explore';
 import { ask, ASK_EXAMPLES, AskResult } from '@/lib/ask';
@@ -15,6 +14,7 @@ import {
 } from '@/lib/simulate';
 import { deriveSegments } from '@/lib/segmentation';
 import { InsightButton } from '@/components/insight-button';
+import { useNarrateInsight } from '@/hooks/use-queries';
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
@@ -25,6 +25,7 @@ import {
   Users, Truck, Package, Tag, Layers, MapPin, UserCog, Wallet, ArrowRightLeft, ClipboardList,
   Send, Wand2, ArrowUpRight, ChevronRight, Search, Calendar,
   FlaskConical, TrendingUp, TrendingDown, Minus, Sliders, CheckCircle2, AlertTriangle, XCircle, Info,
+  Loader2,
 } from 'lucide-react';
 
 const PALETTE = ['#0891b2', '#ea580c', '#7c3aed', '#dc2626', '#ca8a04', '#16a34a', '#2563eb', '#f59e0b', '#ec4899', '#14b8a6', '#8b5cf6', '#64748b'];
@@ -38,46 +39,80 @@ type Mode = 'ask' | 'explore' | 'simulate' | 'compare';
 export interface SeedQuery { dataset: string; measure: string; groupBy: string; filters: Filter[] }
 
 export default function InsightsPage() {
-  const { data: customers = [] } = useCustomers();
-  const { data: sales = [] } = useSales();
-  const { data: suppliers = [] } = useSuppliers();
-  const { data: supplierIssues = [] } = useSupplierIssues();
-  const { data: stockLogs = [] } = useStockLogs();
-  const { data: inventory = [] } = useInventory();
-  const { data: credits = [] } = useCredits();
-  const { data: agents = [] } = useAgents();
-  const bundle: DataBundle = useMemo(() => ({ customers, sales, suppliers, supplierIssues, stockLogs, inventory, credits, agents }), [customers, sales, suppliers, supplierIssues, stockLogs, inventory, credits, agents]);
+  const { bundle, isLoading, hubScope, metricsPeriod } = useInsightDataBundle();
 
   const [mode, setMode] = useState<Mode>('ask');
   const [seed, setSeed] = useState<SeedQuery | null>(null);
   const [initialQ, setInitialQ] = useState('');
+  const [compareKind, setCompareKind] = useState<EntityKind>('product');
+  const [compareA, setCompareA] = useState('');
+  const [compareB, setCompareB] = useState('');
 
   useEffect(() => {
-    const p = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('ask') : null;
-    if (p) { setInitialQ(p); setMode('ask'); }
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const askQ = params.get('ask');
+    const modeQ = params.get('mode') as Mode | null;
+    const kindQ = params.get('kind') as EntityKind | null;
+    const aQ = params.get('a');
+    const bQ = params.get('b');
+    if (askQ) { setInitialQ(askQ); setMode('ask'); }
+    if (modeQ && ['ask', 'explore', 'simulate', 'compare'].includes(modeQ)) setMode(modeQ);
+    if (kindQ && ENTITY_KINDS.some((k) => k.key === kindQ)) setCompareKind(kindQ);
+    if (aQ) setCompareA(aQ);
+    if (bQ) setCompareB(bQ);
   }, []);
 
   const MODES: { key: Mode; label: string; icon: typeof Users }[] = [
-    { key: 'ask', label: 'Ask', icon: Sparkles }, { key: 'explore', label: 'Explore', icon: BarChart3 }, { key: 'simulate', label: 'Simulate', icon: FlaskConical }, { key: 'compare', label: 'Compare', icon: ArrowLeftRight },
+    { key: 'ask', label: 'Ask', icon: Sparkles },
+    { key: 'explore', label: 'Explore', icon: BarChart3 },
+    { key: 'simulate', label: 'Simulate', icon: FlaskConical },
+    { key: 'compare', label: 'Compare', icon: ArrowLeftRight },
   ];
+
+  const periodLabel = metricsPeriod.isCustom
+    ? `${metricsPeriod.dateFrom} → ${metricsPeriod.dateTo}`
+    : metricsPeriod.preset;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 max-w-[1200px] mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-3"><Sparkles className="text-primary" /> Insight Explorer</h1>
-          <p className="text-sm text-muted-foreground">Ask a question in plain English, or build your own view — across every dataset in the system.</p>
+          <p className="text-sm text-muted-foreground">Ask, explore, simulate, or compare — scoped by hub and period.</p>
         </div>
         <div className="flex items-center gap-0.5 bg-muted/40 p-0.5 rounded-lg border shrink-0">
           {MODES.map((mo) => (
-            <button key={mo.key} onClick={() => setMode(mo.key)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${mode === mo.key ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground'}`}><mo.icon size={13} /> {mo.label}</button>
+            <button key={mo.key} type="button" onClick={() => setMode(mo.key)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${mode === mo.key ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground'}`}><mo.icon size={13} /> {mo.label}</button>
           ))}
         </div>
       </div>
-      {mode === 'ask' && <Ask bundle={bundle} initialQ={initialQ} onRefine={(q) => { setSeed(q); setMode('explore'); }} />}
-      {mode === 'explore' && <Explore bundle={bundle} seed={seed} />}
-      {mode === 'simulate' && <Simulate bundle={bundle} />}
-      {mode === 'compare' && <Compare bundle={bundle} />}
+
+      <div className="flex flex-wrap items-center gap-3">
+        <HubScopeFilterBar scope={hubScope} />
+        <MetricsPeriodBar period={metricsPeriod} />
+      </div>
+
+      {isLoading ? (
+        <div className="rounded-xl border bg-card p-12 text-center text-sm text-muted-foreground flex items-center justify-center gap-2">
+          <Loader2 className="animate-spin" size={16} /> Loading insight data…
+        </div>
+      ) : (
+        <>
+          {mode === 'ask' && <Ask bundle={bundle} initialQ={initialQ} onRefine={(q) => { setSeed(q); setMode('explore'); }} />}
+          {mode === 'explore' && <Explore bundle={bundle} seed={seed} />}
+          {mode === 'simulate' && <Simulate bundle={bundle} />}
+          {mode === 'compare' && (
+            <Compare
+              bundle={bundle}
+              initialKind={compareKind}
+              initialA={compareA}
+              initialB={compareB}
+              periodLabel={periodLabel}
+            />
+          )}
+        </>
+      )}
     </div>
   );
 }
@@ -535,18 +570,71 @@ function Simulate({ bundle }: { bundle: DataBundle }) {
 }
 
 /* ═══════════ COMPARE ═══════════ */
-function Compare({ bundle }: { bundle: DataBundle }) {
-  const [kind, setKind] = useState<EntityKind>('supplier');
+function Compare({
+  bundle,
+  initialKind = 'product',
+  initialA = '',
+  initialB = '',
+  periodLabel,
+}: {
+  bundle: DataBundle;
+  initialKind?: EntityKind;
+  initialA?: string;
+  initialB?: string;
+  periodLabel?: string;
+}) {
+  const [kind, setKind] = useState<EntityKind>(initialKind);
   const entities = useMemo(() => listEntities(kind, bundle), [kind, bundle]);
-  const [aId, setAId] = useState('');
-  const [bId, setBId] = useState('');
-  useEffect(() => { if (entities.length === 0) return; if (!entities.find((e) => e.id === aId)) setAId(entities[0].id); if (!entities.find((e) => e.id === bId)) setBId(entities[1]?.id || entities[0].id); }, [entities]); // eslint-disable-line
+  const [aId, setAId] = useState(initialA);
+  const [bId, setBId] = useState(initialB);
+  const [narrative, setNarrative] = useState<string | null>(null);
+  const narrate = useNarrateInsight();
+
+  useEffect(() => { setKind(initialKind); }, [initialKind]);
+  useEffect(() => {
+    if (initialA) setAId(initialA);
+    if (initialB) setBId(initialB);
+  }, [initialA, initialB]);
+
+  useEffect(() => {
+    if (entities.length === 0) return;
+    if (!entities.find((e) => e.id === aId)) setAId(initialA && entities.find((e) => e.id === initialA) ? initialA : entities[0].id);
+    if (!entities.find((e) => e.id === bId)) setBId(initialB && entities.find((e) => e.id === initialB) ? initialB : (entities[1]?.id || entities[0].id));
+  }, [entities]); // eslint-disable-line
+
   const result = useMemo(() => (aId && bId ? compare(kind, aId, bId, bundle) : null), [kind, aId, bId, bundle]);
   const selCls = 'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-ring';
 
+  const handleNarrate = () => {
+    if (!result) return;
+    setNarrative(null);
+    narrate.mutate(
+      {
+        kind,
+        aLabel: result.aLabel,
+        bLabel: result.bLabel,
+        aWins: result.aWins,
+        bWins: result.bWins,
+        periodLabel: periodLabel ?? 'selected period',
+        insights: result.insights.map((i) => i.text),
+        metrics: result.groups.flatMap((g) =>
+          g.rows.map((r) => ({
+            group: g.group,
+            label: r.label,
+            a: r.a.display,
+            b: r.b?.display ?? '—',
+            winner: r.winner,
+            deltaPct: r.deltaPct,
+          })),
+        ),
+      },
+      { onSuccess: (data) => setNarrative(data.summary) },
+    );
+  };
+
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center gap-2">{ENTITY_KINDS.map((k) => { const Icon = KIND_ICON[k.key]; return <button key={k.key} onClick={() => setKind(k.key)} className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold transition-all ${kind === k.key ? 'bg-primary text-primary-foreground border-primary shadow-sm' : 'bg-card hover:bg-accent text-muted-foreground'}`}><Icon size={14} /> {k.label}</button>; })}</div>
+      <div className="flex flex-wrap items-center gap-2">{ENTITY_KINDS.map((k) => { const Icon = KIND_ICON[k.key]; return <button key={k.key} type="button" onClick={() => setKind(k.key)} className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold transition-all ${kind === k.key ? 'bg-primary text-primary-foreground border-primary shadow-sm' : 'bg-card hover:bg-accent text-muted-foreground'}`}><Icon size={14} /> {k.label}</button>; })}</div>
       <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] items-center gap-3">
         <div className="space-y-1"><label className="text-[10px] font-bold uppercase text-primary">Entity A</label><select value={aId} onChange={(e) => setAId(e.target.value)} className={selCls}>{entities.map((e) => <option key={e.id} value={e.id}>{e.label}{e.sublabel ? ` · ${e.sublabel}` : ''}</option>)}</select></div>
         <div className="hidden sm:flex items-center justify-center h-10 w-10 rounded-full border bg-muted/40 text-muted-foreground shrink-0 mt-4"><ArrowLeftRight size={16} /></div>
@@ -562,8 +650,22 @@ function Compare({ bundle }: { bundle: DataBundle }) {
             <ScoreCard label={result.bLabel} wins={result.bWins} lead={result.bWins > result.aWins} tone="b" />
           </div>
           <div className="rounded-xl border bg-card shadow-sm">
-            <div className="p-5 border-b flex items-center gap-2"><Lightbulb size={16} className="text-amber-500" /><h3 className="text-sm font-bold">Key Insights</h3></div>
+            <div className="p-5 border-b flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2"><Lightbulb size={16} className="text-amber-500" /><h3 className="text-sm font-bold">Key Insights</h3></div>
+              <button type="button" onClick={handleNarrate} disabled={narrate.isPending} className="inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-semibold hover:bg-accent disabled:opacity-50">
+                {narrate.isPending ? <Loader2 size={12} className="animate-spin" /> : <Wand2 size={12} />}
+                AI summary
+              </button>
+            </div>
             <div className="p-5 space-y-2.5">{result.insights.map((ins, i) => <div key={i} className="flex items-start gap-2.5 text-sm"><span className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${ins.winner === 'a' ? 'bg-primary' : ins.winner === 'b' ? 'bg-blue-500' : 'bg-muted-foreground'}`} /><span>{ins.text}</span></div>)}</div>
+            {narrative && (
+              <div className="px-5 pb-5">
+                <div className="rounded-lg border bg-muted/20 p-4 text-sm leading-relaxed whitespace-pre-wrap">{narrative}</div>
+              </div>
+            )}
+            {narrate.isError && (
+              <p className="px-5 pb-5 text-xs text-destructive">Could not generate AI summary. Try again.</p>
+            )}
           </div>
           {result.groups.map((g) => (
             <div key={g.group} className="rounded-xl border bg-card shadow-sm overflow-hidden">

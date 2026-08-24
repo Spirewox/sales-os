@@ -20,11 +20,12 @@ import {
 import {
   TrendingUp, BarChart3, Users, Package, CreditCard,
   ArrowUpRight, ArrowDownRight, Minus,
-  AlertTriangle, ChevronRight,
+  AlertTriangle, ChevronRight, ArrowLeftRight,
 } from 'lucide-react';
 import { PaymentMode } from '@/types';
 import { PRODUCT_CATEGORY_COLORS } from '@/lib/product-categories';
 import { AnalyticsPageSkeleton } from '@/components/ui/loading-skeletons';
+import { AnalyticsCompareTab } from '@/components/analytics-compare-tab';
 
 const NAIRA = '\u20A6';
 const fmt = (n: number) => `${NAIRA}${n.toLocaleString()}`;
@@ -39,7 +40,7 @@ const TT = {
 const CHART_COLORS = ['#0891b2', '#ea580c', '#7c3aed', '#dc2626', '#ca8a04', '#16a34a', '#2563eb', '#f59e0b', '#ec4899', '#6b7280'];
 const CAT_COLORS = PRODUCT_CATEGORY_COLORS;
 
-type AnalyticsTab = 'sales' | 'products' | 'customers' | 'credit';
+type AnalyticsTab = 'sales' | 'products' | 'customers' | 'credit' | 'compare';
 
 type PrimaryScope = {
   preset: MetricsPeriodPreset;
@@ -141,6 +142,7 @@ export default function AnalyticsPage() {
     { key: 'products', label: 'Product Performance', icon: Package },
     { key: 'customers', label: 'Customer Insights', icon: Users },
     { key: 'credit', label: 'Credit & Risk', icon: CreditCard },
+    { key: 'compare', label: 'Compare', icon: ArrowLeftRight },
   ];
 
   return (
@@ -175,8 +177,6 @@ export default function AnalyticsPage() {
           <BarChart3 size={32} className="mx-auto text-muted-foreground mb-2" />
           <p className="text-sm text-muted-foreground">Connect to the API to view analytics.</p>
         </div>
-      ) : isLoading || !overview ? (
-        <AnalyticsPageSkeleton />
       ) : (
         <>
           <div className="flex items-center gap-1 bg-muted/40 p-1 rounded-xl border overflow-x-auto">
@@ -197,25 +197,39 @@ export default function AnalyticsPage() {
             ))}
           </div>
 
-          {tab === 'sales' && (
-            <SalesAnalysis
-              data={overview.sales}
-              primary={{ preset: metricsPeriod.preset, isCustom: metricsPeriod.isCustom }}
+          {tab === 'compare' ? (
+            <AnalyticsCompareTab
+              periodLabel={
+                metricsPeriod.isCustom
+                  ? `${metricsPeriod.dateFrom} → ${metricsPeriod.dateTo}`
+                  : metricsPeriod.preset
+              }
             />
-          )}
-          {tab === 'products' && <ProductPerformance data={overview.products} />}
-          {tab === 'customers' && (
-            <CustomerInsights
-              data={overview.customers}
-              router={router}
-              primary={{ preset: metricsPeriod.preset, isCustom: metricsPeriod.isCustom }}
-            />
-          )}
-          {tab === 'credit' && (
-            <CreditRisk
-              data={overview.credit}
-              primary={{ preset: metricsPeriod.preset, isCustom: metricsPeriod.isCustom }}
-            />
+          ) : isLoading || !overview ? (
+            <AnalyticsPageSkeleton />
+          ) : (
+            <>
+              {tab === 'sales' && (
+                <SalesAnalysis
+                  data={overview.sales}
+                  primary={{ preset: metricsPeriod.preset, isCustom: metricsPeriod.isCustom }}
+                />
+              )}
+              {tab === 'products' && <ProductPerformance data={overview.products} />}
+              {tab === 'customers' && (
+                <CustomerInsights
+                  data={overview.customers}
+                  router={router}
+                  primary={{ preset: metricsPeriod.preset, isCustom: metricsPeriod.isCustom }}
+                />
+              )}
+              {tab === 'credit' && (
+                <CreditRisk
+                  data={overview.credit}
+                  primary={{ preset: metricsPeriod.preset, isCustom: metricsPeriod.isCustom }}
+                />
+              )}
+            </>
           )}
         </>
       )}

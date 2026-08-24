@@ -1,4 +1,4 @@
-import { StockMovementType } from '../types';
+import { StockMovementType } from '@/types';
 import { DataBundle } from './insights';
 import { deriveSegments } from './segmentation';
 

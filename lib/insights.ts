@@ -1,7 +1,7 @@
 import {
   Customer, Sale, Supplier, SupplierIssue, StockLog,
   InventoryItem, CreditRecord, Agent, StockMovementType,
-} from '../types';
+} from '@/types';
 import { deriveSegments } from './segmentation';
 
 /**
@@ -91,6 +91,7 @@ export function listEntities(kind: EntityKind, d: DataBundle): EntityDef[] {
       const set = new Set<string>();
       d.customers.forEach((c) => c.location && set.add(c.location));
       d.inventory.forEach((i) => i.location && set.add(i.location));
+      d.sales.forEach((s) => s.hubName && set.add(s.hubName));
       return Array.from(set).sort().map((h) => ({ id: h, label: h }));
     }
     case 'agent':
@@ -240,7 +241,7 @@ export function resolveMetrics(kind: EntityKind, id: string, d: DataBundle): Met
     case 'hub': {
       const custs = d.customers.filter((c) => c.location === id);
       const custIds = new Set(custs.map((c) => c.id));
-      const cs = nonVoid.filter((s) => extractHub(s.productDetails) === id);
+      const cs = nonVoid.filter((s) => (s.hubName || extractHub(s.productDetails)) === id);
       const revenue = cs.reduce((a, s) => a + s.amount, 0);
       const orders = cs.length;
       const profit = cs.reduce((a, s) => a + (s.profitAmount || 0), 0);

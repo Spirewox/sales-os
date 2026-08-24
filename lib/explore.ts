@@ -1,4 +1,4 @@
-import { StockMovementType } from '../types';
+import { StockMovementType } from '@/types';
 import { DataBundle } from './insights';
 import { deriveSegments } from './segmentation';
 
@@ -107,7 +107,7 @@ export const DATASETS: Dataset[] = [
             Employment: cust?.employmentStatus || '—', Religion: cust?.religion || '—',
             Channel: sale?.channel || '—', PaymentMode: sale?.paymentMode || (sale?.isCredit ? 'Credit' : 'Full Payment'),
             PaymentType: sale?.paymentType || (sale?.isCredit ? '—' : 'Cash'), CashCredit: sale?.isCredit ? 'Credit' : 'Cash',
-            Status: sale?.status || '—', Hub: extractHub(sale?.productDetails) || cust?.location || '—', Agent: sale?.agentName || '—',
+            Status: sale?.status || '—', Hub: sale?.hubName || extractHub(sale?.productDetails) || cust?.location || '—', Agent: sale?.agentName || '—',
           },
         });
       };
@@ -116,9 +116,13 @@ export const DATASETS: Dataset[] = [
         if (l.referenceId) withLines.add(l.referenceId);
         push(l.date, l.referenceId || l.id, Math.abs(l.quantity), l.unitPrice, l.unitCost, itemById[l.itemId], sale, sale ? custById[sale.customerId] : null);
       });
-      d.sales.filter((s) => Array.isArray(s.items) && s.items!.length > 0 && !withLines.has(s.id)).forEach((s) => {
+      d.sales.filter((s) => s.item && !withLines.has(s.id)).forEach((s) => {
         const cust = custById[s.customerId];
-        s.items!.forEach((it) => push(s.date, s.id, it.quantity, it.unitPrice, it.unitCost, itemById[it.itemId], s, cust));
+        const it = s.item!;
+        const inv = it.productId ? itemById[it.productId] : undefined;
+        const unitPrice = s.amount && it.quantity ? s.amount / it.quantity : (inv?.baseSellingPrice ?? 0);
+        const unitCost = inv?.avgUnitCost ?? 0;
+        push(s.date, s.id, it.quantity, unitPrice, unitCost, inv, s, cust);
       });
       return rows;
     },

@@ -9,7 +9,7 @@ import { Permission } from '@/lib/permissions';
 import {
   LayoutDashboard, Package, Users, Banknote,
   CreditCard, History, MessageSquare,
-  Settings, LogOut, Menu, X, BarChart3, Truck,
+  Settings, LogOut, Menu, X, BarChart3, Truck, Sparkles,
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { BrandLogo } from '@/components/brand';
@@ -17,6 +17,7 @@ import { BrandLogo } from '@/components/brand';
 const navItems: { href: string; label: string; icon: typeof LayoutDashboard; permission?: Permission }[] = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard, permission: 'dashboard.view' },
   { href: '/analytics', label: 'Analytics', icon: BarChart3, permission: 'analytics.view' },
+  { href: '/insights', label: 'Insights', icon: Sparkles, permission: 'analytics.view' },
   { href: '/inventory', label: 'Inventory', icon: Package, permission: 'inventory.view' },
   { href: '/suppliers', label: 'Suppliers', icon: Truck, permission: 'suppliers.view' },
   { href: '/customers', label: 'Customers', icon: Users, permission: 'customers.view' },
