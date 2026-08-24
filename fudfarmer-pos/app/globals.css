@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+/* POS palette — dark, high contrast, readable under store lighting. */
+@theme {
+  --color-bg: #0b1220;
+  --color-surface: #131c2e;
+  --color-surface-2: #1b2740;
+  --color-line: #26324a;
+  --color-ink: #eef2f9;
+  --color-ink-dim: #93a1bd;
+  --color-brand: #16a34a;
+  --color-brand-ink: #ffffff;
+  --color-warn: #f59e0b;
+  --color-danger: #ef4444;
+  --color-info: #38bdf8;
+}
+
+html, body {
+  height: 100%;
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  /* A till is a kiosk: no pull-to-refresh, no text selection on taps. */
+  overscroll-behavior: none;
+}
+
+/* Touch-first: no accidental text selection, no 300ms delay */
+button, .tap { touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none; }
+
+/* Scrollbars that don't shout */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: #2b3a58; border-radius: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+@keyframes pop { from { transform: scale(.96); opacity: .6 } to { transform: scale(1); opacity: 1 } }
+.animate-pop { animation: pop .12s ease-out }

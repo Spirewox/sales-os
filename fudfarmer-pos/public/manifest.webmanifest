@@ -1,0 +1,15 @@
+{
+  "name": "FudFarmer POS",
+  "short_name": "FF POS",
+  "description": "Offline-first point of sale for FudFarmer retail stores, franchises and subscribers.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0b1220",
+  "theme_color": "#15803d",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}
