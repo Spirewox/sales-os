@@ -42,6 +42,21 @@ type ProductCategory = InventoryItem['category'];
 const ALL_UOMS: InventoryItem['unitOfMeasure'][] = ['Cartons', 'Units', 'Kg', 'Liters'];
 const INVENTORY_PAGE_SIZE = 20;
 
+const roundMoney2 = (n: number | undefined | null) =>
+  Math.round((Number(n) || 0) * 100) / 100;
+
+const fmtMoney = (n: number | undefined | null) =>
+  roundMoney2(n).toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
+const parseMoneyInput = (raw: string) => {
+  if (raw.trim() === '') return 0;
+  const n = Number.parseFloat(raw);
+  return Number.isFinite(n) ? n : 0;
+};
+
 /* ────────────────── FIFO / FEFO helpers ────────────────── */
 
 interface FifoBatch {
@@ -631,9 +646,10 @@ export default function InventoryPage() {
       unit_of_measure: newProduct.unitOfMeasure,
       min_stock_level: newProduct.minStockLevel || 5,
       current_stock: newProduct.currentStock || 0,
-      avg_unit_cost: newProduct.avgUnitCost || 0,
-      base_selling_price: newProduct.baseSellingPrice || 0,
-      carton_price: newProduct.cartonPrice,
+      avg_unit_cost: roundMoney2(newProduct.avgUnitCost),
+      base_selling_price: roundMoney2(newProduct.baseSellingPrice),
+      carton_price:
+        newProduct.cartonPrice != null ? roundMoney2(newProduct.cartonPrice) : undefined,
       carton_weight: newProduct.cartonWeight,
       hub_id: hubId,
       supplier_id: newProduct.supplierId || undefined,
@@ -699,9 +715,14 @@ export default function InventoryPage() {
       category: editProduct.category,
       unit_of_measure: editProduct.unitOfMeasure,
       min_stock_level: editProduct.minStockLevel,
-      base_selling_price: editProduct.baseSellingPrice,
-      avg_unit_cost: editProduct.avgUnitCost,
-      carton_price: editProduct.cartonPrice,
+      base_selling_price:
+        editProduct.baseSellingPrice != null
+          ? roundMoney2(editProduct.baseSellingPrice)
+          : undefined,
+      avg_unit_cost:
+        editProduct.avgUnitCost != null ? roundMoney2(editProduct.avgUnitCost) : undefined,
+      carton_price:
+        editProduct.cartonPrice != null ? roundMoney2(editProduct.cartonPrice) : undefined,
       carton_weight: editProduct.cartonWeight,
       ...(hub?.id ? { hub_id: hub.id } : {}),
       ...(canEditInitialStock
@@ -756,9 +777,12 @@ export default function InventoryPage() {
       item_id: selectedProduct.id,
       type: StockMovementType.PURCHASE,
       quantity: absQty,
-      unit_cost: moveData.unitCost || selectedProduct.avgUnitCost,
-      unit_price: moveData.unitPrice || selectedProduct.baseSellingPrice,
-      carton_price: selectedProduct.unitOfMeasure === 'Cartons' ? moveData.cartonPrice : undefined,
+      unit_cost: roundMoney2(moveData.unitCost || selectedProduct.avgUnitCost),
+      unit_price: roundMoney2(moveData.unitPrice || selectedProduct.baseSellingPrice),
+      carton_price:
+        selectedProduct.unitOfMeasure === 'Cartons'
+          ? roundMoney2(moveData.cartonPrice)
+          : undefined,
       carton_weight: selectedProduct.unitOfMeasure === 'Cartons' ? moveData.cartonWeight : undefined,
       notes: moveData.notes || undefined,
       expiry_date: moveData.expiryDate || undefined,
@@ -783,7 +807,7 @@ export default function InventoryPage() {
       .map(([itemId, data]) => ({
         item_id: itemId,
         quantity: data.quantity,
-        unit_cost: data.cost,
+        unit_cost: data.cost != null ? roundMoney2(data.cost) : undefined,
       }));
 
     if (updates.length === 0) {
@@ -978,7 +1002,7 @@ export default function InventoryPage() {
                     <button
                       onClick={() => {
                         const headers = ['SKU', 'Name', 'Category', 'Location', 'Stock', 'Unit', 'Min Stock', 'Cost Price', 'Selling Price'];
-                        const rows = filteredItems.map((i) => [i.sku, i.name, i.category, i.location, i.currentStock, i.unitOfMeasure, i.minStockLevel, i.avgUnitCost, i.baseSellingPrice]);
+                        const rows = filteredItems.map((i) => [i.sku, i.name, i.category, i.location, i.currentStock, i.unitOfMeasure, i.minStockLevel, roundMoney2(i.avgUnitCost), roundMoney2(i.baseSellingPrice)]);
                         const csv = [headers.join(','), ...rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','))].join('\n');
                         const blob = new Blob([csv], { type: 'text/csv' });
                         const url = URL.createObjectURL(blob);
@@ -1043,7 +1067,7 @@ export default function InventoryPage() {
       {/* ── KPI Cards ── */}
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
         {[
-          { label: 'Inventory Value (Cost)', value: `\u20A6${inventoryValue.toLocaleString()}`, icon: <BarChart4 size={14} />, color: 'text-primary', sub: null as string | null },
+          { label: 'Inventory Value (Cost)', value: `\u20A6${fmtMoney(inventoryValue)}`, icon: <BarChart4 size={14} />, color: 'text-primary', sub: null as string | null },
           { label: 'Total Active SKUs', value: filteredItems.length, icon: <Package size={14} />, color: 'text-blue-600', sub: null },
           {
             label: 'Total Units',
@@ -1055,7 +1079,7 @@ export default function InventoryPage() {
           { label: 'Meals Served', value: mealsServed.toLocaleString(), icon: <UtensilsCrossed size={14} />, color: 'text-pink-600', sub: 'Kitchen · Food plate' },
           { label: 'Low Stock Alerts', value: lowStockItems.length, icon: <AlertTriangle size={14} />, color: lowStockItems.length > 0 ? 'text-red-600' : 'text-muted-foreground', sub: null },
           { label: 'Expiring Soon', value: expiringSoonCount, icon: <Thermometer size={14} />, color: expiringSoonCount > 0 ? 'text-orange-600' : 'text-muted-foreground', sub: null },
-          ...(isAdmin ? [{ label: 'Retail Value', value: `\u20A6${retailValue.toLocaleString()}`, icon: <span className="text-sm font-bold">₦</span>, color: 'text-green-600', sub: null }] : []),
+          ...(isAdmin ? [{ label: 'Retail Value', value: `\u20A6${fmtMoney(retailValue)}`, icon: <span className="text-sm font-bold">₦</span>, color: 'text-green-600', sub: null }] : []),
         ].map((kpi, i) => (
           <div key={i} className="rounded-md border bg-card p-4">
             <div className={`flex items-center gap-2 mb-1 ${kpi.color}`}>{kpi.icon}<span className="text-xs font-medium text-muted-foreground">{kpi.label}</span></div>
@@ -1313,13 +1337,13 @@ export default function InventoryPage() {
                           </div>
                         </td>
                         <td className="p-4 text-right">
-                          <div className="text-xs text-muted-foreground">&#8358;{item.avgUnitCost.toLocaleString()} / &#8358;{sellForMargin.toLocaleString()}</div>
+                          <div className="text-xs text-muted-foreground">&#8358;{fmtMoney(item.avgUnitCost)} / &#8358;{fmtMoney(sellForMargin)}</div>
                           <div className={`text-[10px] font-medium ${margin < 0 ? 'text-red-600' : margin < 15 ? 'text-amber-600' : 'text-green-600'}`}>
                             {margin.toFixed(1)}% margin
                           </div>
                         </td>
                         <td className="p-4 text-right font-medium">
-                          &#8358;{(item.currentStock * item.avgUnitCost).toLocaleString()}
+                          &#8358;{fmtMoney(item.currentStock * item.avgUnitCost)}
                         </td>
                         <td className="p-4 text-right" onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center justify-end gap-1">
@@ -1395,14 +1419,14 @@ export default function InventoryPage() {
                 <TrendingUp size={14} className="text-green-600" />
                 <span className="text-xs font-medium text-muted-foreground">Total Inbound Value</span>
               </div>
-              <div className="text-lg font-bold text-green-700">&#8358;{ledgerStats.totalInboundValue.toLocaleString()}</div>
+              <div className="text-lg font-bold text-green-700">&#8358;{fmtMoney(ledgerStats.totalInboundValue)}</div>
             </div>
             <div className="p-4 rounded-md border bg-card">
               <div className="flex items-center gap-2 mb-1">
                 <TrendingDown size={14} className="text-red-600" />
                 <span className="text-xs font-medium text-muted-foreground">Total Outbound Value</span>
               </div>
-              <div className="text-lg font-bold text-red-700">&#8358;{ledgerStats.totalOutboundValue.toLocaleString()}</div>
+              <div className="text-lg font-bold text-red-700">&#8358;{fmtMoney(ledgerStats.totalOutboundValue)}</div>
             </div>
             <div className="p-4 rounded-md border bg-card">
               <div className="flex items-center gap-2 mb-1">
@@ -1410,7 +1434,7 @@ export default function InventoryPage() {
                 <span className="text-xs font-medium text-muted-foreground">Net Movement Value</span>
               </div>
               <div className={`text-lg font-bold ${ledgerStats.netMovement >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-                {ledgerStats.netMovement >= 0 ? '+' : ''}&#8358;{ledgerStats.netMovement.toLocaleString()}
+                {ledgerStats.netMovement >= 0 ? '+' : ''}&#8358;{fmtMoney(ledgerStats.netMovement)}
               </div>
             </div>
           </div>
@@ -1537,8 +1561,8 @@ export default function InventoryPage() {
                             {log.quantity > 0 ? '+' : ''}{log.quantity}
                           </span>
                         </td>
-                        <td className="p-4 text-right text-muted-foreground">&#8358;{log.unitCost.toLocaleString()}</td>
-                        <td className="p-4 text-right font-medium">&#8358;{(Math.abs(log.quantity) * log.unitCost).toLocaleString()}</td>
+                        <td className="p-4 text-right text-muted-foreground">&#8358;{fmtMoney(log.unitCost)}</td>
+                        <td className="p-4 text-right font-medium">&#8358;{fmtMoney(Math.abs(log.quantity) * log.unitCost)}</td>
                         <td className="p-4 text-xs text-muted-foreground">
                           {log.type === StockMovementType.TRANSFER && log.fromLocation && log.toLocation && (
                             <div className="flex items-center gap-1 font-medium text-purple-700">
@@ -1627,7 +1651,7 @@ export default function InventoryPage() {
                     </div>
                     <div className="p-4 rounded-md border bg-muted/20">
                       <p className="text-xs font-medium text-muted-foreground mb-1">Stock Value</p>
-                      <p className="text-xl font-bold">&#8358;{(viewingDetailsItem.currentStock * viewingDetailsItem.avgUnitCost).toLocaleString()}</p>
+                      <p className="text-xl font-bold">&#8358;{fmtMoney(viewingDetailsItem.currentStock * viewingDetailsItem.avgUnitCost)}</p>
                     </div>
                   </div>
 
@@ -1636,18 +1660,18 @@ export default function InventoryPage() {
                       <p className="text-xs font-medium text-muted-foreground mb-1">
                         {viewingDetailsItem.unitOfMeasure === 'Cartons' ? 'Avg Carton Cost' : 'Avg Unit Cost'}
                       </p>
-                      <p className="text-lg font-bold">&#8358;{viewingDetailsItem.avgUnitCost.toLocaleString()}</p>
+                      <p className="text-lg font-bold">&#8358;{fmtMoney(viewingDetailsItem.avgUnitCost)}</p>
                     </div>
                     <div className="p-4 rounded-md border bg-muted/20">
                       <p className="text-xs font-medium text-muted-foreground mb-1">
                         {viewingDetailsItem.unitOfMeasure === 'Cartons' ? 'Unit Selling Price' : 'Selling Price'}
                       </p>
-                      <p className="text-lg font-bold">&#8358;{viewingDetailsItem.baseSellingPrice.toLocaleString()}</p>
+                      <p className="text-lg font-bold">&#8358;{fmtMoney(viewingDetailsItem.baseSellingPrice)}</p>
                     </div>
                     {viewingDetailsItem.unitOfMeasure === 'Cartons' && viewingDetailsItem.cartonPrice != null && (
                       <div className="p-4 rounded-md border bg-muted/20">
                         <p className="text-xs font-medium text-muted-foreground mb-1">Carton Selling Price</p>
-                        <p className="text-lg font-bold">&#8358;{viewingDetailsItem.cartonPrice.toLocaleString()}</p>
+                        <p className="text-lg font-bold">&#8358;{fmtMoney(viewingDetailsItem.cartonPrice)}</p>
                       </div>
                     )}
                   </div>
@@ -1672,7 +1696,7 @@ export default function InventoryPage() {
                     <div className="flex items-center gap-2"><Package size={14} /> <span className="text-muted-foreground">Min Level:</span> <span className="font-bold">{viewingDetailsItem.minStockLevel}</span></div>
                     <div className="flex items-center gap-2"><Calendar size={14} /> <span className="text-muted-foreground">Updated:</span> <span className="font-bold">{viewingDetailsItem.lastStockUpdate}</span></div>
                     {viewingDetailsItem.cartonPrice != null && (
-                      <div className="flex items-center gap-2"><Package size={14} /> <span className="text-muted-foreground">Carton selling:</span> <span className="font-bold">&#8358;{viewingDetailsItem.cartonPrice.toLocaleString()}</span></div>
+                      <div className="flex items-center gap-2"><Package size={14} /> <span className="text-muted-foreground">Carton selling:</span> <span className="font-bold">&#8358;{fmtMoney(viewingDetailsItem.cartonPrice)}</span></div>
                     )}
                     {viewingDetailsItem.cartonWeight != null && (
                       <div className="flex items-center gap-2"><Activity size={14} /> <span className="text-muted-foreground">Weight:</span> <span className="font-bold">{viewingDetailsItem.cartonWeight} Kg</span></div>
@@ -1699,13 +1723,13 @@ export default function InventoryPage() {
                             ? `${viewingDetailsItem.expenseQty} ${viewingDetailsItem.unitOfMeasure}`
                             : 'Yes'}
                           {viewingDetailsItem.expenseValueAmount != null
-                            ? ` (₦${viewingDetailsItem.expenseValueAmount.toLocaleString()})`
+                            ? ` (₦${fmtMoney(viewingDetailsItem.expenseValueAmount)})`
                             : ''}
                         </span>
                       </div>
                     ) : null}
                     {viewingDetailsItem.lastPurchasePrice != null && (
-                      <div className="flex items-center gap-2 col-span-2"><span className="text-sm font-bold">₦</span> <span className="text-muted-foreground">Last Purchase Price:</span> <span className="font-bold">&#8358;{viewingDetailsItem.lastPurchasePrice.toLocaleString()}</span></div>
+                      <div className="flex items-center gap-2 col-span-2"><span className="text-sm font-bold">₦</span> <span className="text-muted-foreground">Last Purchase Price:</span> <span className="font-bold">&#8358;{fmtMoney(viewingDetailsItem.lastPurchasePrice)}</span></div>
                     )}
                   </div>
 
@@ -1997,7 +2021,7 @@ export default function InventoryPage() {
                           </div>
                           <div className="flex items-center justify-between text-xs">
                             <div className="flex items-center gap-3">
-                              <span className="text-muted-foreground">Cost: <span className="font-bold text-foreground">&#8358;{batch.unitCost.toLocaleString()}</span></span>
+                              <span className="text-muted-foreground">Cost: <span className="font-bold text-foreground">&#8358;{fmtMoney(batch.unitCost)}</span></span>
                               {batch.supplier && <span className="text-muted-foreground">via <span className="font-medium">{batch.supplier}</span></span>}
                             </div>
                             {batch.expiryDate && (
@@ -2031,8 +2055,8 @@ export default function InventoryPage() {
                             <div>
                               <div className="text-xs text-muted-foreground">{entry.date}</div>
                               <div className="flex items-center gap-3 mt-1">
-                                <span className="text-sm">Cost: <span className="font-bold">&#8358;{entry.cost.toLocaleString()}</span></span>
-                                <span className="text-sm">Price: <span className="font-bold">&#8358;{entry.price.toLocaleString()}</span></span>
+                                <span className="text-sm">Cost: <span className="font-bold">&#8358;{fmtMoney(entry.cost)}</span></span>
+                                <span className="text-sm">Price: <span className="font-bold">&#8358;{fmtMoney(entry.price)}</span></span>
                               </div>
                             </div>
                             <span className={`text-sm font-bold ${margin < 0 ? 'text-red-600' : margin < 15 ? 'text-amber-600' : 'text-green-600'}`}>
@@ -2068,7 +2092,7 @@ export default function InventoryPage() {
                         </div>
                         <div className="flex items-center justify-between mt-1 text-xs text-muted-foreground">
                           <span>{log.date}</span>
-                          <span>&#8358;{log.unitCost.toLocaleString()}/unit</span>
+                          <span>&#8358;{fmtMoney(log.unitCost)}/unit</span>
                         </div>
                         {log.type === StockMovementType.TRANSFER && log.fromLocation && log.toLocation && (
                           <div className="text-xs text-purple-600 mt-1 font-medium">{log.fromLocation} → {log.toLocation}</div>
@@ -2157,7 +2181,7 @@ export default function InventoryPage() {
                 <label className={labelCls}>
                   {newProduct.unitOfMeasure === 'Cartons' ? 'Avg carton cost (₦)' : 'Avg Unit Cost (₦)'}
                 </label>
-                <input type="number" value={newProduct.avgUnitCost || ''} onChange={(e) => setNewProduct({ ...newProduct, avgUnitCost: parseInt(e.target.value) || 0 })} className={inputCls} />
+                <input type="number" min={0} step="0.01" value={newProduct.avgUnitCost || ''} onChange={(e) => setNewProduct({ ...newProduct, avgUnitCost: parseMoneyInput(e.target.value) })} className={inputCls} />
                 {newProduct.unitOfMeasure === 'Cartons' ? (
                   <p className="text-[11px] text-muted-foreground">Cost per carton (same unit as stock).</p>
                 ) : null}
@@ -2169,8 +2193,9 @@ export default function InventoryPage() {
                 <input
                   type="number"
                   min={0.01}
+                  step="0.01"
                   value={newProduct.baseSellingPrice || ''}
-                  onChange={(e) => setNewProduct({ ...newProduct, baseSellingPrice: parseInt(e.target.value) || 0 })}
+                  onChange={(e) => setNewProduct({ ...newProduct, baseSellingPrice: parseMoneyInput(e.target.value) })}
                   placeholder={newProduct.unitOfMeasure === 'Cartons' ? 'Price per Kg' : 'Required'}
                   className={inputCls}
                 />
@@ -2182,8 +2207,12 @@ export default function InventoryPage() {
                     <input
                       type="number"
                       min={0.01}
+                      step="0.01"
                       value={newProduct.cartonPrice || ''}
-                      onChange={(e) => setNewProduct({ ...newProduct, cartonPrice: parseInt(e.target.value) || undefined })}
+                      onChange={(e) => setNewProduct({
+                        ...newProduct,
+                        cartonPrice: e.target.value.trim() === '' ? undefined : parseMoneyInput(e.target.value),
+                      })}
                       placeholder="Required for Cartons"
                       className={inputCls}
                     />
@@ -2440,7 +2469,7 @@ export default function InventoryPage() {
                 <label className={labelCls}>
                   {editProduct.unitOfMeasure === 'Cartons' ? 'Avg carton cost (₦)' : 'Avg Unit Cost (₦)'}
                 </label>
-                <input type="number" value={editProduct.avgUnitCost ?? ''} onChange={(e) => setEditProduct({ ...editProduct, avgUnitCost: parseInt(e.target.value) || 0 })} className={inputCls} />
+                <input type="number" min={0} step="0.01" value={editProduct.avgUnitCost ?? ''} onChange={(e) => setEditProduct({ ...editProduct, avgUnitCost: parseMoneyInput(e.target.value) })} className={inputCls} />
                 {editProduct.unitOfMeasure === 'Cartons' ? (
                   <p className="text-[11px] text-muted-foreground">Cost per carton (same unit as stock).</p>
                 ) : null}
@@ -2452,8 +2481,9 @@ export default function InventoryPage() {
                 <input
                   type="number"
                   min={0.01}
+                  step="0.01"
                   value={editProduct.baseSellingPrice ?? ''}
-                  onChange={(e) => setEditProduct({ ...editProduct, baseSellingPrice: parseInt(e.target.value) || 0 })}
+                  onChange={(e) => setEditProduct({ ...editProduct, baseSellingPrice: parseMoneyInput(e.target.value) })}
                   placeholder={editProduct.unitOfMeasure === 'Cartons' ? 'Price per Kg' : 'Required'}
                   className={inputCls}
                 />
@@ -2465,8 +2495,12 @@ export default function InventoryPage() {
                     <input
                       type="number"
                       min={0.01}
+                      step="0.01"
                       value={editProduct.cartonPrice ?? ''}
-                      onChange={(e) => setEditProduct({ ...editProduct, cartonPrice: parseInt(e.target.value) || undefined })}
+                      onChange={(e) => setEditProduct({
+                        ...editProduct,
+                        cartonPrice: e.target.value.trim() === '' ? undefined : parseMoneyInput(e.target.value),
+                      })}
                       placeholder="Required for Cartons"
                       className={inputCls}
                     />
@@ -2526,13 +2560,13 @@ export default function InventoryPage() {
                   <label className={labelCls}>
                     {selectedProduct.unitOfMeasure === 'Cartons' ? 'Carton cost (₦)' : 'Unit Cost (₦)'}
                   </label>
-                  <input type="number" value={moveData.unitCost} onChange={(e) => setMoveData({ ...moveData, unitCost: parseFloat(e.target.value) || 0 })} className={inputCls} />
+                  <input type="number" min={0} step="0.01" value={moveData.unitCost} onChange={(e) => setMoveData({ ...moveData, unitCost: parseMoneyInput(e.target.value) })} className={inputCls} />
                 </div>
                 <div className="space-y-2">
                   <label className={labelCls}>
                     {selectedProduct.unitOfMeasure === 'Cartons' ? 'Unit selling price (₦) *' : 'Selling Price (₦)'}
                   </label>
-                  <input type="number" value={moveData.unitPrice} onChange={(e) => setMoveData({ ...moveData, unitPrice: parseFloat(e.target.value) || 0 })} className={inputCls} />
+                  <input type="number" min={0} step="0.01" value={moveData.unitPrice} onChange={(e) => setMoveData({ ...moveData, unitPrice: parseMoneyInput(e.target.value) })} className={inputCls} />
                 </div>
               </div>
 
@@ -2540,7 +2574,7 @@ export default function InventoryPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className={labelCls}>Carton selling price (₦) *</label>
-                    <input type="number" value={moveData.cartonPrice} onChange={(e) => setMoveData({ ...moveData, cartonPrice: parseFloat(e.target.value) || 0 })} className={inputCls} />
+                    <input type="number" min={0} step="0.01" value={moveData.cartonPrice} onChange={(e) => setMoveData({ ...moveData, cartonPrice: parseMoneyInput(e.target.value) })} className={inputCls} />
                   </div>
                   <div className="space-y-2">
                     <label className={labelCls}>Carton weight (kg) *</label>
@@ -2648,10 +2682,21 @@ export default function InventoryPage() {
                       {batchData.type === StockMovementType.PURCHASE && (
                         <input
                           type="number"
+                          min={0}
+                          step="0.01"
                           placeholder="Cost"
                           className="w-24 h-8 rounded border text-sm text-center"
                           value={update.cost || ''}
-                          onChange={(e) => setBatchData({ ...batchData, updates: { ...batchData.updates, [id]: { ...update, cost: parseInt(e.target.value) || undefined } } })}
+                          onChange={(e) => setBatchData({
+                            ...batchData,
+                            updates: {
+                              ...batchData.updates,
+                              [id]: {
+                                ...update,
+                                cost: e.target.value.trim() === '' ? undefined : parseMoneyInput(e.target.value),
+                              },
+                            },
+                          })}
                         />
                       )}
                     </div>
