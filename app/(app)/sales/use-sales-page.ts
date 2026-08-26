@@ -49,6 +49,7 @@ import {
 } from './sales-utils';
 import type { SalesImportChunkResult, SalesImportPreviewRow } from '@/types/api';
 import { isHistoricalDate } from '@/lib/historical-date';
+import { PRODUCT_CATEGORIES } from '@/lib/product-categories';
 
 export function useSalesPage() {
   const { user } = useAuth();
@@ -63,6 +64,7 @@ export function useSalesPage() {
   const [filterAgent, setFilterAgent] = useState('All');
   const [filterStatus, setFilterStatus] = useState('All');
   const [filterChannel, setFilterChannel] = useState<string>('All');
+  const [filterCategories, setFilterCategories] = useState<string[]>([]);
   const [page, setPage] = useState(1);
   const [sortBy, setSortBy] = useState<'quantity' | 'amount' | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
@@ -79,6 +81,9 @@ export function useSalesPage() {
         ? { exclude_voided: true }
         : { status: filterStatus }),
       ...(filterChannel !== 'All' ? { channel: filterChannel } : {}),
+      ...(filterCategories.length
+        ? { categories: filterCategories.join(',') }
+        : {}),
     }),
     [
       hubScope.hubIdForApi,
@@ -89,6 +94,7 @@ export function useSalesPage() {
       filterAgent,
       filterStatus,
       filterChannel,
+      filterCategories,
     ],
   );
 
@@ -129,6 +135,7 @@ export function useSalesPage() {
     filterAgent,
     filterStatus,
     filterChannel,
+    filterCategories,
     sortBy,
     sortDir,
   ]);
@@ -365,6 +372,7 @@ export function useSalesPage() {
     filterStatus !== 'All' ||
     hubScope.filterHub !== 'All' ||
     filterChannel !== 'All' ||
+    filterCategories.length > 0 ||
     dateFrom ||
     dateTo ||
     dateFieldFilter !== 'sold';
@@ -375,11 +383,18 @@ export function useSalesPage() {
     setFilterStatus('All');
     hubScope.setFilterHub(hubScope.canSwitchHubs ? 'All' : hubScope.hubName);
     setFilterChannel('All');
+    setFilterCategories([]);
     setDateFrom('');
     setDateTo('');
     setDateFieldFilter('sold');
     setQuickPreset('all');
     setPage(1);
+  };
+
+  const toggleCategoryFilter = (category: string) => {
+    setFilterCategories((prev) =>
+      prev.includes(category) ? prev.filter((c) => c !== category) : [...prev, category],
+    );
   };
 
   const handleProductChange = (productId: string) => {
@@ -513,7 +528,16 @@ export function useSalesPage() {
           }
         : isHistoricalSale && productDetailsText.trim()
           ? { item: { product_name: productDetailsText.trim(), quantity: quantity > 0 ? quantity : 1 } }
-          : {};
+          : null;
+
+    if (!saleItemPayload) {
+      toast.error(
+        isHistoricalSale
+          ? 'Enter a product description for historical sales.'
+          : 'Select a catalog product (or Record a meal).',
+      );
+      return;
+    }
 
     createSale.mutate(
       {
@@ -906,6 +930,10 @@ export function useSalesPage() {
     setFilterStatus,
     filterChannel,
     setFilterChannel,
+    filterCategories,
+    setFilterCategories,
+    toggleCategoryFilter,
+    productCategories: PRODUCT_CATEGORIES,
     sortBy,
     sortDir,
     toggleSort,

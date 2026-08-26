@@ -1019,6 +1019,8 @@ type SalesQueryFilters = {
   agent_id?: string;
   customer_id?: string;
   channel?: string;
+  /** Comma-separated product categories */
+  categories?: string;
   search?: string;
   exclude_voided?: boolean;
   page?: number;
@@ -1048,6 +1050,7 @@ export function useSales(
         agent_id: filters?.agent_id,
         customer_id: filters?.customer_id,
         channel: filters?.channel,
+        categories: filters?.categories,
         search: filters?.search,
         exclude_voided: filters?.exclude_voided,
         page: filters?.page,
@@ -1081,6 +1084,7 @@ export function useSalesSummary(
         hub_id: filters?.hub_id,
         agent_id: filters?.agent_id,
         channel: filters?.channel,
+        categories: filters?.categories,
         search: filters?.search,
         exclude_voided: filters?.exclude_voided,
         page: 1,
