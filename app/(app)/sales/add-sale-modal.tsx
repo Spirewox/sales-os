@@ -41,6 +41,18 @@ export interface AddSaleModalProps {
   customerCreditWarning: string | null;
   selectedProductId: string;
   setSelectedProductId: (id: string) => void;
+  selectedBatchNumber: string;
+  setSelectedBatchNumber: (batch: string) => void;
+  productBatches: Array<{
+    batchNumber: string;
+    quantityRemaining: number;
+    unitCost: number;
+    expiryDate?: string;
+    receivedDate?: string;
+    supplier?: string;
+    uom?: string;
+  }>;
+  batchesLoading?: boolean;
   handleProductChange: (productId: string) => void;
   availableInventory: InventoryItem[];
   selectedInventoryItem: InventoryItem | undefined;
@@ -87,6 +99,10 @@ export function AddSaleModal({
   customerCreditWarning,
   selectedProductId,
   setSelectedProductId,
+  selectedBatchNumber,
+  setSelectedBatchNumber,
+  productBatches,
+  batchesLoading = false,
   handleProductChange,
   availableInventory,
   selectedInventoryItem,
@@ -306,6 +322,44 @@ export function AddSaleModal({
               </div>
             )}
           </div>
+
+          {!isHistoricalSale && !isMealSale && selectedProductId && (
+            <div className="space-y-2">
+              <label htmlFor="sale-batch" className={LABEL_CLS}>Batch *</label>
+              <select
+                id="sale-batch"
+                value={selectedBatchNumber}
+                onChange={(e) => {
+                  setSelectedBatchNumber(e.target.value);
+                  setTouched((t) => ({ ...t, batchNumber: true }));
+                }}
+                className={`${INPUT_CLS} ${touched.batchNumber && validationErrors.batchNumber ? 'border-red-500' : ''}`}
+                disabled={batchesLoading || productBatches.length === 0}
+              >
+                <option value="">
+                  {batchesLoading
+                    ? 'Loading batches…'
+                    : productBatches.length === 0
+                      ? 'No open batches — record a Purchase first'
+                      : '-- Select batch --'}
+                </option>
+                {productBatches.map((b) => (
+                  <option key={b.batchNumber} value={b.batchNumber}>
+                    {b.batchNumber}
+                    {` · ${b.quantityRemaining} ${b.uom || selectedInventoryItem?.unitOfMeasure || ''} left`}
+                    {b.expiryDate ? ` · exp ${b.expiryDate}` : ''}
+                    {b.supplier ? ` · ${b.supplier}` : ''}
+                  </option>
+                ))}
+              </select>
+              {touched.batchNumber && validationErrors.batchNumber && (
+                <p className="text-xs text-red-500">{validationErrors.batchNumber}</p>
+              )}
+              <p className="text-[11px] text-muted-foreground">
+                Stock is deducted from the selected purchase batch only.
+              </p>
+            </div>
+          )}
 
           {/* Quantity, sale unit & Amount */}
           <div className={`grid grid-cols-1 ${isCartonProduct && !isMealSale ? 'sm:grid-cols-3' : 'sm:grid-cols-2'} gap-4`}>

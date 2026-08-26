@@ -238,6 +238,7 @@ export interface ApiSaleItem {
   sale_unit?: 'Carton' | 'Kg';
   stock_quantity?: number;
   category?: string;
+  batch_number?: string;
 }
 
 export interface ApiSale {

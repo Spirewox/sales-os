@@ -93,7 +93,8 @@ export default function SalesPage() {
     saleStockLogs, customerSalesHistory, closeDetailPanel,
     handleUpdateDeliveryStatus, startEditing, saveEdit, handleVoidSale,
     showAddModal, setShowAddModal, newSale, setNewSale, selectedHub, setSelectedHub,
-    selectedProductId, setSelectedProductId, quantity, saleUnit, paymentMode, setPaymentMode,
+    selectedProductId, setSelectedProductId, selectedBatchNumber, setSelectedBatchNumber,
+    productBatches, batchesLoading, quantity, saleUnit, paymentMode, setPaymentMode,
     paymentType, setPaymentType, amountPaid, setAmountPaid, dueDate, setDueDate,
     touched, setTouched, validationErrors, isFormValid, isHistoricalSale, isMealSale,
     productDetailsText, setProductDetailsText, customerCreditWarning,
@@ -444,6 +445,10 @@ export default function SalesPage() {
         customerCreditWarning={customerCreditWarning}
         selectedProductId={selectedProductId}
         setSelectedProductId={setSelectedProductId}
+        selectedBatchNumber={selectedBatchNumber}
+        setSelectedBatchNumber={setSelectedBatchNumber}
+        productBatches={productBatches}
+        batchesLoading={batchesLoading}
         handleProductChange={handleProductChange}
         availableInventory={availableInventory}
         selectedInventoryItem={selectedInventoryItem}
