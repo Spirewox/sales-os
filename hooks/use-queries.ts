@@ -1019,6 +1019,8 @@ type SalesQueryFilters = {
   agent_id?: string;
   customer_id?: string;
   channel?: string;
+  /** Comma-separated product categories */
+  categories?: string;
   search?: string;
   exclude_voided?: boolean;
   page?: number;
@@ -1048,6 +1050,7 @@ export function useSales(
         agent_id: filters?.agent_id,
         customer_id: filters?.customer_id,
         channel: filters?.channel,
+        categories: filters?.categories,
         search: filters?.search,
         exclude_voided: filters?.exclude_voided,
         page: filters?.page,
@@ -1081,6 +1084,7 @@ export function useSalesSummary(
         hub_id: filters?.hub_id,
         agent_id: filters?.agent_id,
         channel: filters?.channel,
+        categories: filters?.categories,
         search: filters?.search,
         exclude_voided: filters?.exclude_voided,
         page: 1,
@@ -1116,7 +1120,9 @@ export function useCreateSale() {
         product_name?: string;
         quantity: number;
         unit?: string;
+        sale_unit?: string;
         category?: string;
+        batch_number?: string;
       };
     }) => {
       const res = await axiosPost('sales', dto, true) as ApiListResponse<{ sale: ApiSale; credit_record?: ApiCreditRecord }>;
@@ -1132,6 +1138,7 @@ export function useCreateSale() {
       qc.invalidateQueries({ queryKey: ['inventory'] });
       qc.invalidateQueries({ queryKey: ['inventory-sales-metrics'] });
       qc.invalidateQueries({ queryKey: ['stockLogs'] });
+      qc.invalidateQueries({ queryKey: ['product-batches'] });
       invalidateCredits(qc);
       qc.invalidateQueries({ queryKey: ['dashboardMetrics'] });
     },
@@ -1449,13 +1456,65 @@ export function useUpdateProduct() {
   });
 }
 
-export function useStockLogs(filters?: { item_id?: string; hub_id?: string; type?: string; date_from?: string; date_to?: string; page?: number; limit?: number }) {
+export function useStockLogs(filters?: {
+  item_id?: string;
+  hub_id?: string;
+  type?: string;
+  date_from?: string;
+  date_to?: string;
+  page?: number;
+  limit?: number;
+} | null) {
   return useQuery({
     queryKey: ['stockLogs', filters],
+    enabled: filters !== null,
     queryFn: async () => {
-      if (!HAS_API) return [];
+      if (!HAS_API || filters === null) return [];
       const res = await axiosGet(`inventory/stock-logs${buildQuery(filters ?? {})}`, true) as ApiListResponse<ApiStockLog[]>;
       return (res.data ?? []).map(mapStockLog);
+    },
+  });
+}
+
+export function useProductBatches(productId: string | null) {
+  return useQuery({
+    queryKey: ['product-batches', productId],
+    enabled: !!productId,
+    queryFn: async (): Promise<
+      Array<{
+        batchNumber: string;
+        quantityRemaining: number;
+        unitCost: number;
+        expiryDate?: string;
+        receivedDate?: string;
+        supplier?: string;
+        uom?: string;
+      }>
+    > => {
+      if (!productId || !HAS_API) return [];
+      const res = await axiosGet(
+        `inventory/${productId}/batches`,
+        true,
+      ) as ApiListResponse<
+        Array<{
+          batch_number: string;
+          quantity_remaining: number;
+          unit_cost: number;
+          expiry_date?: string;
+          received_date?: string;
+          supplier?: string;
+          uom?: string;
+        }>
+      >;
+      return (res.data ?? []).map((b) => ({
+        batchNumber: b.batch_number,
+        quantityRemaining: b.quantity_remaining,
+        unitCost: b.unit_cost ?? 0,
+        expiryDate: b.expiry_date ? String(b.expiry_date).slice(0, 10) : undefined,
+        receivedDate: b.received_date ? String(b.received_date).slice(0, 10) : undefined,
+        supplier: b.supplier,
+        uom: b.uom,
+      }));
     },
   });
 }
@@ -1508,8 +1567,17 @@ export function useRecordStockMove() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (dto: object) => {
-      const res = await axiosPost('inventory/stock-logs', dto, true) as ApiListResponse<ApiStockLog>;
-      return mapStockLog(res.data);
+      const res = await axiosPost('inventory/stock-logs', dto, true) as {
+        data?: { product?: unknown; log?: ApiStockLog } | ApiStockLog;
+      };
+      const payload = res.data;
+      if (payload && typeof payload === 'object' && 'log' in payload && payload.log) {
+        return {
+          product: payload.product,
+          log: mapStockLog(payload.log),
+        };
+      }
+      return { log: mapStockLog(payload as ApiStockLog) };
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['stockLogs'] });
@@ -1517,6 +1585,7 @@ export function useRecordStockMove() {
       qc.invalidateQueries({ queryKey: ['supplierPurchases'] });
       qc.invalidateQueries({ queryKey: ['product-suppliers'] });
       qc.invalidateQueries({ queryKey: ['product-sales-performance'] });
+      qc.invalidateQueries({ queryKey: ['product-batches'] });
     },
   });
 }

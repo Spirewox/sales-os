@@ -16,6 +16,7 @@ import {
   useAgents,
   useInventory,
   useStockLogs,
+  useProductBatches,
   useCreditSummary,
   useHubs,
   useDownloadSalesImportTemplate,
@@ -49,6 +50,7 @@ import {
 } from './sales-utils';
 import type { SalesImportChunkResult, SalesImportPreviewRow } from '@/types/api';
 import { isHistoricalDate } from '@/lib/historical-date';
+import { PRODUCT_CATEGORIES } from '@/lib/product-categories';
 
 export function useSalesPage() {
   const { user } = useAuth();
@@ -63,6 +65,7 @@ export function useSalesPage() {
   const [filterAgent, setFilterAgent] = useState('All');
   const [filterStatus, setFilterStatus] = useState('All');
   const [filterChannel, setFilterChannel] = useState<string>('All');
+  const [filterCategories, setFilterCategories] = useState<string[]>([]);
   const [page, setPage] = useState(1);
   const [sortBy, setSortBy] = useState<'quantity' | 'amount' | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
@@ -79,6 +82,9 @@ export function useSalesPage() {
         ? { exclude_voided: true }
         : { status: filterStatus }),
       ...(filterChannel !== 'All' ? { channel: filterChannel } : {}),
+      ...(filterCategories.length
+        ? { categories: filterCategories.join(',') }
+        : {}),
     }),
     [
       hubScope.hubIdForApi,
@@ -89,6 +95,7 @@ export function useSalesPage() {
       filterAgent,
       filterStatus,
       filterChannel,
+      filterCategories,
     ],
   );
 
@@ -129,6 +136,7 @@ export function useSalesPage() {
     filterAgent,
     filterStatus,
     filterChannel,
+    filterCategories,
     sortBy,
     sortDir,
   ]);
@@ -160,6 +168,7 @@ export function useSalesPage() {
   const [debouncedCustomerSearch, setDebouncedCustomerSearch] = useState('');
   const [pinnedSaleCustomer, setPinnedSaleCustomer] = useState<Customer | null>(null);
   const [selectedProductId, setSelectedProductId] = useState('');
+  const [selectedBatchNumber, setSelectedBatchNumber] = useState('');
   const [selectedHub, setSelectedHub] = useState<string>(hubScope.defaultHubName || 'Lagos');
   useEffect(() => {
     if (hubScope.defaultHubName) setSelectedHub(hubScope.defaultHubName);
@@ -250,6 +259,18 @@ export function useSalesPage() {
     () => inventory.find((i) => i.id === selectedProductId),
     [inventory, selectedProductId],
   );
+  const catalogProductId =
+    selectedProductId && selectedProductId !== '__meal__' ? selectedProductId : null;
+  const { data: productBatches = [], isFetching: batchesLoading } = useProductBatches(
+    showAddModal ? catalogProductId : null,
+  );
+
+  useEffect(() => {
+    if (!catalogProductId || batchesLoading) return;
+    if (productBatches.length === 1 && !selectedBatchNumber) {
+      setSelectedBatchNumber(productBatches[0].batchNumber);
+    }
+  }, [catalogProductId, batchesLoading, productBatches, selectedBatchNumber]);
 
   const isCartonProduct = selectedInventoryItem?.unitOfMeasure === 'Cartons';
 
@@ -291,6 +312,9 @@ export function useSalesPage() {
       if (!newSale.amount || newSale.amount <= 0) errors.amount = 'Amount is required for meal sales.';
     } else if (!isHistoricalSale) {
       if (!selectedProductId) errors.productId = 'Product is required.';
+      if (selectedProductId && !selectedBatchNumber) {
+        errors.batchNumber = 'Select a purchase batch.';
+      }
       if (quantity <= 0) errors.quantity = 'Quantity must be greater than 0.';
       if (isCartonProduct) {
         if (!saleUnit) errors.saleUnit = 'Select Carton or Kg.';
@@ -318,6 +342,7 @@ export function useSalesPage() {
     newSale.customerId,
     newSale.amount,
     selectedProductId,
+    selectedBatchNumber,
     quantity,
     saleUnit,
     selectedInventoryItem,
@@ -365,6 +390,7 @@ export function useSalesPage() {
     filterStatus !== 'All' ||
     hubScope.filterHub !== 'All' ||
     filterChannel !== 'All' ||
+    filterCategories.length > 0 ||
     dateFrom ||
     dateTo ||
     dateFieldFilter !== 'sold';
@@ -375,6 +401,7 @@ export function useSalesPage() {
     setFilterStatus('All');
     hubScope.setFilterHub(hubScope.canSwitchHubs ? 'All' : hubScope.hubName);
     setFilterChannel('All');
+    setFilterCategories([]);
     setDateFrom('');
     setDateTo('');
     setDateFieldFilter('sold');
@@ -382,9 +409,16 @@ export function useSalesPage() {
     setPage(1);
   };
 
+  const toggleCategoryFilter = (category: string) => {
+    setFilterCategories((prev) =>
+      prev.includes(category) ? prev.filter((c) => c !== category) : [...prev, category],
+    );
+  };
+
   const handleProductChange = (productId: string) => {
     setSelectedProductId(productId);
-    setTouched((t) => ({ ...t, productId: true }));
+    setSelectedBatchNumber('');
+    setTouched((t) => ({ ...t, productId: true, batchNumber: false }));
     if (productId === MEAL_PRODUCT_ID) {
       setSaleUnit('');
       setProductDetailsText('');
@@ -441,6 +475,7 @@ export function useSalesPage() {
       deliveryStatus: DeliveryStatus.NOT_APPLICABLE,
     });
     setSelectedProductId('');
+    setSelectedBatchNumber('');
     setQuantity(1);
     setSaleUnit('');
     setPaymentMode(PaymentMode.FULL_PAYMENT);
@@ -464,7 +499,7 @@ export function useSalesPage() {
         ? { productId: true, productDetails: true, quantity: true, amount: true }
         : isHistoricalSale
           ? { productDetails: true, amount: true }
-          : { productId: true, quantity: true, saleUnit: true }),
+          : { productId: true, batchNumber: true, quantity: true, saleUnit: true }),
     };
     setTouched(touchFields);
     if (!isFormValid) {
@@ -504,6 +539,7 @@ export function useSalesPage() {
             item: {
               product_id: selectedProductId,
               quantity,
+              batch_number: selectedBatchNumber,
               ...(saleUnit
                 ? { sale_unit: saleUnit, unit: saleUnit }
                 : inventoryItem
@@ -513,7 +549,16 @@ export function useSalesPage() {
           }
         : isHistoricalSale && productDetailsText.trim()
           ? { item: { product_name: productDetailsText.trim(), quantity: quantity > 0 ? quantity : 1 } }
-          : {};
+          : null;
+
+    if (!saleItemPayload) {
+      toast.error(
+        isHistoricalSale
+          ? 'Enter a product description for historical sales.'
+          : 'Select a catalog product (or Record a meal).',
+      );
+      return;
+    }
 
     createSale.mutate(
       {
@@ -850,6 +895,10 @@ export function useSalesPage() {
     setSelectedHub,
     selectedProductId,
     setSelectedProductId,
+    selectedBatchNumber,
+    setSelectedBatchNumber,
+    productBatches,
+    batchesLoading,
     quantity,
     saleUnit,
     paymentMode,
@@ -906,6 +955,10 @@ export function useSalesPage() {
     setFilterStatus,
     filterChannel,
     setFilterChannel,
+    filterCategories,
+    setFilterCategories,
+    toggleCategoryFilter,
+    productCategories: PRODUCT_CATEGORIES,
     sortBy,
     sortDir,
     toggleSort,

@@ -8,7 +8,7 @@ import { SubmitButton } from '@/components/submit-button';
 import { usePermissions } from '@/hooks/use-permissions';
 import {
   useInventory, useCreateProduct, useUpdateProduct, useStockLogs,
-  useRecordStockMove, useTransferStock, useBatchStockUpdate, useHubs,
+  useRecordStockMove, useBatchStockUpdate, useHubs,
   useDownloadInventoryImportTemplate, useValidateInventoryImport, useImportInventory,
   useInventorySalesMetrics, useSuppliers, useProductSuppliers, useProductSalesPerformance,
 } from '@/hooks/use-queries';
@@ -30,7 +30,7 @@ import {
   Tag, AlertCircle, RefreshCw, Upload, ListChecks, MapPin, BarChart4,
   ArrowUpRight, ArrowDownRight, X, Activity, Calendar, TrendingUp, TrendingDown,
   Edit3, Clock, ArrowRightLeft, Thermometer, Filter, ChevronDown, Download,
-  Warehouse, ShieldAlert, Percent, Eye, Boxes, UtensilsCrossed,
+  Warehouse, ShieldAlert, Percent, Boxes, UtensilsCrossed,
   ArrowUpDown, ArrowUp, ArrowDown,
 } from 'lucide-react';
 import {
@@ -74,6 +74,7 @@ function buildFifoBatches(allLogs: StockLog[], itemId: string): FifoBatch[] {
       });
     } else if (log.type === StockMovementType.SALE || log.type === StockMovementType.TRANSFER) {
       let toDeduct = Math.abs(log.quantity);
+      const targetBatch = (log.batchNumber || '').trim();
       // FEFO: sort by expiry date first (soonest first), then by date received (FIFO)
       const sortedBatches = [...batches].sort((a, b) => {
         if (a.expiryDate && b.expiryDate) return a.expiryDate.localeCompare(b.expiryDate);
@@ -81,7 +82,10 @@ function buildFifoBatches(allLogs: StockLog[], itemId: string): FifoBatch[] {
         if (b.expiryDate) return 1;
         return a.date.localeCompare(b.date);
       });
-      for (const batch of sortedBatches) {
+      const pool = targetBatch
+        ? sortedBatches.filter((b) => (b.batchNumber || '').trim() === targetBatch)
+        : sortedBatches;
+      for (const batch of pool) {
         if (toDeduct <= 0) break;
         if (batch.quantityRemaining <= 0) continue;
         const take = Math.min(batch.quantityRemaining, toDeduct);
@@ -180,7 +184,7 @@ export default function InventoryPage() {
   const validateInventoryImport = useValidateInventoryImport();
   const importInventory = useImportInventory();
   const { data: items = [] } = useInventory({ hub_id: hubScope.hubIdForApi });
-  const { data: logs = [] } = useStockLogs({ hub_id: hubScope.hubIdForApi });
+  const { data: logs = [] } = useStockLogs({ hub_id: hubScope.hubIdForApi, limit: 200 });
   const { data: salesMetrics } = useInventorySalesMetrics({
     hub_id: hubScope.hubIdForApi,
     ...metricsPeriod.apiParams,
@@ -199,7 +203,6 @@ export default function InventoryPage() {
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct();
   const recordStockMove = useRecordStockMove();
-  const transferStock = useTransferStock();
   const batchStockUpdate = useBatchStockUpdate();
   const { data: hubs = [] } = useHubs();
   const activeHubs = hubs.filter(h => h.isActive);
@@ -234,6 +237,12 @@ export default function InventoryPage() {
   // Detail panel
   const [viewingDetailsItem, setViewingDetailsItem] = useState<InventoryItem | null>(null);
   const [detailTab, setDetailTab] = useState<'overview' | 'suppliers' | 'sales' | 'batches' | 'history' | 'activity'>('overview');
+  const detailProductId = viewingDetailsItem?.id ?? null;
+  const { data: detailLogs = [] } = useStockLogs(
+    detailProductId ? { item_id: detailProductId, limit: 200 } : null,
+  );
+  // Item-scoped logs include opening PURCHASE (hub list is newest-N and can omit first batch)
+  const logsForDetails = detailProductId ? detailLogs : logs;
 
   // Selected product for stock move
   const [selectedProduct, setSelectedProduct] = useState<InventoryItem | null>(null);
@@ -251,17 +260,35 @@ export default function InventoryPage() {
     updates: Record<string, { quantity: number; cost?: number }>;
   }>({ type: StockMovementType.PURCHASE, notes: '', updates: {} });
 
-  // Stock move data
+  // Stock move / Purchase data
   const [moveData, setMoveData] = useState({
-    type: StockMovementType.PURCHASE,
+    type: StockMovementType.PURCHASE as StockMovementType,
     quantity: 1,
     unitCost: 0,
     unitPrice: 0,
+    cartonPrice: 0,
+    cartonWeight: 0,
     notes: '',
-    batchNumber: '',
     expiryDate: '',
+    purchasedDate: '',
     supplier: '',
     supplierId: '',
+    toLocation: '',
+    reason: '',
+  });
+
+  const emptyMoveData = (item?: InventoryItem) => ({
+    type: StockMovementType.PURCHASE as StockMovementType,
+    quantity: 1,
+    unitCost: item?.avgUnitCost ?? 0,
+    unitPrice: item?.baseSellingPrice ?? 0,
+    cartonPrice: item?.cartonPrice ?? 0,
+    cartonWeight: item?.cartonWeight ?? 0,
+    notes: '',
+    expiryDate: '',
+    purchasedDate: '',
+    supplier: item?.supplier || '',
+    supplierId: item?.supplierId || '',
     toLocation: '',
     reason: '',
   });
@@ -440,7 +467,7 @@ export default function InventoryPage() {
   }, [filteredLogs]);
 
   // Detail panel data
-  const itemLogs = useMemo(() => viewingDetailsItem ? logs.filter((l) => l.itemId === viewingDetailsItem.id).sort((a, b) => b.date.localeCompare(a.date)) : [], [viewingDetailsItem, logs]);
+  const itemLogs = useMemo(() => viewingDetailsItem ? logsForDetails.filter((l) => l.itemId === viewingDetailsItem.id).sort((a, b) => b.date.localeCompare(a.date)) : [], [viewingDetailsItem, logsForDetails]);
   const itemStats = useMemo(() => {
     if (!viewingDetailsItem) return { inbound: 0, outbound: 0 };
     return { inbound: itemLogs.filter((l) => l.quantity > 0).reduce((a, c) => a + c.quantity, 0), outbound: itemLogs.filter((l) => l.quantity < 0).reduce((a, c) => a + Math.abs(c.quantity), 0) };
@@ -448,7 +475,7 @@ export default function InventoryPage() {
 
   const itemBatches = useMemo(() => {
     if (!viewingDetailsItem) return [];
-    const batches = buildFifoBatches(logs, viewingDetailsItem.id);
+    const batches = buildFifoBatches(logsForDetails, viewingDetailsItem.id);
     // Sort by expiry (FEFO), then by date
     return batches.sort((a, b) => {
       if (a.expiryDate && b.expiryDate) return a.expiryDate.localeCompare(b.expiryDate);
@@ -456,7 +483,7 @@ export default function InventoryPage() {
       if (b.expiryDate) return 1;
       return a.date.localeCompare(b.date);
     });
-  }, [viewingDetailsItem, logs]);
+  }, [viewingDetailsItem, logsForDetails]);
 
   const sellingPriceForMargin = (item: {
     unitOfMeasure?: string;
@@ -476,7 +503,6 @@ export default function InventoryPage() {
     return ((sell - viewingDetailsItem.avgUnitCost) / sell) * 100;
   }, [viewingDetailsItem]);
 
-  const detailProductId = viewingDetailsItem?.id ?? null;
   const { data: itemSuppliers = [] } = useProductSuppliers(detailProductId);
   const cheapestSupplierPrice = useMemo(
     () => (itemSuppliers.length ? Math.min(...itemSuppliers.map((s) => s.lastPrice)) : 0),
@@ -696,69 +722,55 @@ export default function InventoryPage() {
     });
   };
 
-  /* ──────── STOCK MOVEMENT ──────── */
+  /* ──────── PURCHASE (stock in) ──────── */
 
   const handleStockMove = () => {
     if (!selectedProduct) return;
-    const isReduction = [StockMovementType.SALE, StockMovementType.TRANSFER].includes(moveData.type);
     const absQty = Math.abs(moveData.quantity);
-
-    if (isReduction && selectedProduct.currentStock < absQty) {
-      toast.error(`Insufficient stock — only ${selectedProduct.currentStock} ${selectedProduct.unitOfMeasure} available.`);
+    if (!(absQty > 0)) {
+      toast.error('Quantity must be greater than 0.');
       return;
     }
-
-    let unitCostForLog = moveData.unitCost || selectedProduct.avgUnitCost;
-    if (moveData.type === StockMovementType.SALE) {
-      const fifoCost = getFifoCostForSale(logs, selectedProduct.id, absQty);
-      if (fifoCost.avgCost > 0) unitCostForLog = Math.round(fifoCost.avgCost);
+    if (selectedProduct.unitOfMeasure === 'Cartons') {
+      if (!(moveData.cartonWeight > 0)) {
+        toast.error('Carton weight is required for Cartons products.');
+        return;
+      }
+      if (!(moveData.cartonPrice > 0)) {
+        toast.error('Carton selling price is required for Cartons products.');
+        return;
+      }
+      if (!(moveData.unitPrice > 0)) {
+        toast.error('Unit selling price (per kg) is required for Cartons products.');
+        return;
+      }
     }
 
     const closeModal = () => {
       setShowStockMoveModal(false);
       setSelectedProduct(null);
-      setMoveData({ type: StockMovementType.PURCHASE, quantity: 1, unitCost: 0, unitPrice: 0, notes: '', batchNumber: '', expiryDate: '', supplier: '', supplierId: '', toLocation: '', reason: '' });
+      setMoveData(emptyMoveData());
     };
 
-    if (moveData.type === StockMovementType.TRANSFER) {
-      if (!moveData.toLocation || moveData.toLocation === selectedProduct.location) {
-        toast.error('Please select a different destination hub for transfer.');
-        return;
-      }
-      const fromHub = activeHubs.find((h) => h.name === selectedProduct.location);
-      const toHub = activeHubs.find((h) => h.name === moveData.toLocation);
-      if (!fromHub || !toHub) {
-        toast.error('Could not resolve hub IDs for transfer.');
-        return;
-      }
-      transferStock.mutate({
-        item_id: selectedProduct.id,
-        quantity: absQty,
-        from_hub_id: fromHub.id,
-        to_hub_id: toHub.id,
-        notes: moveData.notes || `Transfer to ${moveData.toLocation}`,
-      }, {
-        onSuccess: () => { toast.success(`Transferred ${absQty} ${selectedProduct.unitOfMeasure} to ${moveData.toLocation}.`); closeModal(); },
-        onError: (err) => toast.error(err.message),
-      });
-      return;
-    }
-
-    const quantity = isReduction ? -absQty : absQty;
     recordStockMove.mutate({
       item_id: selectedProduct.id,
-      type: moveData.type,
-      quantity,
-      unit_cost: moveData.type === StockMovementType.SALE ? unitCostForLog : (moveData.unitCost || selectedProduct.avgUnitCost),
+      type: StockMovementType.PURCHASE,
+      quantity: absQty,
+      unit_cost: moveData.unitCost || selectedProduct.avgUnitCost,
       unit_price: moveData.unitPrice || selectedProduct.baseSellingPrice,
-      notes: moveData.notes,
-      batch_number: moveData.batchNumber || undefined,
+      carton_price: selectedProduct.unitOfMeasure === 'Cartons' ? moveData.cartonPrice : undefined,
+      carton_weight: selectedProduct.unitOfMeasure === 'Cartons' ? moveData.cartonWeight : undefined,
+      notes: moveData.notes || undefined,
       expiry_date: moveData.expiryDate || undefined,
+      movement_date: moveData.purchasedDate || undefined,
       supplier: moveData.supplier || undefined,
       supplier_id: moveData.supplierId || undefined,
-      reason: moveData.reason || undefined,
     }, {
-      onSuccess: () => { toast.success('Stock updated.'); closeModal(); },
+      onSuccess: (result) => {
+        const batch = result?.log?.batchNumber;
+        toast.success(batch ? `Purchase recorded (batch ${batch}).` : 'Purchase recorded.');
+        closeModal();
+      },
       onError: (err) => toast.error(err.message),
     });
   };
@@ -1324,20 +1336,21 @@ export default function InventoryPage() {
                               <button
                                 onClick={() => {
                                   setSelectedProduct(item);
-                                  setMoveData({ ...moveData, unitCost: item.avgUnitCost, unitPrice: item.baseSellingPrice, type: StockMovementType.PURCHASE, quantity: 1, notes: '', batchNumber: '', expiryDate: '', supplier: item.supplier || '', supplierId: item.supplierId || '', toLocation: '', reason: '' });
+                                  setMoveData(emptyMoveData(item));
                                   setShowStockMoveModal(true);
                                 }}
                                 className="h-8 w-8 rounded-md flex items-center justify-center border hover:bg-accent text-muted-foreground hover:text-foreground"
-                                title="Stock Move"
+                                title="Purchase"
                               >
                                 <ArrowUpRight size={14} />
                               </button>
                             )}
+                            {/* Transfer action commented — restock via Purchase only
                             {can('inventory.transfer') && (
                               <button
                                 onClick={() => {
                                   setSelectedProduct(item);
-                                  setMoveData({ type: StockMovementType.TRANSFER, quantity: 1, unitCost: item.avgUnitCost, unitPrice: item.baseSellingPrice, notes: '', batchNumber: '', expiryDate: '', supplier: '', supplierId: '', toLocation: '', reason: '' });
+                                  setMoveData({ ...emptyMoveData(item), type: StockMovementType.TRANSFER });
                                   setShowStockMoveModal(true);
                                 }}
                                 className="h-8 w-8 rounded-md flex items-center justify-center border hover:bg-accent text-muted-foreground hover:text-foreground"
@@ -1346,6 +1359,7 @@ export default function InventoryPage() {
                                 <ArrowRightLeft size={14} />
                               </button>
                             )}
+                            */}
                           </div>
                         </td>
                       </tr>
@@ -1701,19 +1715,20 @@ export default function InventoryPage() {
                       <button
                         onClick={() => {
                           setSelectedProduct(viewingDetailsItem);
-                          setMoveData({ type: StockMovementType.PURCHASE, quantity: 1, unitCost: viewingDetailsItem.avgUnitCost, unitPrice: viewingDetailsItem.baseSellingPrice, notes: '', batchNumber: '', expiryDate: '', supplier: viewingDetailsItem.supplier || '', supplierId: viewingDetailsItem.supplierId || '', toLocation: '', reason: '' });
+                          setMoveData(emptyMoveData(viewingDetailsItem));
                           setShowStockMoveModal(true);
                         }}
                         className="flex-1 h-10 rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 flex items-center justify-center gap-2"
                       >
-                        <ArrowUpRight size={16} /> Stock Move
+                        <ArrowUpRight size={16} /> Purchase
                       </button>
                     )}
+                    {/* Transfer commented — Purchase only
                     {can('inventory.transfer') && (
                       <button
                         onClick={() => {
                           setSelectedProduct(viewingDetailsItem);
-                          setMoveData({ type: StockMovementType.TRANSFER, quantity: 1, unitCost: viewingDetailsItem.avgUnitCost, unitPrice: viewingDetailsItem.baseSellingPrice, notes: '', batchNumber: '', expiryDate: '', supplier: '', supplierId: '', toLocation: '', reason: '' });
+                          setMoveData({ ...emptyMoveData(viewingDetailsItem), type: StockMovementType.TRANSFER });
                           setShowStockMoveModal(true);
                         }}
                         className="flex-1 h-10 rounded-md text-sm font-medium border border-input bg-background hover:bg-accent flex items-center justify-center gap-2"
@@ -1721,6 +1736,7 @@ export default function InventoryPage() {
                         <ArrowRightLeft size={16} /> Transfer
                       </button>
                     )}
+                    */}
                   </div>
                 </>
               )}
@@ -1971,9 +1987,9 @@ export default function InventoryPage() {
                           <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center gap-2">
                               {batch.batchNumber ? (
-                                <span className="text-xs font-medium bg-secondary px-2 py-0.5 rounded border">#{batch.batchNumber}</span>
+                                <span className="text-xs font-medium bg-secondary px-2 py-0.5 rounded border font-mono">{batch.batchNumber}</span>
                               ) : (
-                                <span className="text-xs text-muted-foreground italic">No batch #</span>
+                                <span className="text-xs text-muted-foreground italic">No purchase SKU</span>
                               )}
                               <span className="text-xs text-muted-foreground">Received {batch.date}</span>
                             </div>
@@ -2486,150 +2502,92 @@ export default function InventoryPage() {
         </div>
       )}
 
-      {/* ══════════════════ STOCK MOVEMENT MODAL ══════════════════ */}
+      {/* ══════════════════ PURCHASE MODAL ══════════════════ */}
       {showStockMoveModal && selectedProduct && (
         <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="w-full max-w-md rounded-xl border bg-card p-6 shadow-xl animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <div>
-                <h2 className="text-lg font-bold">Stock Movement</h2>
+                <h2 className="text-lg font-bold">Record Purchase</h2>
                 <p className="text-sm text-muted-foreground">{selectedProduct.name} <span className="font-mono text-xs">({selectedProduct.sku})</span></p>
                 <p className="text-xs text-muted-foreground mt-0.5">Current stock: <span className="font-bold">{formatInventoryStockDisplay(selectedProduct)}</span> in {selectedProduct.location}</p>
+                <p className="text-[11px] text-muted-foreground mt-1">Batch code is auto-assigned (001, 002, …). Product SKU stays unchanged.</p>
               </div>
               <button onClick={() => { setShowStockMoveModal(false); setSelectedProduct(null); }} className="text-muted-foreground hover:text-foreground"><X size={20} /></button>
             </div>
             <div className="space-y-4">
-              {/* Movement Type */}
               <div className="space-y-2">
-                <label className={labelCls}>Movement Type</label>
-                <select
-                  value={moveData.type}
-                  onChange={(e) => setMoveData({ ...moveData, type: e.target.value as StockMovementType })}
-                  className={inputCls}
-                >
-                  {Object.values(StockMovementType).map((t) => <option key={t} value={t}>{t}</option>)}
-                </select>
+                <label className={labelCls}>Quantity *</label>
+                <input type="number" min={0.01} step="any" value={moveData.quantity} onChange={(e) => setMoveData({ ...moveData, quantity: parseFloat(e.target.value) || 0 })} className={inputCls} />
               </div>
 
-              {/* Quantity */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className={labelCls}>
+                    {selectedProduct.unitOfMeasure === 'Cartons' ? 'Carton cost (₦)' : 'Unit Cost (₦)'}
+                  </label>
+                  <input type="number" value={moveData.unitCost} onChange={(e) => setMoveData({ ...moveData, unitCost: parseFloat(e.target.value) || 0 })} className={inputCls} />
+                </div>
+                <div className="space-y-2">
+                  <label className={labelCls}>
+                    {selectedProduct.unitOfMeasure === 'Cartons' ? 'Unit selling price (₦) *' : 'Selling Price (₦)'}
+                  </label>
+                  <input type="number" value={moveData.unitPrice} onChange={(e) => setMoveData({ ...moveData, unitPrice: parseFloat(e.target.value) || 0 })} className={inputCls} />
+                </div>
+              </div>
+
+              {selectedProduct.unitOfMeasure === 'Cartons' && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className={labelCls}>Carton selling price (₦) *</label>
+                    <input type="number" value={moveData.cartonPrice} onChange={(e) => setMoveData({ ...moveData, cartonPrice: parseFloat(e.target.value) || 0 })} className={inputCls} />
+                  </div>
+                  <div className="space-y-2">
+                    <label className={labelCls}>Carton weight (kg) *</label>
+                    <input type="number" value={moveData.cartonWeight} onChange={(e) => setMoveData({ ...moveData, cartonWeight: parseFloat(e.target.value) || 0 })} className={inputCls} />
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className={labelCls}>Purchased date</label>
+                  <input type="date" value={moveData.purchasedDate} onChange={(e) => setMoveData({ ...moveData, purchasedDate: e.target.value })} className={inputCls} />
+                </div>
+                <div className="space-y-2">
+                  <label className={labelCls}>Expiry date</label>
+                  <input type="date" value={moveData.expiryDate} onChange={(e) => setMoveData({ ...moveData, expiryDate: e.target.value })} className={inputCls} />
+                </div>
+              </div>
+
               <div className="space-y-2">
-                <label className={labelCls}>Quantity</label>
-                <input type="number" min={1} value={moveData.quantity} onChange={(e) => setMoveData({ ...moveData, quantity: parseInt(e.target.value) || 0 })} className={inputCls} />
-                {[StockMovementType.SALE, StockMovementType.TRANSFER].includes(moveData.type) && moveData.quantity > selectedProduct.currentStock && (
-                  <p className="text-xs text-red-600 font-medium">Exceeds available stock ({selectedProduct.currentStock})</p>
+                <label className={labelCls}>Supplier (optional)</label>
+                <select
+                  value={moveData.supplierId}
+                  onChange={(e) => {
+                    const id = e.target.value;
+                    const match = activeSuppliers.find((s) => s.id === id);
+                    setMoveData({
+                      ...moveData,
+                      supplierId: id,
+                      supplier: match?.name || '',
+                    });
+                  }}
+                  className={inputCls}
+                >
+                  <option value="">— None —</option>
+                  {activeSuppliers.map((s) => (
+                    <option key={s.id} value={s.id}>{s.name}</option>
+                  ))}
+                </select>
+                {activeSuppliers.length === 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    No registered suppliers yet. Add one under{' '}
+                    <Link href="/suppliers" className="text-primary underline">Suppliers</Link>.
+                  </p>
                 )}
               </div>
 
-              {/* Cost & Price */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className={labelCls}>Unit Cost (&#8358;)</label>
-                  <input type="number" value={moveData.unitCost} onChange={(e) => setMoveData({ ...moveData, unitCost: parseInt(e.target.value) || 0 })} className={inputCls} />
-                </div>
-                <div className="space-y-2">
-                  <label className={labelCls}>Unit Price (&#8358;)</label>
-                  <input type="number" value={moveData.unitPrice} onChange={(e) => setMoveData({ ...moveData, unitPrice: parseInt(e.target.value) || 0 })} className={inputCls} />
-                </div>
-              </div>
-
-              {/* FIFO cost preview for SALE */}
-              {moveData.type === StockMovementType.SALE && moveData.quantity > 0 && (
-                <div className="p-3 rounded-lg bg-blue-50 border border-blue-200 text-sm">
-                  <div className="flex items-center gap-1.5 text-blue-700 font-bold mb-1">
-                    <Eye size={14} /> FIFO Cost Preview
-                  </div>
-                  {(() => {
-                    const fifo = getFifoCostForSale(logs, selectedProduct.id, moveData.quantity);
-                    return (
-                      <div className="text-blue-800">
-                        <span>Avg FIFO cost: <strong>&#8358;{Math.round(fifo.avgCost).toLocaleString()}</strong>/unit</span>
-                        <span className="ml-3">Total COGS: <strong>&#8358;{Math.round(fifo.totalCost).toLocaleString()}</strong></span>
-                      </div>
-                    );
-                  })()}
-                </div>
-              )}
-
-              {/* Purchase-specific: Batch, Expiry, Supplier */}
-              {moveData.type === StockMovementType.PURCHASE && (
-                <>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className={labelCls}>Batch Number</label>
-                      <input type="text" value={moveData.batchNumber} onChange={(e) => setMoveData({ ...moveData, batchNumber: e.target.value })} placeholder="e.g. B2026-04-001" className={inputCls} />
-                    </div>
-                    <div className="space-y-2">
-                      <label className={labelCls}>Expiry Date</label>
-                      <input type="date" value={moveData.expiryDate} onChange={(e) => setMoveData({ ...moveData, expiryDate: e.target.value })} className={inputCls} />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <label className={labelCls}>Supplier (optional)</label>
-                    <select
-                      value={moveData.supplierId}
-                      onChange={(e) => {
-                        const id = e.target.value;
-                        const match = activeSuppliers.find((s) => s.id === id);
-                        setMoveData({
-                          ...moveData,
-                          supplierId: id,
-                          supplier: match?.name || '',
-                        });
-                      }}
-                      className={inputCls}
-                    >
-                      <option value="">— None —</option>
-                      {activeSuppliers.map((s) => (
-                        <option key={s.id} value={s.id}>{s.name}</option>
-                      ))}
-                    </select>
-                    {activeSuppliers.length === 0 && (
-                      <p className="text-xs text-muted-foreground">
-                        No registered suppliers yet. Add one under{' '}
-                        <Link href="/suppliers" className="text-primary underline">Suppliers</Link>.
-                      </p>
-                    )}
-                  </div>
-                </>
-              )}
-
-              {/* Transfer-specific: Destination Hub */}
-              {moveData.type === StockMovementType.TRANSFER && (
-                <div className="space-y-2">
-                  <label className={labelCls}>Destination Hub</label>
-                  <select
-                    value={moveData.toLocation}
-                    onChange={(e) => setMoveData({ ...moveData, toLocation: e.target.value })}
-                    className={inputCls}
-                  >
-                    <option value="">Select destination...</option>
-                    {activeHubs.filter((h) => h.name !== selectedProduct.location).map((h) => (
-                      <option key={h.id} value={h.name}>{hubOptionLabel(h)}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {/* Adjustment reason */}
-              {moveData.type === StockMovementType.ADJUSTMENT && (
-                <div className="space-y-2">
-                  <label className={labelCls}>Reason for Adjustment</label>
-                  <select
-                    value={moveData.reason}
-                    onChange={(e) => setMoveData({ ...moveData, reason: e.target.value })}
-                    className={inputCls}
-                  >
-                    <option value="">Select reason...</option>
-                    <option value="Damage">Damage</option>
-                    <option value="Spoilage">Spoilage</option>
-                    <option value="Count Correction">Count Correction</option>
-                    <option value="Theft/Loss">Theft/Loss</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-              )}
-
-              {/* Notes */}
               <div className="space-y-2">
                 <label className={labelCls}>Notes</label>
                 <input type="text" value={moveData.notes} onChange={(e) => setMoveData({ ...moveData, notes: e.target.value })} placeholder="Optional notes" className={inputCls} />
@@ -2637,8 +2595,8 @@ export default function InventoryPage() {
             </div>
             <div className="mt-6 flex justify-end gap-3">
               <button onClick={() => { setShowStockMoveModal(false); setSelectedProduct(null); }} className={btnSecondary}>Cancel</button>
-              {((moveData.type === StockMovementType.TRANSFER && can('inventory.transfer')) || (moveData.type !== StockMovementType.TRANSFER && can('inventory.adjust_stock'))) && (
-                <SubmitButton onClick={handleStockMove} loading={transferStock.isPending || recordStockMove.isPending} className={btnPrimary}>Confirm Movement</SubmitButton>
+              {can('inventory.adjust_stock') && (
+                <SubmitButton onClick={handleStockMove} loading={recordStockMove.isPending} className={btnPrimary}>Confirm Purchase</SubmitButton>
               )}
             </div>
           </div>

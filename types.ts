@@ -421,6 +421,7 @@ export interface Sale {
     saleUnit?: 'Carton' | 'Kg';
     stockQuantity?: number;
     category?: string;
+    batchNumber?: string;
   };
   productDetails?: string;
   isCredit?: boolean;

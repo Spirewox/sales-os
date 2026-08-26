@@ -86,13 +86,15 @@ export default function SalesPage() {
     salesMeta, page, setPage, salesLoading, salesFetching, activeHubs,
     searchTerm, setSearchTerm, filterAgent, setFilterAgent, filterStatus, setFilterStatus,
     filterChannel, setFilterChannel,
+    filterCategories, setFilterCategories, toggleCategoryFilter, productCategories,
     sortBy, sortDir, toggleSort,
     selectedSale, setSelectedSale, detailTab, setDetailTab, isEditing, setIsEditing,
     editForm, setEditForm, showVoidConfirm, setShowVoidConfirm,
     saleStockLogs, customerSalesHistory, closeDetailPanel,
     handleUpdateDeliveryStatus, startEditing, saveEdit, handleVoidSale,
     showAddModal, setShowAddModal, newSale, setNewSale, selectedHub, setSelectedHub,
-    selectedProductId, setSelectedProductId, quantity, saleUnit, paymentMode, setPaymentMode,
+    selectedProductId, setSelectedProductId, selectedBatchNumber, setSelectedBatchNumber,
+    productBatches, batchesLoading, quantity, saleUnit, paymentMode, setPaymentMode,
     paymentType, setPaymentType, amountPaid, setAmountPaid, dueDate, setDueDate,
     touched, setTouched, validationErrors, isFormValid, isHistoricalSale, isMealSale,
     productDetailsText, setProductDetailsText, customerCreditWarning,
@@ -282,6 +284,43 @@ export default function SalesPage() {
             <option value="All">All Channels</option>
             {Object.values(SalesChannel).map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
+          <div className="relative group">
+            <details className="relative">
+              <summary className="h-10 list-none cursor-pointer rounded-md border px-3 text-sm bg-background inline-flex items-center gap-2 select-none">
+                Categories
+                {filterCategories.length > 0 && (
+                  <span className="rounded-full bg-primary/15 text-primary text-[10px] font-bold px-1.5 py-0.5">
+                    {filterCategories.length}
+                  </span>
+                )}
+              </summary>
+              <div className="absolute z-20 mt-1 w-56 max-h-64 overflow-y-auto rounded-md border bg-background shadow-md p-2 space-y-1">
+                {productCategories.map((cat) => {
+                  const checked = filterCategories.includes(cat);
+                  return (
+                    <label key={cat} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted/50 text-sm cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleCategoryFilter(cat)}
+                        className="rounded border"
+                      />
+                      {cat}
+                    </label>
+                  );
+                })}
+                {filterCategories.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setFilterCategories([])}
+                    className="w-full text-left text-xs text-muted-foreground px-2 py-1.5 hover:text-foreground"
+                  >
+                    Clear categories
+                  </button>
+                )}
+              </div>
+            </details>
+          </div>
           {hasFilters && (
             <button type="button" onClick={clearFilters} className="h-10 px-3 rounded-md border text-sm font-medium text-muted-foreground hover:bg-accent">
               Clear
@@ -406,6 +445,10 @@ export default function SalesPage() {
         customerCreditWarning={customerCreditWarning}
         selectedProductId={selectedProductId}
         setSelectedProductId={setSelectedProductId}
+        selectedBatchNumber={selectedBatchNumber}
+        setSelectedBatchNumber={setSelectedBatchNumber}
+        productBatches={productBatches}
+        batchesLoading={batchesLoading}
         handleProductChange={handleProductChange}
         availableInventory={availableInventory}
         selectedInventoryItem={selectedInventoryItem}
