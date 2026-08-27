@@ -167,7 +167,7 @@ const CUSTOMERS_PAGE_SIZE = 20;
 
 export default function CustomersPage() {
   const { user } = useAuth();
-  const { can } = usePermissions();
+  const { can, isAdmin } = usePermissions();
   const hubScope = useHubScopeFilter();
   const metricsPeriod = useMetricsPeriod('all');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -290,7 +290,7 @@ export default function CustomersPage() {
     newCustomersMomPct: 0,
     retentionRate: 0,
   };
-  const { data: agents = [] } = useAgents(undefined, { enabled: showAddModal });
+  const { data: agents = [] } = useAgents(undefined, { enabled: showAddModal && isAdmin });
   const detailDataEnabled = !!selectedCustomer;
   const { data: salesList } = useSales(
     { customer_id: selectedCustomer?.id, limit: 200, exclude_voided: true },
@@ -423,7 +423,9 @@ export default function CustomersPage() {
       customer_type: newCustomer.type as CustomerType,
       customer_location: hub?.id || activeHubs[0]?.id || '',
       company_name: newCustomer.companyName,
-      assigned_agent: optionalStringForApi(newCustomer.addedByAgentId),
+      ...(isAdmin
+        ? { assigned_agent: optionalStringForApi(newCustomer.addedByAgentId) }
+        : {}),
       business_category: isB2b ? optionalStringForApi(newCustomer.businessCategory) : undefined,
       gender: !isB2b ? optionalStringForApi(newCustomer.gender) : undefined,
       family_type: !isB2b ? optionalStringForApi(newCustomer.familyType) : undefined,
@@ -1082,7 +1084,9 @@ export default function CustomersPage() {
                   ))}
                 </select>
               </div>
-              <div className="space-y-2"><label className="text-sm font-medium">Assigned Agent</label><select value={newCustomer.addedByAgentId || ''} onChange={(e) => setNewCustomer({ ...newCustomer, addedByAgentId: e.target.value })} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"><option value="">-- Select --</option>{agents.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}</select></div>
+              {isAdmin && (
+                <div className="space-y-2"><label className="text-sm font-medium">Assigned Agent</label><select value={newCustomer.addedByAgentId || ''} onChange={(e) => setNewCustomer({ ...newCustomer, addedByAgentId: e.target.value })} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"><option value="">-- Select --</option>{agents.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}</select></div>
+              )}
             </div>
             <div className="mt-4 space-y-3 border-t pt-4">
               <label className="text-sm font-semibold flex items-center gap-1.5">
