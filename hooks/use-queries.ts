@@ -1761,6 +1761,7 @@ export function useTransferStock() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['stockLogs'] });
       qc.invalidateQueries({ queryKey: ['inventory'] });
+      qc.invalidateQueries({ queryKey: ['product-batches'] });
     },
   });
 }

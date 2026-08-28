@@ -8,7 +8,7 @@ import { SubmitButton } from '@/components/submit-button';
 import { usePermissions } from '@/hooks/use-permissions';
 import {
   useInventory, useCreateProduct, useUpdateProduct, useStockLogs,
-  useRecordStockMove, useBatchStockUpdate, useHubs,
+  useRecordStockMove, useBatchStockUpdate, useHubs, useTransferStock, useProductBatches,
   useDownloadInventoryImportTemplate, useValidateInventoryImport, useImportInventory,
   useInventorySalesMetrics, useSuppliers, useProductSuppliers, useProductSalesPerformance,
 } from '@/hooks/use-queries';
@@ -219,6 +219,7 @@ export default function InventoryPage() {
   const updateProduct = useUpdateProduct();
   const recordStockMove = useRecordStockMove();
   const batchStockUpdate = useBatchStockUpdate();
+  const transferStock = useTransferStock();
   const { data: hubs = [] } = useHubs();
   const activeHubs = hubs.filter(h => h.isActive);
   const { data: supplierList } = useSuppliers({ is_active: true, limit: 200 });
@@ -241,6 +242,12 @@ export default function InventoryPage() {
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showStockMoveModal, setShowStockMoveModal] = useState(false);
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [transferProduct, setTransferProduct] = useState<InventoryItem | null>(null);
+  const [transferBatchNumber, setTransferBatchNumber] = useState('');
+  const [transferQuantity, setTransferQuantity] = useState(1);
+  const [transferToHubId, setTransferToHubId] = useState('');
+  const [transferNotes, setTransferNotes] = useState('');
   const [showBatchModal, setShowBatchModal] = useState(false);
   const [showActionDropdown, setShowActionDropdown] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
@@ -261,6 +268,46 @@ export default function InventoryPage() {
 
   // Selected product for stock move
   const [selectedProduct, setSelectedProduct] = useState<InventoryItem | null>(null);
+
+  const { data: transferBatches = [], isFetching: transferBatchesLoading } = useProductBatches(
+    showTransferModal ? transferProduct?.id ?? null : null,
+  );
+
+  const transferDestinations = useMemo(
+    () => activeHubs.filter((h) => h.id !== transferProduct?.hubId),
+    [activeHubs, transferProduct?.hubId],
+  );
+
+  const selectedTransferBatch = useMemo(
+    () => transferBatches.find((b) => b.batchNumber === transferBatchNumber),
+    [transferBatches, transferBatchNumber],
+  );
+
+  useEffect(() => {
+    if (!showTransferModal || transferBatchesLoading) return;
+    if (transferBatchNumber && transferBatches.some((b) => b.batchNumber === transferBatchNumber)) {
+      return;
+    }
+    setTransferBatchNumber(transferBatches[0]?.batchNumber ?? '');
+  }, [showTransferModal, transferBatchesLoading, transferBatches, transferBatchNumber]);
+
+  const openTransferModal = (item: InventoryItem) => {
+    setTransferProduct(item);
+    setTransferBatchNumber('');
+    setTransferQuantity(1);
+    setTransferToHubId('');
+    setTransferNotes('');
+    setShowTransferModal(true);
+  };
+
+  const closeTransferModal = () => {
+    setShowTransferModal(false);
+    setTransferProduct(null);
+    setTransferBatchNumber('');
+    setTransferQuantity(1);
+    setTransferToHubId('');
+    setTransferNotes('');
+  };
 
   // Ledger filters
   const [ledgerDateFrom, setLedgerDateFrom] = useState('');
@@ -797,6 +844,44 @@ export default function InventoryPage() {
       },
       onError: (err) => toast.error(err.message),
     });
+  };
+
+  const handleTransfer = async () => {
+    if (!transferProduct?.hubId) {
+      toast.error('Product location is missing.');
+      return;
+    }
+    if (!transferBatchNumber) {
+      toast.error('Select a purchase batch.');
+      return;
+    }
+    if (!transferToHubId) {
+      toast.error('Select a destination location.');
+      return;
+    }
+    if (!(transferQuantity > 0)) {
+      toast.error('Enter a valid quantity.');
+      return;
+    }
+    const batchRemaining = selectedTransferBatch?.quantityRemaining ?? 0;
+    if (transferQuantity > batchRemaining) {
+      toast.error(`Batch ${transferBatchNumber} only has ${batchRemaining} remaining.`);
+      return;
+    }
+    try {
+      await transferStock.mutateAsync({
+        item_id: transferProduct.id,
+        quantity: transferQuantity,
+        from_hub_id: transferProduct.hubId,
+        to_hub_id: transferToHubId,
+        batch_number: transferBatchNumber,
+        notes: transferNotes.trim() || undefined,
+      });
+      toast.success(`Transferred batch ${transferBatchNumber} to destination.`);
+      closeTransferModal();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Transfer failed.');
+    }
   };
 
   /* ──────── BATCH UPDATE ──────── */
@@ -1369,21 +1454,15 @@ export default function InventoryPage() {
                                 <ArrowUpRight size={14} />
                               </button>
                             )}
-                            {/* Transfer action commented — restock via Purchase only
                             {can('inventory.transfer') && (
                               <button
-                                onClick={() => {
-                                  setSelectedProduct(item);
-                                  setMoveData({ ...emptyMoveData(item), type: StockMovementType.TRANSFER });
-                                  setShowStockMoveModal(true);
-                                }}
+                                onClick={() => openTransferModal(item)}
                                 className="h-8 w-8 rounded-md flex items-center justify-center border hover:bg-accent text-muted-foreground hover:text-foreground"
                                 title="Transfer"
                               >
                                 <ArrowRightLeft size={14} />
                               </button>
                             )}
-                            */}
                           </div>
                         </td>
                       </tr>
@@ -1747,20 +1826,14 @@ export default function InventoryPage() {
                         <ArrowUpRight size={16} /> Purchase
                       </button>
                     )}
-                    {/* Transfer commented — Purchase only
                     {can('inventory.transfer') && (
                       <button
-                        onClick={() => {
-                          setSelectedProduct(viewingDetailsItem);
-                          setMoveData({ ...emptyMoveData(viewingDetailsItem), type: StockMovementType.TRANSFER });
-                          setShowStockMoveModal(true);
-                        }}
+                        onClick={() => openTransferModal(viewingDetailsItem)}
                         className="flex-1 h-10 rounded-md text-sm font-medium border border-input bg-background hover:bg-accent flex items-center justify-center gap-2"
                       >
                         <ArrowRightLeft size={16} /> Transfer
                       </button>
                     )}
-                    */}
                   </div>
                 </>
               )}
@@ -2631,6 +2704,108 @@ export default function InventoryPage() {
               <button onClick={() => { setShowStockMoveModal(false); setSelectedProduct(null); }} className={btnSecondary}>Cancel</button>
               {can('inventory.adjust_stock') && (
                 <SubmitButton onClick={handleStockMove} loading={recordStockMove.isPending} className={btnPrimary}>Confirm Purchase</SubmitButton>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════════ TRANSFER MODAL ══════════════════ */}
+      {showTransferModal && transferProduct && (
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-md rounded-xl border bg-card p-6 shadow-xl animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <h2 className="text-lg font-bold">Transfer Stock</h2>
+                <p className="text-sm text-muted-foreground">
+                  {transferProduct.name}{' '}
+                  <span className="font-mono text-xs">({transferProduct.sku})</span>
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  From: <span className="font-medium">{transferProduct.location}</span>
+                </p>
+              </div>
+              <button onClick={closeTransferModal} className="text-muted-foreground hover:text-foreground">
+                <X size={20} />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className={labelCls}>Batch *</label>
+                <select
+                  value={transferBatchNumber}
+                  onChange={(e) => setTransferBatchNumber(e.target.value)}
+                  className={inputCls}
+                  disabled={transferBatchesLoading || transferBatches.length === 0}
+                >
+                  <option value="">
+                    {transferBatchesLoading
+                      ? 'Loading batches…'
+                      : transferBatches.length === 0
+                        ? 'No open batches — record a Purchase first'
+                        : '-- Select batch --'}
+                  </option>
+                  {transferBatches.map((b) => (
+                    <option key={b.batchNumber} value={b.batchNumber}>
+                      {b.batchNumber} — {b.quantityRemaining} remaining
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className={labelCls}>Quantity *</label>
+                <input
+                  type="number"
+                  min={0.01}
+                  step="any"
+                  max={selectedTransferBatch?.quantityRemaining ?? undefined}
+                  value={transferQuantity}
+                  onChange={(e) => setTransferQuantity(parseFloat(e.target.value) || 0)}
+                  className={inputCls}
+                />
+                {selectedTransferBatch && (
+                  <p className="text-xs text-muted-foreground">
+                    Max for batch {transferBatchNumber}: {selectedTransferBatch.quantityRemaining}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <label className={labelCls}>To location *</label>
+                <select
+                  value={transferToHubId}
+                  onChange={(e) => setTransferToHubId(e.target.value)}
+                  className={inputCls}
+                >
+                  <option value="">Select hub or RSP</option>
+                  {transferDestinations.map((h) => (
+                    <option key={h.id} value={h.id}>
+                      {hubOptionLabel(h)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className={labelCls}>Notes</label>
+                <input
+                  type="text"
+                  value={transferNotes}
+                  onChange={(e) => setTransferNotes(e.target.value)}
+                  placeholder="Optional notes"
+                  className={inputCls}
+                />
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <button onClick={closeTransferModal} className={btnSecondary}>Cancel</button>
+              {can('inventory.transfer') && (
+                <SubmitButton
+                  onClick={handleTransfer}
+                  loading={transferStock.isPending}
+                  className={btnPrimary}
+                  disabled={!transferBatchNumber || !transferToHubId || transferBatches.length === 0}
+                >
+                  Confirm Transfer
+                </SubmitButton>
               )}
             </div>
           </div>
