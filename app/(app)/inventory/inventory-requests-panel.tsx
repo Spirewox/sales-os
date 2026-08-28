@@ -75,7 +75,6 @@ export function InventoryRequestsPanel() {
   const cancelRequest = useCancelInventoryRequest();
 
   const activeHubs = hubs.filter((h) => h.isActive);
-  const hubLocations = activeHubs.filter((h) => h.locationType === 'hub');
   const rspLocations = activeHubs;
 
   const defaultRequestingLocation =
@@ -91,6 +90,11 @@ export function InventoryRequestsPanel() {
   const [statusFilter, setStatusFilter] = useState<InventoryRequestStatus | 'all'>('all');
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState('');
+
+  const fulfillingLocations = useMemo(
+    () => activeHubs.filter((h) => h.id !== requestingLocation),
+    [activeHubs, requestingLocation],
+  );
 
   const { data: fulfillingInventory = [] } = useInventory({
     hub_id: fulfillingHub || undefined,
@@ -125,8 +129,8 @@ export function InventoryRequestsPanel() {
   const suggestedHub = useMemo(() => {
     const loc = hubs.find((h) => h.id === requestingLocation);
     if (loc?.parentHubId) return loc.parentHubId;
-    return hubLocations[0]?.id ?? '';
-  }, [hubs, requestingLocation, hubLocations]);
+    return activeHubs.find((h) => h.locationType === 'hub')?.id ?? activeHubs[0]?.id ?? '';
+  }, [hubs, requestingLocation, activeHubs]);
 
   const filteredRequests = useMemo(() => {
     if (statusFilter === 'all') return requests;
@@ -148,7 +152,7 @@ export function InventoryRequestsPanel() {
 
   const handleCreate = async () => {
     if (!requestingLocation || !fulfillingHub || !productId || quantity <= 0 || !requestUom) {
-      toast.error('Select requesting location, fulfilling hub, product, quantity, and unit.');
+      toast.error('Select requesting location, fulfilling location, product, quantity, and unit.');
       return;
     }
     const product = fulfillingInventory.find((p) => p.id === productId);
@@ -214,7 +218,7 @@ export function InventoryRequestsPanel() {
             <Package size={18} /> Inventory Requests
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Request stock from any hub. Parent hub is suggested but not required.
+            Request stock from another hub or RSP. Parent hub is suggested but not required.
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -269,7 +273,7 @@ export function InventoryRequestsPanel() {
               </select>
             </div>
             <div className="space-y-2">
-              <label className={labelCls}>Fulfilling hub</label>
+              <label className={labelCls}>Fulfilling location</label>
               <select
                 value={fulfillingHub}
                 onChange={(e) => {
@@ -279,8 +283,8 @@ export function InventoryRequestsPanel() {
                 }}
                 className={inputCls}
               >
-                <option value="">Select hub</option>
-                {hubLocations.map((h) => (
+                <option value="">Select location</option>
+                {fulfillingLocations.map((h) => (
                   <option key={h.id} value={h.id}>
                     {hubOptionLabel(h, h.id === suggestedHub ? '(Suggested)' : undefined)}
                   </option>
@@ -288,7 +292,7 @@ export function InventoryRequestsPanel() {
               </select>
             </div>
             <div className="space-y-2">
-              <label className={labelCls}>Product (from fulfilling hub)</label>
+              <label className={labelCls}>Product (from fulfilling location)</label>
               <select
                 value={productId}
                 onChange={(e) => selectProduct(e.target.value)}
