@@ -192,6 +192,7 @@ function getUniqueSuppliers(logs: StockLog[]): string[] {
 export default function InventoryPage() {
   const router = useRouter();
   const { can, isAdmin } = usePermissions();
+  const canTransfer = can('inventory.transfer') || can('inventory.adjust_stock');
   const hubScope = useHubScopeFilter();
   const metricsPeriod = useMetricsPeriod('all');
   const importInputRef = useRef<HTMLInputElement>(null);
@@ -1454,7 +1455,7 @@ export default function InventoryPage() {
                                 <ArrowUpRight size={14} />
                               </button>
                             )}
-                            {can('inventory.transfer') && (
+                            {canTransfer && (
                               <button
                                 onClick={() => openTransferModal(item)}
                                 className="h-8 w-8 rounded-md flex items-center justify-center border hover:bg-accent text-muted-foreground hover:text-foreground"
@@ -1826,7 +1827,7 @@ export default function InventoryPage() {
                         <ArrowUpRight size={16} /> Purchase
                       </button>
                     )}
-                    {can('inventory.transfer') && (
+                    {canTransfer && (
                       <button
                         onClick={() => openTransferModal(viewingDetailsItem)}
                         className="flex-1 h-10 rounded-md text-sm font-medium border border-input bg-background hover:bg-accent flex items-center justify-center gap-2"
@@ -2797,7 +2798,7 @@ export default function InventoryPage() {
             </div>
             <div className="mt-6 flex justify-end gap-3">
               <button onClick={closeTransferModal} className={btnSecondary}>Cancel</button>
-              {can('inventory.transfer') && (
+              {canTransfer && (
                 <SubmitButton
                   onClick={handleTransfer}
                   loading={transferStock.isPending}
