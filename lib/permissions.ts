@@ -233,6 +233,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<RoleName, Permission[]> = {
 
 export function hasPermission(user: AppUser | null, permission: Permission): boolean {
   if (!user) return false;
+  if (user.roleName === 'company_admin') return true;
   const backendKey = PERMISSION_MAP[permission];
   if (!backendKey) return false;
   return user.permissions.includes(backendKey);
