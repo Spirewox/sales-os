@@ -269,6 +269,7 @@ export function mapInventoryItem(p: ApiProduct, hubMap?: Record<string, string>)
     cartonWeight: p.carton_weight,
     lastStockUpdate: toDateStr(p.last_stock_update) || new Date().toISOString().split('T')[0],
     location: resolveHubName(p.hub, hubMap),
+    hubId: refId(p.hub) || undefined,
     isActive: p.is_active !== false,
     priceVersion: p.price_version,
     supplier: p.supplier,

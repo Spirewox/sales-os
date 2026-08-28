@@ -224,6 +224,7 @@ export interface InventoryItem {
   cartonWeight?: number;
   lastStockUpdate: string;
   location: string;
+  hubId?: string;
   priceVersion?: string;
   supplier?: string;
   supplierId?: string;
