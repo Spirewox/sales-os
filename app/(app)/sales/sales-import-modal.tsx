@@ -6,6 +6,11 @@ import { fmt, BTN_PRIMARY, BTN_SECONDARY } from '../sales/sales-utils';
 import { ModalDialog } from '../sales/modal-dialog';
 import { PanelSkeleton } from '@/components/ui/loading-skeletons';
 
+function formatAmount(amount: number | null | undefined) {
+  if (typeof amount !== 'number' || !Number.isFinite(amount)) return '—';
+  return fmt(amount);
+}
+
 export interface SalesImportModalProps {
   show: boolean;
   onClose: () => void;
@@ -40,7 +45,8 @@ export function SalesImportModal({
   if (!show) return null;
 
   const validRows = previewRows.filter((r) => r.valid);
-  const hasInvalid = (summary?.invalid ?? 0) > 0;
+  const invalidRows = previewRows.filter((r) => !r.valid);
+  const hasInvalid = (summary?.invalid ?? 0) > 0 || invalidRows.length > 0;
   const allCustom = previewRows.length > 0 && previewRows.every((r) => r.import_mode === 'custom');
   const freshTemplateType: 'catalog' | 'custom' = allCustom ? 'custom' : 'catalog';
 
@@ -61,7 +67,7 @@ export function SalesImportModal({
 
   return (
     <ModalDialog onClose={importing ? () => {} : onClose}>
-      <div className="relative z-10 w-full max-w-4xl rounded-md border bg-card p-6 shadow-xl animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+      <div className="relative z-10 w-full max-w-5xl rounded-md border bg-card p-6 shadow-xl animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
           <div>
             <h2 className="text-lg font-bold flex items-center gap-2">
@@ -86,6 +92,9 @@ export function SalesImportModal({
             </p>
             <p className="text-muted-foreground mt-1">
               Import is all-or-nothing: if any row fails, nothing from this file is saved.
+              {hasInvalid
+                ? ` ${invalidRows.length} invalid row(s) will not be imported.`
+                : ''}
             </p>
           </div>
         )}
@@ -125,7 +134,10 @@ export function SalesImportModal({
         {hasInvalid && (
           <div className="mb-4 p-3 rounded-md border border-orange-300 bg-orange-50 text-sm">
             <p className="font-medium text-orange-800 mb-1">
-              {summary?.invalid} row(s) have validation errors and will be skipped.
+              {summary?.invalid ?? invalidRows.length} row(s) have validation errors and will not be imported.
+            </p>
+            <p className="text-orange-700 text-xs mb-2">
+              Fix the Errors column below (or re-download a fresh template), then upload again.
             </p>
             <button
               type="button"
@@ -142,13 +154,13 @@ export function SalesImportModal({
           {allCustom ? (
             <>
               <p><strong>Custom template:</strong> product_description + amount required.</p>
-              <p>Sales never affect stock.</p>
+              <p>Custom/meal lines do not debit inventory stock.</p>
             </>
           ) : (
             <>
               <p><strong>Live (today+):</strong> product_name + quantity required; amount from catalog.</p>
               <p><strong>Historical (before today):</strong> amount required; product optional free text.</p>
-              <p>Sales never affect stock — use inventory adjustments and transfers instead.</p>
+              <p>Follow the Instructions sheet in the downloaded template for stock/batch rules.</p>
             </>
           )}
           <p className="mt-2">Each upload supports up to <strong>500 data rows</strong>. Re-download the template if dropdowns stop after row 501.</p>
@@ -176,6 +188,7 @@ export function SalesImportModal({
                     <th className="h-8 px-3 text-right font-medium text-muted-foreground">Amount</th>
                     <th className="h-8 px-3 text-center font-medium text-muted-foreground">Hist.</th>
                     <th className="h-8 px-3 text-center font-medium text-muted-foreground">Status</th>
+                    <th className="h-8 px-3 text-left font-medium text-muted-foreground min-w-[200px]">Errors</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
@@ -198,7 +211,7 @@ export function SalesImportModal({
                       </td>
                       <td className="px-3 py-2 text-right">{row.quantity || '—'}</td>
                       <td className="px-3 py-2 text-right">
-                        {row.amount === undefined ? '—' : fmt(row.amount)}
+                        {formatAmount(row.amount)}
                       </td>
                       <td className="px-3 py-2 text-center text-[10px]">
                         {row.historical ? 'Yes' : '—'}
@@ -207,8 +220,15 @@ export function SalesImportModal({
                         {row.valid ? (
                           <Check size={14} className="text-green-600 mx-auto" />
                         ) : (
-                          <span title={row.errors.join('; ')} className="inline-flex items-center justify-center">
-                            <AlertCircle size={14} className="text-orange-600" />
+                          <AlertCircle size={14} className="text-orange-600 mx-auto" />
+                        )}
+                      </td>
+                      <td className="px-3 py-2 text-orange-800 max-w-[280px]">
+                        {row.valid ? (
+                          <span className="text-muted-foreground">—</span>
+                        ) : (
+                          <span title={row.errors.join('; ')}>
+                            {(row.errors ?? []).join('; ') || 'Invalid row'}
                           </span>
                         )}
                       </td>
@@ -221,15 +241,13 @@ export function SalesImportModal({
         )}
 
         {hasInvalid && (
-          <div className="mb-4 max-h-24 overflow-y-auto space-y-1 text-xs text-orange-700">
-            {previewRows
-              .filter((r) => !r.valid)
-              .slice(0, 10)
-              .map((r) => (
-                <p key={`err-${r.lineNo}`}>
-                  Row {r.lineNo}: {r.errors.join('; ')}
-                </p>
-              ))}
+          <div className="mb-4 max-h-40 overflow-y-auto space-y-1 rounded-md border border-orange-200 bg-orange-50/60 p-3 text-xs text-orange-800">
+            <p className="font-medium text-orange-900 mb-1">All validation errors</p>
+            {invalidRows.map((r) => (
+              <p key={`err-${r.lineNo}`}>
+                Row {r.lineNo}: {(r.errors ?? []).join('; ') || 'Invalid row'}
+              </p>
+            ))}
           </div>
         )}
 
