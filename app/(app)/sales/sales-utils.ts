@@ -6,7 +6,10 @@ export type SaleDateFieldFilter = 'sold' | 'created';
 export type CsvPreviewRow = { lineNo: number; [column: string]: string | number };
 
 export const NAIRA = '\u20A6';
-export const fmt = (n: number) => `${NAIRA}${n.toLocaleString()}`;
+export const fmt = (n: number | null | undefined) => {
+  if (n == null || !Number.isFinite(Number(n))) return '—';
+  return `${NAIRA}${Number(n).toLocaleString()}`;
+};
 
 export const INPUT_CLS = 'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring';
 export const LABEL_CLS = 'text-sm font-medium';

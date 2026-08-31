@@ -674,8 +674,12 @@ export interface ApiBulkImportSaleRow {
   customer_id: string;
   hub_id: string;
   product_id?: string;
+  product_name?: string;
   quantity?: number;
   amount: number;
+  unit?: string;
+  sale_unit?: string;
+  batch_number?: string;
   unit_price?: number;
   payment_mode: string;
   amount_paid?: number;
@@ -702,6 +706,7 @@ export interface SalesImportPreviewRow {
   product_description?: string;
   quantity: number;
   unit?: string;
+  batch_number?: string;
   payment_mode: string;
   amount_paid?: number;
   due_date?: string;
