@@ -57,6 +57,16 @@ const parseMoneyInput = (raw: string) => {
   return Number.isFinite(n) ? n : 0;
 };
 
+const roundQty2 = (n: number | undefined | null) =>
+  Math.round((Number(n) || 0) * 100) / 100;
+
+const parseKgQtyInput = (raw: string) => {
+  if (raw.trim() === '') return 0;
+  const n = Number.parseFloat(raw);
+  if (!Number.isFinite(n)) return 0;
+  return roundQty2(n);
+};
+
 /* ────────────────── FIFO / FEFO helpers ────────────────── */
 
 interface FifoBatch {
@@ -692,7 +702,10 @@ export default function InventoryPage() {
       category: newProduct.category,
       unit_of_measure: newProduct.unitOfMeasure,
       min_stock_level: newProduct.minStockLevel || 5,
-      current_stock: newProduct.currentStock || 0,
+      current_stock:
+        newProduct.unitOfMeasure === 'Kg'
+          ? roundQty2(newProduct.currentStock || 0)
+          : newProduct.currentStock || 0,
       avg_unit_cost: roundMoney2(newProduct.avgUnitCost),
       base_selling_price: roundMoney2(newProduct.baseSellingPrice),
       carton_price:
@@ -794,7 +807,10 @@ export default function InventoryPage() {
 
   const handleStockMove = () => {
     if (!selectedProduct) return;
-    const absQty = Math.abs(moveData.quantity);
+    const absQty =
+      selectedProduct.unitOfMeasure === 'Kg'
+        ? roundQty2(Math.abs(moveData.quantity))
+        : Math.abs(moveData.quantity);
     if (!(absQty > 0)) {
       toast.error('Quantity must be greater than 0.');
       return;
@@ -2230,7 +2246,25 @@ export default function InventoryPage() {
               </div>
               <div className="space-y-2">
                 <label className={labelCls}>Initial Stock</label>
-                <input type="number" value={newProduct.currentStock || ''} onChange={(e) => setNewProduct({ ...newProduct, currentStock: parseInt(e.target.value) || 0 })} className={inputCls} />
+                <input
+                  type="number"
+                  min={0}
+                  step={newProduct.unitOfMeasure === 'Kg' ? '0.01' : 1}
+                  value={newProduct.currentStock || ''}
+                  onChange={(e) =>
+                    setNewProduct({
+                      ...newProduct,
+                      currentStock:
+                        newProduct.unitOfMeasure === 'Kg'
+                          ? parseKgQtyInput(e.target.value)
+                          : parseInt(e.target.value, 10) || 0,
+                    })
+                  }
+                  className={inputCls}
+                />
+                {newProduct.unitOfMeasure === 'Kg' ? (
+                  <p className="text-[11px] text-muted-foreground">Up to 2 decimal places (Kg).</p>
+                ) : null}
               </div>
               <div className="space-y-2">
                 <label className={labelCls}>Purchased date</label>
@@ -2625,7 +2659,25 @@ export default function InventoryPage() {
             <div className="space-y-4">
               <div className="space-y-2">
                 <label className={labelCls}>Quantity *</label>
-                <input type="number" min={0.01} step="any" value={moveData.quantity} onChange={(e) => setMoveData({ ...moveData, quantity: parseFloat(e.target.value) || 0 })} className={inputCls} />
+                <input
+                  type="number"
+                  min={0.01}
+                  step={selectedProduct.unitOfMeasure === 'Kg' ? '0.01' : 'any'}
+                  value={moveData.quantity}
+                  onChange={(e) =>
+                    setMoveData({
+                      ...moveData,
+                      quantity:
+                        selectedProduct.unitOfMeasure === 'Kg'
+                          ? parseKgQtyInput(e.target.value)
+                          : parseFloat(e.target.value) || 0,
+                    })
+                  }
+                  className={inputCls}
+                />
+                {selectedProduct.unitOfMeasure === 'Kg' ? (
+                  <p className="text-[11px] text-muted-foreground">Up to 2 decimal places (Kg).</p>
+                ) : null}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
