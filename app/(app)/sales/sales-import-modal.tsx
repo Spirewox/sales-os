@@ -154,12 +154,14 @@ export function SalesImportModal({
           {allCustom ? (
             <>
               <p><strong>Custom template:</strong> product_description + amount required.</p>
+              <p>Historical dates only (before today). Live sales require the catalog template.</p>
               <p>Custom/meal lines do not debit inventory stock.</p>
             </>
           ) : (
             <>
               <p><strong>Live (today+):</strong> product_name + quantity required; amount from catalog.</p>
               <p><strong>Historical (before today):</strong> amount required; product optional free text.</p>
+              <p>Fulfillment hub must have catalog products; live rows need a matching product on that hub.</p>
               <p>Follow the Instructions sheet in the downloaded template for stock/batch rules.</p>
             </>
           )}
