@@ -86,58 +86,54 @@ function buildFifoBatches(allLogs: StockLog[], itemId: string): FifoBatch[] {
 
   const batches: FifoBatch[] = [];
 
+  const openBatch = (log: StockLog) => {
+    batches.push({
+      logId: log.id,
+      batchNumber: log.batchNumber,
+      date: log.date,
+      expiryDate: log.expiryDate,
+      quantityRemaining: Math.abs(log.quantity),
+      unitCost: log.unitCost,
+      supplier: log.supplier,
+    });
+  };
+
+  const deductFromBatches = (log: StockLog) => {
+    let toDeduct = Math.abs(log.quantity);
+    const targetBatch = (log.batchNumber || '').trim();
+    // FEFO: sort by expiry date first (soonest first), then by date received (FIFO)
+    const sortedBatches = [...batches].sort((a, b) => {
+      if (a.expiryDate && b.expiryDate) return a.expiryDate.localeCompare(b.expiryDate);
+      if (a.expiryDate) return -1;
+      if (b.expiryDate) return 1;
+      return a.date.localeCompare(b.date);
+    });
+    const pool = targetBatch
+      ? sortedBatches.filter((b) => (b.batchNumber || '').trim() === targetBatch)
+      : sortedBatches;
+    for (const batch of pool) {
+      if (toDeduct <= 0) break;
+      if (batch.quantityRemaining <= 0) continue;
+      const take = Math.min(batch.quantityRemaining, toDeduct);
+      batch.quantityRemaining -= take;
+      toDeduct -= take;
+    }
+  };
+
   for (const log of itemLogs) {
-    if (log.type === StockMovementType.PURCHASE || log.type === StockMovementType.RETURN) {
-      batches.push({
-        logId: log.id,
-        batchNumber: log.batchNumber,
-        date: log.date,
-        expiryDate: log.expiryDate,
-        quantityRemaining: Math.abs(log.quantity),
-        unitCost: log.unitCost,
-        supplier: log.supplier,
-      });
-    } else if (log.type === StockMovementType.SALE || log.type === StockMovementType.TRANSFER) {
-      let toDeduct = Math.abs(log.quantity);
-      const targetBatch = (log.batchNumber || '').trim();
-      // FEFO: sort by expiry date first (soonest first), then by date received (FIFO)
-      const sortedBatches = [...batches].sort((a, b) => {
-        if (a.expiryDate && b.expiryDate) return a.expiryDate.localeCompare(b.expiryDate);
-        if (a.expiryDate) return -1;
-        if (b.expiryDate) return 1;
-        return a.date.localeCompare(b.date);
-      });
-      const pool = targetBatch
-        ? sortedBatches.filter((b) => (b.batchNumber || '').trim() === targetBatch)
-        : sortedBatches;
-      for (const batch of pool) {
-        if (toDeduct <= 0) break;
-        if (batch.quantityRemaining <= 0) continue;
-        const take = Math.min(batch.quantityRemaining, toDeduct);
-        batch.quantityRemaining -= take;
-        toDeduct -= take;
-      }
-    } else if (log.type === StockMovementType.ADJUSTMENT) {
-      if (log.quantity > 0) {
-        batches.push({
-          logId: log.id,
-          batchNumber: log.batchNumber,
-          date: log.date,
-          expiryDate: log.expiryDate,
-          quantityRemaining: Math.abs(log.quantity),
-          unitCost: log.unitCost,
-          supplier: log.supplier,
-        });
-      } else {
-        let toDeduct = Math.abs(log.quantity);
-        for (const batch of batches) {
-          if (toDeduct <= 0) break;
-          if (batch.quantityRemaining <= 0) continue;
-          const take = Math.min(batch.quantityRemaining, toDeduct);
-          batch.quantityRemaining -= take;
-          toDeduct -= take;
-        }
-      }
+    if (
+      log.type === StockMovementType.PURCHASE ||
+      log.type === StockMovementType.RETURN ||
+      (log.type === StockMovementType.TRANSFER && log.quantity > 0) ||
+      (log.type === StockMovementType.ADJUSTMENT && log.quantity > 0)
+    ) {
+      openBatch(log);
+    } else if (
+      log.type === StockMovementType.SALE ||
+      (log.type === StockMovementType.TRANSFER && log.quantity < 0) ||
+      (log.type === StockMovementType.ADJUSTMENT && log.quantity < 0)
+    ) {
+      deductFromBatches(log);
     }
   }
 
@@ -2092,7 +2088,7 @@ export default function InventoryPage() {
                     <h4 className="text-sm font-bold">Active Batches (FEFO Order)</h4>
                   </div>
                   {itemBatches.length === 0 ? (
-                    <p className="text-sm text-muted-foreground italic">No active batches. Record a PURCHASE to create batches.</p>
+                    <p className="text-sm text-muted-foreground italic">No active batches. Record a purchase or receive stock via transfer to create batches.</p>
                   ) : (
                     <div className="space-y-2">
                       {itemBatches.map((batch, idx) => (
