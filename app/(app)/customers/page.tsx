@@ -897,6 +897,11 @@ export default function CustomersPage() {
                         </button>
                       )}
                     </div>
+                    {periodScoped && (
+                      <p className="px-2 pb-2 text-[11px] text-muted-foreground leading-snug">
+                        Segments based on activity in the selected period (not lifetime).
+                      </p>
+                    )}
                     {SEGMENT_TAXONOMY.map((group) => {
                       const options = group.segments
                         .map((name) => ({ name, id: segmentByName.get(name) }))
