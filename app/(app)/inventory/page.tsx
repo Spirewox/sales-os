@@ -666,13 +666,11 @@ export default function InventoryPage() {
       return;
     }
     if (newProduct.isExpensed) {
-      if (
-        !(
-          (newProduct.unitOfMeasure === 'Kg'
-            ? kgQtyDraftToNumber(initialStockDraft)
-            : newProduct.currentStock) > 0
-        )
-      ) {
+      const initialStockQty =
+        newProduct.unitOfMeasure === 'Kg'
+          ? kgQtyDraftToNumber(initialStockDraft)
+          : Number(newProduct.currentStock) || 0;
+      if (!(initialStockQty > 0)) {
         toast.error('Initial (purchased) stock is required when marking as expensed.');
         return;
       }

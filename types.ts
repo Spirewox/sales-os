@@ -287,7 +287,7 @@ export interface CreditRecord {
   dateIssued: string;
   dueDate?: string;
   lastPaymentDate?: string;
-  status: 'Clear' | 'Pending' | 'Overdue';
+  status: 'Clear' | 'Pending' | 'Overdue' | 'Voided';
   repaymentTimelines?: number[];
   paymentTerms?: PaymentTerms;
   payments?: CreditPayment[];
