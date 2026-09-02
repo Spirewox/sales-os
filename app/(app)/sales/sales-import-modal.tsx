@@ -155,13 +155,14 @@ export function SalesImportModal({
             <>
               <p><strong>Custom template:</strong> product_description + amount required.</p>
               <p>Historical dates only (before today). Live sales require the catalog template.</p>
+              <p>When stock tracking is on, custom import is blocked — use the catalog template.</p>
               <p>Custom/meal lines do not debit inventory stock.</p>
             </>
           ) : (
             <>
-              <p><strong>Live (today+):</strong> product_name + quantity required; amount from catalog.</p>
-              <p><strong>Historical (before today):</strong> amount required; product optional free text.</p>
-              <p>Fulfillment hub must have catalog products; live rows need a matching product on that hub.</p>
+              <p><strong>All dates:</strong> product_name + quantity required; product must match the fulfillment hub catalog.</p>
+              <p><strong>Live (today+):</strong> amount from catalog price. <strong>Historical:</strong> amount from the sheet.</p>
+              <p>When stock tracking is on, batch_number is required for live and historical catalog rows.</p>
               <p>Follow the Instructions sheet in the downloaded template for stock/batch rules.</p>
             </>
           )}

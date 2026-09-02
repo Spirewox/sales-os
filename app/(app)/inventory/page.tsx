@@ -67,6 +67,16 @@ const parseKgQtyInput = (raw: string) => {
   return roundQty2(n);
 };
 
+/** Allow typing intermediate Kg values like "0." / "0.5" in controlled inputs. */
+const sanitizeKgQtyDraft = (raw: string): string | null => {
+  const t = raw.trim();
+  if (t === '') return '';
+  if (!/^\d*\.?\d{0,2}$/.test(t)) return null;
+  return t;
+};
+
+const kgQtyDraftToNumber = (raw: string) => parseKgQtyInput(raw);
+
 /* ────────────────── FIFO / FEFO helpers ────────────────── */
 
 interface FifoBatch {
@@ -394,12 +404,16 @@ export default function InventoryPage() {
   const [newProduct, setNewProduct] = useState<NewProductForm>(() =>
     emptyNewProduct(hubScope.defaultHubId, hubScope.defaultHubName),
   );
+  const [initialStockDraft, setInitialStockDraft] = useState('');
+  const [purchaseQtyDraft, setPurchaseQtyDraft] = useState('1');
 
-  const resetNewProduct = () =>
+  const resetNewProduct = () => {
+    setInitialStockDraft('');
     setNewProduct(emptyNewProduct(
       hubScope.defaultHubId || activeHubs[0]?.id,
       hubScope.defaultHubName || activeHubs[0]?.name,
     ));
+  };
 
   useEffect(() => {
     const id = hubScope.defaultHubId;
@@ -652,7 +666,13 @@ export default function InventoryPage() {
       return;
     }
     if (newProduct.isExpensed) {
-      if (!(newProduct.currentStock && newProduct.currentStock > 0)) {
+      if (
+        !(
+          (newProduct.unitOfMeasure === 'Kg'
+            ? kgQtyDraftToNumber(initialStockDraft)
+            : newProduct.currentStock) > 0
+        )
+      ) {
         toast.error('Initial (purchased) stock is required when marking as expensed.');
         return;
       }
@@ -700,7 +720,7 @@ export default function InventoryPage() {
       min_stock_level: newProduct.minStockLevel || 5,
       current_stock:
         newProduct.unitOfMeasure === 'Kg'
-          ? roundQty2(newProduct.currentStock || 0)
+          ? kgQtyDraftToNumber(initialStockDraft)
           : newProduct.currentStock || 0,
       avg_unit_cost: roundMoney2(newProduct.avgUnitCost),
       base_selling_price: roundMoney2(newProduct.baseSellingPrice),
@@ -805,7 +825,7 @@ export default function InventoryPage() {
     if (!selectedProduct) return;
     const absQty =
       selectedProduct.unitOfMeasure === 'Kg'
-        ? roundQty2(Math.abs(moveData.quantity))
+        ? Math.abs(kgQtyDraftToNumber(purchaseQtyDraft))
         : Math.abs(moveData.quantity);
     if (!(absQty > 0)) {
       toast.error('Quantity must be greater than 0.');
@@ -830,6 +850,7 @@ export default function InventoryPage() {
       setShowStockMoveModal(false);
       setSelectedProduct(null);
       setMoveData(emptyMoveData());
+      setPurchaseQtyDraft('1');
     };
 
     recordStockMove.mutate({
@@ -1458,6 +1479,7 @@ export default function InventoryPage() {
                                 onClick={() => {
                                   setSelectedProduct(item);
                                   setMoveData(emptyMoveData(item));
+                                  setPurchaseQtyDraft('1');
                                   setShowStockMoveModal(true);
                                 }}
                                 className="h-8 w-8 rounded-md flex items-center justify-center border hover:bg-accent text-muted-foreground hover:text-foreground"
@@ -1831,6 +1853,7 @@ export default function InventoryPage() {
                         onClick={() => {
                           setSelectedProduct(viewingDetailsItem);
                           setMoveData(emptyMoveData(viewingDetailsItem));
+                          setPurchaseQtyDraft('1');
                           setShowStockMoveModal(true);
                         }}
                         className="flex-1 h-10 rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 flex items-center justify-center gap-2"
@@ -2246,16 +2269,33 @@ export default function InventoryPage() {
                   type="number"
                   min={0}
                   step={newProduct.unitOfMeasure === 'Kg' ? '0.01' : 1}
-                  value={newProduct.currentStock || ''}
-                  onChange={(e) =>
+                  value={
+                    newProduct.unitOfMeasure === 'Kg'
+                      ? initialStockDraft
+                      : newProduct.currentStock || ''
+                  }
+                  onChange={(e) => {
+                    if (newProduct.unitOfMeasure === 'Kg') {
+                      const next = sanitizeKgQtyDraft(e.target.value);
+                      if (next === null) return;
+                      setInitialStockDraft(next);
+                      setNewProduct({
+                        ...newProduct,
+                        currentStock: kgQtyDraftToNumber(next),
+                      });
+                      return;
+                    }
                     setNewProduct({
                       ...newProduct,
-                      currentStock:
-                        newProduct.unitOfMeasure === 'Kg'
-                          ? parseKgQtyInput(e.target.value)
-                          : parseInt(e.target.value, 10) || 0,
-                    })
-                  }
+                      currentStock: parseInt(e.target.value, 10) || 0,
+                    });
+                  }}
+                  onBlur={() => {
+                    if (newProduct.unitOfMeasure !== 'Kg') return;
+                    const n = kgQtyDraftToNumber(initialStockDraft);
+                    setInitialStockDraft(n > 0 ? String(n) : '');
+                    setNewProduct((prev) => ({ ...prev, currentStock: n }));
+                  }}
                   className={inputCls}
                 />
                 {newProduct.unitOfMeasure === 'Kg' ? (
@@ -2659,16 +2699,33 @@ export default function InventoryPage() {
                   type="number"
                   min={0.01}
                   step={selectedProduct.unitOfMeasure === 'Kg' ? '0.01' : 'any'}
-                  value={moveData.quantity}
-                  onChange={(e) =>
+                  value={
+                    selectedProduct.unitOfMeasure === 'Kg'
+                      ? purchaseQtyDraft
+                      : moveData.quantity
+                  }
+                  onChange={(e) => {
+                    if (selectedProduct.unitOfMeasure === 'Kg') {
+                      const next = sanitizeKgQtyDraft(e.target.value);
+                      if (next === null) return;
+                      setPurchaseQtyDraft(next);
+                      setMoveData({
+                        ...moveData,
+                        quantity: kgQtyDraftToNumber(next),
+                      });
+                      return;
+                    }
                     setMoveData({
                       ...moveData,
-                      quantity:
-                        selectedProduct.unitOfMeasure === 'Kg'
-                          ? parseKgQtyInput(e.target.value)
-                          : parseFloat(e.target.value) || 0,
-                    })
-                  }
+                      quantity: parseFloat(e.target.value) || 0,
+                    });
+                  }}
+                  onBlur={() => {
+                    if (selectedProduct.unitOfMeasure !== 'Kg') return;
+                    const n = kgQtyDraftToNumber(purchaseQtyDraft);
+                    setPurchaseQtyDraft(n > 0 ? String(n) : '');
+                    setMoveData((prev) => ({ ...prev, quantity: n }));
+                  }}
                   className={inputCls}
                 />
                 {selectedProduct.unitOfMeasure === 'Kg' ? (

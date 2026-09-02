@@ -310,12 +310,15 @@ export function useSalesPage() {
       if (!productDetailsText.trim()) errors.productDetails = 'Meal name is required.';
       if (quantity <= 0) errors.quantity = 'Quantity must be greater than 0.';
       if (!newSale.amount || newSale.amount <= 0) errors.amount = 'Amount is required for meal sales.';
-    } else if (!isHistoricalSale) {
+    } else {
       if (!selectedProductId) errors.productId = 'Product is required.';
       if (selectedProductId && !selectedBatchNumber) {
         errors.batchNumber = 'Select a purchase batch.';
       }
       if (quantity <= 0) errors.quantity = 'Quantity must be greater than 0.';
+      if (isHistoricalSale && (!newSale.amount || newSale.amount <= 0)) {
+        errors.amount = 'Amount is required for historical sales.';
+      }
       if (isCartonProduct) {
         if (!saleUnit) errors.saleUnit = 'Select Carton or Kg.';
         if (!selectedInventoryItem?.cartonWeight || selectedInventoryItem.cartonWeight <= 0) {
@@ -325,13 +328,6 @@ export function useSalesPage() {
         } else if (saleUnit === 'Kg' && !(selectedInventoryItem.baseSellingPrice > 0)) {
           errors.saleUnit = 'Set unit selling price on this product before selling by Kg.';
         }
-      }
-    } else {
-      if (!selectedProductId && !productDetailsText.trim()) {
-        errors.productDetails = 'Enter a product description or select a catalog product.';
-      }
-      if (!newSale.amount || newSale.amount <= 0) {
-        errors.amount = 'Amount is required for historical sales.';
       }
     }
     if (paymentMode !== PaymentMode.FULL_PAYMENT && !dueDate) {
@@ -497,9 +493,13 @@ export function useSalesPage() {
       dueDate: true,
       ...(isMealSale
         ? { productId: true, productDetails: true, quantity: true, amount: true }
-        : isHistoricalSale
-          ? { productDetails: true, amount: true }
-          : { productId: true, batchNumber: true, quantity: true, saleUnit: true }),
+        : {
+            productId: true,
+            batchNumber: true,
+            quantity: true,
+            saleUnit: true,
+            ...(isHistoricalSale ? { amount: true } : {}),
+          }),
     };
     setTouched(touchFields);
     if (!isFormValid) {
@@ -547,14 +547,12 @@ export function useSalesPage() {
                   : {}),
             },
           }
-        : isHistoricalSale && productDetailsText.trim()
-          ? { item: { product_name: productDetailsText.trim(), quantity: quantity > 0 ? quantity : 1 } }
-          : null;
+        : null;
 
     if (!saleItemPayload) {
       toast.error(
-        isHistoricalSale
-          ? 'Enter a product description for historical sales.'
+        isMealSale
+          ? 'Enter a meal name.'
           : 'Select a catalog product (or Record a meal).',
       );
       return;

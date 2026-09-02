@@ -226,14 +226,11 @@ export function AddSaleModal({
             </div>
           )}
 
-          {!isHistoricalSale && !isMealSale && (
+          {!isMealSale && (
             <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-800">
-              Sales are recorded separately from stock. Inventory is updated via adjustments, imports, and transfers.
-            </div>
-          )}
-          {isHistoricalSale && !isMealSale && (
-            <div className="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900">
-              Historical sale — enter amount and product description if not using catalog.
+              {isHistoricalSale
+                ? 'Historical sales must use a catalog product on the fulfillment hub so inventory stays linked.'
+                : 'Select a catalog product and batch. Inventory is deducted when stock tracking is enabled.'}
             </div>
           )}
           {isMealSale && (
@@ -245,7 +242,7 @@ export function AddSaleModal({
           {/* Product */}
           <div className="space-y-2">
             <label htmlFor="sale-product" className={LABEL_CLS}>
-              Product{isHistoricalSale || isMealSale ? '' : ' *'}
+              Product{isMealSale ? '' : ' *'}
             </label>
             <select id="sale-product" value={selectedProductId} onChange={(e) => handleProductChange(e.target.value)} className={`${INPUT_CLS} ${touched.productId && validationErrors.productId ? 'border-red-500' : ''}`}>
               <option value="">-- Select Product --</option>
@@ -286,24 +283,6 @@ export function AddSaleModal({
                 </div>
               </div>
             )}
-            {isHistoricalSale && !isMealSale && !selectedProductId && (
-              <div className="space-y-1">
-                <label htmlFor="sale-product-details" className="text-xs font-medium text-muted-foreground">
-                  Product description
-                </label>
-                <input
-                  id="sale-product-details"
-                  type="text"
-                  value={productDetailsText}
-                  onChange={(e) => setProductDetailsText(e.target.value)}
-                  placeholder="e.g. 2 crates of tomatoes"
-                  className={`${INPUT_CLS} ${touched.productDetails && validationErrors.productDetails ? 'border-red-500' : ''}`}
-                />
-                {touched.productDetails && validationErrors.productDetails && (
-                  <p className="text-xs text-red-500">{validationErrors.productDetails}</p>
-                )}
-              </div>
-            )}
             {selectedInventoryItem && !isMealSale && (
               <div className="flex items-center gap-3 text-xs text-muted-foreground">
                 <span>Catalog ref: {selectedInventoryItem.currentStock} {selectedInventoryItem.unitOfMeasure} on hand (informational)</span>
@@ -323,7 +302,7 @@ export function AddSaleModal({
             )}
           </div>
 
-          {!isHistoricalSale && !isMealSale && selectedProductId && (
+          {!isMealSale && selectedProductId && (
             <div className="space-y-2">
               <label htmlFor="sale-batch" className={LABEL_CLS}>Batch *</label>
               <select
