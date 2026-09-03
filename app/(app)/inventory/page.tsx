@@ -77,6 +77,45 @@ const sanitizeKgQtyDraft = (raw: string): string | null => {
 
 const kgQtyDraftToNumber = (raw: string) => parseKgQtyInput(raw);
 
+function isCartonsUom(uom?: string) {
+  return (uom ?? '').trim().toLowerCase() === 'cartons';
+}
+
+function defaultPurchaseUom(item?: InventoryItem | null): string {
+  if (!item) return '';
+  if (isCartonsUom(item.unitOfMeasure)) return 'Carton';
+  return item.unitOfMeasure || 'Units';
+}
+
+function purchaseUnitOptions(item?: InventoryItem | null): string[] {
+  if (!item) return [];
+  if (isCartonsUom(item.unitOfMeasure)) return ['Carton', 'Kg'];
+  return [item.unitOfMeasure || 'Units'];
+}
+
+/** Convert entered purchase qty+unit into catalog stock quantity. */
+function purchaseQtyToStockQty(
+  item: InventoryItem,
+  enteredQty: number,
+  purchaseUom: string,
+): number {
+  const qty = Math.abs(enteredQty);
+  if (!(qty > 0)) return 0;
+  if (isCartonsUom(item.unitOfMeasure)) {
+    const weight = Number(item.cartonWeight ?? 0);
+    if (purchaseUom === 'Kg') {
+      if (!(weight > 0)) return 0;
+      return roundQty2(qty / weight);
+    }
+    // Carton (or Cartons) → stock in cartons
+    return roundQty2(qty);
+  }
+  if (item.unitOfMeasure === 'Kg' || purchaseUom === 'Kg') {
+    return roundQty2(qty);
+  }
+  return qty;
+}
+
 /* ────────────────── FIFO / FEFO helpers ────────────────── */
 
 interface FifoBatch {
@@ -407,6 +446,23 @@ export default function InventoryPage() {
   const [initialStockDraft, setInitialStockDraft] = useState('');
   const [editCurrentStockDraft, setEditCurrentStockDraft] = useState('');
   const [purchaseQtyDraft, setPurchaseQtyDraft] = useState('1');
+  const [purchaseUom, setPurchaseUom] = useState('');
+
+  const resetPurchaseModal = () => {
+    setShowStockMoveModal(false);
+    setSelectedProduct(null);
+    setMoveData(emptyMoveData());
+    setPurchaseQtyDraft('1');
+    setPurchaseUom('');
+  };
+
+  const openPurchaseModal = (item: InventoryItem) => {
+    setSelectedProduct(item);
+    setMoveData(emptyMoveData(item));
+    setPurchaseQtyDraft('1');
+    setPurchaseUom(defaultPurchaseUom(item));
+    setShowStockMoveModal(true);
+  };
 
   const resetNewProduct = () => {
     setInitialStockDraft('');
@@ -833,16 +889,21 @@ export default function InventoryPage() {
 
   const handleStockMove = () => {
     if (!selectedProduct) return;
-    const absQty =
-      selectedProduct.unitOfMeasure === 'Kg'
+    if (!purchaseUom) {
+      toast.error('Select a unit.');
+      return;
+    }
+    const enteredQty =
+      purchaseUom === 'Kg'
         ? Math.abs(kgQtyDraftToNumber(purchaseQtyDraft))
         : Math.abs(moveData.quantity);
-    if (!(absQty > 0)) {
+    if (!(enteredQty > 0)) {
       toast.error('Quantity must be greater than 0.');
       return;
     }
     if (selectedProduct.unitOfMeasure === 'Cartons') {
-      if (!(moveData.cartonWeight > 0)) {
+      const cartonWeight = moveData.cartonWeight || selectedProduct.cartonWeight || 0;
+      if (!(cartonWeight > 0)) {
         toast.error('Carton weight is required for Cartons products.');
         return;
       }
@@ -856,24 +917,32 @@ export default function InventoryPage() {
       }
     }
 
-    const closeModal = () => {
-      setShowStockMoveModal(false);
-      setSelectedProduct(null);
-      setMoveData(emptyMoveData());
-      setPurchaseQtyDraft('1');
-    };
+    const stockQty = purchaseQtyToStockQty(
+      {
+        ...selectedProduct,
+        cartonWeight: moveData.cartonWeight || selectedProduct.cartonWeight,
+      },
+      enteredQty,
+      purchaseUom,
+    );
+    if (!(stockQty > 0)) {
+      toast.error('Could not convert quantity to stock unit. Check carton weight.');
+      return;
+    }
 
     recordStockMove.mutate({
       item_id: selectedProduct.id,
       type: StockMovementType.PURCHASE,
-      quantity: absQty,
+      quantity: stockQty,
       unit_cost: roundMoney2(moveData.unitCost || selectedProduct.avgUnitCost),
       unit_price: roundMoney2(moveData.unitPrice || selectedProduct.baseSellingPrice),
       carton_price:
         selectedProduct.unitOfMeasure === 'Cartons'
           ? roundMoney2(moveData.cartonPrice)
           : undefined,
-      carton_weight: selectedProduct.unitOfMeasure === 'Cartons' ? moveData.cartonWeight : undefined,
+      carton_weight: selectedProduct.unitOfMeasure === 'Cartons'
+        ? (moveData.cartonWeight || selectedProduct.cartonWeight)
+        : undefined,
       notes: moveData.notes || undefined,
       expiry_date: moveData.expiryDate || undefined,
       movement_date: moveData.purchasedDate || undefined,
@@ -883,7 +952,7 @@ export default function InventoryPage() {
       onSuccess: (result) => {
         const batch = result?.log?.batchNumber;
         toast.success(batch ? `Purchase recorded (batch ${batch}).` : 'Purchase recorded.');
-        closeModal();
+        resetPurchaseModal();
       },
       onError: (err) => toast.error(err.message),
     });
@@ -1486,12 +1555,7 @@ export default function InventoryPage() {
                             )}
                             {can('inventory.adjust_stock') && (
                               <button
-                                onClick={() => {
-                                  setSelectedProduct(item);
-                                  setMoveData(emptyMoveData(item));
-                                  setPurchaseQtyDraft('1');
-                                  setShowStockMoveModal(true);
-                                }}
+                                onClick={() => openPurchaseModal(item)}
                                 className="h-8 w-8 rounded-md flex items-center justify-center border hover:bg-accent text-muted-foreground hover:text-foreground"
                                 title="Purchase"
                               >
@@ -1860,12 +1924,7 @@ export default function InventoryPage() {
                   <div className="flex gap-2">
                     {can('inventory.adjust_stock') && (
                       <button
-                        onClick={() => {
-                          setSelectedProduct(viewingDetailsItem);
-                          setMoveData(emptyMoveData(viewingDetailsItem));
-                          setPurchaseQtyDraft('1');
-                          setShowStockMoveModal(true);
-                        }}
+                        onClick={() => openPurchaseModal(viewingDetailsItem)}
                         className="flex-1 h-10 rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 flex items-center justify-center gap-2"
                       >
                         <ArrowUpRight size={16} /> Purchase
@@ -2729,48 +2788,90 @@ export default function InventoryPage() {
                 <p className="text-xs text-muted-foreground mt-0.5">Current stock: <span className="font-bold">{formatInventoryStockDisplay(selectedProduct)}</span> in {selectedProduct.location}</p>
                 <p className="text-[11px] text-muted-foreground mt-1">Batch code is auto-assigned (001, 002, …). Product SKU stays unchanged.</p>
               </div>
-              <button onClick={() => { setShowStockMoveModal(false); setSelectedProduct(null); }} className="text-muted-foreground hover:text-foreground"><X size={20} /></button>
+              <button onClick={resetPurchaseModal} className="text-muted-foreground hover:text-foreground"><X size={20} /></button>
             </div>
             <div className="space-y-4">
-              <div className="space-y-2">
-                <label className={labelCls}>Quantity *</label>
-                <input
-                  type="number"
-                  min={0.01}
-                  step={selectedProduct.unitOfMeasure === 'Kg' ? '0.01' : 'any'}
-                  value={
-                    selectedProduct.unitOfMeasure === 'Kg'
-                      ? purchaseQtyDraft
-                      : moveData.quantity
-                  }
-                  onChange={(e) => {
-                    if (selectedProduct.unitOfMeasure === 'Kg') {
-                      const next = sanitizeKgQtyDraft(e.target.value);
-                      if (next === null) return;
-                      setPurchaseQtyDraft(next);
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className={labelCls}>Quantity *</label>
+                  <input
+                    type="number"
+                    min={0.01}
+                    step={purchaseUom === 'Kg' ? '0.01' : 'any'}
+                    value={
+                      purchaseUom === 'Kg'
+                        ? purchaseQtyDraft
+                        : moveData.quantity
+                    }
+                    onChange={(e) => {
+                      if (purchaseUom === 'Kg') {
+                        const next = sanitizeKgQtyDraft(e.target.value);
+                        if (next === null) return;
+                        setPurchaseQtyDraft(next);
+                        setMoveData({
+                          ...moveData,
+                          quantity: kgQtyDraftToNumber(next),
+                        });
+                        return;
+                      }
                       setMoveData({
                         ...moveData,
-                        quantity: kgQtyDraftToNumber(next),
+                        quantity: parseFloat(e.target.value) || 0,
                       });
-                      return;
-                    }
-                    setMoveData({
-                      ...moveData,
-                      quantity: parseFloat(e.target.value) || 0,
-                    });
-                  }}
-                  onBlur={() => {
-                    if (selectedProduct.unitOfMeasure !== 'Kg') return;
-                    const n = kgQtyDraftToNumber(purchaseQtyDraft);
-                    setPurchaseQtyDraft(n > 0 ? String(n) : '');
-                    setMoveData((prev) => ({ ...prev, quantity: n }));
-                  }}
-                  className={inputCls}
-                />
-                {selectedProduct.unitOfMeasure === 'Kg' ? (
-                  <p className="text-[11px] text-muted-foreground">Up to 2 decimal places (Kg).</p>
-                ) : null}
+                    }}
+                    onBlur={() => {
+                      if (purchaseUom !== 'Kg') return;
+                      const n = kgQtyDraftToNumber(purchaseQtyDraft);
+                      setPurchaseQtyDraft(n > 0 ? String(n) : '');
+                      setMoveData((prev) => ({ ...prev, quantity: n }));
+                    }}
+                    className={inputCls}
+                  />
+                  {purchaseUom === 'Kg' ? (
+                    <p className="text-[11px] text-muted-foreground">Up to 2 decimal places (Kg).</p>
+                  ) : null}
+                </div>
+                <div className="space-y-2">
+                  <label className={labelCls}>Unit *</label>
+                  <select
+                    value={purchaseUom}
+                    onChange={(e) => {
+                      const next = e.target.value;
+                      setPurchaseUom(next);
+                      if (next === 'Kg') {
+                        const n = kgQtyDraftToNumber(purchaseQtyDraft || String(moveData.quantity || ''));
+                        setPurchaseQtyDraft(n > 0 ? String(n) : '');
+                        setMoveData((prev) => ({ ...prev, quantity: n }));
+                      }
+                    }}
+                    className={inputCls}
+                  >
+                    <option value="" disabled>Select unit</option>
+                    {purchaseUnitOptions(selectedProduct).map((u) => (
+                      <option key={u} value={u}>{u}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
+              {isCartonsUom(selectedProduct.unitOfMeasure) && purchaseUom && (moveData.cartonWeight || selectedProduct.cartonWeight) ? (
+                <p className="text-[11px] text-muted-foreground -mt-2">
+                  {(() => {
+                    const entered =
+                      purchaseUom === 'Kg'
+                        ? kgQtyDraftToNumber(purchaseQtyDraft)
+                        : moveData.quantity;
+                    const weight = moveData.cartonWeight || selectedProduct.cartonWeight || 0;
+                    if (!(entered > 0) || !(weight > 0)) return null;
+                    if (purchaseUom === 'Carton') {
+                      return `${entered} Carton = ${roundQty2(entered * weight)} Kg (stock: ${entered} Cartons)`;
+                    }
+                    if (purchaseUom === 'Kg') {
+                      return `${entered} Kg = ${roundQty2(entered / weight)} Carton (stock unit)`;
+                    }
+                    return null;
+                  })()}
+                </p>
+              ) : null}
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -2845,7 +2946,7 @@ export default function InventoryPage() {
               </div>
             </div>
             <div className="mt-6 flex justify-end gap-3">
-              <button onClick={() => { setShowStockMoveModal(false); setSelectedProduct(null); }} className={btnSecondary}>Cancel</button>
+              <button onClick={resetPurchaseModal} className={btnSecondary}>Cancel</button>
               {can('inventory.adjust_stock') && (
                 <SubmitButton onClick={handleStockMove} loading={recordStockMove.isPending} className={btnPrimary}>Confirm Purchase</SubmitButton>
               )}
