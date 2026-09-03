@@ -153,10 +153,9 @@ export function SalesImportModal({
           <p className="font-medium text-foreground mb-1">Excel template columns:</p>
           {allCustom ? (
             <>
-              <p><strong>Custom template:</strong> product_description + amount required.</p>
-              <p>Historical dates only (before today). Live sales require the catalog template.</p>
-              <p>When stock tracking is on, custom import is blocked — use the catalog template.</p>
-              <p>Custom/meal lines do not debit inventory stock.</p>
+              <p><strong>Custom template:</strong> kitchen / meal lines only (product_description + amount required).</p>
+              <p>Live and historical dates OK. Each row imports as Food plate / Kitchen and does not debit stock.</p>
+              <p>Inventory SKUs must use the Catalog template (with batch when stock tracking is on).</p>
             </>
           ) : (
             <>
