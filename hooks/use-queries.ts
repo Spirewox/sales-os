@@ -2393,3 +2393,38 @@ export function useDashboardMetrics(): ReturnType<typeof useQuery<DashboardMetri
     },
   });
 }
+
+// --- Insights (Gemini narrative over structured compare/ask results) ---
+export type NarrateInsightPayload = {
+  kind: string;
+  aLabel: string;
+  bLabel: string;
+  aWins: number;
+  bWins: number;
+  periodLabel?: string;
+  insights?: string[];
+  metrics?: Array<{
+    group?: string;
+    label: string;
+    a: string;
+    b: string;
+    winner?: 'a' | 'b' | null;
+    deltaPct?: number;
+  }>;
+};
+
+export function useNarrateInsight() {
+  return useMutation({
+    mutationFn: async (payload: NarrateInsightPayload) => {
+      requireApi();
+      const res = await axiosPost('insights/narrate', payload, true) as
+        | { summary?: string }
+        | { data?: { summary?: string } };
+      const summary =
+        (res as { summary?: string }).summary ??
+        (res as { data?: { summary?: string } }).data?.summary;
+      if (!summary) throw new Error('No summary returned');
+      return { summary };
+    },
+  });
+}
