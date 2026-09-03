@@ -405,6 +405,7 @@ export default function InventoryPage() {
     emptyNewProduct(hubScope.defaultHubId, hubScope.defaultHubName),
   );
   const [initialStockDraft, setInitialStockDraft] = useState('');
+  const [editCurrentStockDraft, setEditCurrentStockDraft] = useState('');
   const [purchaseQtyDraft, setPurchaseQtyDraft] = useState('1');
 
   const resetNewProduct = () => {
@@ -638,6 +639,13 @@ export default function InventoryPage() {
       purchasedDate: '',
       expiryDate: '',
     });
+    setEditCurrentStockDraft(
+      item.unitOfMeasure === 'Kg' && item.currentStock
+        ? String(roundQty2(item.currentStock))
+        : item.unitOfMeasure === 'Kg'
+          ? ''
+          : '',
+    );
     setShowEditModal(true);
   }, []);
 
@@ -801,7 +809,10 @@ export default function InventoryPage() {
       ...(hub?.id ? { hub_id: hub.id } : {}),
       ...(canEditInitialStock
         ? {
-            current_stock: editProduct.currentStock ?? original.currentStock,
+            current_stock:
+              editProduct.unitOfMeasure === 'Kg'
+                ? kgQtyDraftToNumber(editCurrentStockDraft)
+                : editProduct.currentStock ?? original.currentStock,
             purchased_date: editProduct.purchasedDate || undefined,
             expiry_date: editProduct.expiryDate || undefined,
           }
@@ -811,6 +822,7 @@ export default function InventoryPage() {
         if (viewingDetailsItem?.id === editProduct.id) setViewingDetailsItem(updated);
         setShowEditModal(false);
         setEditProduct({});
+        setEditCurrentStockDraft('');
         toast.success('Product updated successfully.');
       },
       onError: (err) => toast.error(err.message),
@@ -2525,7 +2537,7 @@ export default function InventoryPage() {
           <div className="w-full max-w-lg rounded-xl border bg-card p-6 shadow-xl animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold">Edit SKU</h2>
-              <button onClick={() => { setShowEditModal(false); setEditProduct({}); }} className="text-muted-foreground hover:text-foreground"><X size={20} /></button>
+              <button onClick={() => { setShowEditModal(false); setEditProduct({}); setEditCurrentStockDraft(''); }} className="text-muted-foreground hover:text-foreground"><X size={20} /></button>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2 col-span-2">
@@ -2562,11 +2574,40 @@ export default function InventoryPage() {
                     <input
                       type="number"
                       min={0}
-                      value={editProduct.currentStock ?? ''}
-                      onChange={(e) => setEditProduct({ ...editProduct, currentStock: parseInt(e.target.value) || 0 })}
+                      step={editProduct.unitOfMeasure === 'Kg' ? '0.01' : 1}
+                      value={
+                        editProduct.unitOfMeasure === 'Kg'
+                          ? editCurrentStockDraft
+                          : editProduct.currentStock ?? ''
+                      }
+                      onChange={(e) => {
+                        if (editProduct.unitOfMeasure === 'Kg') {
+                          const next = sanitizeKgQtyDraft(e.target.value);
+                          if (next === null) return;
+                          setEditCurrentStockDraft(next);
+                          setEditProduct({
+                            ...editProduct,
+                            currentStock: kgQtyDraftToNumber(next),
+                          });
+                          return;
+                        }
+                        setEditProduct({
+                          ...editProduct,
+                          currentStock: parseInt(e.target.value, 10) || 0,
+                        });
+                      }}
+                      onBlur={() => {
+                        if (editProduct.unitOfMeasure !== 'Kg') return;
+                        const n = kgQtyDraftToNumber(editCurrentStockDraft);
+                        setEditCurrentStockDraft(n > 0 ? String(n) : '');
+                        setEditProduct((prev) => ({ ...prev, currentStock: n }));
+                      }}
                       className={inputCls}
                     />
-                    <p className="text-[11px] text-muted-foreground">Editable until the first sale is recorded.</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Editable until the first sale is recorded.
+                      {editProduct.unitOfMeasure === 'Kg' ? ' Up to 2 decimal places (Kg).' : ''}
+                    </p>
                   </div>
                   <div className="space-y-2">
                     <label className={labelCls}>Purchased date</label>
@@ -2670,7 +2711,7 @@ export default function InventoryPage() {
               </div>
             ) : null}
             <div className="mt-6 flex justify-end gap-3">
-              <button onClick={() => { setShowEditModal(false); setEditProduct({}); }} className={btnSecondary}>Cancel</button>
+              <button onClick={() => { setShowEditModal(false); setEditProduct({}); setEditCurrentStockDraft(''); }} className={btnSecondary}>Cancel</button>
               {can('inventory.edit') && <SubmitButton onClick={handleEditProduct} loading={updateProduct.isPending} className={btnPrimary}>Save Changes</SubmitButton>}
             </div>
           </div>
