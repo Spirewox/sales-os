@@ -90,6 +90,7 @@ function defaultPurchaseUom(item?: InventoryItem | null): string {
 function purchaseUnitOptions(item?: InventoryItem | null): string[] {
   if (!item) return [];
   if (isCartonsUom(item.unitOfMeasure)) return ['Carton', 'Kg'];
+  if (item.unitOfMeasure === 'Kg') return ['Kg', 'Carton'];
   return [item.unitOfMeasure || 'Units'];
 }
 
@@ -101,19 +102,36 @@ function purchaseQtyToStockQty(
 ): number {
   const qty = Math.abs(enteredQty);
   if (!(qty > 0)) return 0;
+  const weight = Number(item.cartonWeight ?? 0);
+
   if (isCartonsUom(item.unitOfMeasure)) {
-    const weight = Number(item.cartonWeight ?? 0);
     if (purchaseUom === 'Kg') {
       if (!(weight > 0)) return 0;
       return roundQty2(qty / weight);
     }
-    // Carton (or Cartons) → stock in cartons
+    // Carton → stock in cartons
     return roundQty2(qty);
   }
-  if (item.unitOfMeasure === 'Kg' || purchaseUom === 'Kg') {
+
+  if (item.unitOfMeasure === 'Kg') {
+    if (purchaseUom === 'Carton') {
+      if (!(weight > 0)) return 0;
+      return roundQty2(qty * weight);
+    }
     return roundQty2(qty);
   }
+
   return qty;
+}
+
+function needsPurchaseCartonWeight(
+  item: InventoryItem | null | undefined,
+  purchaseUom: string,
+): boolean {
+  if (!item || !purchaseUom) return false;
+  if (isCartonsUom(item.unitOfMeasure)) return true;
+  if (item.unitOfMeasure === 'Kg' && purchaseUom === 'Carton') return true;
+  return false;
 }
 
 /* ────────────────── FIFO / FEFO helpers ────────────────── */
@@ -901,12 +919,14 @@ export default function InventoryPage() {
       toast.error('Quantity must be greater than 0.');
       return;
     }
+
+    const cartonWeight = moveData.cartonWeight || selectedProduct.cartonWeight || 0;
+    if (needsPurchaseCartonWeight(selectedProduct, purchaseUom) && !(cartonWeight > 0)) {
+      toast.error('Carton weight (kg) is required for this unit conversion.');
+      return;
+    }
+
     if (selectedProduct.unitOfMeasure === 'Cartons') {
-      const cartonWeight = moveData.cartonWeight || selectedProduct.cartonWeight || 0;
-      if (!(cartonWeight > 0)) {
-        toast.error('Carton weight is required for Cartons products.');
-        return;
-      }
       if (!(moveData.cartonPrice > 0)) {
         toast.error('Carton selling price is required for Cartons products.');
         return;
@@ -920,7 +940,7 @@ export default function InventoryPage() {
     const stockQty = purchaseQtyToStockQty(
       {
         ...selectedProduct,
-        cartonWeight: moveData.cartonWeight || selectedProduct.cartonWeight,
+        cartonWeight,
       },
       enteredQty,
       purchaseUom,
@@ -940,8 +960,8 @@ export default function InventoryPage() {
         selectedProduct.unitOfMeasure === 'Cartons'
           ? roundMoney2(moveData.cartonPrice)
           : undefined,
-      carton_weight: selectedProduct.unitOfMeasure === 'Cartons'
-        ? (moveData.cartonWeight || selectedProduct.cartonWeight)
+      carton_weight: needsPurchaseCartonWeight(selectedProduct, purchaseUom)
+        ? cartonWeight
         : undefined,
       notes: moveData.notes || undefined,
       expiry_date: moveData.expiryDate || undefined,
@@ -2853,7 +2873,7 @@ export default function InventoryPage() {
                   </select>
                 </div>
               </div>
-              {isCartonsUom(selectedProduct.unitOfMeasure) && purchaseUom && (moveData.cartonWeight || selectedProduct.cartonWeight) ? (
+              {needsPurchaseCartonWeight(selectedProduct, purchaseUom) && purchaseUom ? (
                 <p className="text-[11px] text-muted-foreground -mt-2">
                   {(() => {
                     const entered =
@@ -2862,13 +2882,17 @@ export default function InventoryPage() {
                         : moveData.quantity;
                     const weight = moveData.cartonWeight || selectedProduct.cartonWeight || 0;
                     if (!(entered > 0) || !(weight > 0)) return null;
-                    if (purchaseUom === 'Carton') {
-                      return `${entered} Carton = ${roundQty2(entered * weight)} Kg (stock: ${entered} Cartons)`;
-                    }
-                    if (purchaseUom === 'Kg') {
+                    if (isCartonsUom(selectedProduct.unitOfMeasure)) {
+                      if (purchaseUom === 'Carton') {
+                        return `${entered} Carton = ${roundQty2(entered * weight)} Kg (stock: ${entered} Cartons)`;
+                      }
                       return `${entered} Kg = ${roundQty2(entered / weight)} Carton (stock unit)`;
                     }
-                    return null;
+                    // Catalog Kg
+                    if (purchaseUom === 'Carton') {
+                      return `${entered} Carton = ${roundQty2(entered * weight)} Kg (stock unit)`;
+                    }
+                    return `${entered} Kg (stock unit)`;
                   })()}
                 </p>
               ) : null}
@@ -2896,8 +2920,24 @@ export default function InventoryPage() {
                   </div>
                   <div className="space-y-2">
                     <label className={labelCls}>Carton weight (kg) *</label>
-                    <input type="number" value={moveData.cartonWeight} onChange={(e) => setMoveData({ ...moveData, cartonWeight: parseFloat(e.target.value) || 0 })} className={inputCls} />
+                    <input type="number" min={0.01} step="0.01" value={moveData.cartonWeight} onChange={(e) => setMoveData({ ...moveData, cartonWeight: parseFloat(e.target.value) || 0 })} className={inputCls} />
                   </div>
+                </div>
+              )}
+
+              {selectedProduct.unitOfMeasure === 'Kg' && purchaseUom === 'Carton' && (
+                <div className="space-y-2">
+                  <label className={labelCls}>Carton weight (kg) *</label>
+                  <input
+                    type="number"
+                    min={0.01}
+                    step="0.01"
+                    value={moveData.cartonWeight || ''}
+                    onChange={(e) => setMoveData({ ...moveData, cartonWeight: parseFloat(e.target.value) || 0 })}
+                    placeholder="Kg per carton"
+                    className={inputCls}
+                  />
+                  <p className="text-[11px] text-muted-foreground">Required to convert cartons into Kg stock.</p>
                 </div>
               )}
 
