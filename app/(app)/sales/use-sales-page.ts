@@ -185,7 +185,6 @@ export function useSalesPage() {
   });
   const [newSale, setNewSale] = useState<Partial<Sale>>({
     amount: 0,
-    profitMargin: 20,
     status: 'Pending',
     date: new Date().toISOString().split('T')[0],
     paymentTerms: PaymentTerms.COD,
@@ -462,7 +461,6 @@ export function useSalesPage() {
   const resetForm = () => {
     setNewSale({
       amount: 0,
-      profitMargin: 0,
       status: 'Pending',
       date: new Date().toISOString().split('T')[0],
       paymentTerms: PaymentTerms.COD,
@@ -514,8 +512,6 @@ export function useSalesPage() {
     }
 
     const amount = Number(newSale.amount);
-    const profitMargin = isAdmin ? Number(newSale.profitMargin) || 0 : 0;
-    const profitAmount = isAdmin ? (amount * profitMargin) / 100 : 0;
     const saleDate = newSale.date || new Date().toISOString().split('T')[0];
     const finalAmountPaid = getAmountPaidForMode(paymentMode, amount, amountPaid);
     const isCreditMode = paymentMode !== PaymentMode.FULL_PAYMENT;
@@ -572,7 +568,6 @@ export function useSalesPage() {
         delivery_status: newSale.deliveryStatus || DeliveryStatus.NOT_APPLICABLE,
         delivery_address: newSale.deliveryAddress,
         notes: newSale.notes || undefined,
-        ...(isAdmin ? { profit_margin: profitMargin, profit_amount: profitAmount } : {}),
         date: saleDate,
         ...saleItemPayload,
       },
@@ -610,7 +605,6 @@ export function useSalesPage() {
     if (!selectedSale) return;
     setEditForm({
       amount: selectedSale.amount,
-      profitMargin: selectedSale.profitMargin,
       notes: selectedSale.notes,
       deliveryAddress: selectedSale.deliveryAddress,
       customerPhone: selectedSale.customerPhone,
@@ -625,14 +619,11 @@ export function useSalesPage() {
   const saveEdit = () => {
     if (!selectedSale) return;
     const amount = Number(editForm.amount) || selectedSale.amount;
-    const profitMargin = isAdmin ? Number(editForm.profitMargin) || selectedSale.profitMargin : 0;
-    const profitAmount = isAdmin ? (amount * profitMargin) / 100 : 0;
     const hubId = editForm.hubName ? resolveHubId(editForm.hubName) : undefined;
     updateSale.mutate(
       {
         id: selectedSale.id,
         amount,
-        ...(isAdmin ? { profit_margin: profitMargin, profit_amount: profitAmount } : {}),
         notes: editForm.notes,
         delivery_address: editForm.deliveryAddress,
         payment_terms: editForm.paymentTerms,
