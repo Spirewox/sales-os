@@ -768,7 +768,6 @@ export function useCustomers(filters?: {
   return useQuery({
     queryKey: ['customers', filters],
     enabled: options?.enabled ?? true,
-    placeholderData: keepPreviousData,
     queryFn: async (): Promise<CustomerListResult> => {
       if (!HAS_API) return EMPTY_CUSTOMER_LIST;
       const hubs = await qc.fetchQuery({
