@@ -2,10 +2,6 @@
 
 import { useMemo } from 'react';
 import {
-  useCustomers,
-  useSales,
-  useSuppliers,
-  useStockLogs,
   useInventory,
   useSaleCredits,
   useAgents,
@@ -15,12 +11,16 @@ import { useMetricsPeriod } from '@/components/metrics-period-bar';
 import type { DataBundle } from '@/lib/insights';
 import type { Sale, StockLog, CreditRecord, SupplierIssue } from '@/types';
 import { axiosGet } from '@/lib/api';
+import {
+  fetchAllInsightCustomers,
+  fetchAllInsightSales,
+  fetchAllInsightStockLogs,
+  fetchAllInsightSuppliers,
+} from '@/lib/insight-data-fetch';
 import { HAS_API } from '@/lib/require-api';
 import { useQuery } from '@tanstack/react-query';
 import type { ApiSupplierIssue } from '@/types/api';
 import { mapSupplierIssue } from '@/lib/api-mappers';
-
-const BUNDLE_LIMIT = 500;
 
 function inDateRange(iso: string | undefined, from?: string, to?: string): boolean {
   if (!from && !to) return true;
@@ -73,27 +73,52 @@ export function useInsightDataBundle(options?: {
       : undefined);
   const applyPeriod = options?.applyPeriod ?? true;
 
-  const customersQ = useCustomers({ hub_id: hubId, limit: BUNDLE_LIMIT, page: 1 });
-  const salesQ = useSales({
+  const salesFilters = {
     hub_id: hubId,
-    limit: BUNDLE_LIMIT,
-    page: 1,
-    exclude_voided: true,
+    exclude_voided: true as const,
     ...(applyPeriod && dateFrom ? { date_from: dateFrom } : {}),
     ...(applyPeriod && dateTo ? { date_to: dateTo } : {}),
+  };
+
+  const stockLogFilters = {
+    hub_id: hubId,
+    ...(applyPeriod && dateFrom ? { date_from: dateFrom } : {}),
+    ...(applyPeriod && dateTo ? { date_to: dateTo } : {}),
+  };
+
+  const customersQ = useQuery({
+    queryKey: ['insight-all-customers', hubId],
+    enabled: HAS_API,
+    staleTime: 60_000,
+    queryFn: () => fetchAllInsightCustomers(hubId),
   });
-  const suppliersQ = useSuppliers({ hub_id: hubId, limit: BUNDLE_LIMIT, page: 1 });
+
+  const salesQ = useQuery({
+    queryKey: ['insight-all-sales', salesFilters],
+    enabled: HAS_API,
+    staleTime: 60_000,
+    queryFn: () => fetchAllInsightSales(salesFilters),
+  });
+
+  const suppliersQ = useQuery({
+    queryKey: ['insight-all-suppliers', hubId],
+    enabled: HAS_API,
+    staleTime: 60_000,
+    queryFn: () => fetchAllInsightSuppliers(hubId),
+  });
+
+  const stockLogsQ = useQuery({
+    queryKey: ['insight-all-stock-logs', stockLogFilters],
+    enabled: HAS_API,
+    staleTime: 60_000,
+    queryFn: () => fetchAllInsightStockLogs(stockLogFilters),
+  });
+
   const inventoryQ = useInventory({ hub_id: hubId });
-  const stockLogsQ = useStockLogs({
-    hub_id: hubId,
-    limit: BUNDLE_LIMIT,
-    ...(applyPeriod && dateFrom ? { date_from: dateFrom } : {}),
-    ...(applyPeriod && dateTo ? { date_to: dateTo } : {}),
-  });
   const creditsQ = useSaleCredits();
   const agentsQ = useAgents({ hub_id: hubId, limit: 200 });
 
-  const supplierIds = (suppliersQ.data?.items ?? []).map((s) => s.id).slice(0, 80);
+  const supplierIds = (suppliersQ.data ?? []).map((s) => s.id).slice(0, 80);
   const issuesQ = useQuery({
     queryKey: ['insight-supplier-issues', supplierIds],
     enabled: HAS_API && supplierIds.length > 0,
@@ -130,12 +155,12 @@ export function useInsightDataBundle(options?: {
     agentsQ.isLoading;
 
   const bundle: DataBundle = useMemo(() => {
-    const customers = customersQ.data?.items ?? [];
-    let sales = salesQ.data?.items ?? [];
+    const customers = customersQ.data ?? [];
+    let sales = salesQ.data ?? [];
     let stockLogs = stockLogsQ.data ?? [];
     let credits = (creditsQ.data ?? []) as CreditRecord[];
     const inventory = inventoryQ.data ?? [];
-    const suppliers = suppliersQ.data?.items ?? [];
+    const suppliers = suppliersQ.data ?? [];
     const agents = agentsQ.data ?? [];
     const supplierIssues = issuesQ.data ?? [];
 

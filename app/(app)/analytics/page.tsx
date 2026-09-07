@@ -132,10 +132,14 @@ export default function AnalyticsPage() {
   const [tab, setTab] = useState<AnalyticsTab>('sales');
   const hubScope = useHubScopeFilter();
   const metricsPeriod = useMetricsPeriod('all');
-  const { data: overview, isLoading } = useAnalyticsOverview({
-    hub_id: hubScope.hubIdForApi,
-    ...metricsPeriod.apiParams,
-  });
+  const insightScope = useMemo(
+    () => ({
+      hub_id: hubScope.hubIdForApi,
+      ...metricsPeriod.apiParams,
+    }),
+    [hubScope.hubIdForApi, metricsPeriod.apiParams],
+  );
+  const { data: overview, isLoading } = useAnalyticsOverview(insightScope);
 
   const tabs: { key: AnalyticsTab; label: string; icon: React.ElementType }[] = [
     { key: 'sales', label: 'Sales Analysis', icon: TrendingUp },
@@ -199,6 +203,7 @@ export default function AnalyticsPage() {
 
           {tab === 'compare' ? (
             <AnalyticsCompareTab
+              scope={insightScope}
               periodLabel={
                 metricsPeriod.isCustom
                   ? `${metricsPeriod.dateFrom} → ${metricsPeriod.dateTo}`
