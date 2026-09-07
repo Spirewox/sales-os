@@ -99,7 +99,8 @@ export default function SalesPage() {
     touched, setTouched, validationErrors, isFormValid, isHistoricalSale, isMealSale,
     productDetailsText, setProductDetailsText, customerCreditWarning,
     selectedFormCustomer, availableInventory, selectedInventoryItem, isCartonProduct,
-    handleProductChange, handleQuantityChange, handleSaleUnitChange, handleSaveSale,
+    handleProductChange, handleBatchChange, handleQuantityChange, handleSaleUnitChange,
+    listUnitPriceForSale, selectedBatch, handleSaveSale,
     savingSale, savingEdit, voidingSale, updatingDelivery,
     showImportModal, setShowImportModal, importPreview, setImportPreview, importSummary, setImportSummary,
     validateAuditId, importing, importProgress, importResult, importError, showImportConfirm, setShowImportConfirm,
@@ -447,11 +448,14 @@ export default function SalesPage() {
         setSelectedProductId={setSelectedProductId}
         selectedBatchNumber={selectedBatchNumber}
         setSelectedBatchNumber={setSelectedBatchNumber}
+        handleBatchChange={handleBatchChange}
         productBatches={productBatches}
         batchesLoading={batchesLoading}
         handleProductChange={handleProductChange}
         availableInventory={availableInventory}
         selectedInventoryItem={selectedInventoryItem}
+        selectedBatch={selectedBatch}
+        listUnitPriceForSale={listUnitPriceForSale}
         quantity={quantity}
         handleQuantityChange={handleQuantityChange}
         saleUnit={saleUnit}

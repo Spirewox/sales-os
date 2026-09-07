@@ -221,6 +221,37 @@ function OverviewTab({
             <p><span className="text-muted-foreground">Quantity:</span> {sale.item?.quantity ?? '—'}</p>
             <p><span className="text-muted-foreground">Unit:</span> {sale.item?.unit || '—'}</p>
             <p><span className="text-muted-foreground">Category:</span> {sale.item?.category || '—'}</p>
+            {(sale.item?.unitCost != null || sale.item?.unitPrice != null) && (
+              <>
+                {sale.item?.unitCost != null && (
+                  <p>
+                    <span className="text-muted-foreground">Batch cost:</span>{' '}
+                    {fmt(sale.item.unitCost)}
+                  </p>
+                )}
+                {sale.item?.unitPrice != null && (
+                  <p>
+                    <span className="text-muted-foreground">Batch list price:</span>{' '}
+                    {fmt(sale.item.unitPrice)}
+                    {sale.item.saleUnit !== 'Carton' &&
+                    sale.item.quantity != null &&
+                    sale.item.unitPrice > 0
+                      ? (() => {
+                          const listTotal = sale.item!.unitPrice! * sale.item!.quantity;
+                          if (sale.amount < listTotal - 0.005) {
+                            return (
+                              <span className="text-amber-700 ml-1 font-medium">
+                                (under list · charged {fmt(sale.amount)})
+                              </span>
+                            );
+                          }
+                          return null;
+                        })()
+                      : null}
+                  </p>
+                )}
+              </>
+            )}
           </div>
         )}
       </div>

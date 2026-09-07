@@ -239,6 +239,8 @@ export interface ApiSaleItem {
   stock_quantity?: number;
   category?: string;
   batch_number?: string;
+  unit_cost?: number;
+  unit_price?: number;
 }
 
 export interface ApiSale {

@@ -245,6 +245,8 @@ export function mapSale(s: ApiSale, hubMap?: Record<string, string>): Sale {
           stockQuantity: item.stock_quantity,
           category: item.category,
           batchNumber: item.batch_number,
+          unitCost: item.unit_cost,
+          unitPrice: item.unit_price,
         }
       : undefined,
     productDetails: s.product_details ?? derivedProductDetails,

@@ -1484,6 +1484,8 @@ export function useProductBatches(productId: string | null) {
         batchNumber: string;
         quantityRemaining: number;
         unitCost: number;
+        unitPrice: number;
+        purchaseLogId?: string;
         expiryDate?: string;
         receivedDate?: string;
         supplier?: string;

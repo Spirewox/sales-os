@@ -273,17 +273,39 @@ export function useSalesPage() {
 
   const isCartonProduct = selectedInventoryItem?.unitOfMeasure === 'Cartons';
 
-  const computeSaleAmount = (item: typeof selectedInventoryItem, qty: number, unit: 'Carton' | 'Kg' | '') => {
-    if (!item || qty <= 0) return 0;
+  const selectedBatch = useMemo(
+    () => productBatches.find((b) => b.batchNumber === selectedBatchNumber),
+    [productBatches, selectedBatchNumber],
+  );
+
+  /** List selling price in the sale unit, preferring the selected batch snapshot. */
+  const listUnitPriceForSale = (
+    item: typeof selectedInventoryItem,
+    unit: 'Carton' | 'Kg' | '',
+    batch?: { unitPrice: number } | null,
+  ) => {
+    if (!item) return 0;
+    const batchList = Number(batch?.unitPrice) || 0;
     if (item.unitOfMeasure === 'Cartons') {
       if (unit === 'Kg') {
-        if (!(item.baseSellingPrice > 0)) return 0;
-        return item.baseSellingPrice * qty;
+        return batchList > 0 ? batchList : item.baseSellingPrice;
       }
-      if (!(item.cartonPrice && item.cartonPrice > 0)) return 0;
-      return item.cartonPrice * qty;
+      if (batchList > 0 && item.cartonWeight && item.cartonWeight > 0) {
+        return Math.round(batchList * item.cartonWeight * 100) / 100;
+      }
+      return item.cartonPrice && item.cartonPrice > 0 ? item.cartonPrice : 0;
     }
-    return item.baseSellingPrice * qty;
+    return batchList > 0 ? batchList : item.baseSellingPrice;
+  };
+
+  const computeSaleAmount = (
+    item: typeof selectedInventoryItem,
+    qty: number,
+    unit: 'Carton' | 'Kg' | '',
+    batch?: { unitPrice: number } | null,
+  ) => {
+    if (!item || qty <= 0) return 0;
+    return listUnitPriceForSale(item, unit, batch) * qty;
   };
 
   const stockQtyForSale = (item: typeof selectedInventoryItem, qty: number, unit: 'Carton' | 'Kg' | '') => {
@@ -298,6 +320,25 @@ export function useSalesPage() {
   const [productDetailsText, setProductDetailsText] = useState('');
   const MEAL_PRODUCT_ID = '__meal__';
   const isMealSale = selectedProductId === MEAL_PRODUCT_ID;
+
+  // When batch becomes available/selected, refresh amount from batch list price.
+  useEffect(() => {
+    if (!selectedInventoryItem || !selectedBatchNumber || isMealSale) return;
+    const batch = productBatches.find((b) => b.batchNumber === selectedBatchNumber);
+    if (!batch) return;
+    setNewSale((prev) => {
+      const next = computeSaleAmount(
+        selectedInventoryItem,
+        quantity,
+        saleUnit || (selectedInventoryItem.unitOfMeasure === 'Cartons' ? 'Carton' : ''),
+        batch,
+      );
+      if (prev.amount === next) return prev;
+      return { ...prev, amount: next };
+    });
+    // Only re-default when batch selection changes — not on every amount edit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: batch-driven default only
+  }, [selectedBatchNumber, selectedInventoryItem?.id, productBatches, isMealSale]);
 
   const saleDateStr = newSale.date || new Date().toISOString().split('T')[0];
   const isHistoricalSale = isHistoricalDate(saleDateStr);
@@ -322,10 +363,19 @@ export function useSalesPage() {
         if (!saleUnit) errors.saleUnit = 'Select Carton or Kg.';
         if (!selectedInventoryItem?.cartonWeight || selectedInventoryItem.cartonWeight <= 0) {
           errors.saleUnit = 'Set carton weight on this product before recording a sale.';
-        } else if (saleUnit === 'Carton' && !(selectedInventoryItem.cartonPrice && selectedInventoryItem.cartonPrice > 0)) {
-          errors.saleUnit = 'Set carton selling price on this product before selling by Carton.';
-        } else if (saleUnit === 'Kg' && !(selectedInventoryItem.baseSellingPrice > 0)) {
-          errors.saleUnit = 'Set unit selling price on this product before selling by Kg.';
+        } else if (saleUnit === 'Carton') {
+          const batchList = Number(selectedBatch?.unitPrice) || 0;
+          const hasCartonList =
+            (batchList > 0 && selectedInventoryItem.cartonWeight > 0) ||
+            !!(selectedInventoryItem.cartonPrice && selectedInventoryItem.cartonPrice > 0);
+          if (!hasCartonList) {
+            errors.saleUnit = 'Set carton selling price (or batch list price) before selling by Carton.';
+          }
+        } else if (saleUnit === 'Kg') {
+          const batchList = Number(selectedBatch?.unitPrice) || 0;
+          if (!(batchList > 0 || selectedInventoryItem.baseSellingPrice > 0)) {
+            errors.saleUnit = 'Set unit selling price on this product or batch before selling by Kg.';
+          }
         }
       }
     }
@@ -341,6 +391,7 @@ export function useSalesPage() {
     quantity,
     saleUnit,
     selectedInventoryItem,
+    selectedBatch,
     isCartonProduct,
     paymentMode,
     dueDate,
@@ -426,8 +477,21 @@ export function useSalesPage() {
     if (item) {
       setNewSale((prev) => ({
         ...prev,
-        amount: computeSaleAmount(item, quantity, nextUnit),
+        amount: computeSaleAmount(item, quantity, nextUnit, null),
         productDetails: `${quantity} ${nextUnit || item.unitOfMeasure} of ${item.name}`,
+      }));
+    }
+  };
+
+  const handleBatchChange = (batchNumber: string) => {
+    setSelectedBatchNumber(batchNumber);
+    setTouched((t) => ({ ...t, batchNumber: true }));
+    const item = inventory.find((i) => i.id === selectedProductId);
+    const batch = productBatches.find((b) => b.batchNumber === batchNumber);
+    if (item) {
+      setNewSale((prev) => ({
+        ...prev,
+        amount: computeSaleAmount(item, quantity, saleUnit, batch),
       }));
     }
   };
@@ -439,7 +503,7 @@ export function useSalesPage() {
     if (item) {
       setNewSale((prev) => ({
         ...prev,
-        amount: computeSaleAmount(item, qty, saleUnit),
+        amount: computeSaleAmount(item, qty, saleUnit, selectedBatch),
         productDetails: `${qty} ${saleUnit || item.unitOfMeasure} of ${item.name}`,
       }));
     }
@@ -452,7 +516,7 @@ export function useSalesPage() {
     if (item) {
       setNewSale((prev) => ({
         ...prev,
-        amount: computeSaleAmount(item, quantity, unit),
+        amount: computeSaleAmount(item, quantity, unit, selectedBatch),
         productDetails: `${quantity} ${unit || item.unitOfMeasure} of ${item.name}`,
       }));
     }
@@ -912,8 +976,11 @@ export function useSalesPage() {
     selectedInventoryItem,
     isCartonProduct,
     handleProductChange,
+    handleBatchChange,
     handleQuantityChange,
     handleSaleUnitChange,
+    listUnitPriceForSale,
+    selectedBatch,
     handleSaveSale,
     resetForm,
     showImportModal,
