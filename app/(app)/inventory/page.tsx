@@ -881,7 +881,10 @@ export default function InventoryPage() {
         editProduct.cartonPrice != null ? roundMoney2(editProduct.cartonPrice) : undefined,
       carton_weight: editProduct.cartonWeight,
       ...(hub?.id ? { hub_id: hub.id } : {}),
-      ...(canEditInitialStock
+      ...(canEditInitialStock &&
+      (editProduct.unitOfMeasure === 'Kg'
+        ? kgQtyDraftToNumber(editCurrentStockDraft) !== (original.currentStock ?? 0)
+        : (editProduct.currentStock ?? original.currentStock) !== original.currentStock)
         ? {
             current_stock:
               editProduct.unitOfMeasure === 'Kg'
