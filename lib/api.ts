@@ -31,9 +31,16 @@ function axiosErrorMessage(error: AxiosError, fallback = 'An error occurred'): s
   return fallback;
 }
 
-export const axiosGet = async (endpoint: string, withAuth?: boolean) => {
+export const axiosGet = async (
+  endpoint: string,
+  withAuth?: boolean,
+  timeoutMs?: number,
+) => {
   try {
-    const res = await axios.get(`${base_url}${endpoint}`, authConfig(withAuth));
+    const res = await axios.get(`${base_url}${endpoint}`, {
+      ...authConfig(withAuth),
+      ...(timeoutMs != null ? { timeout: timeoutMs } : {}),
+    });
     return res.data;
   } catch (error) {
     if (isAxiosError(error)) {

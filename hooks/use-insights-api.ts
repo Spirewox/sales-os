@@ -11,6 +11,9 @@ import type { Filter, QueryResult } from '@/lib/explore';
 import type { CompareResult, EntityKind } from '@/lib/insights';
 import type { Levers, ScenarioKey, SimOutput } from '@/lib/simulate';
 
+/** Insights endpoints load scoped datasets server-side — allow longer than the default 8s. */
+const INSIGHTS_TIMEOUT_MS = 60_000;
+
 export type InsightScopeParams = {
   hub_id?: string;
   period?: string;
@@ -49,7 +52,7 @@ export function useAskInsight() {
   return useMutation({
     mutationFn: async (payload: InsightScopeParams & { question: string }) => {
       requireApi();
-      const res = await axiosPost('insights/ask', payload, true);
+      const res = await axiosPost('insights/ask', payload, true, INSIGHTS_TIMEOUT_MS);
       return unwrapData<AskResult>(res);
     },
   });
@@ -66,7 +69,7 @@ export function useExploreQuery() {
       },
     ) => {
       requireApi();
-      const res = await axiosPost('insights/explore/query', payload, true);
+      const res = await axiosPost('insights/explore/query', payload, true, INSIGHTS_TIMEOUT_MS);
       return unwrapData<
         QueryResult & { measureLabel: string; groupLabel: string; measureKind: 'money' | 'number' }
       >(res);
@@ -83,7 +86,12 @@ export function useExploreFieldValues(
     enabled: HAS_API && enabled && !!params.dataset && !!params.field,
     staleTime: 60_000,
     queryFn: async () => {
-      const res = await axiosPost('insights/explore/field-values', params, true);
+      const res = await axiosPost(
+        'insights/explore/field-values',
+        params,
+        true,
+        INSIGHTS_TIMEOUT_MS,
+      );
       return unwrapData<{ values: string[] }>(res).values;
     },
   });
@@ -99,7 +107,11 @@ export function useSimulateTargets(scope: InsightScopeParams) {
       Object.entries(scope).forEach(([k, v]) => {
         if (v != null && v !== '') qs.set(k, String(v));
       });
-      const res = await axiosGet(`insights/simulate/targets?${qs.toString()}`, true);
+      const res = await axiosGet(
+        `insights/simulate/targets?${qs.toString()}`,
+        true,
+        INSIGHTS_TIMEOUT_MS,
+      );
       return unwrapData<{
         targets: { value: string; label: string }[];
         segments: string[];
@@ -112,7 +124,12 @@ export function useSimulateInterpret() {
   return useMutation({
     mutationFn: async (payload: InsightScopeParams & { question: string }) => {
       requireApi();
-      const res = await axiosPost('insights/simulate/interpret', payload, true);
+      const res = await axiosPost(
+        'insights/simulate/interpret',
+        payload,
+        true,
+        INSIGHTS_TIMEOUT_MS,
+      );
       return unwrapData<{ scenario: ScenarioKey; levers: Levers; understood: string }>(res);
     },
   });
@@ -124,7 +141,7 @@ export function useSimulateRun() {
       payload: InsightScopeParams & { scenario: ScenarioKey; levers: Levers },
     ) => {
       requireApi();
-      const res = await axiosPost('insights/simulate/run', payload, true);
+      const res = await axiosPost('insights/simulate/run', payload, true, INSIGHTS_TIMEOUT_MS);
       return unwrapData<SimOutput>(res);
     },
   });
@@ -140,7 +157,11 @@ export function useCompareEntities(kind: EntityKind, scope: InsightScopeParams) 
       Object.entries(scope).forEach(([k, v]) => {
         if (v != null && v !== '') qs.set(k, String(v));
       });
-      const res = await axiosGet(`insights/compare/entities?${qs.toString()}`, true);
+      const res = await axiosGet(
+        `insights/compare/entities?${qs.toString()}`,
+        true,
+        INSIGHTS_TIMEOUT_MS,
+      );
       return unwrapData<{ entities: { id: string; label: string; sublabel?: string }[] }>(res)
         .entities;
     },
@@ -153,7 +174,7 @@ export function useCompareInsight() {
       payload: InsightScopeParams & { kind: EntityKind; aId: string; bId: string },
     ) => {
       requireApi();
-      const res = await axiosPost('insights/compare', payload, true);
+      const res = await axiosPost('insights/compare', payload, true, INSIGHTS_TIMEOUT_MS);
       return unwrapData<CompareResult>(res);
     },
   });

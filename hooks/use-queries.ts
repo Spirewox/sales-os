@@ -1499,6 +1499,8 @@ export function useProductBatches(productId: string | null) {
           batch_number: string;
           quantity_remaining: number;
           unit_cost: number;
+          unit_price?: number;
+          purchase_log_id?: string;
           expiry_date?: string;
           received_date?: string;
           supplier?: string;
@@ -1509,11 +1511,40 @@ export function useProductBatches(productId: string | null) {
         batchNumber: b.batch_number,
         quantityRemaining: b.quantity_remaining,
         unitCost: b.unit_cost ?? 0,
+        unitPrice: b.unit_price ?? 0,
+        purchaseLogId: b.purchase_log_id,
         expiryDate: b.expiry_date ? String(b.expiry_date).slice(0, 10) : undefined,
         receivedDate: b.received_date ? String(b.received_date).slice(0, 10) : undefined,
         supplier: b.supplier,
         uom: b.uom,
       }));
+    },
+  });
+}
+
+export function useUpdatePurchaseBatch() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      logId,
+      unit_cost,
+      unit_price,
+    }: {
+      logId: string;
+      unit_cost?: number;
+      unit_price?: number;
+    }) => {
+      const res = await axiosPatch(
+        `inventory/stock-logs/${logId}`,
+        { unit_cost, unit_price },
+        true,
+      );
+      return res;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['stockLogs'] });
+      qc.invalidateQueries({ queryKey: ['inventory'] });
+      qc.invalidateQueries({ queryKey: ['product-batches'] });
     },
   });
 }
@@ -2416,7 +2447,7 @@ export function useNarrateInsight() {
   return useMutation({
     mutationFn: async (payload: NarrateInsightPayload) => {
       requireApi();
-      const res = await axiosPost('insights/narrate', payload, true) as
+      const res = await axiosPost('insights/narrate', payload, true, 60_000) as
         | { summary?: string }
         | { data?: { summary?: string } };
       const summary =
