@@ -9,9 +9,11 @@ import { usePermissions } from '@/hooks/use-permissions';
 import {
   useInventory, useCreateProduct, useUpdateProduct, useStockLogs,
   useRecordStockMove, useBatchStockUpdate, useHubs, useTransferStock, useProductBatches,
+  useUpdatePurchaseBatch,
   useDownloadInventoryImportTemplate, useValidateInventoryImport, useImportInventory,
   useInventorySalesMetrics, useSuppliers, useProductSuppliers, useProductSalesPerformance,
 } from '@/hooks/use-queries';
+import { ConfirmPreviewModal, type ConfirmPreviewRow } from '@/components/confirm-preview-modal';
 import { InventoryItem, StockLog, StockMovementType } from '@/types';
 import type { InventoryImportPreviewRow } from '@/types/api';
 import Link from 'next/link';
@@ -143,6 +145,7 @@ interface FifoBatch {
   expiryDate?: string;
   quantityRemaining: number;
   unitCost: number;
+  unitPrice: number;
   supplier?: string;
 }
 
@@ -161,6 +164,7 @@ function buildFifoBatches(allLogs: StockLog[], itemId: string): FifoBatch[] {
       expiryDate: log.expiryDate,
       quantityRemaining: Math.abs(log.quantity),
       unitCost: log.unitCost,
+      unitPrice: log.unitPrice ?? 0,
       supplier: log.supplier,
     });
   };
@@ -291,8 +295,24 @@ export default function InventoryPage() {
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct();
   const recordStockMove = useRecordStockMove();
+  const updatePurchaseBatch = useUpdatePurchaseBatch();
   const batchStockUpdate = useBatchStockUpdate();
   const transferStock = useTransferStock();
+
+  type InventoryConfirmState = {
+    title: string;
+    subtitle?: string;
+    rows: ConfirmPreviewRow[];
+    warning?: string;
+    confirmLabel?: string;
+    run: () => void;
+  };
+  const [confirmPreview, setConfirmPreview] = useState<InventoryConfirmState | null>(null);
+  const [batchPriceEdit, setBatchPriceEdit] = useState<{
+    logId: string;
+    unitCost: string;
+    unitPrice: string;
+  } | null>(null);
   const { data: hubs = [] } = useHubs();
   const activeHubs = hubs.filter(h => h.isActive);
   const { data: supplierList } = useSuppliers({ is_active: true, limit: 200 });
@@ -793,15 +813,17 @@ export default function InventoryPage() {
       toast.error('Select a location hub.');
       return;
     }
-    createProduct.mutate({
+    const hubLabel = activeHubs.find((h) => h.id === hubId)?.name || newProduct.location || hubId;
+    const initialStock =
+      newProduct.unitOfMeasure === 'Kg'
+        ? kgQtyDraftToNumber(initialStockDraft)
+        : newProduct.currentStock || 0;
+    const payload = {
       name: newProduct.name!,
       category: newProduct.category,
       unit_of_measure: newProduct.unitOfMeasure,
       min_stock_level: newProduct.minStockLevel || 5,
-      current_stock:
-        newProduct.unitOfMeasure === 'Kg'
-          ? kgQtyDraftToNumber(initialStockDraft)
-          : newProduct.currentStock || 0,
+      current_stock: initialStock,
       avg_unit_cost: roundMoney2(newProduct.avgUnitCost),
       base_selling_price: roundMoney2(newProduct.baseSellingPrice),
       carton_price:
@@ -813,7 +835,7 @@ export default function InventoryPage() {
       expiry_date: newProduct.expiryDate || undefined,
       ...(newProduct.isExpensed
         ? {
-            is_expensed: true,
+            is_expensed: true as const,
             expense_mode: newProduct.expenseMode,
             expense_value: newProduct.expenseValue,
             expense_match_scope: newProduct.expenseMatchScope,
@@ -823,13 +845,44 @@ export default function InventoryPage() {
               : {}),
           }
         : {}),
-    }, {
-      onSuccess: (created) => {
-        setShowAddProductModal(false);
-        resetNewProduct();
-        toast.success(created?.sku ? `Product created (${created.sku}).` : 'Product created successfully.');
+    };
+    const rows: ConfirmPreviewRow[] = [
+      { label: 'Name', value: payload.name },
+      { label: 'Category', value: String(payload.category ?? '—') },
+      { label: 'UOM', value: String(payload.unit_of_measure ?? '—') },
+      { label: 'Location', value: hubLabel },
+      { label: 'Initial stock', value: `${initialStock} ${payload.unit_of_measure ?? ''}`.trim() },
+      { label: 'Unit cost', value: `₦${fmtMoney(payload.avg_unit_cost)}` },
+      { label: 'Selling price', value: `₦${fmtMoney(payload.base_selling_price)}` },
+    ];
+    if (payload.carton_price != null) {
+      rows.push({ label: 'Carton price', value: `₦${fmtMoney(payload.carton_price)}` });
+    }
+    if (payload.carton_weight != null) {
+      rows.push({ label: 'Carton weight', value: `${payload.carton_weight} Kg` });
+    }
+    if (newProduct.isExpensed) {
+      rows.push({
+        label: 'Expensed',
+        value: `${payload.expense_mode} · ${payload.expense_value}`,
+        tone: 'warn',
+      });
+    }
+    setConfirmPreview({
+      title: 'Review & create',
+      subtitle: payload.name,
+      rows,
+      confirmLabel: 'Create product',
+      run: () => {
+        createProduct.mutate(payload, {
+          onSuccess: (created) => {
+            setShowAddProductModal(false);
+            resetNewProduct();
+            toast.success(created?.sku ? `Product created (${created.sku}).` : 'Product created successfully.');
+          },
+          onError: (err) => toast.error(err.message),
+        });
       },
-      onError: (err) => toast.error(err.message),
     });
   };
 
@@ -864,8 +917,17 @@ export default function InventoryPage() {
     }
 
     const hub = activeHubs.find((h) => h.name === (editProduct.location || original.location));
+    const nextStock =
+      editProduct.unitOfMeasure === 'Kg'
+        ? kgQtyDraftToNumber(editCurrentStockDraft)
+        : editProduct.currentStock ?? original.currentStock;
+    const stockChanged =
+      canEditInitialStock &&
+      (editProduct.unitOfMeasure === 'Kg'
+        ? nextStock !== (original.currentStock ?? 0)
+        : (editProduct.currentStock ?? original.currentStock) !== original.currentStock);
 
-    updateProduct.mutate({
+    const payload = {
       id: editProduct.id,
       name: editProduct.name,
       category: editProduct.category,
@@ -881,28 +943,71 @@ export default function InventoryPage() {
         editProduct.cartonPrice != null ? roundMoney2(editProduct.cartonPrice) : undefined,
       carton_weight: editProduct.cartonWeight,
       ...(hub?.id ? { hub_id: hub.id } : {}),
-      ...(canEditInitialStock &&
-      (editProduct.unitOfMeasure === 'Kg'
-        ? kgQtyDraftToNumber(editCurrentStockDraft) !== (original.currentStock ?? 0)
-        : (editProduct.currentStock ?? original.currentStock) !== original.currentStock)
+      ...(stockChanged
         ? {
-            current_stock:
-              editProduct.unitOfMeasure === 'Kg'
-                ? kgQtyDraftToNumber(editCurrentStockDraft)
-                : editProduct.currentStock ?? original.currentStock,
+            current_stock: nextStock,
             purchased_date: editProduct.purchasedDate || undefined,
             expiry_date: editProduct.expiryDate || undefined,
           }
         : {}),
-    }, {
-      onSuccess: (updated) => {
-        if (viewingDetailsItem?.id === editProduct.id) setViewingDetailsItem(updated);
-        setShowEditModal(false);
-        setEditProduct({});
-        setEditCurrentStockDraft('');
-        toast.success('Product updated successfully.');
+    };
+
+    const fmtDiff = (v: unknown) =>
+      v == null || v === '' ? '—' : typeof v === 'number' ? String(v) : String(v);
+    const moneyChanged = (a?: number | null, b?: number | null) =>
+      roundMoney2(a) !== roundMoney2(b);
+
+    const rows: ConfirmPreviewRow[] = [];
+    const pushChange = (label: string, before: unknown, after: unknown, asMoney = false) => {
+      const beforeStr = asMoney ? `₦${fmtMoney(Number(before) || 0)}` : fmtDiff(before);
+      const afterStr = asMoney ? `₦${fmtMoney(Number(after) || 0)}` : fmtDiff(after);
+      if (beforeStr === afterStr) return;
+      rows.push({ label, value: `${beforeStr} → ${afterStr}` });
+    };
+
+    pushChange('Name', original.name, editProduct.name);
+    pushChange('Category', original.category, editProduct.category);
+    pushChange('UOM', original.unitOfMeasure, editProduct.unitOfMeasure);
+    pushChange('Min stock', original.minStockLevel, editProduct.minStockLevel);
+    pushChange('Location', original.location, editProduct.location || original.location);
+    pushChange('Unit cost', original.avgUnitCost, editProduct.avgUnitCost, true);
+    pushChange('Selling price', original.baseSellingPrice, editProduct.baseSellingPrice, true);
+    pushChange('Carton price', original.cartonPrice, editProduct.cartonPrice, true);
+    pushChange('Carton weight', original.cartonWeight, editProduct.cartonWeight);
+    if (stockChanged) {
+      pushChange('Current stock', original.currentStock, nextStock);
+    }
+
+    if (rows.length === 0) {
+      toast.error('No changes to save.');
+      return;
+    }
+
+    const costOrPriceChanged =
+      moneyChanged(original.avgUnitCost, editProduct.avgUnitCost) ||
+      moneyChanged(original.baseSellingPrice, editProduct.baseSellingPrice) ||
+      moneyChanged(original.cartonPrice, editProduct.cartonPrice);
+
+    setConfirmPreview({
+      title: 'Review changes',
+      subtitle: original.name,
+      rows,
+      warning: costOrPriceChanged
+        ? 'Catalog cost/price only. Edit each purchase batch for COGS used on sales.'
+        : undefined,
+      confirmLabel: 'Save changes',
+      run: () => {
+        updateProduct.mutate(payload, {
+          onSuccess: (updated) => {
+            if (viewingDetailsItem?.id === editProduct.id) setViewingDetailsItem(updated);
+            setShowEditModal(false);
+            setEditProduct({});
+            setEditCurrentStockDraft('');
+            toast.success('Product updated successfully.');
+          },
+          onError: (err) => toast.error(err.message),
+        });
       },
-      onError: (err) => toast.error(err.message),
     });
   };
 
@@ -953,12 +1058,15 @@ export default function InventoryPage() {
       return;
     }
 
-    recordStockMove.mutate({
+    const unitCost = roundMoney2(moveData.unitCost || selectedProduct.avgUnitCost);
+    const unitPrice = roundMoney2(moveData.unitPrice || selectedProduct.baseSellingPrice);
+    const stockAfter = roundQty2((selectedProduct.currentStock || 0) + stockQty);
+    const payload = {
       item_id: selectedProduct.id,
       type: StockMovementType.PURCHASE,
       quantity: stockQty,
-      unit_cost: roundMoney2(moveData.unitCost || selectedProduct.avgUnitCost),
-      unit_price: roundMoney2(moveData.unitPrice || selectedProduct.baseSellingPrice),
+      unit_cost: unitCost,
+      unit_price: unitPrice,
       carton_price:
         selectedProduct.unitOfMeasure === 'Cartons'
           ? roundMoney2(moveData.cartonPrice)
@@ -971,13 +1079,30 @@ export default function InventoryPage() {
       movement_date: moveData.purchasedDate || undefined,
       supplier: moveData.supplier || undefined,
       supplier_id: moveData.supplierId || undefined,
-    }, {
-      onSuccess: (result) => {
-        const batch = result?.log?.batchNumber;
-        toast.success(batch ? `Purchase recorded (batch ${batch}).` : 'Purchase recorded.');
-        resetPurchaseModal();
+    };
+
+    setConfirmPreview({
+      title: 'Review purchase',
+      subtitle: selectedProduct.name,
+      rows: [
+        { label: 'Product', value: `${selectedProduct.name} (${selectedProduct.sku})` },
+        { label: 'Qty', value: `${enteredQty} ${purchaseUom}` },
+        { label: 'Stock qty', value: `${stockQty} ${selectedProduct.unitOfMeasure}` },
+        { label: 'Cost', value: `₦${fmtMoney(unitCost)}` },
+        { label: 'Price', value: `₦${fmtMoney(unitPrice)}` },
+        { label: 'Stock after', value: `${stockAfter} ${selectedProduct.unitOfMeasure}` },
+      ],
+      confirmLabel: 'Confirm purchase',
+      run: () => {
+        recordStockMove.mutate(payload, {
+          onSuccess: (result) => {
+            const batch = result?.log?.batchNumber;
+            toast.success(batch ? `Purchase recorded (batch ${batch}).` : 'Purchase recorded.');
+            resetPurchaseModal();
+          },
+          onError: (err) => toast.error(err.message),
+        });
       },
-      onError: (err) => toast.error(err.message),
     });
   };
 
@@ -1003,20 +1128,39 @@ export default function InventoryPage() {
       toast.error(`Batch ${transferBatchNumber} only has ${batchRemaining} remaining.`);
       return;
     }
-    try {
-      await transferStock.mutateAsync({
-        item_id: transferProduct.id,
-        quantity: transferQuantity,
-        from_hub_id: transferProduct.hubId,
-        to_hub_id: transferToHubId,
-        batch_number: transferBatchNumber,
-        notes: transferNotes.trim() || undefined,
-      });
-      toast.success(`Transferred batch ${transferBatchNumber} to destination.`);
-      closeTransferModal();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Transfer failed.');
-    }
+    const toHub = transferDestinations.find((h) => h.id === transferToHubId);
+    const payload = {
+      item_id: transferProduct.id,
+      quantity: transferQuantity,
+      from_hub_id: transferProduct.hubId,
+      to_hub_id: transferToHubId,
+      batch_number: transferBatchNumber,
+      notes: transferNotes.trim() || undefined,
+    };
+    setConfirmPreview({
+      title: 'Review transfer',
+      subtitle: transferProduct.name,
+      rows: [
+        { label: 'Product', value: `${transferProduct.name} (${transferProduct.sku})` },
+        { label: 'Batch', value: transferBatchNumber },
+        { label: 'Quantity', value: `${transferQuantity} ${transferProduct.unitOfMeasure}` },
+        { label: 'From', value: transferProduct.location },
+        { label: 'To', value: toHub ? hubOptionLabel(toHub) : transferToHubId },
+        ...(payload.notes ? [{ label: 'Notes', value: payload.notes }] : []),
+      ],
+      confirmLabel: 'Confirm transfer',
+      run: () => {
+        void (async () => {
+          try {
+            await transferStock.mutateAsync(payload);
+            toast.success(`Transferred batch ${transferBatchNumber} to destination.`);
+            closeTransferModal();
+          } catch (err) {
+            toast.error(err instanceof Error ? err.message : 'Transfer failed.');
+          }
+        })();
+      },
+    });
   };
 
   /* ──────── BATCH UPDATE ──────── */
@@ -1035,18 +1179,40 @@ export default function InventoryPage() {
       return;
     }
 
-    batchStockUpdate.mutate({
-      type: batchData.type,
-      notes: batchData.notes || 'Batch Update',
-      updates,
-    }, {
-      onSuccess: () => {
-        setShowBatchModal(false);
-        setSelectedIds(new Set());
-        setIsSelectionMode(false);
-        toast.success('Batch update complete.');
+    const rows: ConfirmPreviewRow[] = [
+      { label: 'Type', value: String(batchData.type) },
+      { label: 'Notes', value: batchData.notes || 'Batch Update' },
+      { label: 'Items', value: `${updates.length}` },
+      ...updates.map((u) => {
+        const item = items.find((i) => i.id === u.item_id);
+        const costPart = u.unit_cost != null ? ` · cost ₦${fmtMoney(u.unit_cost)}` : '';
+        return {
+          label: item?.name || u.item_id,
+          value: `${u.quantity > 0 ? '+' : ''}${u.quantity}${costPart}`,
+        };
+      }),
+    ];
+
+    setConfirmPreview({
+      title: 'Review batch update',
+      subtitle: `${updates.length} item${updates.length === 1 ? '' : 's'}`,
+      rows,
+      confirmLabel: 'Apply batch',
+      run: () => {
+        batchStockUpdate.mutate({
+          type: batchData.type,
+          notes: batchData.notes || 'Batch Update',
+          updates,
+        }, {
+          onSuccess: () => {
+            setShowBatchModal(false);
+            setSelectedIds(new Set());
+            setIsSelectionMode(false);
+            toast.success('Batch update complete.');
+          },
+          onError: (err) => toast.error(err.message),
+        });
       },
-      onError: (err) => toast.error(err.message),
     });
   };
 
@@ -2206,7 +2372,10 @@ export default function InventoryPage() {
                     <p className="text-sm text-muted-foreground italic">No active batches. Record a purchase or receive stock via transfer to create batches.</p>
                   ) : (
                     <div className="space-y-2">
-                      {itemBatches.map((batch, idx) => (
+                      {itemBatches.map((batch, idx) => {
+                        const isPurchaseBatch = !!batch.logId;
+                        const editing = batchPriceEdit?.logId === batch.logId;
+                        return (
                         <div key={batch.logId + '-' + idx} className={`p-4 rounded-md border ${batch.expiryDate ? getExpiryColor(batch.expiryDate).replace('text-', 'border-').split(' ')[0] : ''} bg-muted/10`}>
                           <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center gap-2">
@@ -2219,19 +2388,121 @@ export default function InventoryPage() {
                             </div>
                             <span className="text-lg font-bold">{batch.quantityRemaining}</span>
                           </div>
-                          <div className="flex items-center justify-between text-xs">
-                            <div className="flex items-center gap-3">
+                          <div className="flex items-center justify-between text-xs gap-2 flex-wrap">
+                            <div className="flex items-center gap-3 flex-wrap">
                               <span className="text-muted-foreground">Cost: <span className="font-bold text-foreground">&#8358;{fmtMoney(batch.unitCost)}</span></span>
+                              {isPurchaseBatch && (
+                                <span className="text-muted-foreground">Price: <span className="font-bold text-foreground">&#8358;{fmtMoney(batch.unitPrice)}</span></span>
+                              )}
                               {batch.supplier && <span className="text-muted-foreground">via <span className="font-medium">{batch.supplier}</span></span>}
                             </div>
-                            {batch.expiryDate && (
-                              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getExpiryColor(batch.expiryDate)}`}>
-                                {getExpiryLabel(batch.expiryDate)}
-                              </span>
-                            )}
+                            <div className="flex items-center gap-2">
+                              {batch.expiryDate && (
+                                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getExpiryColor(batch.expiryDate)}`}>
+                                  {getExpiryLabel(batch.expiryDate)}
+                                </span>
+                              )}
+                              {isPurchaseBatch && can('inventory.edit') && !editing && (
+                                <button
+                                  type="button"
+                                  className="text-xs font-medium text-primary hover:underline"
+                                  onClick={() =>
+                                    setBatchPriceEdit({
+                                      logId: batch.logId,
+                                      unitCost: String(roundMoney2(batch.unitCost)),
+                                      unitPrice: String(roundMoney2(batch.unitPrice)),
+                                    })
+                                  }
+                                >
+                                  Edit prices
+                                </button>
+                              )}
+                            </div>
                           </div>
+                          {isPurchaseBatch && editing && batchPriceEdit && (
+                            <div className="mt-3 pt-3 border-t space-y-3">
+                              <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1">
+                                  <label className={labelCls}>Unit cost (₦)</label>
+                                  <input
+                                    type="number"
+                                    min={0}
+                                    step="0.01"
+                                    value={batchPriceEdit.unitCost}
+                                    onChange={(e) =>
+                                      setBatchPriceEdit({ ...batchPriceEdit, unitCost: e.target.value })
+                                    }
+                                    className={inputCls}
+                                  />
+                                </div>
+                                <div className="space-y-1">
+                                  <label className={labelCls}>Unit price (₦)</label>
+                                  <input
+                                    type="number"
+                                    min={0}
+                                    step="0.01"
+                                    value={batchPriceEdit.unitPrice}
+                                    onChange={(e) =>
+                                      setBatchPriceEdit({ ...batchPriceEdit, unitPrice: e.target.value })
+                                    }
+                                    className={inputCls}
+                                  />
+                                </div>
+                              </div>
+                              <div className="flex justify-end gap-2">
+                                <button
+                                  type="button"
+                                  className={btnSecondary}
+                                  onClick={() => setBatchPriceEdit(null)}
+                                >
+                                  Cancel
+                                </button>
+                                <button
+                                  type="button"
+                                  className={btnPrimary}
+                                  onClick={() => {
+                                    const unit_cost = roundMoney2(parseMoneyInput(batchPriceEdit.unitCost));
+                                    const unit_price = roundMoney2(parseMoneyInput(batchPriceEdit.unitPrice));
+                                    setConfirmPreview({
+                                      title: 'Review batch prices',
+                                      subtitle: batch.batchNumber
+                                        ? `Batch ${batch.batchNumber}`
+                                        : viewingDetailsItem?.name,
+                                      rows: [
+                                        { label: 'Batch', value: batch.batchNumber || batch.logId },
+                                        {
+                                          label: 'Unit cost',
+                                          value: `₦${fmtMoney(batch.unitCost)} → ₦${fmtMoney(unit_cost)}`,
+                                        },
+                                        {
+                                          label: 'Unit price',
+                                          value: `₦${fmtMoney(batch.unitPrice)} → ₦${fmtMoney(unit_price)}`,
+                                        },
+                                      ],
+                                      confirmLabel: 'Update prices',
+                                      run: () => {
+                                        updatePurchaseBatch.mutate(
+                                          { logId: batch.logId, unit_cost, unit_price },
+                                          {
+                                            onSuccess: () => {
+                                              setBatchPriceEdit(null);
+                                              toast.success('Batch prices updated.');
+                                            },
+                                            onError: (err) => toast.error(err.message),
+                                          },
+                                        );
+                                      },
+                                    });
+                                  }}
+                                >
+                                  Review prices
+                                </button>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </>
@@ -2607,7 +2878,7 @@ export default function InventoryPage() {
             ) : null}
             <div className="mt-6 flex justify-end gap-3">
               <button onClick={() => setShowAddProductModal(false)} className={btnSecondary}>Cancel</button>
-              <SubmitButton onClick={handleSaveProduct} loading={createProduct.isPending} className={btnPrimary}>Create Product</SubmitButton>
+              <SubmitButton onClick={handleSaveProduct} loading={createProduct.isPending} className={btnPrimary}>Review & create</SubmitButton>
             </div>
           </div>
         </div>
@@ -2794,7 +3065,7 @@ export default function InventoryPage() {
             ) : null}
             <div className="mt-6 flex justify-end gap-3">
               <button onClick={() => { setShowEditModal(false); setEditProduct({}); setEditCurrentStockDraft(''); }} className={btnSecondary}>Cancel</button>
-              {can('inventory.edit') && <SubmitButton onClick={handleEditProduct} loading={updateProduct.isPending} className={btnPrimary}>Save Changes</SubmitButton>}
+              {can('inventory.edit') && <SubmitButton onClick={handleEditProduct} loading={updateProduct.isPending} className={btnPrimary}>Review changes</SubmitButton>}
             </div>
           </div>
         </div>
@@ -2991,7 +3262,7 @@ export default function InventoryPage() {
             <div className="mt-6 flex justify-end gap-3">
               <button onClick={resetPurchaseModal} className={btnSecondary}>Cancel</button>
               {can('inventory.adjust_stock') && (
-                <SubmitButton onClick={handleStockMove} loading={recordStockMove.isPending} className={btnPrimary}>Confirm Purchase</SubmitButton>
+                <SubmitButton onClick={handleStockMove} loading={recordStockMove.isPending} className={btnPrimary}>Review purchase</SubmitButton>
               )}
             </div>
           </div>
@@ -3092,7 +3363,7 @@ export default function InventoryPage() {
                   className={btnPrimary}
                   disabled={!transferBatchNumber || !transferToHubId || transferBatches.length === 0}
                 >
-                  Confirm Transfer
+                  Review transfer
                 </SubmitButton>
               )}
             </div>
@@ -3169,7 +3440,7 @@ export default function InventoryPage() {
             </div>
             <div className="mt-6 flex justify-end gap-3">
               <button onClick={() => setShowBatchModal(false)} className={btnSecondary}>Cancel</button>
-              {can('inventory.adjust_stock') && <SubmitButton onClick={handleBatchUpdate} loading={batchStockUpdate.isPending} className={btnPrimary}>Apply Batch</SubmitButton>}
+              {can('inventory.adjust_stock') && <SubmitButton onClick={handleBatchUpdate} loading={batchStockUpdate.isPending} className={btnPrimary}>Review batch update</SubmitButton>}
             </div>
           </div>
         </div>
@@ -3185,6 +3456,18 @@ export default function InventoryPage() {
         importError={importError}
         onConfirm={handleInventoryImportConfirm}
         onDownloadTemplate={handleDownloadInventoryTemplate}
+      />
+
+      <ConfirmPreviewModal
+        open={!!confirmPreview}
+        title={confirmPreview?.title ?? ''}
+        subtitle={confirmPreview?.subtitle}
+        rows={confirmPreview?.rows ?? []}
+        warning={confirmPreview?.warning}
+        confirmLabel={confirmPreview?.confirmLabel}
+        loading={updateProduct.isPending || recordStockMove.isPending || createProduct.isPending || transferStock.isPending || batchStockUpdate.isPending || updatePurchaseBatch.isPending}
+        onBack={() => setConfirmPreview(null)}
+        onConfirm={() => { const run = confirmPreview?.run; setConfirmPreview(null); run?.(); }}
       />
     </div>
   );
