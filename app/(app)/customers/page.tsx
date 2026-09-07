@@ -64,6 +64,16 @@ const SEG_GROUP_COLORS: Record<string, string> = {
 };
 const segClass = (s: string) => SEG_GROUP_COLORS[SEGMENT_GROUP_OF[s]] || 'bg-muted text-muted-foreground border-border';
 
+/** Put actively filtered segment names first so they aren't buried under +N / scroll. */
+function prioritizeSegments(segments: string[], priorityNames: string[]) {
+  if (!priorityNames.length) return segments;
+  const priority = new Set(priorityNames);
+  return [
+    ...segments.filter((s) => priority.has(s)),
+    ...segments.filter((s) => !priority.has(s)),
+  ];
+}
+
 const pfCls = 'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring';
 const pfClsSm = 'flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-ring';
 
@@ -189,6 +199,18 @@ export default function CustomersPage() {
     for (const s of segments) map.set(s.name, s.id);
     return map;
   }, [segments]);
+  const segmentIdToName = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const s of segments) map.set(s.id, s.name);
+    return map;
+  }, [segments]);
+  const activeFilterSegmentNames = useMemo(
+    () =>
+      filterSegmentIds
+        .map((id) => segmentIdToName.get(id))
+        .filter((name): name is string => Boolean(name)),
+    [filterSegmentIds, segmentIdToName],
+  );
 
   const ordersFilterParams = useMemo(() => {
     if (ordersFilterMode === 'once') return { min_orders: 1, max_orders: 1 };
@@ -1018,11 +1040,25 @@ export default function CustomersPage() {
                     </td>
                     <td className="p-4">
                       <div className="flex flex-wrap gap-1 max-w-[200px]">
-                        {customer.segments?.slice(0, 3).map((seg) => (
-                          <span key={seg} className="inline-flex items-center rounded-sm border px-2 py-0.5 text-[10px] font-medium text-muted-foreground">{seg}</span>
-                        ))}
-                        {(customer.segments?.length || 0) > 3 && <span className="text-[10px] text-muted-foreground">+{customer.segments!.length - 3}</span>}
-                        {(!customer.segments || customer.segments.length === 0) && <span className="text-xs text-muted-foreground/50">—</span>}
+                        {(() => {
+                          const ordered = prioritizeSegments(
+                            customer.segments ?? [],
+                            activeFilterSegmentNames,
+                          );
+                          return (
+                            <>
+                              {ordered.slice(0, 3).map((seg) => (
+                                <span key={seg} className="inline-flex items-center rounded-sm border px-2 py-0.5 text-[10px] font-medium text-muted-foreground">{seg}</span>
+                              ))}
+                              {ordered.length > 3 && (
+                                <span className="text-[10px] text-muted-foreground">+{ordered.length - 3}</span>
+                              )}
+                              {ordered.length === 0 && (
+                                <span className="text-xs text-muted-foreground/50">—</span>
+                              )}
+                            </>
+                          );
+                        })()}
                       </div>
                     </td>
                     <td className="p-4 text-right">
@@ -1370,12 +1406,15 @@ export default function CustomersPage() {
                     </div>
                   </div>
 
-                  {/* Auto Segments */}
+                  {/* Auto Segments — API/list payload (not client re-derive) */}
                   {(() => {
-                    const segs = deriveSegments(selectedCustomer);
+                    const segs = prioritizeSegments(
+                      selectedCustomer.segments ?? [],
+                      activeFilterSegmentNames,
+                    );
                     return (
                       <div>
-                        <h4 className="text-xs font-bold uppercase text-muted-foreground mb-2 flex items-center gap-1.5"><Sparkles size={12} className="text-primary" /> Auto Segments <span className="font-normal normal-case text-muted-foreground/70">· generated from profile</span></h4>
+                        <h4 className="text-xs font-bold uppercase text-muted-foreground mb-2 flex items-center gap-1.5"><Sparkles size={12} className="text-primary" /> Auto Segments <span className="font-normal normal-case text-muted-foreground/70">· from customer record</span></h4>
                         {segs.length > 0 ? (
                           <div className="flex flex-wrap gap-2">
                             {segs.map((seg) => (
