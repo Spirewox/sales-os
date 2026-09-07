@@ -293,7 +293,10 @@ export function mapInventoryItem(p: ApiProduct, hubMap?: Record<string, string>)
   };
 }
 
-export function mapStockLog(l: ApiStockLog): StockLog {
+export function mapStockLog(
+  l: ApiStockLog,
+  hubMap?: Record<string, string>,
+): StockLog {
   const itemObj = typeof l.item === 'object' && l.item ? l.item : null;
   const agentObj = typeof l.agent === 'object' && l.agent ? l.agent : null;
   return {
@@ -314,8 +317,10 @@ export function mapStockLog(l: ApiStockLog): StockLog {
     expiryDate: l.expiry_date ? toDateStr(l.expiry_date) : undefined,
     supplier: l.supplier,
     supplierId: typeof l.supplier_id === 'string' ? l.supplier_id : refId(l.supplier_id),
-    fromLocation: l.from_hub,
-    toLocation: l.to_hub,
+    fromLocation: l.from_hub
+      ? hubMap?.[l.from_hub] || l.from_hub
+      : undefined,
+    toLocation: l.to_hub ? hubMap?.[l.to_hub] || l.to_hub : undefined,
     reason: l.reason,
     itemSku: itemObj?.sku,
   };

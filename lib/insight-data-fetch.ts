@@ -137,6 +137,7 @@ export async function fetchAllInsightStockLogs(filters: {
   date_to?: string;
 }): Promise<StockLog[]> {
   if (!HAS_API) return [];
+  const hubMap = await fetchHubMap();
   return fetchAllPages(async (page, limit) => {
     const raw = await axiosGet(
       `inventory/stock-logs${buildQuery({
@@ -151,7 +152,7 @@ export async function fetchAllInsightStockLogs(filters: {
     const rows = unwrapArrayData<ApiStockLog>(raw);
     const meta = readListMeta(raw, rows.length, limit);
     return {
-      items: rows.map(mapStockLog),
+      items: rows.map((l) => mapStockLog(l, hubMap)),
       totalPages: meta.totalPages,
     };
   }, INSIGHT_PAGE_LIMITS.stockLogs);
