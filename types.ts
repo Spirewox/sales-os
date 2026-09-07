@@ -423,6 +423,8 @@ export interface Sale {
     stockQuantity?: number;
     category?: string;
     batchNumber?: string;
+    unitCost?: number;
+    unitPrice?: number;
   };
   productDetails?: string;
   isCredit?: boolean;

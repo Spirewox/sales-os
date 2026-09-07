@@ -43,10 +43,12 @@ export interface AddSaleModalProps {
   setSelectedProductId: (id: string) => void;
   selectedBatchNumber: string;
   setSelectedBatchNumber: (batch: string) => void;
+  handleBatchChange: (batch: string) => void;
   productBatches: Array<{
     batchNumber: string;
     quantityRemaining: number;
     unitCost: number;
+    unitPrice: number;
     expiryDate?: string;
     receivedDate?: string;
     supplier?: string;
@@ -56,6 +58,16 @@ export interface AddSaleModalProps {
   handleProductChange: (productId: string) => void;
   availableInventory: InventoryItem[];
   selectedInventoryItem: InventoryItem | undefined;
+  selectedBatch?: {
+    batchNumber: string;
+    unitCost: number;
+    unitPrice: number;
+  };
+  listUnitPriceForSale: (
+    item: InventoryItem | undefined,
+    unit: 'Carton' | 'Kg' | '',
+    batch?: { unitPrice: number } | null,
+  ) => number;
   quantity: number;
   handleQuantityChange: (qty: number) => void;
   saleUnit: 'Carton' | 'Kg' | '';
@@ -100,12 +112,14 @@ export function AddSaleModal({
   selectedProductId,
   setSelectedProductId,
   selectedBatchNumber,
-  setSelectedBatchNumber,
+  handleBatchChange,
   productBatches,
   batchesLoading = false,
   handleProductChange,
   availableInventory,
   selectedInventoryItem,
+  selectedBatch,
+  listUnitPriceForSale,
   quantity,
   handleQuantityChange,
   saleUnit,
@@ -292,8 +306,12 @@ export function AddSaleModal({
                 <span>
                   &middot;{' '}
                   {isCartonProduct
-                    ? `${fmt(selectedInventoryItem.cartonPrice ?? 0)}/Carton · ${fmt(selectedInventoryItem.baseSellingPrice)}/Kg`
-                    : `${fmt(selectedInventoryItem.baseSellingPrice)}/${selectedInventoryItem.unitOfMeasure}`}
+                    ? selectedBatch
+                      ? `${fmt(listUnitPriceForSale(selectedInventoryItem, 'Carton', selectedBatch))}/Carton · ${fmt(listUnitPriceForSale(selectedInventoryItem, 'Kg', selectedBatch))}/Kg (batch)`
+                      : `${fmt(selectedInventoryItem.cartonPrice ?? 0)}/Carton · ${fmt(selectedInventoryItem.baseSellingPrice)}/Kg (avg)`
+                    : selectedBatch
+                      ? `${fmt(listUnitPriceForSale(selectedInventoryItem, '', selectedBatch))}/${selectedInventoryItem.unitOfMeasure} (batch)`
+                      : `${fmt(selectedInventoryItem.baseSellingPrice)}/${selectedInventoryItem.unitOfMeasure} (avg)`}
                 </span>
                 {selectedInventoryItem.currentStock <= selectedInventoryItem.minStockLevel && (
                   <span className="text-red-500 font-medium flex items-center gap-1"><AlertTriangle size={10} /> Low stock</span>
@@ -308,10 +326,7 @@ export function AddSaleModal({
               <select
                 id="sale-batch"
                 value={selectedBatchNumber}
-                onChange={(e) => {
-                  setSelectedBatchNumber(e.target.value);
-                  setTouched((t) => ({ ...t, batchNumber: true }));
-                }}
+                onChange={(e) => handleBatchChange(e.target.value)}
                 className={`${INPUT_CLS} ${touched.batchNumber && validationErrors.batchNumber ? 'border-red-500' : ''}`}
                 disabled={batchesLoading || productBatches.length === 0}
               >
@@ -326,6 +341,7 @@ export function AddSaleModal({
                   <option key={b.batchNumber} value={b.batchNumber}>
                     {b.batchNumber}
                     {` · ${b.quantityRemaining} ${b.uom || selectedInventoryItem?.unitOfMeasure || ''} left`}
+                    {b.unitPrice > 0 ? ` · list ${fmt(b.unitPrice)}` : ''}
                     {b.expiryDate ? ` · exp ${b.expiryDate}` : ''}
                     {b.supplier ? ` · ${b.supplier}` : ''}
                   </option>
@@ -381,25 +397,40 @@ export function AddSaleModal({
               {touched.amount && validationErrors.amount && <p className="text-xs text-red-500">{validationErrors.amount}</p>}
             </div>
           </div>
-          {/* Live price breakdown */}
+          {/* Live price breakdown from selected batch list price */}
           {selectedInventoryItem && !isMealSale && quantity > 0 && (
             <div className="text-xs text-muted-foreground bg-muted/30 rounded-md px-3 py-2 flex items-center gap-3 flex-wrap">
               {(() => {
-                const unitPrice =
-                  isCartonProduct && saleUnit === 'Kg'
-                    ? selectedInventoryItem.baseSellingPrice
-                    : isCartonProduct
-                      ? (selectedInventoryItem.cartonPrice ?? 0)
-                      : selectedInventoryItem.baseSellingPrice;
-                const suggested = unitPrice * quantity;
+                const unitPrice = listUnitPriceForSale(
+                  selectedInventoryItem,
+                  saleUnit,
+                  selectedBatch ?? null,
+                );
+                const listTotal = unitPrice * quantity;
+                const charged = Number(newSale.amount) || 0;
+                const underList = listTotal > 0 && charged < listTotal - 0.005;
+                const pctOff =
+                  underList && listTotal > 0
+                    ? Math.round(((listTotal - charged) / listTotal) * 1000) / 10
+                    : 0;
                 return (
                   <>
                     <span>
-                      {quantity} {saleUnit || selectedInventoryItem.unitOfMeasure} &times; {fmt(unitPrice)} ={' '}
-                      <span className="font-medium text-foreground">{fmt(suggested)}</span>
+                      List: {quantity} {saleUnit || selectedInventoryItem.unitOfMeasure} &times;{' '}
+                      {fmt(unitPrice)} ={' '}
+                      <span className="font-medium text-foreground">{fmt(listTotal)}</span>
+                      {selectedBatch ? ' (batch)' : ''}
                     </span>
-                    {Number(newSale.amount) !== suggested && (
-                      <span className="text-orange-600 font-medium">Custom price applied ({fmt(Number(newSale.amount))})</span>
+                    {underList && (
+                      <span className="text-amber-700 font-medium">
+                        Under list price ({fmt(charged)}
+                        {pctOff > 0 ? ` · ${pctOff}% off` : ''})
+                      </span>
+                    )}
+                    {!underList && charged > listTotal + 0.005 && listTotal > 0 && (
+                      <span className="text-orange-600 font-medium">
+                        Above list ({fmt(charged)})
+                      </span>
                     )}
                   </>
                 );

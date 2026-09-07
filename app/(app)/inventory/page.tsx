@@ -1657,8 +1657,10 @@ export default function InventoryPage() {
                         type="button"
                         onClick={() => toggleSort('avgUnitCost')}
                         className="inline-flex items-center gap-1 ml-auto hover:text-foreground"
+                        title="Weighted average from remaining purchase batches"
                       >
                         Cost / Price
+                        <span className="text-[10px] font-normal text-muted-foreground/80">(avg)</span>
                         <SortIcon field="avgUnitCost" />
                       </button>
                     </th>
@@ -2035,12 +2037,14 @@ export default function InventoryPage() {
                     <div className="p-4 rounded-md border bg-muted/20">
                       <p className="text-xs font-medium text-muted-foreground mb-1">
                         {viewingDetailsItem.unitOfMeasure === 'Cartons' ? 'Avg Carton Cost' : 'Avg Unit Cost'}
+                        <span className="font-normal"> (from batches)</span>
                       </p>
                       <p className="text-lg font-bold">&#8358;{fmtMoney(viewingDetailsItem.avgUnitCost)}</p>
                     </div>
                     <div className="p-4 rounded-md border bg-muted/20">
                       <p className="text-xs font-medium text-muted-foreground mb-1">
                         {viewingDetailsItem.unitOfMeasure === 'Cartons' ? 'Unit Selling Price' : 'Selling Price'}
+                        <span className="font-normal"> (avg from batches)</span>
                       </p>
                       <p className="text-lg font-bold">&#8358;{fmtMoney(viewingDetailsItem.baseSellingPrice)}</p>
                     </div>
