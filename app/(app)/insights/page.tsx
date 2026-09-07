@@ -299,7 +299,11 @@ function Ask({ scope, initialQ, onRefine }: { scope: InsightScopeParams; initial
       )}
 
       {(askMut.isError || compareMut.isError) && !pending && (
-        <p className="text-sm text-destructive">Could not answer that. Try again.</p>
+        <p className="text-sm text-destructive">
+          {(askMut.error instanceof Error && askMut.error.message)
+            || (compareMut.error instanceof Error && compareMut.error.message)
+            || 'Could not answer that. Try again.'}
+        </p>
       )}
 
       {result && (
