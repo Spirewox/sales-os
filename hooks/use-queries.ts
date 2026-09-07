@@ -1469,8 +1469,9 @@ export function useStockLogs(filters?: {
     enabled: filters !== null,
     queryFn: async () => {
       if (!HAS_API || filters === null) return [];
+      const hubMap = await fetchHubMap();
       const res = await axiosGet(`inventory/stock-logs${buildQuery(filters ?? {})}`, true) as ApiListResponse<ApiStockLog[]>;
-      return (res.data ?? []).map(mapStockLog);
+      return (res.data ?? []).map((l) => mapStockLog(l, hubMap));
     },
   });
 }
@@ -1599,6 +1600,7 @@ export function useRecordStockMove() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (dto: object) => {
+      const hubMap = await fetchHubMap();
       const res = await axiosPost('inventory/stock-logs', dto, true) as {
         data?: { product?: unknown; log?: ApiStockLog } | ApiStockLog;
       };
@@ -1606,10 +1608,10 @@ export function useRecordStockMove() {
       if (payload && typeof payload === 'object' && 'log' in payload && payload.log) {
         return {
           product: payload.product,
-          log: mapStockLog(payload.log),
+          log: mapStockLog(payload.log, hubMap),
         };
       }
-      return { log: mapStockLog(payload as ApiStockLog) };
+      return { log: mapStockLog(payload as ApiStockLog, hubMap) };
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['stockLogs'] });
@@ -1707,12 +1709,13 @@ export function useSupplierPurchases(supplierId: string | null) {
       if (!supplierId || !HAS_API) {
         return { items: [], summary: { orderCount: 0, totalSpend: 0, avgOrder: 0 } };
       }
+      const hubMap = await fetchHubMap();
       const raw = await axiosGet(`suppliers/${supplierId}/purchases?limit=200`, true) as {
         data?: ApiStockLog[];
         summary?: { order_count?: number; total_spend?: number; avg_order?: number };
       };
       return {
-        items: (raw.data ?? []).map(mapStockLog),
+        items: (raw.data ?? []).map((l) => mapStockLog(l, hubMap)),
         summary: {
           orderCount: raw.summary?.order_count ?? 0,
           totalSpend: raw.summary?.total_spend ?? 0,
@@ -1790,6 +1793,33 @@ export function useTransferStock() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (dto: object) => axiosPost('inventory/transfer', dto, true),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['stockLogs'] });
+      qc.invalidateQueries({ queryKey: ['inventory'] });
+      qc.invalidateQueries({ queryKey: ['product-batches'] });
+    },
+  });
+}
+
+export function useReconcileProductStock() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (productId: string) => {
+      const res = await axiosPost(
+        `inventory/${productId}/reconcile-stock`,
+        {},
+        true,
+      ) as {
+        message?: string;
+        data?: {
+          previous_stock?: number;
+          current_stock?: number;
+          changed?: boolean;
+          product?: ApiProduct;
+        };
+      };
+      return res;
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['stockLogs'] });
       qc.invalidateQueries({ queryKey: ['inventory'] });

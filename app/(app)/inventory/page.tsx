@@ -9,7 +9,7 @@ import { usePermissions } from '@/hooks/use-permissions';
 import {
   useInventory, useCreateProduct, useUpdateProduct, useStockLogs,
   useRecordStockMove, useBatchStockUpdate, useHubs, useTransferStock, useProductBatches,
-  useUpdatePurchaseBatch,
+  useUpdatePurchaseBatch, useReconcileProductStock,
   useDownloadInventoryImportTemplate, useValidateInventoryImport, useImportInventory,
   useInventorySalesMetrics, useSuppliers, useProductSuppliers, useProductSalesPerformance,
 } from '@/hooks/use-queries';
@@ -298,6 +298,7 @@ export default function InventoryPage() {
   const updatePurchaseBatch = useUpdatePurchaseBatch();
   const batchStockUpdate = useBatchStockUpdate();
   const transferStock = useTransferStock();
+  const reconcileProductStock = useReconcileProductStock();
 
   type InventoryConfirmState = {
     title: string;
@@ -365,6 +366,7 @@ export default function InventoryPage() {
   const { data: transferBatches = [], isFetching: transferBatchesLoading } = useProductBatches(
     showTransferModal ? transferProduct?.id ?? null : null,
   );
+  const { data: detailApiBatches = [] } = useProductBatches(detailProductId);
 
   const transferDestinations = useMemo(
     () => activeHubs.filter((h) => h.id !== transferProduct?.hubId),
@@ -661,6 +663,22 @@ export default function InventoryPage() {
       return a.date.localeCompare(b.date);
     });
   }, [viewingDetailsItem, logsForDetails]);
+
+  const itemBatchRemainingTotal = useMemo(() => {
+    if (detailProductId) {
+      return detailApiBatches.reduce((sum, b) => sum + (b.quantityRemaining || 0), 0);
+    }
+    return itemBatches.reduce((sum, b) => sum + (b.quantityRemaining || 0), 0);
+  }, [detailProductId, detailApiBatches, itemBatches]);
+
+  const stockBatchMismatch = useMemo(() => {
+    if (!viewingDetailsItem) return null;
+    const stock = Number(viewingDetailsItem.currentStock) || 0;
+    const batches = itemBatchRemainingTotal;
+    const eps = (viewingDetailsItem.unitOfMeasure || '').toLowerCase() === 'kg' ? 0.01 : 0.0001;
+    if (Math.abs(stock - batches) <= eps) return null;
+    return { stock, batches };
+  }, [viewingDetailsItem, itemBatchRemainingTotal]);
 
   const sellingPriceForMargin = (item: {
     unitOfMeasure?: string;
@@ -2017,6 +2035,41 @@ export default function InventoryPage() {
             </div>
 
             <div className="p-6 space-y-6">
+              {stockBatchMismatch && (
+                <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+                  <p className="font-medium">
+                    Stock on hand ({stockBatchMismatch.stock} {viewingDetailsItem.unitOfMeasure}) does not match open batches ({stockBatchMismatch.batches} {viewingDetailsItem.unitOfMeasure}).
+                  </p>
+                  <p className="mt-1 text-xs text-amber-800">
+                    Align stock to the FEFO batch ledger so the product table matches Batches.
+                  </p>
+                  {can('inventory.adjust_stock') && (
+                    <button
+                      type="button"
+                      disabled={reconcileProductStock.isPending}
+                      onClick={() => {
+                        reconcileProductStock.mutate(viewingDetailsItem.id, {
+                          onSuccess: (res) => {
+                            const next = res.data?.current_stock;
+                            if (typeof next === 'number') {
+                              setViewingDetailsItem((prev) =>
+                                prev ? { ...prev, currentStock: next } : prev,
+                              );
+                            }
+                            toast.success(
+                              res.message || 'Stock aligned to open batches.',
+                            );
+                          },
+                          onError: (err) => toast.error(err.message),
+                        });
+                      }}
+                      className="mt-3 h-8 rounded-md border border-amber-400 bg-white px-3 text-xs font-medium hover:bg-amber-100 disabled:opacity-50"
+                    >
+                      {reconcileProductStock.isPending ? 'Aligning…' : 'Align stock to batches'}
+                    </button>
+                  )}
+                </div>
+              )}
               {/* ── OVERVIEW TAB ── */}
               {detailTab === 'overview' && (
                 <>
