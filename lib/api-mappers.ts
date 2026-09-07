@@ -169,7 +169,13 @@ export function mapSegment(s: ApiSegment): { id: string; name: string } {
 
 export function mapCustomer(c: ApiCustomer, hubMap?: Record<string, string>): Customer {
   const segments = (c.segments ?? [])
-    .map((s) => (typeof s === 'string' ? s : s?.name))
+    .map((s) => {
+      if (typeof s === 'string') {
+        // Ignore raw ObjectIds (unpopulated segments) — not display names
+        return /^[a-f0-9]{24}$/i.test(s) ? undefined : s;
+      }
+      return s?.name;
+    })
     .filter((name): name is string => Boolean(name));
   const assigned =
     typeof c.assigned_agent === 'object' && c.assigned_agent
