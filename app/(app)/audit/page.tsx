@@ -48,7 +48,7 @@ export default function AuditTrailPage() {
         ? { category: 'bulk_upload' as const }
         : activeTab === 'all'
           ? {}
-          : { category: 'bulk_upload' as const, bulk_domain: activeTab };
+          : { module: activeTab as 'sales' | 'inventory' | 'customers' };
 
     return {
       ...(searchTerm.trim() ? { search: searchTerm.trim() } : {}),
@@ -105,9 +105,9 @@ export default function AuditTrailPage() {
   const tabs: { key: AuditTab; label: string; count: number }[] = [
     { key: 'all', label: 'All Logs', count: summary.total },
     { key: 'bulk', label: 'Bulk Uploads', count: summary.bulk },
-    { key: 'sales', label: 'Sales Uploads', count: summary.sales },
-    { key: 'inventory', label: 'Inventory Uploads', count: summary.inventory },
-    { key: 'customers', label: 'Customer Uploads', count: summary.customers },
+    { key: 'sales', label: 'Sales', count: summary.sales },
+    { key: 'inventory', label: 'Inventory', count: summary.inventory },
+    { key: 'customers', label: 'Customers', count: summary.customers },
   ];
 
   const summaryNumber = (log: AuditLog, key: string) => {
@@ -233,7 +233,9 @@ export default function AuditTrailPage() {
         of <span className="font-semibold text-foreground">{meta.total}</span> entries
       </p>
 
-      {activeTab === 'all' ? (
+      {activeTab === 'bulk' ? (
+        renderBulkTable()
+      ) : (
         <div className="rounded-xl border bg-card overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -260,7 +262,7 @@ export default function AuditTrailPage() {
             </table>
           </div>
         </div>
-      ) : renderBulkTable()}
+      )}
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">Page {meta.page} of {meta.totalPages}</p>
