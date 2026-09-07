@@ -8,10 +8,14 @@ import {
 import {
   ArrowLeftRight, Crown, Lightbulb, Loader2, Sparkles, Table as TableIcon, BarChart3, ExternalLink,
 } from 'lucide-react';
-import { useInsightDataBundle } from '@/hooks/use-insight-data-bundle';
+import {
+  useCompareEntities,
+  useCompareInsight,
+  type InsightScopeParams,
+} from '@/hooks/use-insights-api';
 import { useNarrateInsight } from '@/hooks/use-queries';
 import {
-  EntityKind, ENTITY_KINDS, listEntities, compare, type CompareResult,
+  EntityKind, ENTITY_KINDS, type CompareResult,
 } from '@/lib/insights';
 
 type CompareScope = 'product' | 'customer' | 'general';
@@ -26,22 +30,28 @@ const SCOPE_KINDS: Record<CompareScope, EntityKind[]> = {
 const selCls =
   'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-ring';
 
-export function AnalyticsCompareTab({ periodLabel }: { periodLabel: string }) {
-  const { bundle, isLoading } = useInsightDataBundle();
-  const [scope, setScope] = useState<CompareScope>('product');
-  const allowedKinds = SCOPE_KINDS[scope];
+export function AnalyticsCompareTab({
+  periodLabel,
+  scope = {},
+}: {
+  periodLabel: string;
+  scope?: InsightScopeParams;
+}) {
+  const [cmpScope, setCmpScope] = useState<CompareScope>('product');
+  const allowedKinds = SCOPE_KINDS[cmpScope];
   const [kind, setKind] = useState<EntityKind>(allowedKinds[0]);
   const [aId, setAId] = useState('');
   const [bId, setBId] = useState('');
   const [view, setView] = useState<ViewMode>('chart');
+  const [result, setResult] = useState<CompareResult | null>(null);
   const [narrative, setNarrative] = useState<string | null>(null);
   const narrate = useNarrateInsight();
+  const compareMut = useCompareInsight();
+  const { data: entities = [], isLoading: entitiesLoading } = useCompareEntities(kind, scope);
 
   useEffect(() => {
     if (!allowedKinds.includes(kind)) setKind(allowedKinds[0]);
-  }, [scope, allowedKinds, kind]);
-
-  const entities = useMemo(() => listEntities(kind, bundle), [kind, bundle]);
+  }, [cmpScope, allowedKinds, kind]);
 
   useEffect(() => {
     if (entities.length === 0) return;
@@ -49,10 +59,23 @@ export function AnalyticsCompareTab({ periodLabel }: { periodLabel: string }) {
     if (!entities.find((e) => e.id === bId)) setBId(entities[1]?.id || entities[0].id);
   }, [entities]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const result = useMemo(
-    () => (aId && bId && aId !== bId ? compare(kind, aId, bId, bundle) : null),
-    [kind, aId, bId, bundle],
-  );
+  useEffect(() => {
+    setNarrative(null);
+    if (!aId || !bId || aId === bId) {
+      setResult(null);
+      return;
+    }
+    let cancelled = false;
+    compareMut.mutate(
+      { kind, aId, bId, ...scope },
+      {
+        onSuccess: (data) => { if (!cancelled) setResult(data); },
+        onError: () => { if (!cancelled) setResult(null); },
+      },
+    );
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [kind, aId, bId, scope]);
 
   const chartData = useMemo(() => {
     if (!result) return [];
@@ -99,13 +122,7 @@ export function AnalyticsCompareTab({ periodLabel }: { periodLabel: string }) {
     );
   };
 
-  if (isLoading) {
-    return (
-      <div className="rounded-xl border bg-card p-12 text-center text-sm text-muted-foreground flex items-center justify-center gap-2">
-        <Loader2 className="animate-spin" size={16} /> Loading comparison data…
-      </div>
-    );
-  }
+  const loadingCompare = entitiesLoading || (compareMut.isPending && !result);
 
   return (
     <div className="space-y-5">
@@ -137,9 +154,9 @@ export function AnalyticsCompareTab({ periodLabel }: { periodLabel: string }) {
           <button
             key={key}
             type="button"
-            onClick={() => setScope(key)}
+            onClick={() => setCmpScope(key)}
             className={`rounded-lg border px-3 py-2 text-xs font-semibold transition-all ${
-              scope === key
+              cmpScope === key
                 ? 'bg-primary text-primary-foreground border-primary'
                 : 'bg-card hover:bg-accent text-muted-foreground'
             }`}
@@ -149,7 +166,7 @@ export function AnalyticsCompareTab({ periodLabel }: { periodLabel: string }) {
         ))}
       </div>
 
-      {scope === 'general' && (
+      {cmpScope === 'general' && (
         <div className="flex flex-wrap items-center gap-2">
           {ENTITY_KINDS.filter((k) => allowedKinds.includes(k.key)).map((k) => (
             <button
@@ -166,7 +183,7 @@ export function AnalyticsCompareTab({ periodLabel }: { periodLabel: string }) {
         </div>
       )}
 
-      {scope !== 'general' && allowedKinds.length > 1 && (
+      {cmpScope !== 'general' && allowedKinds.length > 1 && (
         <div className="flex flex-wrap items-center gap-2">
           {allowedKinds.map((k) => {
             const meta = ENTITY_KINDS.find((e) => e.key === k);
@@ -189,7 +206,7 @@ export function AnalyticsCompareTab({ periodLabel }: { periodLabel: string }) {
       <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] items-center gap-3">
         <div className="space-y-1">
           <label className="text-[10px] font-bold uppercase text-primary">Entity A</label>
-          <select value={aId} onChange={(e) => setAId(e.target.value)} className={selCls}>
+          <select value={aId} onChange={(e) => setAId(e.target.value)} className={selCls} disabled={entitiesLoading}>
             {entities.map((e) => (
               <option key={e.id} value={e.id}>
                 {e.label}
@@ -203,7 +220,7 @@ export function AnalyticsCompareTab({ periodLabel }: { periodLabel: string }) {
         </div>
         <div className="space-y-1">
           <label className="text-[10px] font-bold uppercase text-blue-600">Entity B</label>
-          <select value={bId} onChange={(e) => setBId(e.target.value)} className={selCls}>
+          <select value={bId} onChange={(e) => setBId(e.target.value)} className={selCls} disabled={entitiesLoading}>
             {entities.map((e) => (
               <option key={e.id} value={e.id}>
                 {e.label}
@@ -214,7 +231,11 @@ export function AnalyticsCompareTab({ periodLabel }: { periodLabel: string }) {
         </div>
       </div>
 
-      {!result ? (
+      {loadingCompare ? (
+        <div className="rounded-xl border bg-card p-12 text-center text-sm text-muted-foreground flex items-center justify-center gap-2">
+          <Loader2 className="animate-spin" size={16} /> Loading comparison…
+        </div>
+      ) : !result ? (
         <div className="rounded-xl border bg-card p-10 text-center text-sm text-muted-foreground">
           {aId === bId ? 'Pick two different entities to compare.' : 'Select entities to compare.'}
         </div>
@@ -282,7 +303,12 @@ export function AnalyticsCompareTab({ periodLabel }: { periodLabel: string }) {
           </div>
 
           {view === 'chart' ? (
-            <div className="rounded-xl border bg-card p-4 h-[360px]">
+            <div className="rounded-xl border bg-card p-4 h-[360px] relative">
+              {compareMut.isPending && (
+                <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-background/50">
+                  <Loader2 className="animate-spin text-muted-foreground" size={20} />
+                </div>
+              )}
               {chartData.length === 0 ? (
                 <div className="h-full flex items-center justify-center text-sm text-muted-foreground">No numeric metrics to chart.</div>
               ) : (

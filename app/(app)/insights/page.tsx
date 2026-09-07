@@ -2,17 +2,27 @@
 
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useInsightDataBundle } from '@/hooks/use-insight-data-bundle';
+import {
+  useInsightScope,
+  useAskInsight,
+  useExploreQuery,
+  useExploreFieldValues,
+  useSimulateTargets,
+  useSimulateInterpret,
+  useSimulateRun,
+  useCompareEntities,
+  useCompareInsight,
+  type InsightScopeParams,
+} from '@/hooks/use-insights-api';
 import { HubScopeFilterBar } from '@/components/hub-scope-filter';
 import { MetricsPeriodBar } from '@/components/metrics-period-bar';
-import { EntityKind, ENTITY_KINDS, DataBundle, listEntities, compare } from '@/lib/insights';
-import { DATASETS, Dataset, Filter, fieldValues, runQuery } from '@/lib/explore';
-import { ask, ASK_EXAMPLES, AskResult } from '@/lib/ask';
+import { EntityKind, ENTITY_KINDS, type CompareResult } from '@/lib/insights';
+import { DATASETS, type Filter, type QueryResult } from '@/lib/explore';
+import { ASK_EXAMPLES, type AskResult } from '@/lib/ask';
 import {
-  runSimulation, interpretScenario, SIM_SCENARIOS, SIM_EXAMPLES, defaultLevers,
-  ScenarioKey, Levers, LeverDef, SimOutput, SimMetric,
+  SIM_SCENARIOS, SIM_EXAMPLES, defaultLevers,
+  type ScenarioKey, type Levers, type LeverDef, type SimOutput, type SimMetric,
 } from '@/lib/simulate';
-import { deriveSegments } from '@/lib/segmentation';
 import { InsightButton } from '@/components/insight-button';
 import { useNarrateInsight } from '@/hooks/use-queries';
 import {
@@ -38,8 +48,10 @@ type Chart = 'column' | 'bar' | 'line' | 'pie' | 'table';
 type Mode = 'ask' | 'explore' | 'simulate' | 'compare';
 export interface SeedQuery { dataset: string; measure: string; groupBy: string; filters: Filter[] }
 
+type ExploreApiResult = QueryResult & { measureLabel: string; groupLabel: string; measureKind: 'money' | 'number' };
+
 export default function InsightsPage() {
-  const { bundle, isLoading, hubScope, metricsPeriod } = useInsightDataBundle();
+  const { hubScope, metricsPeriod, scope, periodLabel } = useInsightScope();
 
   const [mode, setMode] = useState<Mode>('ask');
   const [seed, setSeed] = useState<SeedQuery | null>(null);
@@ -70,10 +82,6 @@ export default function InsightsPage() {
     { key: 'compare', label: 'Compare', icon: ArrowLeftRight },
   ];
 
-  const periodLabel = metricsPeriod.isCustom
-    ? `${metricsPeriod.dateFrom} → ${metricsPeriod.dateTo}`
-    : metricsPeriod.preset;
-
   return (
     <div className="space-y-6 animate-in fade-in duration-500 max-w-[1200px] mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
@@ -93,25 +101,17 @@ export default function InsightsPage() {
         <MetricsPeriodBar period={metricsPeriod} />
       </div>
 
-      {isLoading ? (
-        <div className="rounded-xl border bg-card p-12 text-center text-sm text-muted-foreground flex items-center justify-center gap-2">
-          <Loader2 className="animate-spin" size={16} /> Loading insight data…
-        </div>
-      ) : (
-        <>
-          {mode === 'ask' && <Ask bundle={bundle} initialQ={initialQ} onRefine={(q) => { setSeed(q); setMode('explore'); }} />}
-          {mode === 'explore' && <Explore bundle={bundle} seed={seed} />}
-          {mode === 'simulate' && <Simulate bundle={bundle} />}
-          {mode === 'compare' && (
-            <Compare
-              bundle={bundle}
-              initialKind={compareKind}
-              initialA={compareA}
-              initialB={compareB}
-              periodLabel={periodLabel}
-            />
-          )}
-        </>
+      {mode === 'ask' && <Ask scope={scope} initialQ={initialQ} onRefine={(q) => { setSeed(q); setMode('explore'); }} />}
+      {mode === 'explore' && <Explore scope={scope} seed={seed} />}
+      {mode === 'simulate' && <Simulate scope={scope} />}
+      {mode === 'compare' && (
+        <Compare
+          scope={scope}
+          initialKind={compareKind}
+          initialA={compareA}
+          initialB={compareB}
+          periodLabel={periodLabel}
+        />
       )}
     </div>
   );
@@ -241,32 +241,69 @@ function RecordsList({ result }: { result: AskResult }) {
   );
 }
 
-function Ask({ bundle, initialQ, onRefine }: { bundle: DataBundle; initialQ: string; onRefine: (q: SeedQuery) => void }) {
+function Ask({ scope, initialQ, onRefine }: { scope: InsightScopeParams; initialQ: string; onRefine: (q: SeedQuery) => void }) {
   const [q, setQ] = useState('');
-  const [submitted, setSubmitted] = useState('');
-  const result: AskResult | null = useMemo(() => submitted.trim() ? ask(submitted, bundle) : null, [submitted, bundle]);
-  useEffect(() => { if (initialQ) { setQ(initialQ); setSubmitted(initialQ); } }, [initialQ]);
+  const [result, setResult] = useState<AskResult | null>(null);
+  const [cmp, setCmp] = useState<CompareResult | null>(null);
+  const askMut = useAskInsight();
+  const compareMut = useCompareInsight();
+  const pending = askMut.isPending || compareMut.isPending;
 
-  const run = (text: string) => { setQ(text); setSubmitted(text); };
-  const cmp = useMemo(() => (result?.compare ? compare(result.compare.kind, result.compare.aId, result.compare.bId, bundle) : null), [result, bundle]);
+  const run = async (text: string) => {
+    const question = text.trim();
+    if (!question) return;
+    setQ(question);
+    setResult(null);
+    setCmp(null);
+    try {
+      const askResult = await askMut.mutateAsync({ question, ...scope });
+      setResult(askResult);
+      if (askResult.compare) {
+        const compareResult = await compareMut.mutateAsync({
+          kind: askResult.compare.kind,
+          aId: askResult.compare.aId,
+          bId: askResult.compare.bId,
+          ...scope,
+        });
+        setCmp(compareResult);
+      }
+    } catch {
+      /* mutation error surfaced via isError */
+    }
+  };
+
+  useEffect(() => {
+    if (initialQ) void run(initialQ);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialQ]);
 
   return (
     <div className="space-y-5">
-      {/* Ask box */}
       <div className="rounded-xl border bg-card shadow-sm p-4">
         <div className="flex items-center gap-2">
           <Sparkles size={18} className="text-primary shrink-0" />
-          <input value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') run(q); }} placeholder="Ask anything — e.g. what do Sunday customers buy?" className="flex-1 h-10 bg-transparent text-sm focus:outline-none" />
-          <button onClick={() => run(q)} disabled={!q.trim()} className="inline-flex items-center gap-1.5 rounded-md bg-primary text-primary-foreground px-3 h-9 text-sm font-semibold disabled:opacity-50"><Send size={14} /> Ask</button>
+          <input value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void run(q); }} placeholder="Ask anything — e.g. what do Sunday customers buy?" className="flex-1 h-10 bg-transparent text-sm focus:outline-none" />
+          <button onClick={() => void run(q)} disabled={!q.trim() || pending} className="inline-flex items-center gap-1.5 rounded-md bg-primary text-primary-foreground px-3 h-9 text-sm font-semibold disabled:opacity-50">
+            {pending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />} Ask
+          </button>
         </div>
         <div className="flex flex-wrap gap-1.5 mt-3">
-          {ASK_EXAMPLES.map((ex) => <button key={ex} onClick={() => run(ex)} className="rounded-full border px-2.5 py-1 text-[11px] font-medium text-muted-foreground hover:bg-accent">{ex}</button>)}
+          {ASK_EXAMPLES.map((ex) => <button key={ex} onClick={() => void run(ex)} disabled={pending} className="rounded-full border px-2.5 py-1 text-[11px] font-medium text-muted-foreground hover:bg-accent disabled:opacity-50">{ex}</button>)}
         </div>
       </div>
 
+      {pending && !result && (
+        <div className="rounded-xl border bg-card p-12 text-center text-sm text-muted-foreground flex items-center justify-center gap-2">
+          <Loader2 className="animate-spin" size={16} /> Thinking…
+        </div>
+      )}
+
+      {(askMut.isError || compareMut.isError) && !pending && (
+        <p className="text-sm text-destructive">Could not answer that. Try again.</p>
+      )}
+
       {result && (
         <>
-          {/* Understanding */}
           <div className="rounded-xl border border-primary/30 bg-primary/5 p-4">
             <div className="flex items-start gap-2.5">
               <Wand2 size={16} className="text-primary mt-0.5 shrink-0" />
@@ -289,14 +326,19 @@ function Ask({ bundle, initialQ, onRefine }: { bundle: DataBundle; initialQ: str
             </div>
           </div>
 
-          {/* Find mode — real records */}
           {result.mode === 'find' ? (
             result.records && result.records.length > 0 ? <RecordsList result={result} /> : null
-          ) : result.compare && cmp ? (
-            <div className="rounded-xl border bg-card shadow-sm">
-              <div className="p-5 border-b flex items-center justify-between"><h3 className="text-sm font-bold">{cmp.aLabel} vs {cmp.bLabel}</h3><span className="text-sm font-black">{cmp.aWins} <span className="text-muted-foreground">–</span> {cmp.bWins}</span></div>
-              <div className="p-5 space-y-2.5">{cmp.insights.map((ins, i) => <div key={i} className="flex items-start gap-2.5 text-sm"><span className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${ins.winner === 'a' ? 'bg-primary' : ins.winner === 'b' ? 'bg-blue-500' : 'bg-muted-foreground'}`} /><span>{ins.text}</span></div>)}</div>
-            </div>
+          ) : result.compare ? (
+            compareMut.isPending && !cmp ? (
+              <div className="rounded-xl border bg-card p-10 text-center text-sm text-muted-foreground flex items-center justify-center gap-2">
+                <Loader2 className="animate-spin" size={16} /> Loading comparison…
+              </div>
+            ) : cmp ? (
+              <div className="rounded-xl border bg-card shadow-sm">
+                <div className="p-5 border-b flex items-center justify-between"><h3 className="text-sm font-bold">{cmp.aLabel} vs {cmp.bLabel}</h3><span className="text-sm font-black">{cmp.aWins} <span className="text-muted-foreground">–</span> {cmp.bWins}</span></div>
+                <div className="p-5 space-y-2.5">{cmp.insights.map((ins, i) => <div key={i} className="flex items-start gap-2.5 text-sm"><span className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${ins.winner === 'a' ? 'bg-primary' : ins.winner === 'b' ? 'bg-blue-500' : 'bg-muted-foreground'}`} /><span>{ins.text}</span></div>)}</div>
+              </div>
+            ) : null
           ) : (
             <div className="rounded-xl border bg-card shadow-sm">
               <div className="p-5 border-b flex items-start justify-between gap-3"><h3 className="text-sm font-bold">{result.measureLabel} by {result.groupLabel}</h3><InsightButton title={`${result.measureLabel} by ${result.groupLabel}`} kind={result.measureKind} time={result.chart === 'line'} series={result.rows.map((r) => ({ label: r.label, value: r.value }))} /></div>
@@ -310,24 +352,82 @@ function Ask({ bundle, initialQ, onRefine }: { bundle: DataBundle; initialQ: str
 }
 
 /* ═══════════ EXPLORE (query builder) ═══════════ */
-function Explore({ bundle, seed }: { bundle: DataBundle; seed: SeedQuery | null }) {
+function FilterValueChips({
+  dataset,
+  field,
+  selected,
+  onChange,
+  scope,
+}: {
+  dataset: string;
+  field: string;
+  selected: string[];
+  onChange: (values: string[]) => void;
+  scope: InsightScopeParams;
+}) {
+  const { data: values = [], isLoading, isFetching } = useExploreFieldValues(true, { dataset, field, ...scope });
+  if (isLoading || isFetching) {
+    return <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground py-1"><Loader2 size={12} className="animate-spin" /> Loading values…</div>;
+  }
+  return (
+    <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto">
+      {values.map((v) => {
+        const on = selected.includes(v);
+        return (
+          <button
+            key={v}
+            type="button"
+            onClick={() => onChange(on ? selected.filter((x) => x !== v) : [...selected, v])}
+            className={`rounded-full px-2 py-0.5 text-[11px] font-medium border transition-colors ${on ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-muted-foreground hover:bg-accent'}`}
+          >
+            {v}
+          </button>
+        );
+      })}
+      {values.length === 0 && <span className="text-[11px] text-muted-foreground">No values</span>}
+    </div>
+  );
+}
+
+function Explore({ scope, seed }: { scope: InsightScopeParams; seed: SeedQuery | null }) {
   const [dsKey, setDsKey] = useState(seed?.dataset || 'sales');
-  const ds: Dataset = useMemo(() => DATASETS.find((d) => d.key === dsKey)!, [dsKey]);
-  const rows = useMemo(() => ds.build(bundle), [ds, bundle]);
+  const ds = useMemo(() => DATASETS.find((d) => d.key === dsKey)!, [dsKey]);
   const [measure, setMeasure] = useState(seed?.measure || ds.measures[0].key);
   const [groupBy, setGroupBy] = useState(seed?.groupBy || ds.fields[0].key);
   const [filters, setFilters] = useState<Filter[]>(seed?.filters || []);
   const [chart, setChart] = useState<Chart>('column');
+  const [result, setResult] = useState<ExploreApiResult | null>(null);
+  const exploreMut = useExploreQuery();
 
   const first = useRef(true);
-  useEffect(() => { if (first.current) { first.current = false; return; } setMeasure(ds.measures[0].key); setGroupBy(ds.fields[0].key); setFilters([]); }, [dsKey]); // eslint-disable-line
+  useEffect(() => {
+    if (first.current) { first.current = false; return; }
+    setMeasure(ds.measures[0].key);
+    setGroupBy(ds.fields[0].key);
+    setFilters([]);
+  }, [dsKey]); // eslint-disable-line
 
-  const result = useMemo(() => runQuery(ds, rows, filters, groupBy, measure), [ds, rows, filters, groupBy, measure]);
-  const measureLabel = ds.measures.find((m) => m.key === measure)?.label || '';
-  const groupLabel = ds.fields.find((f) => f.key === groupBy)?.label || '';
-  const top = result.rows[0];
+  useEffect(() => {
+    const t = setTimeout(() => {
+      exploreMut.mutate(
+        { dataset: dsKey, measure, groupBy, filters, ...scope },
+        { onSuccess: (data) => setResult(data) },
+      );
+    }, 280);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dsKey, measure, groupBy, filters, scope]);
 
-  const addFilter = () => { const used = new Set(filters.map((f) => f.field)); const next = ds.fields.find((f) => !used.has(f.key) && f.key !== groupBy) || ds.fields[0]; setFilters([...filters, { field: next.key, multi: !!next.multi, values: [] }]); };
+  const measureLabel = result?.measureLabel || ds.measures.find((m) => m.key === measure)?.label || '';
+  const groupLabel = result?.groupLabel || ds.fields.find((f) => f.key === groupBy)?.label || '';
+  const measureKind = result?.measureKind || (ds.measures.find((m) => m.key === measure)?.kind ?? 'number');
+  const top = result?.rows[0];
+
+  const addFilter = () => {
+    const used = new Set(filters.map((f) => f.field));
+    const next = ds.fields.find((f) => !used.has(f.key) && f.key !== groupBy) || ds.fields[0];
+    setFilters([...filters, { field: next.key, multi: !!next.multi, values: [] }]);
+  };
   const updateFilter = (idx: number, patch: Partial<Filter>) => setFilters(filters.map((f, i) => i === idx ? { ...f, ...patch } : f));
   const removeFilter = (idx: number) => setFilters(filters.filter((_, i) => i !== idx));
 
@@ -350,7 +450,6 @@ function Explore({ bundle, seed }: { bundle: DataBundle; seed: SeedQuery | null 
           {filters.map((f, idx) => {
             const fDef = ds.fields.find((x) => x.key === f.field);
             if (!fDef) return null;
-            const values = fieldValues(rows, fDef);
             return (
               <div key={idx} className="rounded-lg border bg-muted/20 p-2.5">
                 <div className="flex items-center gap-2 mb-2">
@@ -359,9 +458,13 @@ function Explore({ bundle, seed }: { bundle: DataBundle; seed: SeedQuery | null 
                   <span className="text-xs text-muted-foreground">is</span><span className="text-[10px] text-muted-foreground ml-auto">{f.values.length || 'any'}</span>
                   <button onClick={() => removeFilter(idx)} className="text-muted-foreground hover:text-red-600 p-0.5"><X size={13} /></button>
                 </div>
-                <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto">
-                  {values.map((v) => { const on = f.values.includes(v); return <button key={v} onClick={() => updateFilter(idx, { values: on ? f.values.filter((x) => x !== v) : [...f.values, v] })} className={`rounded-full px-2 py-0.5 text-[11px] font-medium border transition-colors ${on ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-muted-foreground hover:bg-accent'}`}>{v}</button>; })}
-                </div>
+                <FilterValueChips
+                  dataset={dsKey}
+                  field={f.field}
+                  selected={f.values}
+                  scope={scope}
+                  onChange={(values) => updateFilter(idx, { values })}
+                />
               </div>
             );
           })}
@@ -369,16 +472,35 @@ function Explore({ bundle, seed }: { bundle: DataBundle; seed: SeedQuery | null 
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="rounded-xl border bg-card p-4 shadow-sm"><p className="text-[10px] font-bold uppercase text-muted-foreground">Total {measureLabel}</p><p className="text-2xl font-black">{fmtVal(result.total, result.measureKind)}</p></div>
-        <div className="rounded-xl border bg-card p-4 shadow-sm"><p className="text-[10px] font-bold uppercase text-muted-foreground">{groupLabel} Groups</p><p className="text-2xl font-black">{result.rows.length}</p></div>
-        <div className="rounded-xl border bg-card p-4 shadow-sm"><p className="text-[10px] font-bold uppercase text-muted-foreground flex items-center gap-1"><Lightbulb size={11} className="text-amber-500" /> Top {groupLabel}</p><p className="text-sm font-black truncate">{top ? top.label : '—'}</p>{top && <p className="text-[11px] text-muted-foreground">{fmtVal(top.value, result.measureKind)}{result.total > 0 ? ` · ${Math.round((top.value / result.total) * 100)}%` : ''}</p>}</div>
-      </div>
+      {exploreMut.isPending && !result && (
+        <div className="rounded-xl border bg-card p-12 text-center text-sm text-muted-foreground flex items-center justify-center gap-2">
+          <Loader2 className="animate-spin" size={16} /> Running query…
+        </div>
+      )}
 
-      <div className="rounded-xl border bg-card shadow-sm">
-        <div className="p-5 border-b flex items-start justify-between gap-3"><h3 className="text-sm font-bold">{measureLabel} by {groupLabel}</h3><InsightButton title={`${measureLabel} by ${groupLabel}`} kind={result.measureKind} time={!!ds.fields.find((f) => f.key === groupBy)?.time} series={result.rows.map((r) => ({ label: r.label, value: r.value }))} /></div>
-        <div className="p-5"><ResultChart rows={result.rows} chart={chart} measureLabel={measureLabel} measureKind={result.measureKind} groupLabel={groupLabel} /></div>
-      </div>
+      {exploreMut.isError && !exploreMut.isPending && (
+        <p className="text-sm text-destructive">Query failed. Try adjusting filters.</p>
+      )}
+
+      {result && (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="rounded-xl border bg-card p-4 shadow-sm"><p className="text-[10px] font-bold uppercase text-muted-foreground">Total {measureLabel}</p><p className="text-2xl font-black">{fmtVal(result.total, measureKind)}</p></div>
+            <div className="rounded-xl border bg-card p-4 shadow-sm"><p className="text-[10px] font-bold uppercase text-muted-foreground">{groupLabel} Groups</p><p className="text-2xl font-black">{result.rows.length}</p></div>
+            <div className="rounded-xl border bg-card p-4 shadow-sm"><p className="text-[10px] font-bold uppercase text-muted-foreground flex items-center gap-1"><Lightbulb size={11} className="text-amber-500" /> Top {groupLabel}</p><p className="text-sm font-black truncate">{top ? top.label : '—'}</p>{top && <p className="text-[11px] text-muted-foreground">{fmtVal(top.value, measureKind)}{result.total > 0 ? ` · ${Math.round((top.value / result.total) * 100)}%` : ''}</p>}</div>
+          </div>
+
+          <div className="rounded-xl border bg-card shadow-sm relative">
+            {exploreMut.isPending && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-background/50">
+                <Loader2 className="animate-spin text-muted-foreground" size={20} />
+              </div>
+            )}
+            <div className="p-5 border-b flex items-start justify-between gap-3"><h3 className="text-sm font-bold">{measureLabel} by {groupLabel}</h3><InsightButton title={`${measureLabel} by ${groupLabel}`} kind={measureKind} time={!!ds.fields.find((f) => f.key === groupBy)?.time} series={result.rows.map((r) => ({ label: r.label, value: r.value }))} /></div>
+            <div className="p-5"><ResultChart rows={result.rows} chart={chart} measureLabel={measureLabel} measureKind={measureKind} groupLabel={groupLabel} /></div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -386,21 +508,6 @@ function Explore({ bundle, seed }: { bundle: DataBundle; seed: SeedQuery | null 
 /* ═══════════ SIMULATE (what-if scenarios) ═══════════ */
 
 const fmtM = (v: number, k: SimMetric['kind']) => k === 'money' ? money(v) : k === 'percent' ? `${Math.round(v)}%` : Math.round(v).toLocaleString();
-
-function targetOptions(bundle: DataBundle, includeSuppliers: boolean): { value: string; label: string }[] {
-  const cats = Array.from(new Set(bundle.inventory.map((i) => i.category))).sort();
-  const items = [...bundle.inventory].sort((a, b) => a.name.localeCompare(b.name));
-  const opts = [{ value: 'all', label: 'Whole catalogue' }];
-  cats.forEach((c) => opts.push({ value: `cat:${c}`, label: `${c} · category` }));
-  items.forEach((i) => opts.push({ value: `item:${i.id}`, label: i.name }));
-  if (includeSuppliers) bundle.suppliers.forEach((s) => opts.push({ value: `sup:${s.id}`, label: `${s.name} · supplier` }));
-  return opts;
-}
-function segmentOptions(bundle: DataBundle): string[] {
-  const set = new Set<string>();
-  bundle.customers.forEach((c) => deriveSegments(c).forEach((s) => set.add(s)));
-  return Array.from(set).sort();
-}
 
 function MetricTile({ mt, big }: { mt: SimMetric; big?: boolean }) {
   const delta = mt.projected - mt.baseline;
@@ -423,7 +530,19 @@ function MetricTile({ mt, big }: { mt: SimMetric; big?: boolean }) {
   );
 }
 
-function LeverControl({ def, levers, patch, bundle }: { def: LeverDef; levers: Levers; patch: (p: Partial<Levers>) => void; bundle: DataBundle }) {
+function LeverControl({
+  def,
+  levers,
+  patch,
+  targets,
+  segments,
+}: {
+  def: LeverDef;
+  levers: Levers;
+  patch: (p: Partial<Levers>) => void;
+  targets: { value: string; label: string }[];
+  segments: string[];
+}) {
   if (def.kind === 'target') {
     if (def.key === 'churnSegment') {
       return (
@@ -431,12 +550,12 @@ function LeverControl({ def, levers, patch, bundle }: { def: LeverDef; levers: L
           <span className="text-[11px] font-semibold text-muted-foreground">{def.label}</span>
           <select value={levers.churnSegment} onChange={(e) => patch({ churnSegment: e.target.value })} className="mt-1 w-full h-9 rounded-md border bg-background px-2 text-sm">
             <option value="">— use top customers —</option>
-            {segmentOptions(bundle).map((s) => <option key={s} value={`seg:${s}`}>{s}</option>)}
+            {segments.map((s) => <option key={s} value={`seg:${s}`}>{s}</option>)}
           </select>
         </label>
       );
     }
-    const opts = targetOptions(bundle, !!def.includeSuppliers);
+    const opts = def.includeSuppliers ? targets : targets.filter((o) => !o.value.startsWith('sup:'));
     return (
       <label className="block">
         <span className="text-[11px] font-semibold text-muted-foreground">{def.label}</span>
@@ -468,42 +587,71 @@ const VERDICT_STYLE = {
   neutral: { icon: Info, cls: 'bg-muted/50 border-border text-foreground', dot: 'text-muted-foreground' },
 } as const;
 
-function Simulate({ bundle }: { bundle: DataBundle }) {
+function Simulate({ scope }: { scope: InsightScopeParams }) {
   const [q, setQ] = useState('');
   const [scenario, setScenario] = useState<ScenarioKey>('price');
   const [levers, setLevers] = useState<Levers>(defaultLevers());
   const [understood, setUnderstood] = useState<string>('');
+  const [out, setOut] = useState<SimOutput | null>(null);
+
+  const { data: targetData, isLoading: targetsLoading } = useSimulateTargets(scope);
+  const targets = targetData?.targets ?? [];
+  const segments = targetData?.segments ?? [];
+  const interpretMut = useSimulateInterpret();
+  const runMut = useSimulateRun();
 
   const def = SIM_SCENARIOS.find((s) => s.key === scenario)!;
-  const out: SimOutput = useMemo(() => runSimulation(scenario, levers, bundle), [scenario, levers, bundle]);
   const patch = (p: Partial<Levers>) => setLevers((prev) => ({ ...prev, ...p }));
 
-  const runNL = (text: string) => {
-    setQ(text);
-    const r = interpretScenario(text, bundle);
-    setScenario(r.scenario); setLevers(r.levers); setUnderstood(r.understood);
+  useEffect(() => {
+    let cancelled = false;
+    const t = setTimeout(() => {
+      runMut.mutate(
+        { scenario, levers, ...scope },
+        {
+          onSuccess: (data) => { if (!cancelled) setOut(data); },
+        },
+      );
+    }, 200);
+    return () => { cancelled = true; clearTimeout(t); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scenario, levers, scope]);
+
+  const runNL = async (text: string) => {
+    const question = text.trim();
+    if (!question) return;
+    setQ(question);
+    try {
+      const r = await interpretMut.mutateAsync({ question, ...scope });
+      setScenario(r.scenario);
+      setLevers(r.levers);
+      setUnderstood(r.understood);
+    } catch {
+      /* surfaced via isError */
+    }
   };
   const pickScenario = (k: ScenarioKey) => { setScenario(k); setLevers({ ...defaultLevers(), target: levers.target }); setUnderstood(''); };
 
-  const v = VERDICT_STYLE[out.verdict.tone];
+  const v = out ? VERDICT_STYLE[out.verdict.tone] : VERDICT_STYLE.neutral;
   const VIcon = v.icon;
 
   return (
     <div className="space-y-5">
-      {/* NL box */}
       <div className="rounded-xl border bg-card shadow-sm p-4">
         <div className="flex items-center gap-2">
           <FlaskConical size={18} className="text-primary shrink-0" />
-          <input value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && q.trim()) runNL(q); }} placeholder="Describe a what-if — e.g. what if I raise Beef prices 10%?" className="flex-1 h-10 bg-transparent text-sm focus:outline-none" />
-          <button onClick={() => q.trim() && runNL(q)} disabled={!q.trim()} className="inline-flex items-center gap-1.5 rounded-md bg-primary text-primary-foreground px-3 h-9 text-sm font-semibold disabled:opacity-50"><Send size={14} /> Simulate</button>
+          <input value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && q.trim()) void runNL(q); }} placeholder="Describe a what-if — e.g. what if I raise Beef prices 10%?" className="flex-1 h-10 bg-transparent text-sm focus:outline-none" />
+          <button onClick={() => q.trim() && void runNL(q)} disabled={!q.trim() || interpretMut.isPending} className="inline-flex items-center gap-1.5 rounded-md bg-primary text-primary-foreground px-3 h-9 text-sm font-semibold disabled:opacity-50">
+            {interpretMut.isPending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />} Simulate
+          </button>
         </div>
         <div className="flex flex-wrap gap-1.5 mt-3">
-          {SIM_EXAMPLES.map((ex) => <button key={ex} onClick={() => runNL(ex)} className="rounded-full border px-2.5 py-1 text-[11px] font-medium text-muted-foreground hover:bg-accent">{ex}</button>)}
+          {SIM_EXAMPLES.map((ex) => <button key={ex} onClick={() => void runNL(ex)} disabled={interpretMut.isPending} className="rounded-full border px-2.5 py-1 text-[11px] font-medium text-muted-foreground hover:bg-accent disabled:opacity-50">{ex}</button>)}
         </div>
         {understood && <p className="text-[11px] text-muted-foreground mt-2.5"><Wand2 size={11} className="inline mr-1 text-primary" />Understood as: <span className="font-semibold text-foreground">{understood}</span></p>}
+        {interpretMut.isError && <p className="text-xs text-destructive mt-2">Could not interpret that scenario.</p>}
       </div>
 
-      {/* Scenario chips */}
       <div className="flex flex-wrap gap-1.5">
         {SIM_SCENARIOS.map((s) => (
           <button key={s.key} onClick={() => pickScenario(s.key)} className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${scenario === s.key ? 'bg-primary text-primary-foreground border-primary' : 'bg-card text-muted-foreground hover:bg-accent'}`}>{s.label}</button>
@@ -511,58 +659,78 @@ function Simulate({ bundle }: { bundle: DataBundle }) {
       </div>
 
       <div className="grid lg:grid-cols-3 gap-5">
-        {/* Levers */}
         <div className="rounded-xl border bg-card shadow-sm p-4 space-y-4 h-fit">
           <div className="flex items-center gap-2 pb-1"><Sliders size={14} className="text-primary" /><h3 className="text-sm font-bold">{def.label}</h3></div>
           <p className="text-[11px] text-muted-foreground -mt-2">{def.blurb}</p>
-          {def.levers.map((ld) => <LeverControl key={ld.key} def={ld} levers={levers} patch={patch} bundle={bundle} />)}
+          {targetsLoading ? (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground py-2"><Loader2 size={12} className="animate-spin" /> Loading targets…</div>
+          ) : (
+            def.levers.map((ld) => (
+              <LeverControl key={ld.key} def={ld} levers={levers} patch={patch} targets={targets} segments={segments} />
+            ))
+          )}
         </div>
 
-        {/* Results */}
         <div className="lg:col-span-2 space-y-4">
-          <div className="rounded-xl border bg-card shadow-sm p-5">
-            <div className="flex items-start justify-between gap-3 mb-4">
-              <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase text-primary tracking-wide">Projected outcome</p>
-                <h3 className="text-base font-bold leading-tight">{out.title}</h3>
-                <p className="text-[11px] text-muted-foreground">{out.subtitle}</p>
-              </div>
-              <MetricTile mt={out.headline} big />
+          {runMut.isPending && !out && (
+            <div className="rounded-xl border bg-card p-12 text-center text-sm text-muted-foreground flex items-center justify-center gap-2">
+              <Loader2 className="animate-spin" size={16} /> Running simulation…
             </div>
+          )}
+          {runMut.isError && !out && (
+            <p className="text-sm text-destructive">Simulation failed. Try again.</p>
+          )}
+          {out && (
+            <>
+              <div className="rounded-xl border bg-card shadow-sm p-5 relative">
+                {runMut.isPending && (
+                  <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-background/50">
+                    <Loader2 className="animate-spin text-muted-foreground" size={20} />
+                  </div>
+                )}
+                <div className="flex items-start justify-between gap-3 mb-4">
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-bold uppercase text-primary tracking-wide">Projected outcome</p>
+                    <h3 className="text-base font-bold leading-tight">{out.title}</h3>
+                    <p className="text-[11px] text-muted-foreground">{out.subtitle}</p>
+                  </div>
+                  <MetricTile mt={out.headline} big />
+                </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-4">
-              {out.metrics.map((mt, i) => <MetricTile key={i} mt={mt} />)}
-            </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-4">
+                  {out.metrics.map((mt, i) => <MetricTile key={i} mt={mt} />)}
+                </div>
 
-            <div className="h-44">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={out.chart} margin={{ top: 4, right: 8, left: 8, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
-                  <XAxis dataKey="name" tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
-                  <YAxis tickFormatter={(v2) => money(v2)} tick={{ fontSize: 10 }} width={48} stroke="var(--muted-foreground)" />
-                  <Tooltip formatter={(v2) => money(Number(v2))} contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Bar dataKey="Baseline" fill="#94a3b8" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="Projected" fill="#0891b2" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          {/* AI read */}
-          <div className={`rounded-xl border p-4 ${v.cls}`}>
-            <div className="flex items-start gap-2.5">
-              <VIcon size={18} className={`mt-0.5 shrink-0 ${v.dot}`} />
-              <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-wide mb-1 opacity-80">AI recommendation</p>
-                <p className="text-sm font-semibold leading-snug">{out.verdict.text}</p>
-                <p className="text-xs mt-2 leading-relaxed opacity-90">{out.narrative}</p>
-                <div className="flex flex-wrap gap-1.5 mt-2.5">
-                  {out.assumptions.map((a, i) => <span key={i} className="inline-flex items-center rounded-full bg-background/60 border border-current/10 px-2 py-0.5 text-[10px] font-medium opacity-80">{a}</span>)}
+                <div className="h-44">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={out.chart} margin={{ top: 4, right: 8, left: 8, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+                      <XAxis dataKey="name" tick={{ fontSize: 11 }} stroke="var(--muted-foreground)" />
+                      <YAxis tickFormatter={(v2) => money(v2)} tick={{ fontSize: 10 }} width={48} stroke="var(--muted-foreground)" />
+                      <Tooltip formatter={(v2) => money(Number(v2))} contentStyle={{ fontSize: 12, borderRadius: 8 }} />
+                      <Legend wrapperStyle={{ fontSize: 11 }} />
+                      <Bar dataKey="Baseline" fill="#94a3b8" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="Projected" fill="#0891b2" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
                 </div>
               </div>
-            </div>
-          </div>
+
+              <div className={`rounded-xl border p-4 ${v.cls}`}>
+                <div className="flex items-start gap-2.5">
+                  <VIcon size={18} className={`mt-0.5 shrink-0 ${v.dot}`} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] font-bold uppercase tracking-wide mb-1 opacity-80">AI recommendation</p>
+                    <p className="text-sm font-semibold leading-snug">{out.verdict.text}</p>
+                    <p className="text-xs mt-2 leading-relaxed opacity-90">{out.narrative}</p>
+                    <div className="flex flex-wrap gap-1.5 mt-2.5">
+                      {out.assumptions.map((a, i) => <span key={i} className="inline-flex items-center rounded-full bg-background/60 border border-current/10 px-2 py-0.5 text-[10px] font-medium opacity-80">{a}</span>)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -571,23 +739,25 @@ function Simulate({ bundle }: { bundle: DataBundle }) {
 
 /* ═══════════ COMPARE ═══════════ */
 function Compare({
-  bundle,
+  scope,
   initialKind = 'product',
   initialA = '',
   initialB = '',
   periodLabel,
 }: {
-  bundle: DataBundle;
+  scope: InsightScopeParams;
   initialKind?: EntityKind;
   initialA?: string;
   initialB?: string;
   periodLabel?: string;
 }) {
   const [kind, setKind] = useState<EntityKind>(initialKind);
-  const entities = useMemo(() => listEntities(kind, bundle), [kind, bundle]);
+  const { data: entities = [], isLoading: entitiesLoading } = useCompareEntities(kind, scope);
   const [aId, setAId] = useState(initialA);
   const [bId, setBId] = useState(initialB);
+  const [result, setResult] = useState<CompareResult | null>(null);
   const [narrative, setNarrative] = useState<string | null>(null);
+  const compareMut = useCompareInsight();
   const narrate = useNarrateInsight();
 
   useEffect(() => { setKind(initialKind); }, [initialKind]);
@@ -602,7 +772,24 @@ function Compare({
     if (!entities.find((e) => e.id === bId)) setBId(initialB && entities.find((e) => e.id === initialB) ? initialB : (entities[1]?.id || entities[0].id));
   }, [entities]); // eslint-disable-line
 
-  const result = useMemo(() => (aId && bId ? compare(kind, aId, bId, bundle) : null), [kind, aId, bId, bundle]);
+  useEffect(() => {
+    setNarrative(null);
+    if (!aId || !bId || aId === bId) {
+      setResult(null);
+      return;
+    }
+    let cancelled = false;
+    compareMut.mutate(
+      { kind, aId, bId, ...scope },
+      {
+        onSuccess: (data) => { if (!cancelled) setResult(data); },
+        onError: () => { if (!cancelled) setResult(null); },
+      },
+    );
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [kind, aId, bId, scope]);
+
   const selCls = 'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-ring';
 
   const handleNarrate = () => {
@@ -636,11 +823,15 @@ function Compare({
     <div className="space-y-5">
       <div className="flex flex-wrap items-center gap-2">{ENTITY_KINDS.map((k) => { const Icon = KIND_ICON[k.key]; return <button key={k.key} type="button" onClick={() => setKind(k.key)} className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold transition-all ${kind === k.key ? 'bg-primary text-primary-foreground border-primary shadow-sm' : 'bg-card hover:bg-accent text-muted-foreground'}`}><Icon size={14} /> {k.label}</button>; })}</div>
       <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] items-center gap-3">
-        <div className="space-y-1"><label className="text-[10px] font-bold uppercase text-primary">Entity A</label><select value={aId} onChange={(e) => setAId(e.target.value)} className={selCls}>{entities.map((e) => <option key={e.id} value={e.id}>{e.label}{e.sublabel ? ` · ${e.sublabel}` : ''}</option>)}</select></div>
+        <div className="space-y-1"><label className="text-[10px] font-bold uppercase text-primary">Entity A</label><select value={aId} onChange={(e) => setAId(e.target.value)} className={selCls} disabled={entitiesLoading}>{entities.map((e) => <option key={e.id} value={e.id}>{e.label}{e.sublabel ? ` · ${e.sublabel}` : ''}</option>)}</select></div>
         <div className="hidden sm:flex items-center justify-center h-10 w-10 rounded-full border bg-muted/40 text-muted-foreground shrink-0 mt-4"><ArrowLeftRight size={16} /></div>
-        <div className="space-y-1"><label className="text-[10px] font-bold uppercase text-blue-600">Entity B</label><select value={bId} onChange={(e) => setBId(e.target.value)} className={selCls}>{entities.map((e) => <option key={e.id} value={e.id}>{e.label}{e.sublabel ? ` · ${e.sublabel}` : ''}</option>)}</select></div>
+        <div className="space-y-1"><label className="text-[10px] font-bold uppercase text-blue-600">Entity B</label><select value={bId} onChange={(e) => setBId(e.target.value)} className={selCls} disabled={entitiesLoading}>{entities.map((e) => <option key={e.id} value={e.id}>{e.label}{e.sublabel ? ` · ${e.sublabel}` : ''}</option>)}</select></div>
       </div>
-      {!result || aId === bId ? (
+      {entitiesLoading || (compareMut.isPending && !result) ? (
+        <div className="rounded-xl border bg-card p-10 text-center text-sm text-muted-foreground flex items-center justify-center gap-2">
+          <Loader2 className="animate-spin" size={16} /> Loading comparison…
+        </div>
+      ) : !result || aId === bId ? (
         <div className="rounded-xl border bg-card p-10 text-center text-sm text-muted-foreground">{aId === bId ? 'Pick two different entities to compare.' : 'Select entities to compare.'}</div>
       ) : (
         <>
