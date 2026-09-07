@@ -2423,7 +2423,7 @@ export default function InventoryPage() {
                 <>
                   <div className="flex items-center gap-2 mb-2">
                     <Thermometer size={16} className="text-primary" />
-                    <h4 className="text-sm font-bold">Active Batches (FEFO Order)</h4>
+                    <h4 className="text-sm font-bold">Active Batches</h4>
                   </div>
                   {itemBatches.length === 0 ? (
                     <p className="text-sm text-muted-foreground italic">No active batches. Record a purchase or receive stock via transfer to create batches.</p>
