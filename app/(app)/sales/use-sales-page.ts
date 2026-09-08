@@ -51,6 +51,13 @@ import {
 import type { SalesImportChunkResult, SalesImportPreviewRow } from '@/types/api';
 import { isHistoricalDate } from '@/lib/historical-date';
 import { PRODUCT_CATEGORIES } from '@/lib/product-categories';
+import {
+  defaultVolumeUnit,
+  isVolumeUom,
+  type SaleFormUnit,
+  volumeUnitOptions,
+  volumeUnitPrice,
+} from '@/lib/volume-units';
 
 export function useSalesPage() {
   const { user } = useAuth();
@@ -174,7 +181,7 @@ export function useSalesPage() {
     if (hubScope.defaultHubName) setSelectedHub(hubScope.defaultHubName);
   }, [hubScope.defaultHubName]);
   const [quantity, setQuantity] = useState(1);
-  const [saleUnit, setSaleUnit] = useState<'Carton' | 'Kg' | ''>('');
+  const [saleUnit, setSaleUnit] = useState<SaleFormUnit>('');
   const [paymentMode, setPaymentMode] = useState<PaymentMode>(PaymentMode.FULL_PAYMENT);
   const [paymentType, setPaymentType] = useState<PaymentType>(PaymentType.CASH);
   const [amountPaid, setAmountPaid] = useState(0);
@@ -272,6 +279,7 @@ export function useSalesPage() {
   }, [catalogProductId, batchesLoading, productBatches, selectedBatchNumber]);
 
   const isCartonProduct = selectedInventoryItem?.unitOfMeasure === 'Cartons';
+  const isVolumeProduct = isVolumeUom(selectedInventoryItem?.unitOfMeasure);
 
   const selectedBatch = useMemo(
     () => productBatches.find((b) => b.batchNumber === selectedBatchNumber),
@@ -281,7 +289,7 @@ export function useSalesPage() {
   /** List selling price in the sale unit, preferring the selected batch snapshot. */
   const listUnitPriceForSale = (
     item: typeof selectedInventoryItem,
-    unit: 'Carton' | 'Kg' | '',
+    unit: SaleFormUnit,
     batch?: { unitPrice: number } | null,
   ) => {
     if (!item) return 0;
@@ -295,26 +303,21 @@ export function useSalesPage() {
       }
       return item.cartonPrice && item.cartonPrice > 0 ? item.cartonPrice : 0;
     }
-    return batchList > 0 ? batchList : item.baseSellingPrice;
+    const catalogPrice = batchList > 0 ? batchList : item.baseSellingPrice;
+    if (isVolumeUom(item.unitOfMeasure) && unit) {
+      return volumeUnitPrice(item.unitOfMeasure, catalogPrice, unit);
+    }
+    return catalogPrice;
   };
 
   const computeSaleAmount = (
     item: typeof selectedInventoryItem,
     qty: number,
-    unit: 'Carton' | 'Kg' | '',
+    unit: SaleFormUnit,
     batch?: { unitPrice: number } | null,
   ) => {
     if (!item || qty <= 0) return 0;
     return listUnitPriceForSale(item, unit, batch) * qty;
-  };
-
-  const stockQtyForSale = (item: typeof selectedInventoryItem, qty: number, unit: 'Carton' | 'Kg' | '') => {
-    if (!item || qty <= 0) return 0;
-    if (item.unitOfMeasure === 'Cartons' && unit === 'Kg') {
-      if (!item.cartonWeight || item.cartonWeight <= 0) return Infinity;
-      return qty / item.cartonWeight;
-    }
-    return qty;
   };
 
   const [productDetailsText, setProductDetailsText] = useState('');
@@ -330,7 +333,10 @@ export function useSalesPage() {
       const next = computeSaleAmount(
         selectedInventoryItem,
         quantity,
-        saleUnit || (selectedInventoryItem.unitOfMeasure === 'Cartons' ? 'Carton' : ''),
+        saleUnit ||
+          (selectedInventoryItem.unitOfMeasure === 'Cartons'
+            ? 'Carton'
+            : defaultVolumeUnit(selectedInventoryItem.unitOfMeasure) || ''),
         batch,
       );
       if (prev.amount === next) return prev;
@@ -378,6 +384,9 @@ export function useSalesPage() {
           }
         }
       }
+      if (isVolumeProduct && !saleUnit) {
+        errors.saleUnit = `Select ${volumeUnitOptions(selectedInventoryItem?.unitOfMeasure).join(' or ')}.`;
+      }
     }
     if (paymentMode !== PaymentMode.FULL_PAYMENT && !dueDate) {
       errors.dueDate = 'Due date is required for credit sales.';
@@ -393,6 +402,7 @@ export function useSalesPage() {
     selectedInventoryItem,
     selectedBatch,
     isCartonProduct,
+    isVolumeProduct,
     paymentMode,
     dueDate,
     isHistoricalSale,
@@ -472,7 +482,10 @@ export function useSalesPage() {
       return;
     }
     const item = inventory.find((i) => i.id === productId);
-    const nextUnit: 'Carton' | 'Kg' | '' = item?.unitOfMeasure === 'Cartons' ? 'Carton' : '';
+    const nextUnit: SaleFormUnit =
+      item?.unitOfMeasure === 'Cartons'
+        ? 'Carton'
+        : defaultVolumeUnit(item?.unitOfMeasure) || '';
     setSaleUnit(nextUnit);
     if (item) {
       setNewSale((prev) => ({
@@ -509,7 +522,7 @@ export function useSalesPage() {
     }
   };
 
-  const handleSaleUnitChange = (unit: 'Carton' | 'Kg' | '') => {
+  const handleSaleUnitChange = (unit: SaleFormUnit) => {
     setSaleUnit(unit);
     setTouched((t) => ({ ...t, saleUnit: true }));
     const item = inventory.find((i) => i.id === selectedProductId);
@@ -975,6 +988,7 @@ export function useSalesPage() {
     availableInventory,
     selectedInventoryItem,
     isCartonProduct,
+    isVolumeProduct,
     handleProductChange,
     handleBatchChange,
     handleQuantityChange,

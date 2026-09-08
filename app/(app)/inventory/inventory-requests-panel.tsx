@@ -21,6 +21,7 @@ import { SubmitButton } from '@/components/submit-button';
 import { TableSkeleton } from '@/components/ui/loading-skeletons';
 import { toast } from 'sonner';
 import { Plus, Package, Check, X, Truck, Ban } from 'lucide-react';
+import { isVolumeUom, volumeConversionPreview, volumeUnitOptions } from '@/lib/volume-units';
 
 function hubName(ref: ApiInventoryRequest['requesting_location']) {
   return typeof ref === 'object' && ref ? ref.hub_name ?? '—' : '—';
@@ -111,11 +112,17 @@ export function InventoryRequestsPanel() {
   const unitOptions = useMemo(() => {
     if (!selectedProduct) return [];
     if (isCartonProduct) return ['Carton', 'Kg'];
+    if (isVolumeUom(selectedProduct.unitOfMeasure)) {
+      return volumeUnitOptions(selectedProduct.unitOfMeasure);
+    }
     return [selectedProduct.unitOfMeasure || 'Units'];
   }, [selectedProduct, isCartonProduct]);
 
   const conversionPreview = useMemo(() => {
     if (!selectedProduct || !(quantity > 0)) return null;
+    if (isVolumeUom(selectedProduct.unitOfMeasure)) {
+      return volumeConversionPreview(selectedProduct.unitOfMeasure, quantity, requestUom);
+    }
     if (!isCartonProduct || !(cartonWeight && cartonWeight > 0)) return null;
     if (requestUom === 'Carton') {
       return `${quantity} Carton = ${(quantity * cartonWeight).toFixed(2)} Kg`;
@@ -348,6 +355,12 @@ export function InventoryRequestsPanel() {
                     This product has no valid carton weight in the catalog.
                   </p>
                 )}
+              </div>
+            )}
+            {isVolumeUom(selectedProduct?.unitOfMeasure) && conversionPreview && (
+              <div className="space-y-1 md:col-span-2 rounded-md border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                <p>1000 ml = 1 Liter</p>
+                <p className="font-medium text-foreground">{conversionPreview}</p>
               </div>
             )}
             <div className="space-y-2 md:col-span-2">

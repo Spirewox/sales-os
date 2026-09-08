@@ -18,6 +18,7 @@ import { fmt, NAIRA, INPUT_CLS, LABEL_CLS, BTN_PRIMARY, BTN_SECONDARY } from './
 import { ModalDialog } from './modal-dialog';
 import { SearchableCustomerSelect } from '@/components/searchable-customer-select';
 import { SubmitButton } from '@/components/submit-button';
+import { type SaleFormUnit, volumeUnitOptions } from '@/lib/volume-units';
 
 type SelectedFormCustomer = Customer & {
   avgOrder: number;
@@ -65,14 +66,15 @@ export interface AddSaleModalProps {
   };
   listUnitPriceForSale: (
     item: InventoryItem | undefined,
-    unit: 'Carton' | 'Kg' | '',
+    unit: SaleFormUnit,
     batch?: { unitPrice: number } | null,
   ) => number;
   quantity: number;
   handleQuantityChange: (qty: number) => void;
-  saleUnit: 'Carton' | 'Kg' | '';
-  handleSaleUnitChange: (unit: 'Carton' | 'Kg' | '') => void;
+  saleUnit: SaleFormUnit;
+  handleSaleUnitChange: (unit: SaleFormUnit) => void;
   isCartonProduct: boolean;
+  isVolumeProduct: boolean;
   paymentMode: PaymentMode;
   setPaymentMode: (mode: PaymentMode) => void;
   amountPaid: number;
@@ -125,6 +127,7 @@ export function AddSaleModal({
   saleUnit,
   handleSaleUnitChange,
   isCartonProduct,
+  isVolumeProduct,
   paymentMode,
   setPaymentMode,
   amountPaid,
@@ -309,9 +312,23 @@ export function AddSaleModal({
                     ? selectedBatch
                       ? `${fmt(listUnitPriceForSale(selectedInventoryItem, 'Carton', selectedBatch))}/Carton · ${fmt(listUnitPriceForSale(selectedInventoryItem, 'Kg', selectedBatch))}/Kg (batch)`
                       : `${fmt(selectedInventoryItem.cartonPrice ?? 0)}/Carton · ${fmt(selectedInventoryItem.baseSellingPrice)}/Kg (avg)`
-                    : selectedBatch
-                      ? `${fmt(listUnitPriceForSale(selectedInventoryItem, '', selectedBatch))}/${selectedInventoryItem.unitOfMeasure} (batch)`
-                      : `${fmt(selectedInventoryItem.baseSellingPrice)}/${selectedInventoryItem.unitOfMeasure} (avg)`}
+                    : isVolumeProduct
+                      ? selectedBatch
+                        ? volumeUnitOptions(selectedInventoryItem.unitOfMeasure)
+                            .map(
+                              (u) =>
+                                `${fmt(listUnitPriceForSale(selectedInventoryItem, u, selectedBatch))}/${u}`,
+                            )
+                            .join(' · ') + ' (batch)'
+                        : volumeUnitOptions(selectedInventoryItem.unitOfMeasure)
+                            .map(
+                              (u) =>
+                                `${fmt(listUnitPriceForSale(selectedInventoryItem, u, null))}/${u}`,
+                            )
+                            .join(' · ') + ' (avg)'
+                      : selectedBatch
+                        ? `${fmt(listUnitPriceForSale(selectedInventoryItem, '', selectedBatch))}/${selectedInventoryItem.unitOfMeasure} (batch)`
+                        : `${fmt(selectedInventoryItem.baseSellingPrice)}/${selectedInventoryItem.unitOfMeasure} (avg)`}
                 </span>
                 {selectedInventoryItem.currentStock <= selectedInventoryItem.minStockLevel && (
                   <span className="text-red-500 font-medium flex items-center gap-1"><AlertTriangle size={10} /> Low stock</span>
@@ -357,19 +374,29 @@ export function AddSaleModal({
           )}
 
           {/* Quantity, sale unit & Amount */}
-          <div className={`grid grid-cols-1 ${isCartonProduct && !isMealSale ? 'sm:grid-cols-3' : 'sm:grid-cols-2'} gap-4`}>
-            {isCartonProduct && !isMealSale && (
+          <div className={`grid grid-cols-1 ${(isCartonProduct || isVolumeProduct) && !isMealSale ? 'sm:grid-cols-3' : 'sm:grid-cols-2'} gap-4`}>
+            {(isCartonProduct || isVolumeProduct) && !isMealSale && (
               <div className="space-y-2">
                 <label htmlFor="sale-unit" className={LABEL_CLS}>Unit *</label>
                 <select
                   id="sale-unit"
                   value={saleUnit}
-                  onChange={(e) => handleSaleUnitChange((e.target.value as 'Carton' | 'Kg' | '') || '')}
+                  onChange={(e) => handleSaleUnitChange((e.target.value as SaleFormUnit) || '')}
                   className={`${INPUT_CLS} ${touched.saleUnit && validationErrors.saleUnit ? 'border-red-500' : ''}`}
                 >
                   <option value="">-- Select --</option>
-                  <option value="Carton">Carton</option>
-                  <option value="Kg">Kg</option>
+                  {isCartonProduct && (
+                    <>
+                      <option value="Carton">Carton</option>
+                      <option value="Kg">Kg</option>
+                    </>
+                  )}
+                  {isVolumeProduct &&
+                    volumeUnitOptions(selectedInventoryItem?.unitOfMeasure).map((u) => (
+                      <option key={u} value={u}>
+                        {u}
+                      </option>
+                    ))}
                 </select>
                 {touched.saleUnit && validationErrors.saleUnit && (
                   <p className="text-xs text-red-500">{validationErrors.saleUnit}</p>

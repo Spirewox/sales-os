@@ -215,7 +215,7 @@ export interface InventoryItem {
   sku: string;
   name: string;
   category: ProductCategory;
-  unitOfMeasure: 'Cartons' | 'Units' | 'Kg' | 'Liters';
+  unitOfMeasure: 'Cartons' | 'Units' | 'Kg' | 'Liters' | 'ml';
   minStockLevel: number;
   currentStock: number;
   avgUnitCost: number;
@@ -419,7 +419,7 @@ export interface Sale {
     productName?: string;
     quantity: number;
     unit?: string;
-    saleUnit?: 'Carton' | 'Kg';
+    saleUnit?: 'Carton' | 'Kg' | 'Liters' | 'ml';
     stockQuantity?: number;
     category?: string;
     batchNumber?: string;

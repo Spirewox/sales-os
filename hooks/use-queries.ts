@@ -1402,7 +1402,7 @@ export function useInventorySalesMetrics(filters?: {
     queryFn: async (): Promise<InventorySalesMetrics> => {
       if (!HAS_API) {
         return {
-          volumeByUnit: { Kg: 0, Litres: 0, Units: 0 },
+          volumeByUnit: { Kg: 0, Litres: 0, Units: 0, ml: 0 },
           topSellers: [],
           mostVolatile: [],
           mealsServed: 0,
@@ -1419,7 +1419,7 @@ export function useInventorySalesMetrics(filters?: {
         true,
       ) as ApiListResponse<InventorySalesMetrics>;
       return res.data ?? {
-        volumeByUnit: { Kg: 0, Litres: 0, Units: 0 },
+        volumeByUnit: { Kg: 0, Litres: 0, Units: 0, ml: 0 },
         topSellers: [],
         mostVolatile: [],
         mealsServed: 0,
