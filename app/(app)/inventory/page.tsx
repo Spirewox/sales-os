@@ -26,6 +26,13 @@ import {
   formatInventoryStockDisplay,
   formatStockLogReference,
 } from '@/lib/format-carton-stock';
+import {
+  isLitersUom,
+  isVolumeUom,
+  volumeConversionPreview,
+  volumeEnteredQtyToStock,
+  volumeUnitOptions,
+} from '@/lib/volume-units';
 import { toast } from 'sonner';
 import {
   Plus, Box, Search, History, Package, AlertTriangle, Truck, Layers,
@@ -41,7 +48,7 @@ import {
 import { PaginationControls } from '@/components/ui/pagination-controls';
 
 type ProductCategory = InventoryItem['category'];
-const ALL_UOMS: InventoryItem['unitOfMeasure'][] = ['Cartons', 'Units', 'Kg', 'Liters'];
+const ALL_UOMS: InventoryItem['unitOfMeasure'][] = ['Cartons', 'Units', 'Kg', 'Liters', 'ml'];
 const INVENTORY_PAGE_SIZE = 20;
 
 const roundMoney2 = (n: number | undefined | null) =>
@@ -93,6 +100,7 @@ function purchaseUnitOptions(item?: InventoryItem | null): string[] {
   if (!item) return [];
   if (isCartonsUom(item.unitOfMeasure)) return ['Carton', 'Kg'];
   if (item.unitOfMeasure === 'Kg') return ['Kg', 'Carton'];
+  if (isVolumeUom(item.unitOfMeasure)) return volumeUnitOptions(item.unitOfMeasure);
   return [item.unitOfMeasure || 'Units'];
 }
 
@@ -121,6 +129,10 @@ function purchaseQtyToStockQty(
       return roundQty2(qty * weight);
     }
     return roundQty2(qty);
+  }
+
+  if (isVolumeUom(item.unitOfMeasure)) {
+    return volumeEnteredQtyToStock(item.unitOfMeasure, qty, purchaseUom);
   }
 
   return qty;
@@ -285,6 +297,7 @@ export default function InventoryPage() {
     () => [
       { unit: 'Kg', quantity: salesMetrics?.volumeByUnit.Kg ?? 0 },
       { unit: 'Litres', quantity: salesMetrics?.volumeByUnit.Litres ?? 0 },
+      { unit: 'ml', quantity: salesMetrics?.volumeByUnit.ml ?? 0 },
       { unit: 'Units', quantity: salesMetrics?.volumeByUnit.Units ?? 0 },
     ],
     [salesMetrics],
@@ -2688,7 +2701,7 @@ export default function InventoryPage() {
                 <input
                   type="number"
                   min={0}
-                  step={newProduct.unitOfMeasure === 'Kg' ? '0.01' : 1}
+                  step={newProduct.unitOfMeasure === 'Kg' || isLitersUom(newProduct.unitOfMeasure) ? (newProduct.unitOfMeasure === 'Kg' ? '0.01' : '0.001') : 1}
                   value={
                     newProduct.unitOfMeasure === 'Kg'
                       ? initialStockDraft
@@ -2707,7 +2720,9 @@ export default function InventoryPage() {
                     }
                     setNewProduct({
                       ...newProduct,
-                      currentStock: parseInt(e.target.value, 10) || 0,
+                      currentStock: isLitersUom(newProduct.unitOfMeasure)
+                        ? parseFloat(e.target.value) || 0
+                        : parseInt(e.target.value, 10) || 0,
                     });
                   }}
                   onBlur={() => {
@@ -2720,6 +2735,8 @@ export default function InventoryPage() {
                 />
                 {newProduct.unitOfMeasure === 'Kg' ? (
                   <p className="text-[11px] text-muted-foreground">Up to 2 decimal places (Kg).</p>
+                ) : isLitersUom(newProduct.unitOfMeasure) ? (
+                  <p className="text-[11px] text-muted-foreground">Up to 3 decimal places (Liters). 1000 ml = 1 L.</p>
                 ) : null}
               </div>
               <div className="space-y-2">
@@ -2984,7 +3001,7 @@ export default function InventoryPage() {
                     <input
                       type="number"
                       min={0}
-                      step={editProduct.unitOfMeasure === 'Kg' ? '0.01' : 1}
+                      step={editProduct.unitOfMeasure === 'Kg' || isLitersUom(editProduct.unitOfMeasure) ? (editProduct.unitOfMeasure === 'Kg' ? '0.01' : '0.001') : 1}
                       value={
                         editProduct.unitOfMeasure === 'Kg'
                           ? editCurrentStockDraft
@@ -3003,7 +3020,9 @@ export default function InventoryPage() {
                         }
                         setEditProduct({
                           ...editProduct,
-                          currentStock: parseInt(e.target.value, 10) || 0,
+                          currentStock: isLitersUom(editProduct.unitOfMeasure)
+                            ? parseFloat(e.target.value) || 0
+                            : parseInt(e.target.value, 10) || 0,
                         });
                       }}
                       onBlur={() => {
@@ -3017,6 +3036,7 @@ export default function InventoryPage() {
                     <p className="text-[11px] text-muted-foreground">
                       Editable until the first sale is recorded.
                       {editProduct.unitOfMeasure === 'Kg' ? ' Up to 2 decimal places (Kg).' : ''}
+                      {isLitersUom(editProduct.unitOfMeasure) ? ' Up to 3 decimal places (Liters).' : ''}
                     </p>
                   </div>
                   <div className="space-y-2">
@@ -3225,6 +3245,15 @@ export default function InventoryPage() {
                     }
                     return `${entered} Kg (stock unit)`;
                   })()}
+                </p>
+              ) : null}
+              {isVolumeUom(selectedProduct.unitOfMeasure) && purchaseUom ? (
+                <p className="text-[11px] text-muted-foreground -mt-2">
+                  {volumeConversionPreview(
+                    selectedProduct.unitOfMeasure,
+                    moveData.quantity,
+                    purchaseUom,
+                  )}
                 </p>
               ) : null}
 

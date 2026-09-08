@@ -235,7 +235,7 @@ export interface ApiSaleItem {
   product_name?: string;
   quantity: number;
   unit?: string;
-  sale_unit?: 'Carton' | 'Kg';
+  sale_unit?: 'Carton' | 'Kg' | 'Liters' | 'ml';
   stock_quantity?: number;
   category?: string;
   batch_number?: string;
@@ -812,7 +812,7 @@ export interface CustomerImportValidateResponse {
 }
 
 export interface InventorySalesMetrics {
-  volumeByUnit: { Kg: number; Litres: number; Units: number };
+  volumeByUnit: { Kg: number; Litres: number; Units: number; ml: number };
   topSellers: { productName: string; quantity: number; revenue: number }[];
   mostVolatile: {
     productName: string;

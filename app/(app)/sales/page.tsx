@@ -99,6 +99,7 @@ export default function SalesPage() {
     touched, setTouched, validationErrors, isFormValid, isHistoricalSale, isMealSale,
     productDetailsText, setProductDetailsText, customerCreditWarning,
     selectedFormCustomer, availableInventory, selectedInventoryItem, isCartonProduct,
+    isVolumeProduct,
     handleProductChange, handleBatchChange, handleQuantityChange, handleSaleUnitChange,
     listUnitPriceForSale, selectedBatch, handleSaveSale,
     savingSale, savingEdit, voidingSale, updatingDelivery,
@@ -461,6 +462,7 @@ export default function SalesPage() {
         saleUnit={saleUnit}
         handleSaleUnitChange={handleSaleUnitChange}
         isCartonProduct={isCartonProduct}
+        isVolumeProduct={isVolumeProduct}
         paymentMode={paymentMode}
         setPaymentMode={setPaymentMode}
         amountPaid={amountPaid}
