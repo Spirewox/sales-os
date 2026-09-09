@@ -181,6 +181,19 @@ function buildFifoBatches(allLogs: StockLog[], itemId: string): FifoBatch[] {
     });
   };
 
+  /** Credit qty back onto an existing batch code (void RETURN); else open a new batch. */
+  const creditToBatch = (log: StockLog) => {
+    const code = (log.batchNumber || '').trim();
+    if (code) {
+      const existing = batches.find((b) => (b.batchNumber || '').trim() === code);
+      if (existing) {
+        existing.quantityRemaining += Math.abs(log.quantity);
+        return;
+      }
+    }
+    openBatch(log);
+  };
+
   const deductFromBatches = (log: StockLog) => {
     let toDeduct = Math.abs(log.quantity);
     const targetBatch = (log.batchNumber || '').trim();
@@ -206,11 +219,12 @@ function buildFifoBatches(allLogs: StockLog[], itemId: string): FifoBatch[] {
   for (const log of itemLogs) {
     if (
       log.type === StockMovementType.PURCHASE ||
-      log.type === StockMovementType.RETURN ||
       (log.type === StockMovementType.TRANSFER && log.quantity > 0) ||
       (log.type === StockMovementType.ADJUSTMENT && log.quantity > 0)
     ) {
       openBatch(log);
+    } else if (log.type === StockMovementType.RETURN) {
+      creditToBatch(log);
     } else if (
       log.type === StockMovementType.SALE ||
       (log.type === StockMovementType.TRANSFER && log.quantity < 0) ||
