@@ -157,7 +157,8 @@ export function useSalesPage() {
     }
   };
 
-  const { data: stockLogs = [] } = useStockLogs();
+  const { data: stockLogsResult } = useStockLogs();
+  const stockLogs = stockLogsResult?.data ?? [];
   const { data: creditSummary = [] } = useCreditSummary();
   const { data: hubs = [] } = useHubs();
   const activeHubs = hubs.filter((h) => h.isActive);

@@ -1455,6 +1455,22 @@ export function useUpdateProduct() {
   });
 }
 
+export type StockLogsQueryResult = {
+  data: ReturnType<typeof mapStockLog>[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasMore: boolean;
+  };
+};
+
+const EMPTY_STOCK_LOGS_RESULT: StockLogsQueryResult = {
+  data: [],
+  meta: { page: 1, limit: 0, total: 0, totalPages: 1, hasMore: false },
+};
+
 export function useStockLogs(filters?: {
   item_id?: string;
   hub_id?: string;
@@ -1467,11 +1483,28 @@ export function useStockLogs(filters?: {
   return useQuery({
     queryKey: ['stockLogs', filters],
     enabled: filters !== null,
-    queryFn: async () => {
-      if (!HAS_API || filters === null) return [];
+    placeholderData: keepPreviousData,
+    queryFn: async (): Promise<StockLogsQueryResult> => {
+      if (!HAS_API || filters === null) return EMPTY_STOCK_LOGS_RESULT;
       const hubMap = await fetchHubMap();
-      const res = await axiosGet(`inventory/stock-logs${buildQuery(filters ?? {})}`, true) as ApiListResponse<ApiStockLog[]>;
-      return (res.data ?? []).map((l) => mapStockLog(l, hubMap));
+      const res = (await axiosGet(
+        `inventory/stock-logs${buildQuery(filters ?? {})}`,
+        true,
+      )) as ApiListResponse<ApiStockLog[]>;
+      const rows = (res.data ?? []).map((l) => mapStockLog(l, hubMap));
+      const page = res.meta?.page ?? filters?.page ?? 1;
+      const limit = res.meta?.limit ?? filters?.limit ?? rows.length;
+      const total = res.meta?.total ?? rows.length;
+      const totalPages =
+        res.meta?.totalPages ?? Math.max(1, Math.ceil(total / Math.max(1, limit || 1)));
+      const hasMore =
+        typeof res.meta?.hasMore === 'boolean'
+          ? res.meta.hasMore
+          : page * Math.max(1, limit) < total;
+      return {
+        data: rows,
+        meta: { page, limit, total, totalPages, hasMore },
+      };
     },
   });
 }

@@ -302,7 +302,8 @@ export default function InventoryPage() {
   const validateInventoryImport = useValidateInventoryImport();
   const importInventory = useImportInventory();
   const { data: items = [] } = useInventory({ hub_id: hubScope.hubIdForApi });
-  const { data: logs = [] } = useStockLogs({ hub_id: hubScope.hubIdForApi, limit: 200 });
+  const { data: hubLogsResult } = useStockLogs({ hub_id: hubScope.hubIdForApi, limit: 200 });
+  const logs = hubLogsResult?.data ?? [];
   const { data: salesMetrics } = useInventorySalesMetrics({
     hub_id: hubScope.hubIdForApi,
     ...metricsPeriod.apiParams,
@@ -381,11 +382,50 @@ export default function InventoryPage() {
   const [viewingDetailsItem, setViewingDetailsItem] = useState<InventoryItem | null>(null);
   const [detailTab, setDetailTab] = useState<'overview' | 'suppliers' | 'sales' | 'batches' | 'history' | 'activity'>('overview');
   const detailProductId = viewingDetailsItem?.id ?? null;
-  const { data: detailLogs = [] } = useStockLogs(
-    detailProductId ? { item_id: detailProductId, limit: 200 } : null,
+  const ACTIVITY_PAGE_SIZE = 30;
+  const [activityLimit, setActivityLimit] = useState(ACTIVITY_PAGE_SIZE);
+  const activityLoadMoreRef = useRef<HTMLDivElement | null>(null);
+  const detailPanelScrollRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    setActivityLimit(ACTIVITY_PAGE_SIZE);
+  }, [detailProductId]);
+
+  const {
+    data: detailLogsResult,
+    isFetching: detailLogsFetching,
+  } = useStockLogs(
+    detailProductId ? { item_id: detailProductId, limit: activityLimit } : null,
   );
+  const detailLogs = detailLogsResult?.data ?? [];
+  const detailLogsMeta = detailLogsResult?.meta;
   // Item-scoped logs include opening PURCHASE (hub list is newest-N and can omit first batch)
   const logsForDetails = detailProductId ? detailLogs : logs;
+
+  useEffect(() => {
+    if (detailTab !== 'activity' || !detailProductId) return;
+    const node = activityLoadMoreRef.current;
+    const root = detailPanelScrollRef.current;
+    if (!node || !root) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const hit = entries.some((e) => e.isIntersecting);
+        if (!hit) return;
+        if (!detailLogsMeta?.hasMore || detailLogsFetching) return;
+        setActivityLimit((prev) => prev + ACTIVITY_PAGE_SIZE);
+      },
+      { root, rootMargin: '80px', threshold: 0 },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [
+    detailTab,
+    detailProductId,
+    detailLogsMeta?.hasMore,
+    detailLogsFetching,
+    activityLimit,
+    detailLogs.length,
+  ]);
 
   // Selected product for stock move
   const [selectedProduct, setSelectedProduct] = useState<InventoryItem | null>(null);
@@ -2012,7 +2052,11 @@ export default function InventoryPage() {
       {/* ══════════════════ DETAIL SIDE PANEL ══════════════════ */}
       {viewingDetailsItem && (
         <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex justify-end" onClick={() => setViewingDetailsItem(null)}>
-          <div className="w-full max-w-xl bg-card border-l shadow-xl h-full overflow-y-auto animate-in slide-in-from-right duration-200" onClick={(e) => e.stopPropagation()}>
+          <div
+            ref={detailPanelScrollRef}
+            className="w-full max-w-xl bg-card border-l shadow-xl h-full overflow-y-auto animate-in slide-in-from-right duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Header */}
             <div className="p-6 border-b flex justify-between items-start sticky top-0 bg-card z-10">
               <div className="flex-1 min-w-0">
@@ -2056,7 +2100,7 @@ export default function InventoryPage() {
                   {tab === 'sales' && 'Sales'}
                   {tab === 'batches' && `Batches (${itemBatches.length})`}
                   {tab === 'history' && 'Price'}
-                  {tab === 'activity' && `Activity (${itemLogs.length})`}
+                  {tab === 'activity' && `Activity (${detailLogsMeta?.total ?? itemLogs.length})`}
                 </button>
               ))}
             </div>
@@ -2632,8 +2676,25 @@ export default function InventoryPage() {
               {detailTab === 'activity' && (
                 <>
                   <h4 className="text-xs font-medium text-muted-foreground mb-3">Recent Activity</h4>
+                  <div className="flex items-center gap-4 text-xs mb-3">
+                    <div className="flex items-center gap-2">
+                      <TrendingUp size={14} className="text-green-600" />
+                      <span className="text-muted-foreground">Inbound:</span>
+                      <span className="font-bold">{itemStats.inbound}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <TrendingDown size={14} className="text-red-600" />
+                      <span className="text-muted-foreground">Outbound:</span>
+                      <span className="font-bold">{itemStats.outbound}</span>
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mb-3">
+                    Showing {itemLogs.length}
+                    {detailLogsMeta?.total != null ? ` of ${detailLogsMeta.total}` : ''} movements
+                    {detailLogsMeta?.hasMore ? ' · scroll for more' : ''}
+                  </p>
                   <div className="space-y-2">
-                    {itemLogs.slice(0, 30).map((log) => (
+                    {itemLogs.map((log) => (
                       <div key={log.id} className="p-3 rounded-lg border bg-muted/10 text-sm">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
@@ -2661,6 +2722,10 @@ export default function InventoryPage() {
                       </div>
                     ))}
                     {itemLogs.length === 0 && <p className="text-sm text-muted-foreground italic">No activity yet.</p>}
+                    <div ref={activityLoadMoreRef} className="h-4" aria-hidden />
+                    {detailLogsFetching && detailLogsMeta?.hasMore && (
+                      <p className="text-xs text-muted-foreground text-center py-2">Loading more…</p>
+                    )}
                   </div>
                 </>
               )}

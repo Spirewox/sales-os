@@ -116,8 +116,10 @@ export default function SuppliersPage() {
     code_to: codeTo.trim() || undefined,
   });
   const suppliers = supplierList?.items ?? [];
-  const { data: purchaseStockLogs = [] } = useStockLogs({ type: 'PURCHASE' });
-  const { data: stockLogs = [] } = useStockLogs();
+  const { data: purchaseStockLogsResult } = useStockLogs({ type: 'PURCHASE' });
+  const purchaseStockLogs = purchaseStockLogsResult?.data ?? [];
+  const { data: stockLogsResult } = useStockLogs();
+  const stockLogs = stockLogsResult?.data ?? [];
   const { data: inventory = [] } = useInventory();
   const { data: hubs = [] } = useHubs();
   const { data: agents = [] } = useAgents();

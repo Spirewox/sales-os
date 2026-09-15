@@ -112,6 +112,13 @@ export interface ApiCreditRecord {
 export interface ApiListResponse<T> {
   message: string;
   data: T;
+  meta?: {
+    page?: number;
+    limit?: number;
+    total?: number;
+    totalPages?: number;
+    hasMore?: boolean;
+  };
 }
 
 export interface ApiHub {
