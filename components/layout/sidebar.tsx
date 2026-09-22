@@ -9,14 +9,16 @@ import { Permission } from '@/lib/permissions';
 import {
   LayoutDashboard, Package, Users, Banknote,
   CreditCard, History, MessageSquare,
-  Settings, LogOut, Menu, X, BarChart3, Truck, Sparkles,
+  Settings, LogOut, Menu, X, Truck, Sparkles,
+  // BarChart3 — temporarily unused while Analytics nav is hidden
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { BrandLogo } from '@/components/brand';
 
 const navItems: { href: string; label: string; icon: typeof LayoutDashboard; permission?: Permission }[] = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard, permission: 'dashboard.view' },
-  { href: '/analytics', label: 'Analytics', icon: BarChart3, permission: 'analytics.view' },
+  // Temporarily hidden — re-enable with BarChart3 import when Analytics returns
+  // { href: '/analytics', label: 'Analytics', icon: BarChart3, permission: 'analytics.view' },
   { href: '/insights', label: 'Insights', icon: Sparkles, permission: 'analytics.view' },
   { href: '/inventory', label: 'Inventory', icon: Package, permission: 'inventory.view' },
   { href: '/suppliers', label: 'Suppliers', icon: Truck, permission: 'suppliers.view' },

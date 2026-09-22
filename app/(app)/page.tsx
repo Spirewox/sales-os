@@ -14,7 +14,8 @@ import {
   Banknote, ChevronRight, Package, CreditCard, AlertTriangle,
   Users, TrendingUp, UserCheck, Eye, Plus, ArrowUpRight,
   ShoppingCart, MessageSquare, ClipboardList, Wallet,
-  BarChart3, UserPlus, PackagePlus, Receipt,
+  UserPlus, PackagePlus, Receipt,
+  // BarChart3 — temporarily unused while Analytics shortcut is hidden
 } from 'lucide-react';
 import { CustomerType } from '@/types';
 
@@ -394,9 +395,11 @@ export default function DashboardPage() {
             <MessageSquare size={14} className="text-sky-600" /> Log Feedback
           </button>
         )}
+        {/* Temporarily hidden — re-enable when Analytics returns
         <button onClick={() => router.push('/analytics')} className="inline-flex items-center gap-1.5 shrink-0 rounded-lg border bg-card px-3.5 py-2 text-xs font-semibold hover:border-indigo-300 hover:bg-indigo-50 transition-all">
           <BarChart3 size={14} className="text-indigo-600" /> Analytics
         </button>
+        */}
       </div>
 
       {/* ═══════════════════════════════════════
