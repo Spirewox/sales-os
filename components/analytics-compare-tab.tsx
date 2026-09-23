@@ -1,12 +1,11 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts';
 import {
-  ArrowLeftRight, Crown, Lightbulb, Loader2, Sparkles, Table as TableIcon, BarChart3, ExternalLink,
+  ArrowLeftRight, Crown, Lightbulb, Loader2, Sparkles, Table as TableIcon, BarChart3,
 } from 'lucide-react';
 import {
   useCompareEntities,
@@ -94,8 +93,6 @@ export function AnalyticsCompareTab({
     ).slice(0, 10);
   }, [result]);
 
-  const insightsLink = `/insights?mode=compare&kind=${encodeURIComponent(kind)}&a=${encodeURIComponent(aId)}&b=${encodeURIComponent(bId)}`;
-
   const handleNarrate = (r: CompareResult) => {
     setNarrative(null);
     narrate.mutate(
@@ -132,15 +129,9 @@ export function AnalyticsCompareTab({
             <ArrowLeftRight size={16} className="text-primary" /> Compare
           </h2>
           <p className="text-xs text-muted-foreground">
-            Side-by-side metrics for the selected hub and period. Open Insight Explorer for Ask / Explore / Simulate.
+            Side-by-side metrics for the selected hub and period.
           </p>
         </div>
-        <Link
-          href={insightsLink}
-          className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold hover:bg-accent"
-        >
-          <Sparkles size={13} /> Open in Insights <ExternalLink size={12} />
-        </Link>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
