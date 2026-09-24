@@ -7,7 +7,16 @@ export const ROLE_COLOR_MAP: Record<RoleName, string> = {
   'Hub Manager': 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
   Finance: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
   'Customer Success': 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+  Cashier: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
 };
+
+export function isPosRoleSelection(roleLabelName?: string): boolean {
+  return roleLabelName === 'Cashier';
+}
+
+export function canRegenerateTillPin(roleLabelName?: string): boolean {
+  return roleLabelName === 'Cashier' || roleLabelName === 'Hub Manager';
+}
 
 const CUSTOM_ROLE_COLOR = 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300';
 

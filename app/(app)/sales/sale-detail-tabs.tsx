@@ -9,7 +9,7 @@ import type { StockLog } from '@/types';
 import type { Permission } from '@/lib/permissions';
 import {
   fmt, statusColor, paymentModeBadgeClass, DELIVERY_STEPS,
-  INPUT_CLS, BTN_PRIMARY, BTN_SECONDARY,
+  INPUT_CLS, BTN_PRIMARY, BTN_SECONDARY, isTillSale,
 } from './sales-utils';
 import type { DetailTab } from './sales-utils';
 import { SubmitButton } from '@/components/submit-button';
@@ -299,7 +299,7 @@ function OverviewTab({
           <span className="text-muted-foreground">Channel:</span>
           {isEditing ? (
             <select value={editForm.channel || sale.channel} onChange={(e) => setEditForm({ ...editForm, channel: e.target.value as SalesChannel })} className="h-8 rounded-md border px-2 text-sm bg-background">
-              {Object.values(SalesChannel).map((c) => <option key={c} value={c}>{c}</option>)}
+              {Object.values(SalesChannel).filter((c) => c !== SalesChannel.POS).map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           ) : (
             <span className="font-medium">{sale.channel || 'Walk-In'}</span>
@@ -367,7 +367,7 @@ function OverviewTab({
         </div>
       )}
 
-      {sale.status !== 'Voided' && !isEditing && can('sales.void') && (
+      {sale.status !== 'Voided' && !isEditing && !isTillSale(sale) && can('sales.void') && (
         <div className="pt-4 border-t">
           {showVoidConfirm ? (
             <div className="p-4 rounded-md border border-red-200 bg-red-50">

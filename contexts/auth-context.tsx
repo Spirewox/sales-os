@@ -31,7 +31,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [isError, queryClient]);
 
   const login = async (email: string, password: string) => {
-    await axiosPost('auth/login', { email, password }, true);
+    await axiosPost('auth/login', { identifier: email, password }, true);
     await refetch();
     router.replace('/');
   };

@@ -647,6 +647,7 @@ export function useCreateAgent() {
     mutationFn: async (dto: {
       full_name: string;
       email: string;
+      username?: string;
       phone: string;
       role_id: string;
       hub_id?: string;
@@ -665,6 +666,7 @@ export function useUpdateAgent() {
       id,
       full_name,
       email,
+      username,
       phone,
       role_id,
       hub_id,
@@ -673,6 +675,7 @@ export function useUpdateAgent() {
       id: string;
       full_name?: string;
       email?: string;
+      username?: string;
       phone?: string;
       role_id?: string;
       hub_id?: string;
@@ -681,7 +684,7 @@ export function useUpdateAgent() {
       requireApi();
       return axiosPatch(
         `users/${id}`,
-        { full_name, email, phone, role_id, hub_id, is_active },
+        { full_name, email, username, phone, role_id, hub_id, is_active },
         true,
       );
     },
@@ -698,6 +701,17 @@ export function useDeleteAgent() {
     mutationFn: async (id: string) => {
       requireApi();
       return axiosDelete(`users/${id}`, true);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['agents'] }),
+  });
+}
+
+export function useRegeneratePin() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      requireApi();
+      return axiosPost(`users/${id}/regenerate-pin`, {}, true);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['agents'] }),
   });

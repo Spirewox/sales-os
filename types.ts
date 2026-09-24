@@ -74,6 +74,7 @@ export enum SalesChannel {
   WALK_IN = 'Walk-In',
   DELIVERY = 'Delivery',
   PRE_ORDER = 'Pre-Order',
+  POS = 'POS',
 }
 
 export enum DeliveryStatus {
@@ -301,6 +302,7 @@ export interface Agent {
   id: string;
   name: string;
   email: string;
+  username?: string;
   phone: string;
   role: string;
   location: string;
@@ -430,6 +432,8 @@ export interface Sale {
   isCredit?: boolean;
   paymentTerms?: PaymentTerms;
   notes?: string;
+  source?: 'crm' | 'pos';
+  clientSaleId?: string;
   channel?: SalesChannel;
   deliveryStatus?: DeliveryStatus;
   deliveryAddress?: string;

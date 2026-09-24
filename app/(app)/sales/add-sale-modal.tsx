@@ -176,7 +176,7 @@ export function AddSaleModal({
             <div className="space-y-2">
               <label htmlFor="sale-channel" className={LABEL_CLS}>Sales Channel</label>
               <select id="sale-channel" value={newSale.channel || SalesChannel.WALK_IN} onChange={(e) => { const ch = e.target.value as SalesChannel; setNewSale({ ...newSale, channel: ch, deliveryStatus: ch === SalesChannel.DELIVERY ? DeliveryStatus.PENDING : DeliveryStatus.NOT_APPLICABLE }); }} className={INPUT_CLS}>
-                {Object.values(SalesChannel).map((c) => <option key={c} value={c}>{c}</option>)}
+                {Object.values(SalesChannel).filter((c) => c !== SalesChannel.POS).map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
           </div>

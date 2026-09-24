@@ -436,7 +436,10 @@ export default function InventoryPage() {
   const { data: detailApiBatches = [] } = useProductBatches(detailProductId);
 
   const transferDestinations = useMemo(
-    () => activeHubs.filter((h) => h.id !== transferProduct?.hubId),
+    () =>
+      activeHubs
+        .filter((h) => h.id !== transferProduct?.hubId)
+        .map((h) => ({ key: `hub:${h.id}`, id: h.id, kind: 'hub' as const, label: hubOptionLabel(h) })),
     [activeHubs, transferProduct?.hubId],
   );
 
@@ -1213,12 +1216,12 @@ export default function InventoryPage() {
       toast.error(`Batch ${transferBatchNumber} only has ${batchRemaining} remaining.`);
       return;
     }
-    const toHub = transferDestinations.find((h) => h.id === transferToHubId);
+    const dest = transferDestinations.find((d) => d.key === transferToHubId);
     const payload = {
       item_id: transferProduct.id,
       quantity: transferQuantity,
       from_hub_id: transferProduct.hubId,
-      to_hub_id: transferToHubId,
+      to_hub_id: dest?.id || transferToHubId,
       batch_number: transferBatchNumber,
       notes: transferNotes.trim() || undefined,
     };
@@ -1230,7 +1233,7 @@ export default function InventoryPage() {
         { label: 'Batch', value: transferBatchNumber },
         { label: 'Quantity', value: `${transferQuantity} ${transferProduct.unitOfMeasure}` },
         { label: 'From', value: transferProduct.location },
-        { label: 'To', value: toHub ? hubOptionLabel(toHub) : transferToHubId },
+        { label: 'To', value: dest?.label || transferToHubId },
         ...(payload.notes ? [{ label: 'Notes', value: payload.notes }] : []),
       ],
       confirmLabel: 'Confirm transfer',
@@ -3500,10 +3503,10 @@ export default function InventoryPage() {
                   onChange={(e) => setTransferToHubId(e.target.value)}
                   className={inputCls}
                 >
-                  <option value="">Select hub or RSP</option>
-                  {transferDestinations.map((h) => (
-                    <option key={h.id} value={h.id}>
-                      {hubOptionLabel(h)}
+                  <option value="">Select hub, RSP, or store</option>
+                  {transferDestinations.map((d) => (
+                    <option key={d.key} value={d.key}>
+                      {d.label}
                     </option>
                   ))}
                 </select>

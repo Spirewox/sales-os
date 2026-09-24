@@ -47,6 +47,7 @@ import {
   type DetailTab,
   type QuickDatePreset,
   type SaleDateFieldFilter,
+  isTillSale,
 } from './sales-utils';
 import type { SalesImportChunkResult, SalesImportPreviewRow } from '@/types/api';
 import { isHistoricalDate } from '@/lib/historical-date';
@@ -681,6 +682,10 @@ export function useSalesPage() {
 
   const startEditing = () => {
     if (!selectedSale) return;
+    if (isTillSale(selectedSale)) {
+      toast.error('Till sales are read-only in Sales-OS.');
+      return;
+    }
     setEditForm({
       amount: selectedSale.amount,
       notes: selectedSale.notes,
@@ -696,6 +701,10 @@ export function useSalesPage() {
 
   const saveEdit = () => {
     if (!selectedSale) return;
+    if (isTillSale(selectedSale)) {
+      toast.error('Till sales are read-only in Sales-OS.');
+      return;
+    }
     const amount = Number(editForm.amount) || selectedSale.amount;
     const hubId = editForm.hubName ? resolveHubId(editForm.hubName) : undefined;
     updateSale.mutate(
@@ -732,6 +741,10 @@ export function useSalesPage() {
 
   const handleVoidSale = () => {
     if (!selectedSale) return;
+    if (isTillSale(selectedSale)) {
+      toast.error('Till sales cannot be voided in Sales-OS.');
+      return;
+    }
     voidSale.mutate(selectedSale.id, {
       onSuccess: (updated) => {
         setSelectedSale(updated);

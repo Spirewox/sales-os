@@ -43,7 +43,13 @@ function SalesTableRow({ sale, onSelect }: SalesTableRowProps) {
       <td className="p-4">
         <span className="font-medium">{sale.customerName}</span>
         {sale.channel && sale.channel !== SalesChannel.WALK_IN && (
-          <span className={`ml-2 text-[10px] font-semibold px-1.5 py-0.5 rounded ${sale.channel === SalesChannel.DELIVERY ? 'text-blue-600 bg-blue-50' : 'text-purple-600 bg-purple-50'}`}>
+          <span className={`ml-2 text-[10px] font-semibold px-1.5 py-0.5 rounded ${
+            sale.channel === SalesChannel.DELIVERY
+              ? 'text-blue-600 bg-blue-50'
+              : sale.channel === SalesChannel.POS
+                ? 'text-amber-700 bg-amber-50'
+                : 'text-purple-600 bg-purple-50'
+          }`}>
             {sale.channel}
           </span>
         )}

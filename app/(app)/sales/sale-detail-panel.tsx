@@ -4,6 +4,7 @@ import { X, Edit3, Save } from 'lucide-react';
 import { Sale, DeliveryStatus, Hub } from '@/types';
 import type { HubScopeFilter } from '@/hooks/use-hub-scope';
 import type { DetailTab } from './sales-utils';
+import { isTillSale } from './sales-utils';
 import type { Permission } from '@/lib/permissions';
 import { ModalDialog } from './modal-dialog';
 import { SaleDetailTabContent } from './sale-detail-tabs';
@@ -66,7 +67,7 @@ function DetailPanelHeader({
         <p className="text-sm text-muted-foreground mt-0.5">{sale.date} &middot; {sale.agentName} &middot; {sale.channel || 'Walk-In'}</p>
       </div>
       <div className="flex items-center gap-2 ml-4 shrink-0">
-        {sale.status !== 'Voided' && !isEditing && can('sales.edit') && (
+        {sale.status !== 'Voided' && !isEditing && !isTillSale(sale) && can('sales.edit') && (
           <button type="button" onClick={onStartEditing} className="h-8 px-3 rounded-md flex items-center gap-1.5 border hover:bg-accent text-sm font-medium"><Edit3 size={14} /> Edit</button>
         )}
         {isEditing && (

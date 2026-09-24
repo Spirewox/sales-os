@@ -267,6 +267,8 @@ export interface ApiSale {
   product_details?: string;
   payment_terms?: string;
   notes?: string;
+  source?: 'crm' | 'pos';
+  client_sale_id?: string;
   channel?: string;
   delivery_status?: string;
   delivery_address?: string;
@@ -294,7 +296,7 @@ export interface ApiProduct {
   carton_price?: number;
   carton_weight?: number;
   last_stock_update?: string;
-  hub: string | { _id: string; hub_name?: string };
+  hub: string | { _id: string; hub_name?: string } | null;
   is_active?: boolean;
   price_version?: string;
   supplier?: string;
@@ -376,6 +378,7 @@ export interface ApiAgentUser {
   _id: string;
   full_name: string;
   email: string;
+  username?: string;
   phone: string;
   is_active?: boolean;
   createdAt?: string;

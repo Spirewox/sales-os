@@ -229,6 +229,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<RoleName, Permission[]> = {
     'credits.view',
     'interactions.view', 'interactions.create', 'interactions.resolve',
   ],
+  Cashier: [],
 };
 
 export function hasPermission(user: AppUser | null, permission: Permission): boolean {

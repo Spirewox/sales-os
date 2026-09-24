@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useCallback, type SubmitEvent } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import {
-  useAgents, useCreateAgent, useUpdateAgent, useDeleteAgent,
+  useAgents, useCreateAgent, useUpdateAgent, useDeleteAgent, useRegeneratePin,
   useHubs, useCreateHub, useUpdateHub, useDeleteHub, useUpgradeHub, useDowngradeHub,
   useRoles, useCreateRole, useUpdateRole, useDeleteRole, useResetPassword, useUpdateProfile,
 } from '@/hooks/use-queries';
@@ -30,6 +30,8 @@ import {
   getPasswordStrengthTextClass,
   getPermissionGroupCheckboxClass,
   isCompanyAdminSelection,
+  canRegenerateTillPin,
+  isPosRoleSelection,
   resolveRoleId,
   resolveUserHubId,
   runConfirmAction,
@@ -43,7 +45,7 @@ import { toast } from 'sonner';
 import { SubmitButton } from '@/components/submit-button';
 import {
   Save, User, Lock, Moon, Sun, Trash2, AlertTriangle,
-  Users, Plus, X, Pencil, MapPin, Building2, Shield,
+  Users, Plus, X, Pencil, MapPin, Building2, Shield, KeyRound,
   ChevronDown, ChevronRight, Check, RotateCcw,
 } from 'lucide-react';
 
@@ -65,6 +67,7 @@ export default function SettingsPage() {
   const createAgent = useCreateAgent();
   const updateAgent = useUpdateAgent();
   const deleteAgent = useDeleteAgent();
+  const regeneratePin = useRegeneratePin();
   const createHub = useCreateHub();
   const updateHub = useUpdateHub();
   const deleteHub = useDeleteHub();
@@ -218,6 +221,7 @@ export default function SettingsPage() {
   const handleSaveUser = async () => {
     const roleLabelName = editingUser.role ?? 'Hub Manager';
     const roleId = resolveRoleId(apiRoles, roleLabelName);
+    const isPosRole = isPosRoleSelection(roleLabelName);
     const hubId = resolveUserHubId(apiRoles, roleLabelName, editingUser.location, canSwitchHubs, scopeHubId ?? undefined, hubs);
     const validationError = validateUserSave(editingUser, HAS_API, roleId, hubId, isAdminRole(roleLabelName));
     if (validationError) {
@@ -234,6 +238,7 @@ export default function SettingsPage() {
           id: editingUser.id,
           full_name: userName,
           email: userEmail,
+          username: editingUser.username,
           phone: editingUser.phone || '',
           ...(roleId ? { role_id: roleId } : {}),
           ...(hubId === undefined ? {} : { hub_id: hubId }),
@@ -247,11 +252,18 @@ export default function SettingsPage() {
         await createAgent.mutateAsync({
           full_name: userName,
           email: userEmail,
+          username: editingUser.username,
           phone: editingUser.phone || '',
           role_id: roleId,
           hub_id: hubId,
         });
-        toast.success('User created. A welcome email with login details was sent.');
+        toast.success(
+          isPosRole
+            ? 'User created. A 4-digit POS PIN was emailed.'
+            : roleLabelName === 'Hub Manager'
+              ? 'User created. Login details and a till PIN were emailed.'
+              : 'User created. A welcome email with login details was sent.',
+        );
       }
       setShowUserModal(false);
       setEditingUser({ role: 'Hub Manager', location: activeHubs[0]?.name || user?.hubName || 'Lagos' });
@@ -263,6 +275,15 @@ export default function SettingsPage() {
   const handleDeleteUser = (id: string) => {
     if (id === user?.id) { toast.error("Can't delete yourself."); return; }
     setConfirmAction({ type: 'deleteUser', payload: id });
+  };
+
+  const handleRegeneratePin = async (id: string) => {
+    try {
+      await regeneratePin.mutateAsync(id);
+      toast.success('A new PIN has been emailed.');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to regenerate PIN.');
+    }
   };
 
   // ── Hubs ──
@@ -560,12 +581,21 @@ export default function SettingsPage() {
                     <p className="font-medium">{agent.name}</p>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${getRoleBadgeClasses(agent.role)}`}>{agent.role}</span>
-                      <span className="text-xs text-muted-foreground">{agent.email} &middot; {agent.location}</span>
+                      <span className="text-xs text-muted-foreground">{agent.email}{agent.username ? ` · @${agent.username}` : ''} &middot; {agent.location}</span>
                     </div>
                   </div>
                 </div>
                 {canManageUsers && (
                   <div className="flex gap-2">
+                    {canRegenerateTillPin(agent.role) && (
+                      <button
+                        title="Regenerate PIN"
+                        onClick={() => handleRegeneratePin(agent.id)}
+                        className="h-8 w-8 rounded-md border flex items-center justify-center hover:bg-accent"
+                      >
+                        <KeyRound size={14} />
+                      </button>
+                    )}
                     <button onClick={() => { setEditingUser(agent); setShowUserModal(true); }} className="h-8 w-8 rounded-md border flex items-center justify-center hover:bg-accent"><Pencil size={14} /></button>
                     <button onClick={() => handleDeleteUser(agent.id)} className="h-8 w-8 rounded-md border flex items-center justify-center hover:bg-destructive/10 text-destructive"><Trash2 size={14} /></button>
                   </div>
@@ -891,11 +921,15 @@ export default function SettingsPage() {
             <div className="space-y-4">
               <div className="space-y-2"><label htmlFor="user-name" className={labelCls}>Name *</label><input id="user-name" type="text" value={editingUser.name || ''} onChange={(e) => setEditingUser({ ...editingUser, name: e.target.value })} className={inputCls} /></div>
               <div className="space-y-2"><label htmlFor="user-email" className={labelCls}>Email *</label><input id="user-email" type="email" value={editingUser.email || ''} onChange={(e) => setEditingUser({ ...editingUser, email: e.target.value })} className={inputCls} /></div>
+              <div className="space-y-2"><label htmlFor="user-username" className={labelCls}>Username (optional)</label><input id="user-username" type="text" value={editingUser.username || ''} onChange={(e) => setEditingUser({ ...editingUser, username: e.target.value })} className={inputCls} /></div>
               <div className="space-y-2"><label htmlFor="user-phone" className={labelCls}>Phone</label><input id="user-phone" type="text" value={editingUser.phone || ''} onChange={(e) => setEditingUser({ ...editingUser, phone: e.target.value })} className={inputCls} /></div>
+              {isPosRoleSelection(editingUser.role) && (
+                <p className="text-xs text-muted-foreground">This person signs in on the POS till with a 4-digit PIN. The PIN is emailed and is not a Sales-OS password.</p>
+              )}
               <div className={`grid gap-4 ${isAdminRole(editingUser.role ?? '') ? 'grid-cols-1' : 'grid-cols-2'}`}>
-                <div className="space-y-2"><label htmlFor="user-role" className={labelCls}>Role</label><select id="user-role" value={editingUser.role} onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value })} className={inputCls} disabled={!canSwitchHubs && !!editingUser.id}>{apiRoles.map((r) => (<option key={r._id} value={roleLabel(r)}>{roleLabel(r)}</option>))}</select></div>
+                <div className="space-y-2"><label htmlFor="user-role" className={labelCls}>Role</label><select id="user-role" value={editingUser.role} onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value })} className={inputCls} disabled={!canSwitchHubs && !!editingUser.id}>{apiRoles.filter((r) => r.name !== 'cashier' || (!!editingUser.id && editingUser.role === roleLabel(r))).map((r) => (<option key={r._id} value={roleLabel(r)}>{roleLabel(r)}</option>))}</select></div>
                 {!isAdminRole(editingUser.role ?? '') && (
-                  <div className="space-y-2"><label htmlFor="user-hub" className={labelCls}>Hub</label>
+                  <div className="space-y-2"><label htmlFor="user-hub" className={labelCls}>Hub / RSP *</label>
                     <select
                       id="user-hub"
                       value={editingUser.location}

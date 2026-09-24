@@ -16,6 +16,14 @@ export const LABEL_CLS = 'text-sm font-medium';
 export const BTN_PRIMARY = 'inline-flex items-center rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2';
 export const BTN_SECONDARY = 'inline-flex items-center rounded-md text-sm font-medium border border-input bg-background hover:bg-accent h-9 px-4 py-2';
 
+export const CRM_SALES_CHANNELS = Object.values(SalesChannel).filter(
+  (c) => c !== SalesChannel.POS,
+);
+
+export function isTillSale(sale: Pick<Sale, 'source' | 'channel'>) {
+  return sale.source === 'pos' || sale.channel === SalesChannel.POS;
+}
+
 export const DELIVERY_STEPS: DeliveryStatus[] = [
   DeliveryStatus.PENDING,
   DeliveryStatus.IN_TRANSIT,
