@@ -5,6 +5,7 @@ import { useAuditLogs, useAgents } from '@/hooks/use-queries';
 import { History, Search, Filter, Box, Banknote, User, Shield, Clock, CalendarDays, Upload, X } from 'lucide-react';
 import type { AuditLog } from '@/types';
 import { TableSkeleton } from '@/components/ui/loading-skeletons';
+import { formatAuditAction, formatAuditEntity } from '@/lib/api-mappers';
 
 type DatePreset = 'today' | '7days' | '30days' | 'all';
 type AuditTab = 'all' | 'bulk' | 'sales' | 'inventory' | 'customers';
@@ -26,6 +27,81 @@ const ENTITY_MAP: Record<string, string | undefined> = {
   Customer: 'Customer',
   System: 'System',
 };
+
+function formatNaira(n: number): string {
+  return `₦${n.toLocaleString('en-NG', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+}
+
+function parseMoneyToken(text: string): number | null {
+  const n = Number(text.replace(/[₦,\s]/g, ''));
+  return Number.isFinite(n) ? n : null;
+}
+
+function formatMoneyArrows(text: string): string {
+  const sep = text.indexOf('→');
+  if (sep < 0) return text;
+  const left = text.slice(0, sep).trim();
+  const right = text.slice(sep + 1).trim();
+  const na = parseMoneyToken(left);
+  const nb = parseMoneyToken(right);
+  if (na == null || nb == null) return text;
+  return `${formatNaira(na)} → ${formatNaira(nb)}`;
+}
+
+type DetailRow = { label?: string; text: string };
+
+function parseAuditDetailRows(details: string): DetailRow[] | null {
+  if (!details?.trim()) return null;
+  const lower = details.toLowerCase();
+  const looksStructured =
+    details.includes('\n') ||
+    details.includes('→') ||
+    lower.includes('unit cost') ||
+    lower.includes('list price');
+  if (!looksStructured) return null;
+
+  const rows: DetailRow[] = [];
+  const chunks = details
+    .replace(/,\s*(?=cost\s)/gi, '\n')
+    .replace(/,\s*(?=price\s)/gi, '\n')
+    .split('\n')
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  for (const chunk of chunks) {
+    const colon = chunk.indexOf(':');
+    if (colon > 0 && chunk.includes('→')) {
+      rows.push({
+        label: chunk.slice(0, colon).trim(),
+        text: formatMoneyArrows(chunk.slice(colon + 1).trim()),
+      });
+      continue;
+    }
+    const chunkLower = chunk.toLowerCase();
+    if (chunkLower.startsWith('cost ')) {
+      rows.push({ label: 'Unit cost', text: formatMoneyArrows(chunk.slice(5).trim()) });
+      continue;
+    }
+    if (chunkLower.startsWith('price ')) {
+      rows.push({ label: 'List price', text: formatMoneyArrows(chunk.slice(6).trim()) });
+      continue;
+    }
+    rows.push({ text: formatMoneyArrows(chunk) });
+  }
+
+  return rows.length ? rows : null;
+}
+
+function auditDetailsSummary(details: string): string {
+  const rows = parseAuditDetailRows(details);
+  if (!rows?.length) return details || '—';
+  const change = rows.find((r) => r.label && /cost|price/i.test(r.label));
+  if (change) return `${change.label} ${change.text}`;
+  return rows[0].text;
+}
 
 export default function AuditTrailPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -249,9 +325,9 @@ export default function AuditTrailPage() {
                   >
                     <td className="p-6 whitespace-nowrap"><div className="flex flex-col"><span className="font-bold">{new Date(log.timestamp).toLocaleDateString()}</span><span className="text-[10px] text-muted-foreground flex items-center gap-1"><Clock size={10} /> {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span></div></td>
                     <td className="p-6"><div className="flex items-center gap-2"><div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary border">{log.userName.charAt(0)}</div><div className="flex flex-col"><span className="font-medium">{log.userName}</span><span className="text-[10px] text-muted-foreground uppercase">{log.location}</span></div></div></td>
-                    <td className="p-6"><div className="flex items-center gap-2 font-semibold">{getEntityIcon(log.entityType)}{log.entityType}</div></td>
-                    <td className="p-6"><span className="px-2.5 py-1 rounded-md bg-secondary text-secondary-foreground text-xs font-bold uppercase border border-border/50">{log.action}</span></td>
-                    <td className="p-6 text-muted-foreground italic text-xs max-w-xs truncate" title={log.details}>{log.details}</td>
+                    <td className="p-6"><div className="flex items-center gap-2 font-semibold">{getEntityIcon(log.entityType)}{formatAuditEntity(log.entityType)}</div></td>
+                    <td className="p-6"><span className="px-2.5 py-1 rounded-md bg-secondary text-secondary-foreground text-xs font-semibold border border-border/50">{formatAuditAction(log.action)}</span></td>
+                    <td className="p-6 text-muted-foreground text-xs max-w-xs truncate" title={log.details}>{auditDetailsSummary(log.details)}</td>
                   </tr>
                 ))}
                 {logs.length === 0 && !isLoading && <tr><td colSpan={5} className="p-12 text-center text-muted-foreground italic">No activity logs found.</td></tr>}
@@ -301,7 +377,7 @@ export default function AuditTrailPage() {
                 <h2 className="text-lg font-bold">
                   {selectedLog.bulkUpload ? 'Bulk Upload Details' : 'Audit log'}
                 </h2>
-                <p className="text-sm text-muted-foreground">{selectedLog.action}</p>
+                <p className="text-sm text-muted-foreground">{formatAuditAction(selectedLog.action)}</p>
               </div>
               <button type="button" onClick={() => setSelectedLog(null)} className="text-muted-foreground hover:text-foreground"><X size={20} /></button>
             </div>
@@ -309,13 +385,36 @@ export default function AuditTrailPage() {
               <div className="rounded-md border p-3"><span className="text-xs text-muted-foreground">Time</span><p className="font-semibold">{new Date(selectedLog.timestamp).toLocaleString()}</p></div>
               <div className="rounded-md border p-3"><span className="text-xs text-muted-foreground">Agent</span><p className="font-semibold">{selectedLog.userName}</p></div>
               <div className="rounded-md border p-3"><span className="text-xs text-muted-foreground">Location</span><p className="font-semibold">{selectedLog.location || '—'}</p></div>
-              <div className="rounded-md border p-3"><span className="text-xs text-muted-foreground">Entity</span><p className="font-semibold">{selectedLog.entityType}</p></div>
+              <div className="rounded-md border p-3"><span className="text-xs text-muted-foreground">Entity</span><p className="font-semibold">{formatAuditEntity(selectedLog.entityType)}</p></div>
               <div className="rounded-md border p-3"><span className="text-xs text-muted-foreground">Entity ID</span><p className="font-semibold break-all">{selectedLog.entityId || '—'}</p></div>
-              <div className="rounded-md border p-3"><span className="text-xs text-muted-foreground">Action</span><p className="font-semibold">{selectedLog.action}</p></div>
+              <div className="rounded-md border p-3"><span className="text-xs text-muted-foreground">Action</span><p className="font-semibold">{formatAuditAction(selectedLog.action)}</p></div>
             </div>
             <div className="rounded-md border p-3 mb-4">
               <span className="text-xs text-muted-foreground">Details</span>
-              <p className="text-sm font-medium whitespace-pre-wrap break-words mt-1">{selectedLog.details || '—'}</p>
+              {(() => {
+                const rows = parseAuditDetailRows(selectedLog.details || '');
+                if (!rows) {
+                  return (
+                    <p className="text-sm font-medium whitespace-pre-wrap break-words mt-1">
+                      {selectedLog.details || '—'}
+                    </p>
+                  );
+                }
+                return (
+                  <div className="mt-2 space-y-2">
+                    {rows.map((row, i) => (
+                      <div key={`${row.label ?? 'row'}-${i}`} className="flex flex-col gap-0.5">
+                        {row.label && (
+                          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                            {row.label}
+                          </span>
+                        )}
+                        <p className="text-sm font-medium break-words">{row.text}</p>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
             {selectedLog.bulkUpload && (
               <>

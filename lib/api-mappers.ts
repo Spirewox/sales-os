@@ -127,6 +127,40 @@ function capitalizeWords(s: string): string {
     .join(' ');
 }
 
+const AUDIT_ACTION_LABELS: Record<string, string> = {
+  UPDATE_PURCHASE_BATCH: 'Update purchase batch',
+  DELETE_PURCHASE_BATCH: 'Delete purchase batch',
+  STOCK_MOVEMENT: 'Stock movement',
+  STOCK_TRANSFER: 'Stock transfer',
+  HISTORICAL_STOCK_LOG: 'Historical stock log',
+  RECONCILE_STOCK: 'Reconcile stock',
+  CREATE_SKU: 'Create SKU',
+  UPDATE_SKU: 'Update SKU',
+  CREATE_SALE: 'Create sale',
+  UPDATE_SALE: 'Update sale',
+  VOID_SALE: 'Void sale',
+  VALIDATE_BULK_UPLOAD: 'Validate bulk upload',
+  IMPORT_BULK_UPLOAD: 'Import bulk upload',
+  CREATE_INVENTORY_REQUEST: 'Create inventory request',
+  FULFILL_INVENTORY_REQUEST: 'Fulfill inventory request',
+};
+
+export function formatAuditAction(action: string): string {
+  if (!action) return '—';
+  return AUDIT_ACTION_LABELS[action] ?? capitalizeWords(action);
+}
+
+export function formatAuditEntity(entity: string): string {
+  if (!entity) return '—';
+  const key = entity.replace(/[\s_]/g, '').toLowerCase();
+  if (key === 'bulkupload') return 'Bulk upload';
+  if (key === 'inventory') return 'Inventory';
+  if (key === 'sale') return 'Sale';
+  if (key === 'customer') return 'Customer';
+  if (key === 'system') return 'System';
+  return capitalizeWords(entity);
+}
+
 function titleCaseStatus(s: string): 'Open' | 'Resolved' | 'Closed' {
   const lower = s.toLowerCase();
   if (lower === 'resolved') return 'Resolved';
