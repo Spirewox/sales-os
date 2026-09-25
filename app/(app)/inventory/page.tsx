@@ -2517,7 +2517,13 @@ export default function InventoryPage() {
                               )}
                               <span className="text-xs text-muted-foreground">Received {batch.date}</span>
                             </div>
-                            <span className="text-lg font-bold">{batch.quantityRemaining}</span>
+                            <span className="text-lg font-bold">
+                              {viewingDetailsItem.unitOfMeasure === 'Kg'
+                                ? roundQty2(batch.quantityRemaining)
+                                : viewingDetailsItem.unitOfMeasure === 'Liters'
+                                  ? Math.round((batch.quantityRemaining || 0) * 1000) / 1000
+                                  : batch.quantityRemaining}
+                            </span>
                           </div>
                           <div className="flex items-center justify-between text-xs gap-2 flex-wrap">
                             <div className="flex items-center gap-3 flex-wrap">
