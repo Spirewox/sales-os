@@ -986,22 +986,6 @@ export default function InventoryPage() {
         toast.error('Carton weight (Kg) is required when unit of measure is Cartons.');
         return;
       }
-      if (!(editProduct.cartonPrice && editProduct.cartonPrice > 0)) {
-        toast.error('Carton selling price is required when unit of measure is Cartons.');
-        return;
-      }
-      if (!(editProduct.baseSellingPrice && editProduct.baseSellingPrice > 0)) {
-        toast.error('Unit selling price is required when unit of measure is Cartons (used for Kg sales).');
-        return;
-      }
-    } else if (!(editProduct.baseSellingPrice && editProduct.baseSellingPrice > 0)) {
-      toast.error('Selling price is required.');
-      return;
-    }
-
-    if (editProduct.avgUnitCost && sellingPriceForMargin(editProduct) > 0
-      && editProduct.avgUnitCost > sellingPriceForMargin(editProduct)) {
-      toast.warning('Warning: Cost exceeds selling price — negative margin!');
     }
 
     const hub = activeHubs.find((h) => h.name === (editProduct.location || original.location));
@@ -1021,14 +1005,6 @@ export default function InventoryPage() {
       category: editProduct.category,
       unit_of_measure: editProduct.unitOfMeasure,
       min_stock_level: editProduct.minStockLevel,
-      base_selling_price:
-        editProduct.baseSellingPrice != null
-          ? roundMoney2(editProduct.baseSellingPrice)
-          : undefined,
-      avg_unit_cost:
-        editProduct.avgUnitCost != null ? roundMoney2(editProduct.avgUnitCost) : undefined,
-      carton_price:
-        editProduct.cartonPrice != null ? roundMoney2(editProduct.cartonPrice) : undefined,
       carton_weight: editProduct.cartonWeight,
       ...(hub?.id ? { hub_id: hub.id } : {}),
       ...(stockChanged
@@ -1042,8 +1018,6 @@ export default function InventoryPage() {
 
     const fmtDiff = (v: unknown) =>
       v == null || v === '' ? '—' : typeof v === 'number' ? String(v) : String(v);
-    const moneyChanged = (a?: number | null, b?: number | null) =>
-      roundMoney2(a) !== roundMoney2(b);
 
     const rows: ConfirmPreviewRow[] = [];
     const pushChange = (label: string, before: unknown, after: unknown, asMoney = false) => {
@@ -1058,9 +1032,6 @@ export default function InventoryPage() {
     pushChange('UOM', original.unitOfMeasure, editProduct.unitOfMeasure);
     pushChange('Min stock', original.minStockLevel, editProduct.minStockLevel);
     pushChange('Location', original.location, editProduct.location || original.location);
-    pushChange('Unit cost', original.avgUnitCost, editProduct.avgUnitCost, true);
-    pushChange('Selling price', original.baseSellingPrice, editProduct.baseSellingPrice, true);
-    pushChange('Carton price', original.cartonPrice, editProduct.cartonPrice, true);
     pushChange('Carton weight', original.cartonWeight, editProduct.cartonWeight);
     if (stockChanged) {
       pushChange('Current stock', original.currentStock, nextStock);
@@ -1071,18 +1042,11 @@ export default function InventoryPage() {
       return;
     }
 
-    const costOrPriceChanged =
-      moneyChanged(original.avgUnitCost, editProduct.avgUnitCost) ||
-      moneyChanged(original.baseSellingPrice, editProduct.baseSellingPrice) ||
-      moneyChanged(original.cartonPrice, editProduct.cartonPrice);
-
     setConfirmPreview({
       title: 'Review changes',
       subtitle: original.name,
       rows,
-      warning: costOrPriceChanged
-        ? 'Catalog cost/price only. Edit each purchase batch for COGS used on sales.'
-        : undefined,
+      warning: undefined,
       confirmLabel: 'Save changes',
       run: () => {
         updateProduct.mutate(payload, {
@@ -3165,69 +3129,24 @@ export default function InventoryPage() {
                   <input type="text" readOnly disabled value={editProduct.location || hubScope.hubName} className={`${inputCls} opacity-80 cursor-not-allowed`} />
                 )}
               </div>
-              <div className="space-y-2">
-                <label className={labelCls}>
-                  {editProduct.unitOfMeasure === 'Cartons' ? 'Avg carton cost (₦)' : 'Avg Unit Cost (₦)'}
-                </label>
-                <input type="number" min={0} step="0.01" value={editProduct.avgUnitCost ?? ''} onChange={(e) => setEditProduct({ ...editProduct, avgUnitCost: parseMoneyInput(e.target.value) })} className={inputCls} />
-                {editProduct.unitOfMeasure === 'Cartons' ? (
-                  <p className="text-[11px] text-muted-foreground">Cost per carton (same unit as stock).</p>
-                ) : null}
-              </div>
-              <div className="space-y-2">
-                <label className={labelCls}>
-                  {editProduct.unitOfMeasure === 'Cartons' ? 'Unit selling price (₦) *' : 'Selling Price (₦) *'}
-                </label>
-                <input
-                  type="number"
-                  min={0.01}
-                  step="0.01"
-                  value={editProduct.baseSellingPrice ?? ''}
-                  onChange={(e) => setEditProduct({ ...editProduct, baseSellingPrice: parseMoneyInput(e.target.value) })}
-                  placeholder={editProduct.unitOfMeasure === 'Cartons' ? 'Price per Kg' : 'Required'}
-                  className={inputCls}
-                />
-              </div>
               {editProduct.unitOfMeasure === 'Cartons' && (
-                <>
-                  <div className="space-y-2">
-                    <label className={labelCls}>Carton selling price (₦) *</label>
-                    <input
-                      type="number"
-                      min={0.01}
-                      step="0.01"
-                      value={editProduct.cartonPrice ?? ''}
-                      onChange={(e) => setEditProduct({
-                        ...editProduct,
-                        cartonPrice: e.target.value.trim() === '' ? undefined : parseMoneyInput(e.target.value),
-                      })}
-                      placeholder="Required for Cartons"
-                      className={inputCls}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className={labelCls}>Carton Weight (Kg) *</label>
-                    <input
-                      type="number"
-                      min={0.01}
-                      step="0.01"
-                      value={editProduct.cartonWeight ?? ''}
-                      onChange={(e) => setEditProduct({ ...editProduct, cartonWeight: parseFloat(e.target.value) || undefined })}
-                      placeholder="Required for Cartons"
-                      className={inputCls}
-                    />
-                  </div>
-                </>
+                <div className="space-y-2">
+                  <label className={labelCls}>Carton Weight (Kg) *</label>
+                  <input
+                    type="number"
+                    min={0.01}
+                    step="0.01"
+                    value={editProduct.cartonWeight ?? ''}
+                    onChange={(e) => setEditProduct({ ...editProduct, cartonWeight: parseFloat(e.target.value) || undefined })}
+                    placeholder="Required for Cartons"
+                    className={inputCls}
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    Cost and selling price are edited on each purchase batch.
+                  </p>
+                </div>
               )}
             </div>
-            {/* Margin warning */}
-            {(editProduct.avgUnitCost ?? 0) > 0
-              && sellingPriceForMargin(editProduct) > 0
-              && (editProduct.avgUnitCost ?? 0) > sellingPriceForMargin(editProduct) ? (
-              <div className="mt-3 p-3 rounded-lg bg-amber-50 border border-amber-200 flex items-center gap-2 text-sm text-amber-700">
-                <ShieldAlert size={16} /> Warning: Cost exceeds selling price — negative margin!
-              </div>
-            ) : null}
             <div className="mt-6 flex justify-end gap-3">
               <button onClick={() => { setShowEditModal(false); setEditProduct({}); setEditCurrentStockDraft(''); }} className={btnSecondary}>Cancel</button>
               {can('inventory.edit') && <SubmitButton onClick={handleEditProduct} loading={updateProduct.isPending} className={btnPrimary}>Review changes</SubmitButton>}
