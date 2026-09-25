@@ -37,7 +37,7 @@ export default function AuditTrailPage() {
   const [activePreset, setActivePreset] = useState<DatePreset | null>('all');
   const [activeTab, setActiveTab] = useState<AuditTab>('all');
   const [page, setPage] = useState(1);
-  const [selectedBulkLog, setSelectedBulkLog] = useState<AuditLog | null>(null);
+  const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
 
   const { data: agents = [] } = useAgents();
 
@@ -134,7 +134,7 @@ export default function AuditTrailPage() {
           </thead>
           <tbody className="divide-y">
             {logs.map((log) => (
-              <tr key={log.id} className="hover:bg-muted/30">
+              <tr key={log.id} className="hover:bg-muted/30 cursor-pointer" onClick={() => setSelectedLog(log)}>
                 <td className="p-4 whitespace-nowrap">
                   <span className="font-semibold">{new Date(log.timestamp).toLocaleDateString()}</span>
                   <span className="block text-[10px] text-muted-foreground">{new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
@@ -156,7 +156,7 @@ export default function AuditTrailPage() {
                   </span>
                 </td>
                 <td className="p-4"><span className="px-2.5 py-1 rounded-md bg-secondary text-secondary-foreground text-xs font-bold uppercase border">{log.bulkUpload?.stage ?? log.action}</span></td>
-                <td className="p-4"><button type="button" onClick={() => setSelectedBulkLog(log)} className="text-primary text-xs font-semibold hover:underline">View rows</button></td>
+                <td className="p-4"><button type="button" onClick={(e) => { e.stopPropagation(); setSelectedLog(log); }} className="text-primary text-xs font-semibold hover:underline">View rows</button></td>
               </tr>
             ))}
             {logs.length === 0 && !isLoading && <tr><td colSpan={9} className="p-12 text-center text-muted-foreground italic">No bulk upload logs found.</td></tr>}
@@ -242,7 +242,11 @@ export default function AuditTrailPage() {
               <thead className="bg-muted/50 border-b text-[10px] uppercase font-bold text-muted-foreground tracking-wider"><tr><th className="h-12 px-6 text-left">Timestamp</th><th className="h-12 px-6 text-left">Agent</th><th className="h-12 px-6 text-left">Entity</th><th className="h-12 px-6 text-left">Action</th><th className="h-12 px-6 text-left">Details</th></tr></thead>
               <tbody className="divide-y">
                 {logs.map((log) => (
-                  <tr key={log.id} className="hover:bg-muted/30">
+                  <tr
+                    key={log.id}
+                    className="hover:bg-muted/30 cursor-pointer"
+                    onClick={() => setSelectedLog(log)}
+                  >
                     <td className="p-6 whitespace-nowrap"><div className="flex flex-col"><span className="font-bold">{new Date(log.timestamp).toLocaleDateString()}</span><span className="text-[10px] text-muted-foreground flex items-center gap-1"><Clock size={10} /> {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span></div></td>
                     <td className="p-6"><div className="flex items-center gap-2"><div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary border">{log.userName.charAt(0)}</div><div className="flex flex-col"><span className="font-medium">{log.userName}</span><span className="text-[10px] text-muted-foreground uppercase">{log.location}</span></div></div></td>
                     <td className="p-6"><div className="flex items-center gap-2 font-semibold">{getEntityIcon(log.entityType)}{log.entityType}</div></td>
@@ -289,32 +293,50 @@ export default function AuditTrailPage() {
         </div>
       </div>
 
-      {selectedBulkLog && (
+      {selectedLog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-5xl max-h-[85vh] overflow-y-auto rounded-lg border bg-card p-6 shadow-xl">
             <div className="flex items-start justify-between gap-4 mb-4">
               <div>
-                <h2 className="text-lg font-bold">Bulk Upload Details</h2>
-                <p className="text-sm text-muted-foreground">{selectedBulkLog.details}</p>
+                <h2 className="text-lg font-bold">
+                  {selectedLog.bulkUpload ? 'Bulk Upload Details' : 'Audit log'}
+                </h2>
+                <p className="text-sm text-muted-foreground">{selectedLog.action}</p>
               </div>
-              <button type="button" onClick={() => setSelectedBulkLog(null)} className="text-muted-foreground hover:text-foreground"><X size={20} /></button>
+              <button type="button" onClick={() => setSelectedLog(null)} className="text-muted-foreground hover:text-foreground"><X size={20} /></button>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4 text-sm">
-              <div className="rounded-md border p-3"><span className="text-xs text-muted-foreground">Domain</span><p className="font-semibold capitalize">{selectedBulkLog.bulkUpload?.domain ?? '—'}</p></div>
-              <div className="rounded-md border p-3"><span className="text-xs text-muted-foreground">Type</span><p className="font-semibold">{selectedBulkLog.bulkUpload?.importType ?? '—'}</p></div>
-              <div className="rounded-md border p-3"><span className="text-xs text-muted-foreground">File</span><p className="font-semibold truncate">{selectedBulkLog.bulkUpload?.fileName ?? '—'}</p></div>
-              <div className="rounded-md border p-3"><span className="text-xs text-muted-foreground">Stage</span><p className="font-semibold">{selectedBulkLog.bulkUpload?.stage ?? selectedBulkLog.action}</p></div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4 text-sm">
+              <div className="rounded-md border p-3"><span className="text-xs text-muted-foreground">Time</span><p className="font-semibold">{new Date(selectedLog.timestamp).toLocaleString()}</p></div>
+              <div className="rounded-md border p-3"><span className="text-xs text-muted-foreground">Agent</span><p className="font-semibold">{selectedLog.userName}</p></div>
+              <div className="rounded-md border p-3"><span className="text-xs text-muted-foreground">Location</span><p className="font-semibold">{selectedLog.location || '—'}</p></div>
+              <div className="rounded-md border p-3"><span className="text-xs text-muted-foreground">Entity</span><p className="font-semibold">{selectedLog.entityType}</p></div>
+              <div className="rounded-md border p-3"><span className="text-xs text-muted-foreground">Entity ID</span><p className="font-semibold break-all">{selectedLog.entityId || '—'}</p></div>
+              <div className="rounded-md border p-3"><span className="text-xs text-muted-foreground">Action</span><p className="font-semibold">{selectedLog.action}</p></div>
             </div>
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <h3 className="font-semibold mb-2">Uploaded / validated rows</h3>
-                <pre className="max-h-80 overflow-auto rounded-md bg-muted p-3 text-xs">{JSON.stringify(selectedBulkLog.bulkUpload?.rows ?? [], null, 2)}</pre>
-              </div>
-              <div>
-                <h3 className="font-semibold mb-2">Results</h3>
-                <pre className="max-h-80 overflow-auto rounded-md bg-muted p-3 text-xs">{JSON.stringify(selectedBulkLog.bulkUpload?.results ?? selectedBulkLog.bulkUpload?.summary ?? {}, null, 2)}</pre>
-              </div>
+            <div className="rounded-md border p-3 mb-4">
+              <span className="text-xs text-muted-foreground">Details</span>
+              <p className="text-sm font-medium whitespace-pre-wrap break-words mt-1">{selectedLog.details || '—'}</p>
             </div>
+            {selectedLog.bulkUpload && (
+              <>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4 text-sm">
+                  <div className="rounded-md border p-3"><span className="text-xs text-muted-foreground">Domain</span><p className="font-semibold capitalize">{selectedLog.bulkUpload.domain ?? '—'}</p></div>
+                  <div className="rounded-md border p-3"><span className="text-xs text-muted-foreground">Type</span><p className="font-semibold">{selectedLog.bulkUpload.importType ?? '—'}</p></div>
+                  <div className="rounded-md border p-3"><span className="text-xs text-muted-foreground">File</span><p className="font-semibold truncate">{selectedLog.bulkUpload.fileName ?? '—'}</p></div>
+                  <div className="rounded-md border p-3"><span className="text-xs text-muted-foreground">Stage</span><p className="font-semibold">{selectedLog.bulkUpload.stage ?? selectedLog.action}</p></div>
+                </div>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <h3 className="font-semibold mb-2">Uploaded / validated rows</h3>
+                    <pre className="max-h-80 overflow-auto rounded-md bg-muted p-3 text-xs">{JSON.stringify(selectedLog.bulkUpload.rows ?? [], null, 2)}</pre>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold mb-2">Results</h3>
+                    <pre className="max-h-80 overflow-auto rounded-md bg-muted p-3 text-xs">{JSON.stringify(selectedLog.bulkUpload.results ?? selectedLog.bulkUpload.summary ?? {}, null, 2)}</pre>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
