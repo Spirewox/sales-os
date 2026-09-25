@@ -161,7 +161,11 @@ interface FifoBatch {
   supplier?: string;
 }
 
-function buildFifoBatches(allLogs: StockLog[], itemId: string): FifoBatch[] {
+function buildFifoBatches(
+  allLogs: StockLog[],
+  itemId: string,
+  options?: { includeDepleted?: boolean },
+): FifoBatch[] {
   const itemLogs = allLogs
     .filter((l) => l.itemId === itemId)
     .sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
@@ -234,7 +238,11 @@ function buildFifoBatches(allLogs: StockLog[], itemId: string): FifoBatch[] {
     }
   }
 
-  return batches.filter((b) => b.quantityRemaining > 0);
+  return batches.filter((b) => {
+    if ((b.batchNumber || '').startsWith('UNLABELED-')) return false;
+    if (options?.includeDepleted) return true;
+    return b.quantityRemaining > 0;
+  });
 }
 
 function getFifoCostForSale(allLogs: StockLog[], itemId: string, saleQty: number): { totalCost: number; avgCost: number } {
@@ -721,7 +729,7 @@ export default function InventoryPage() {
 
   const itemBatches = useMemo(() => {
     if (!viewingDetailsItem) return [];
-    const batches = buildFifoBatches(logsForDetails, viewingDetailsItem.id);
+    const batches = buildFifoBatches(logsForDetails, viewingDetailsItem.id, { includeDepleted: true });
     // Sort by expiry (FEFO), then by date
     return batches.sort((a, b) => {
       if (a.expiryDate && b.expiryDate) return a.expiryDate.localeCompare(b.expiryDate);
@@ -2458,17 +2466,18 @@ export default function InventoryPage() {
                 <>
                   <div className="flex items-center gap-2 mb-2">
                     <Thermometer size={16} className="text-primary" />
-                    <h4 className="text-sm font-bold">Active Batches</h4>
+                    <h4 className="text-sm font-bold">Batches</h4>
                   </div>
                   {itemBatches.length === 0 ? (
-                    <p className="text-sm text-muted-foreground italic">No active batches. Record a purchase or receive stock via transfer to create batches.</p>
+                    <p className="text-sm text-muted-foreground italic">No batches yet</p>
                   ) : (
                     <div className="space-y-2">
                       {itemBatches.map((batch, idx) => {
                         const isPurchaseBatch = !!batch.logId;
                         const editing = batchPriceEdit?.logId === batch.logId;
+                        const isSpent = batch.quantityRemaining <= 0;
                         return (
-                        <div key={batch.logId + '-' + idx} className={`p-4 rounded-md border ${batch.expiryDate ? getExpiryColor(batch.expiryDate).replace('text-', 'border-').split(' ')[0] : ''} bg-muted/10`}>
+                        <div key={batch.logId + '-' + idx} className={`p-4 rounded-md border ${batch.expiryDate && !isSpent ? getExpiryColor(batch.expiryDate).replace('text-', 'border-').split(' ')[0] : ''} bg-muted/10 ${isSpent ? 'opacity-80' : ''}`}>
                           <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center gap-2">
                               {batch.batchNumber ? (
@@ -2477,6 +2486,9 @@ export default function InventoryPage() {
                                 <span className="text-xs text-muted-foreground italic">No purchase SKU</span>
                               )}
                               <span className="text-xs text-muted-foreground">Received {batch.date}</span>
+                              {isSpent && (
+                                <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-muted text-muted-foreground border">Spent</span>
+                              )}
                             </div>
                             <span className="text-lg font-bold">
                               {viewingDetailsItem.unitOfMeasure === 'Kg'
