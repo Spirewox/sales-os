@@ -441,7 +441,9 @@ export default function InventoryPage() {
   const { data: transferBatches = [], isFetching: transferBatchesLoading } = useProductBatches(
     showTransferModal ? transferProduct?.id ?? null : null,
   );
-  const { data: detailApiBatches = [] } = useProductBatches(detailProductId);
+  const { data: detailApiBatches = [] } = useProductBatches(detailProductId, {
+    includeDepleted: true,
+  });
 
   const transferDestinations = useMemo(
     () =>
@@ -730,24 +732,30 @@ export default function InventoryPage() {
     return { inbound: itemLogs.filter((l) => l.quantity > 0).reduce((a, c) => a + c.quantity, 0), outbound: itemLogs.filter((l) => l.quantity < 0).reduce((a, c) => a + Math.abs(c.quantity), 0) };
   }, [itemLogs, viewingDetailsItem]);
 
-  const itemBatches = useMemo(() => {
+  const itemBatches = useMemo((): FifoBatch[] => {
     if (!viewingDetailsItem) return [];
-    const batches = buildFifoBatches(logsForDetails, viewingDetailsItem.id, { includeDepleted: true });
-    // Sort by expiry (FEFO), then by date
-    return batches.sort((a, b) => {
-      if (a.expiryDate && b.expiryDate) return a.expiryDate.localeCompare(b.expiryDate);
-      if (a.expiryDate) return -1;
-      if (b.expiryDate) return 1;
-      return a.date.localeCompare(b.date);
-    });
-  }, [viewingDetailsItem, logsForDetails]);
+    return detailApiBatches
+      .map((b) => ({
+        logId: b.purchaseLogId ?? '',
+        batchNumber: b.batchNumber,
+        date: b.receivedDate ?? '',
+        expiryDate: b.expiryDate,
+        quantityRemaining: b.quantityRemaining,
+        unitCost: b.unitCost,
+        unitPrice: b.unitPrice,
+        supplier: b.supplier,
+      }))
+      .sort((a, b) => {
+        if (a.expiryDate && b.expiryDate) return a.expiryDate.localeCompare(b.expiryDate);
+        if (a.expiryDate) return -1;
+        if (b.expiryDate) return 1;
+        return a.date.localeCompare(b.date);
+      });
+  }, [viewingDetailsItem, detailApiBatches]);
 
   const itemBatchRemainingTotal = useMemo(() => {
-    if (detailProductId) {
-      return detailApiBatches.reduce((sum, b) => sum + (b.quantityRemaining || 0), 0);
-    }
     return itemBatches.reduce((sum, b) => sum + (b.quantityRemaining || 0), 0);
-  }, [detailProductId, detailApiBatches, itemBatches]);
+  }, [itemBatches]);
 
   const stockBatchMismatch = useMemo(() => {
     if (!viewingDetailsItem) return null;

@@ -1523,9 +1523,13 @@ export function useStockLogs(filters?: {
   });
 }
 
-export function useProductBatches(productId: string | null) {
+export function useProductBatches(
+  productId: string | null,
+  options?: { includeDepleted?: boolean },
+) {
+  const includeDepleted = options?.includeDepleted === true;
   return useQuery({
-    queryKey: ['product-batches', productId],
+    queryKey: ['product-batches', productId, includeDepleted ? 'depleted' : 'open'],
     enabled: !!productId,
     queryFn: async (): Promise<
       Array<{
@@ -1541,8 +1545,9 @@ export function useProductBatches(productId: string | null) {
       }>
     > => {
       if (!productId || !HAS_API) return [];
+      const qs = includeDepleted ? '?include_depleted=true' : '';
       const res = await axiosGet(
-        `inventory/${productId}/batches`,
+        `inventory/${productId}/batches${qs}`,
         true,
       ) as ApiListResponse<
         Array<{
