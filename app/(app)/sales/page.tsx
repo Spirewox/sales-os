@@ -148,14 +148,14 @@ export default function SalesPage() {
     { label: 'Deliveries', value: String(kpis.deliveryCount), icon: <Truck size={14} />, color: 'text-teal-600' },
   ];
 
-  const unitOrder = ['Kg', 'Cartons', 'Liters', 'ml', 'Plates', 'Units'];
-  const unitsSoldRows = Object.entries(kpis.unitsByUnit ?? {})
-    .filter(([, qty]) => qty)
-    .sort((a, b) => {
-      const ai = unitOrder.indexOf(a[0]);
-      const bi = unitOrder.indexOf(b[0]);
-      return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi) || a[0].localeCompare(b[0]);
-    });
+  const mainUnitOrder = ['Kg', 'Cartons', 'Liters', 'ml', 'Plates', 'Units'];
+  const unitsByUnit = kpis.unitsByUnit ?? {};
+  const mainUnitRows = mainUnitOrder
+    .filter((unit) => unitsByUnit[unit])
+    .map((unit) => [unit, unitsByUnit[unit]] as const);
+  const otherUnitRows = Object.entries(unitsByUnit)
+    .filter(([unit, qty]) => qty && !mainUnitOrder.includes(unit))
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
   const selectedSku = skuOptions.find((item) => item.id === filterProductId);
   const unitsSoldHint = filterProductId
     ? [selectedSku?.sku, selectedSku?.name].filter(Boolean).join(' · ') || 'Selected SKU'
@@ -257,21 +257,36 @@ export default function SalesPage() {
             <Package size={14} />
             <span className="text-xs font-medium text-muted-foreground">Units Sold{hasFilters ? ' (filtered)' : ''}</span>
           </div>
-          {unitsSoldRows.length === 0 ? (
+          {mainUnitRows.length === 0 && otherUnitRows.length === 0 ? (
             <p className="text-2xl font-black leading-tight">0</p>
           ) : (
-            <div className="mt-1 space-y-1">
-              {unitsSoldRows.map(([unit, qty]) => (
-                <div key={unit} className="flex items-baseline justify-between gap-3">
-                  <span className="text-lg font-black tabular-nums leading-tight">
-                    {Number(qty).toLocaleString()}
-                  </span>
-                  <span className="text-xs text-muted-foreground shrink-0">{unit}</span>
+            <>
+              {mainUnitRows.length > 0 && (
+                <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2">
+                  {mainUnitRows.map(([unit, qty]) => (
+                    <div key={unit} className="min-w-0">
+                      <p className="text-lg font-black tabular-nums leading-tight">{Number(qty).toLocaleString()}</p>
+                      <p className="text-xs text-muted-foreground">{unit}</p>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              )}
+              {otherUnitRows.length > 0 && (
+                <details className="mt-3 border-t pt-2">
+                  <summary className="cursor-pointer text-xs font-medium text-muted-foreground">Other recorded units</summary>
+                  <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2">
+                    {otherUnitRows.map(([unit, qty]) => (
+                      <div key={unit} className="min-w-0">
+                        <p className="text-lg font-black tabular-nums leading-tight">{Number(qty).toLocaleString()}</p>
+                        <p className="text-xs text-muted-foreground">{unit}</p>
+                      </div>
+                    ))}
+                  </div>
+                </details>
+              )}
+            </>
           )}
-          <p className="text-[11px] text-muted-foreground mt-1" title={unitsSoldHint}>{unitsSoldHint}</p>
+          <p className="text-[11px] text-muted-foreground mt-2" title={unitsSoldHint}>{unitsSoldHint}</p>
         </div>
       </div>
 
