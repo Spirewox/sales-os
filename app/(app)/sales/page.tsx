@@ -6,7 +6,7 @@ import { SalesChannel, PaymentMode } from '@/types';
 import {
   Plus, Banknote, Search, TrendingUp, ChevronRight, CreditCard,
   ArrowUpRight, ArrowDownRight, Calendar, Upload, Download, ShoppingCart, Truck, BarChart3,
-  ArrowUpDown, ArrowUp, ArrowDown,
+  ArrowUpDown, ArrowUp, ArrowDown, Package,
 } from 'lucide-react';
 import {
   fmt, paymentModeBadgeClass, paymentModeLabel, resolveSalePaymentMode,
@@ -93,6 +93,7 @@ export default function SalesPage() {
     searchTerm, setSearchTerm, filterAgent, setFilterAgent, filterStatus, setFilterStatus,
     filterChannel, setFilterChannel,
     filterCategories, setFilterCategories, toggleCategoryFilter, productCategories,
+    filterProductId, setFilterProductId, skuOptions,
     sortBy, sortDir, toggleSort,
     selectedSale, setSelectedSale, detailTab, setDetailTab, isEditing, setIsEditing,
     editForm, setEditForm, showVoidConfirm, setShowVoidConfirm,
@@ -146,6 +147,18 @@ export default function SalesPage() {
     { label: 'Credit Sales', value: `${kpis.creditCount} (${fmt(kpis.creditAmount)})`, icon: <CreditCard size={14} />, color: 'text-orange-600' },
     { label: 'Deliveries', value: String(kpis.deliveryCount), icon: <Truck size={14} />, color: 'text-teal-600' },
   ];
+
+  const unitsSoldText = (() => {
+    const entries = Object.entries(kpis.unitsByUnit ?? {}).filter(([, qty]) => qty);
+    if (entries.length === 0) return '0';
+    return entries.map(([unit, qty]) => `${qty} ${unit}`).join(' · ');
+  })();
+  const selectedSku = skuOptions.find((item) => item.id === filterProductId);
+  const unitsSoldHint = filterProductId
+    ? [selectedSku?.sku, selectedSku?.name].filter(Boolean).join(' · ') || 'Selected SKU'
+    : filterCategories.length > 0
+      ? filterCategories.join(', ')
+      : 'All categories';
 
   const datePresets: [QuickDatePreset, string][] = [
     ['today', 'Today'], ['week', 'This Week'], ['month', 'This Month'], ['30days', 'Last 30 Days'], ['all', 'All Time'],
@@ -236,6 +249,14 @@ export default function SalesPage() {
             )}
           </div>
         ))}
+        <div className="rounded-md border bg-card p-4">
+          <div className="flex items-center gap-2 mb-1 text-amber-700">
+            <Package size={14} />
+            <span className="text-xs font-medium text-muted-foreground">Units Sold{hasFilters ? ' (filtered)' : ''}</span>
+          </div>
+          <MetricValue value={unitsSoldText} className="font-bold" />
+          <p className="text-[11px] text-muted-foreground mt-0.5 truncate" title={unitsSoldHint}>{unitsSoldHint}</p>
+        </div>
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">
@@ -329,6 +350,18 @@ export default function SalesPage() {
               </div>
             </details>
           </div>
+          <select
+            value={filterProductId}
+            onChange={(e) => setFilterProductId(e.target.value)}
+            className="h-10 max-w-[240px] rounded-md border px-3 text-sm bg-background"
+          >
+            <option value="">All SKUs</option>
+            {skuOptions.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.sku} · {item.name}
+              </option>
+            ))}
+          </select>
           {hasFilters && (
             <button type="button" onClick={clearFilters} className="h-10 px-3 rounded-md border text-sm font-medium text-muted-foreground hover:bg-accent">
               Clear
