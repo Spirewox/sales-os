@@ -121,7 +121,7 @@ export function useSalesPage() {
   );
 
   const { data: salesList, isLoading: salesLoading, isFetching: salesFetching } = useSales(listFilters);
-  const { data: salesSummary } = useSalesSummary(summaryFilters);
+  const { data: salesSummary, isFetching: summaryFetching } = useSalesSummary(summaryFilters);
   const sales = salesList?.items ?? [];
   const salesMeta = salesList?.meta ?? { page: 1, limit: SALES_PAGE_SIZE, total: 0, totalPages: 1 };
   const kpis = salesSummary ?? {
@@ -967,6 +967,7 @@ export function useSalesPage() {
     salesMeta,
     salesLoading,
     salesFetching,
+    summaryFetching,
     page,
     setPage,
     customers: saleModalCustomers,

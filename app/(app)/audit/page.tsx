@@ -209,7 +209,7 @@ export default function AuditTrailPage() {
             </tr>
           </thead>
           <tbody className="divide-y">
-            {logs.map((log) => (
+            {!isFetching && logs.map((log) => (
               <tr key={log.id} className="hover:bg-muted/30 cursor-pointer" onClick={() => setSelectedLog(log)}>
                 <td className="p-4 whitespace-nowrap">
                   <span className="font-semibold">{new Date(log.timestamp).toLocaleDateString()}</span>
@@ -235,8 +235,8 @@ export default function AuditTrailPage() {
                 <td className="p-4"><button type="button" onClick={(e) => { e.stopPropagation(); setSelectedLog(log); }} className="text-primary text-xs font-semibold hover:underline">View rows</button></td>
               </tr>
             ))}
-            {logs.length === 0 && !isLoading && <tr><td colSpan={9} className="p-12 text-center text-muted-foreground italic">No bulk upload logs found.</td></tr>}
-            {isLoading && logs.length === 0 && (
+            {!isFetching && logs.length === 0 && <tr><td colSpan={9} className="p-12 text-center text-muted-foreground italic">No bulk upload logs found.</td></tr>}
+            {isFetching && (
               <tr>
                 <td colSpan={9} className="p-0">
                   <TableSkeleton rows={6} cols={9} />
@@ -317,7 +317,7 @@ export default function AuditTrailPage() {
             <table className="w-full text-sm">
               <thead className="bg-muted/50 border-b text-[10px] uppercase font-bold text-muted-foreground tracking-wider"><tr><th className="h-12 px-6 text-left">Timestamp</th><th className="h-12 px-6 text-left">Agent</th><th className="h-12 px-6 text-left">Entity</th><th className="h-12 px-6 text-left">Action</th><th className="h-12 px-6 text-left">Details</th></tr></thead>
               <tbody className="divide-y">
-                {logs.map((log) => (
+                {!isFetching && logs.map((log) => (
                   <tr
                     key={log.id}
                     className="hover:bg-muted/30 cursor-pointer"
@@ -330,8 +330,8 @@ export default function AuditTrailPage() {
                     <td className="p-6 text-muted-foreground text-xs max-w-xs truncate" title={log.details}>{auditDetailsSummary(log.details)}</td>
                   </tr>
                 ))}
-                {logs.length === 0 && !isLoading && <tr><td colSpan={5} className="p-12 text-center text-muted-foreground italic">No activity logs found.</td></tr>}
-                {isLoading && logs.length === 0 && (
+                {!isFetching && logs.length === 0 && <tr><td colSpan={5} className="p-12 text-center text-muted-foreground italic">No activity logs found.</td></tr>}
+                {isFetching && (
                   <tr>
                     <td colSpan={5} className="p-0">
                       <TableSkeleton rows={6} cols={5} />

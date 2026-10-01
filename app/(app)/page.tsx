@@ -16,6 +16,7 @@ import {
   ShoppingCart, MessageSquare, ClipboardList, Wallet,
   BarChart3, UserPlus, PackagePlus, Receipt,
 } from 'lucide-react';
+import { CardSkeleton } from '@/components/ui/loading-skeletons';
 import { CustomerType } from '@/types';
 
 import { PRODUCT_CATEGORY_COLORS } from '@/lib/product-categories';
@@ -105,7 +106,7 @@ export default function DashboardPage() {
   const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null);
 
   const { can, isAdmin, user } = usePermissions();
-  const { data: metrics } = useDashboardMetrics();
+  const { data: metrics, isFetching: metricsFetching } = useDashboardMetrics();
   const { data: salesSummary, isFetching: salesFetching } = useDashboardSalesSummary(salesGranularity);
   const { data: categoryRevenue } = useDashboardRevenueByCategory(catPeriod);
   const { data: customerSalesResult } = useSales(
@@ -287,6 +288,10 @@ export default function DashboardPage() {
            TRACKER STRIP
          ═══════════════════════════════════════ */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        {metricsFetching ? (
+          Array.from({ length: 6 }, (_, i) => <CardSkeleton key={i} />)
+        ) : (
+          <>
         {/* Today's Revenue */}
         <button onClick={() => router.push('/sales')} className="group relative rounded-xl border bg-card p-4 hover:border-emerald-300 transition-all text-left">
           <div className="flex items-center gap-2 mb-2">
@@ -362,6 +367,8 @@ export default function DashboardPage() {
           <p className="text-[10px] font-bold text-muted-foreground uppercase mt-0.5">Customers</p>
           {tracker.newCustomersThisMonth > 0 && <p className="text-[10px] text-emerald-600 font-semibold">+{tracker.newCustomersThisMonth} this month</p>}
         </button>
+          </>
+        )}
       </div>
 
       {/* ═══════════════════════════════════════
@@ -419,6 +426,10 @@ export default function DashboardPage() {
         <div className="p-5">
           {/* KPIs */}
           <div className={`grid gap-4 mb-5 ${isAdmin ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-2 sm:grid-cols-3'}`}>
+            {salesFetching ? (
+              Array.from({ length: isAdmin ? 4 : 3 }, (_, i) => <CardSkeleton key={i} />)
+            ) : (
+              <>
             <div>
               <p className="text-[10px] font-bold text-muted-foreground uppercase">Revenue</p>
               <p className="text-2xl font-black text-emerald-600">{salesData.revenue > 0 ? fmtK(salesData.revenue) : '—'}</p>
@@ -439,6 +450,8 @@ export default function DashboardPage() {
               <p className="text-sm font-bold text-emerald-600">{fmtK(salesData.cashRevenue)}</p>
               {salesData.creditRevenue > 0 && <p className="text-[10px] font-semibold text-amber-600">{fmtK(salesData.creditRevenue)} credit</p>}
             </div>
+              </>
+            )}
           </div>
 
           {/* Channel split */}

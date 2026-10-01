@@ -21,13 +21,13 @@ import {
   ArrowDown,
 } from 'lucide-react';
 import { PaginationControls } from '@/components/ui/pagination-controls';
-import { TableSkeleton } from '@/components/ui/loading-skeletons';
+import { CardSkeleton, TableSkeleton } from '@/components/ui/loading-skeletons';
 
 type SortKey = 'outstanding' | 'overdue' | 'oldest';
 const PAGE_SIZE = 20;
 
 export default function CreditsPage() {
-  const { data: summary = [], isLoading } = useCreditSummary();
+  const { data: summary = [], isLoading, isFetching } = useCreditSummary();
   const { data: metrics } = useCreditMetrics();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -116,6 +116,10 @@ export default function CreditsPage() {
 
       {/* KPI row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {isFetching ? (
+          Array.from({ length: 4 }, (_, i) => <CardSkeleton key={i} />)
+        ) : (
+          <>
         <div className="rounded-xl border bg-card p-4">
           <div className="flex items-center gap-2 mb-1">
             <CreditCard size={14} className="text-red-500" />
@@ -152,6 +156,8 @@ export default function CreditsPage() {
             </p>
           )}
         </div>
+          </>
+        )}
       </div>
 
       {/* Filters */}
@@ -224,14 +230,14 @@ export default function CreditsPage() {
               </tr>
             </thead>
             <tbody>
-              {isLoading && summary.length === 0 && (
+              {isFetching && (
                 <tr>
                   <td colSpan={6} className="p-0">
                     <TableSkeleton rows={6} cols={6} />
                   </td>
                 </tr>
               )}
-              {!isLoading && filtered.length === 0 && (
+              {!isFetching && filtered.length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-4 py-12 text-center">
                     <CreditCard size={36} className="mx-auto text-muted-foreground/30 mb-2" />
@@ -239,7 +245,7 @@ export default function CreditsPage() {
                   </td>
                 </tr>
               )}
-              {paginatedRows.map((row) => {
+              {!isFetching && paginatedRows.map((row) => {
                 const dueDays = row.oldestDueDate ? daysUntil(row.oldestDueDate) : null;
                 return (
                   <tr
