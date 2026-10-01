@@ -74,7 +74,7 @@ export function useSalesPage() {
   const [filterStatus, setFilterStatus] = useState('All');
   const [filterChannel, setFilterChannel] = useState<string>('All');
   const [filterCategories, setFilterCategories] = useState<string[]>([]);
-  const [filterProductId, setFilterProductId] = useState('');
+  const [filterProductIds, setFilterProductIds] = useState<string[]>([]);
   const [page, setPage] = useState(1);
   const [sortBy, setSortBy] = useState<'quantity' | 'amount' | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
@@ -94,7 +94,9 @@ export function useSalesPage() {
       ...(filterCategories.length
         ? { categories: filterCategories.join(',') }
         : {}),
-      ...(filterProductId ? { product_id: filterProductId } : {}),
+      ...(filterProductIds.length
+        ? { product_ids: filterProductIds.join(',') }
+        : {}),
     }),
     [
       hubScope.hubIdForApi,
@@ -106,7 +108,7 @@ export function useSalesPage() {
       filterStatus,
       filterChannel,
       filterCategories,
-      filterProductId,
+      filterProductIds,
     ],
   );
 
@@ -153,11 +155,12 @@ export function useSalesPage() {
   }, [skuInventory, filterCategories]);
 
   useEffect(() => {
-    if (!filterProductId || !skuInventoryFetched) return;
-    if (!skuOptions.some((item) => item.id === filterProductId)) {
-      setFilterProductId('');
-    }
-  }, [filterProductId, skuInventoryFetched, skuOptions]);
+    if (!skuInventoryFetched) return;
+    setFilterProductIds((prev) => {
+      const next = prev.filter((id) => skuOptions.some((item) => item.id === id));
+      return next.length === prev.length ? prev : next;
+    });
+  }, [skuInventoryFetched, skuOptions]);
 
   useEffect(() => {
     setPage(1);
@@ -171,7 +174,7 @@ export function useSalesPage() {
     filterStatus,
     filterChannel,
     filterCategories,
-    filterProductId,
+    filterProductIds,
     sortBy,
     sortDir,
   ]);
@@ -476,7 +479,7 @@ export function useSalesPage() {
     hubScope.filterHub !== 'All' ||
     filterChannel !== 'All' ||
     filterCategories.length > 0 ||
-    !!filterProductId ||
+    filterProductIds.length > 0 ||
     dateFrom ||
     dateTo ||
     dateFieldFilter !== 'sold';
@@ -488,7 +491,7 @@ export function useSalesPage() {
     hubScope.setFilterHub(hubScope.canSwitchHubs ? 'All' : hubScope.hubName);
     setFilterChannel('All');
     setFilterCategories([]);
-    setFilterProductId('');
+    setFilterProductIds([]);
     setDateFrom('');
     setDateTo('');
     setDateFieldFilter('sold');
@@ -1072,8 +1075,8 @@ export function useSalesPage() {
     filterCategories,
     setFilterCategories,
     toggleCategoryFilter,
-    filterProductId,
-    setFilterProductId,
+    filterProductIds,
+    setFilterProductIds,
     skuOptions,
     productCategories: PRODUCT_CATEGORIES,
     sortBy,

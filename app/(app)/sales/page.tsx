@@ -18,6 +18,7 @@ import { AddSaleModal } from './add-sale-modal';
 import { SalesImportModal } from './sales-import-modal';
 import { PaginationControls } from '@/components/ui/pagination-controls';
 import { MetricValue } from '@/components/ui/metric-value';
+import { SkuMultiSelect } from '@/components/sku-multi-select';
 import { CardSkeleton, TableSkeleton } from '@/components/ui/loading-skeletons';
 import type { Sale } from '@/types';
 
@@ -113,7 +114,7 @@ export default function SalesPage() {
     searchTerm, setSearchTerm, filterAgent, setFilterAgent, filterStatus, setFilterStatus,
     filterChannel, setFilterChannel,
     filterCategories, setFilterCategories, toggleCategoryFilter, productCategories,
-    filterProductId, setFilterProductId, skuOptions,
+    filterProductIds, setFilterProductIds, skuOptions,
     sortBy, sortDir, toggleSort,
     selectedSale, setSelectedSale, detailTab, setDetailTab, isEditing, setIsEditing,
     editForm, setEditForm, showVoidConfirm, setShowVoidConfirm,
@@ -138,11 +139,8 @@ export default function SalesPage() {
   } = useSalesPage();
   const [showTemplateMenu, setShowTemplateMenu] = useState(false);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
-  const [skuOpen, setSkuOpen] = useState(false);
   const closeCategories = () => setCategoriesOpen(false);
-  const closeSku = () => setSkuOpen(false);
   const categoriesRef = useDismissOnOutside(categoriesOpen, closeCategories);
-  const skuRef = useDismissOnOutside(skuOpen, closeSku);
   const tableLoading = salesLoading || salesFetching;
 
   const openSaleDetail = (sale: Sale) => {
@@ -182,9 +180,9 @@ export default function SalesPage() {
   const otherUnitRows = Object.entries(unitsByUnit)
     .filter(([unit, qty]) => qty && !mainUnitOrder.includes(unit))
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
-  const selectedSku = skuOptions.find((item) => item.id === filterProductId);
-  const unitsSoldHint = filterProductId
-    ? [selectedSku?.sku, selectedSku?.name].filter(Boolean).join(' · ') || 'Selected SKU'
+  const selectedSkus = skuOptions.filter((item) => filterProductIds.includes(item.id));
+  const unitsSoldHint = selectedSkus.length
+    ? selectedSkus.map((item) => [item.sku, item.name].filter(Boolean).join(' · ')).join(', ')
     : filterCategories.length > 0
       ? filterCategories.join(', ')
       : 'All categories';
@@ -379,10 +377,7 @@ export default function SalesPage() {
           <div className="relative" ref={categoriesRef}>
             <button
               type="button"
-              onClick={() => {
-                setSkuOpen(false);
-                setCategoriesOpen((open) => !open);
-              }}
+              onClick={() => setCategoriesOpen((open) => !open)}
               className="h-10 cursor-pointer rounded-md border px-3 text-sm bg-background inline-flex items-center gap-2"
             >
               Categories
@@ -420,45 +415,11 @@ export default function SalesPage() {
               </div>
             )}
           </div>
-          <div className="relative" ref={skuRef}>
-            <button
-              type="button"
-              onClick={() => {
-                setCategoriesOpen(false);
-                setSkuOpen((open) => !open);
-              }}
-              className="h-10 max-w-[240px] rounded-md border px-3 text-sm bg-background inline-flex items-center"
-            >
-              <span className="truncate">{selectedSku ? `${selectedSku.sku} · ${selectedSku.name}` : 'All SKUs'}</span>
-            </button>
-            {skuOpen && (
-              <div className="absolute z-20 mt-1 w-64 max-h-64 overflow-y-auto rounded-md border bg-background shadow-md p-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setFilterProductId('');
-                    setSkuOpen(false);
-                  }}
-                  className="w-full text-left px-2 py-1.5 rounded text-sm hover:bg-muted/50"
-                >
-                  All SKUs
-                </button>
-                {skuOptions.map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => {
-                      setFilterProductId(item.id);
-                      setSkuOpen(false);
-                    }}
-                    className="w-full text-left px-2 py-1.5 rounded text-sm hover:bg-muted/50"
-                  >
-                    {item.sku} · {item.name}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          <SkuMultiSelect
+            options={skuOptions.map((item) => ({ id: item.id, sku: item.sku, name: item.name }))}
+            selectedIds={filterProductIds}
+            onChange={setFilterProductIds}
+          />
           {hasFilters && (
             <button type="button" onClick={clearFilters} className="h-10 px-3 rounded-md border text-sm font-medium text-muted-foreground hover:bg-accent">
               Clear

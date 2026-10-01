@@ -13,6 +13,7 @@ import {
   useDownloadInventoryImportTemplate, useValidateInventoryImport, useImportInventory,
   useInventorySalesMetrics, useSuppliers, useProductSuppliers, useProductSalesPerformance,
 } from '@/hooks/use-queries';
+import { SkuMultiSelect } from '@/components/sku-multi-select';
 import { CardSkeleton, TableSkeleton } from '@/components/ui/loading-skeletons';
 import { ConfirmPreviewModal, type ConfirmPreviewRow } from '@/components/confirm-preview-modal';
 import { InventoryItem, StockLog, StockMovementType } from '@/types';
@@ -361,6 +362,7 @@ export default function InventoryPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterLowStock, setFilterLowStock] = useState(false);
   const [filterCategory, setFilterCategory] = useState<ProductCategory | 'All'>('All');
+  const [filterProductIds, setFilterProductIds] = useState<string[]>([]);
   const [inventoryPage, setInventoryPage] = useState(1);
   const [sortBy, setSortBy] = useState<'avgUnitCost' | 'value' | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
@@ -619,8 +621,9 @@ export default function InventoryPage() {
       const matchesLowStock = filterLowStock ? i.currentStock <= i.minStockLevel : true;
       const matchesHub = hubScope.matchesHub(i.location);
       const matchesCategory = filterCategory === 'All' || i.category === filterCategory;
+      const matchesSku = filterProductIds.length === 0 || filterProductIds.includes(i.id);
       const matchesActive = i.isActive !== false;
-      return matchesSearch && matchesLowStock && matchesHub && matchesCategory && matchesActive;
+      return matchesSearch && matchesLowStock && matchesHub && matchesCategory && matchesSku && matchesActive;
     });
     if (!sortBy) return rows;
     const dir = sortDir === 'asc' ? 1 : -1;
@@ -629,7 +632,7 @@ export default function InventoryPage() {
       const bVal = sortBy === 'avgUnitCost' ? b.avgUnitCost : b.currentStock * b.avgUnitCost;
       return (aVal - bVal) * dir;
     });
-  }, [items, searchTerm, filterLowStock, hubScope, filterCategory, sortBy, sortDir]);
+  }, [items, searchTerm, filterLowStock, hubScope, filterCategory, filterProductIds, sortBy, sortDir]);
 
   const inventoryTotalPages = Math.max(
     1,
@@ -643,7 +646,29 @@ export default function InventoryPage() {
 
   useEffect(() => {
     setInventoryPage(1);
-  }, [searchTerm, filterLowStock, filterCategory, hubScope.filterHub, sortBy, sortDir]);
+  }, [searchTerm, filterLowStock, filterCategory, filterProductIds, hubScope.filterHub, sortBy, sortDir]);
+
+  const inventorySkuOptions = useMemo(
+    () =>
+      items
+        .filter((item) => {
+          if (!item.sku || item.isActive === false) return false;
+          if (!hubScope.matchesHub(item.location)) return false;
+          if (filterCategory !== 'All' && item.category !== filterCategory) return false;
+          return true;
+        })
+        .slice()
+        .sort((a, b) => a.sku.localeCompare(b.sku) || a.name.localeCompare(b.name))
+        .map((item) => ({ id: item.id, sku: item.sku, name: item.name })),
+    [items, hubScope, filterCategory],
+  );
+
+  useEffect(() => {
+    setFilterProductIds((prev) => {
+      const next = prev.filter((id) => inventorySkuOptions.some((item) => item.id === id));
+      return next.length === prev.length ? prev : next;
+    });
+  }, [inventorySkuOptions]);
 
   const toggleSort = (field: 'avgUnitCost' | 'value') => {
     if (sortBy === field) {
@@ -1626,7 +1651,7 @@ export default function InventoryPage() {
             <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
               Filter products
             </p>
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(260px,1fr)_220px_auto]">
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(260px,1fr)_220px_minmax(200px,1fr)_auto]">
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-muted-foreground" htmlFor="inventory-search">
                   Search
@@ -1659,6 +1684,14 @@ export default function InventoryPage() {
                     {PRODUCT_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
+              </div>
+              <div className="space-y-1.5">
+                <span className="text-xs font-medium text-muted-foreground">SKU</span>
+                <SkuMultiSelect
+                  options={inventorySkuOptions}
+                  selectedIds={filterProductIds}
+                  onChange={setFilterProductIds}
+                />
               </div>
               <div className="flex flex-wrap items-end gap-2 md:col-span-2 xl:col-span-1 xl:justify-end">
                 <button
