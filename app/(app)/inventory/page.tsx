@@ -13,6 +13,7 @@ import {
   useDownloadInventoryImportTemplate, useValidateInventoryImport, useImportInventory,
   useInventorySalesMetrics, useSuppliers, useProductSuppliers, useProductSalesPerformance,
 } from '@/hooks/use-queries';
+import { CardSkeleton, TableSkeleton } from '@/components/ui/loading-skeletons';
 import { ConfirmPreviewModal, type ConfirmPreviewRow } from '@/components/confirm-preview-modal';
 import { InventoryItem, StockLog, StockMovementType } from '@/types';
 import type { InventoryImportPreviewRow } from '@/types/api';
@@ -309,10 +310,10 @@ export default function InventoryPage() {
   const downloadInventoryTemplate = useDownloadInventoryImportTemplate();
   const validateInventoryImport = useValidateInventoryImport();
   const importInventory = useImportInventory();
-  const { data: items = [] } = useInventory({ hub_id: hubScope.hubIdForApi });
-  const { data: hubLogsResult } = useStockLogs({ hub_id: hubScope.hubIdForApi, limit: 200 });
+  const { data: items = [], isFetching: itemsFetching } = useInventory({ hub_id: hubScope.hubIdForApi });
+  const { data: hubLogsResult, isFetching: logsFetching } = useStockLogs({ hub_id: hubScope.hubIdForApi, limit: 200 });
   const logs = hubLogsResult?.data ?? [];
-  const { data: salesMetrics } = useInventorySalesMetrics({
+  const { data: salesMetrics, isFetching: metricsFetching } = useInventorySalesMetrics({
     hub_id: hubScope.hubIdForApi,
     ...metricsPeriod.apiParams,
   });
@@ -1517,6 +1518,10 @@ export default function InventoryPage() {
 
       {/* ── KPI Cards ── */}
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+        {(itemsFetching || metricsFetching) ? (
+          Array.from({ length: isAdmin ? 7 : 6 }, (_, i) => <CardSkeleton key={i} />)
+        ) : (
+          <>
         {[
           { label: 'Inventory Value (Cost)', value: `\u20A6${fmtMoney(inventoryValue)}`, icon: <BarChart4 size={14} />, color: 'text-primary', sub: null as string | null },
           { label: 'Total Active SKUs', value: filteredItems.length, icon: <Package size={14} />, color: 'text-blue-600', sub: null },
@@ -1538,6 +1543,8 @@ export default function InventoryPage() {
             {kpi.sub && <p className="text-[10px] text-muted-foreground mt-1 truncate" title={kpi.sub}>{kpi.sub}</p>}
           </div>
         ))}
+          </>
+        )}
       </div>
 
       {/* Sales volume + rankings */}
@@ -1743,7 +1750,13 @@ export default function InventoryPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {paginatedItems.map((item) => {
+                  {itemsFetching ? (
+                    <tr>
+                      <td colSpan={9} className="p-0">
+                        <TableSkeleton rows={8} cols={8} />
+                      </td>
+                    </tr>
+                  ) : paginatedItems.map((item) => {
                     const isLow = item.currentStock <= item.minStockLevel;
                     const isSelected = selectedIds.has(item.id);
                     const status = getStockStatus(item);
@@ -1832,7 +1845,7 @@ export default function InventoryPage() {
                       </tr>
                     );
                   })}
-                  {filteredItems.length === 0 && (
+                  {!itemsFetching && filteredItems.length === 0 && (
                     <tr><td colSpan={9} className="p-12 text-center text-muted-foreground italic">No products found.</td></tr>
                   )}
                 </tbody>
@@ -1857,6 +1870,10 @@ export default function InventoryPage() {
         <div className="space-y-5">
           {/* Ledger Summary Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {logsFetching ? (
+              Array.from({ length: 3 }, (_, i) => <CardSkeleton key={i} />)
+            ) : (
+              <>
             <div className="p-4 rounded-md border bg-card">
               <div className="flex items-center gap-2 mb-1">
                 <TrendingUp size={14} className="text-green-600" />
@@ -1880,6 +1897,8 @@ export default function InventoryPage() {
                 {ledgerStats.netMovement >= 0 ? '+' : ''}&#8358;{fmtMoney(ledgerStats.netMovement)}
               </div>
             </div>
+              </>
+            )}
           </div>
 
           {/* Ledger Filters */}
@@ -1979,7 +1998,13 @@ export default function InventoryPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {filteredLogs.map((log) => {
+                  {logsFetching ? (
+                    <tr>
+                      <td colSpan={7} className="p-0">
+                        <TableSkeleton rows={8} cols={7} />
+                      </td>
+                    </tr>
+                  ) : filteredLogs.map((log) => {
                     const movementTypeColors: Record<string, string> = {
                       PURCHASE: 'bg-green-50 text-green-700 border-green-200',
                       SALE: 'bg-red-50 text-red-700 border-red-200',
@@ -2019,7 +2044,7 @@ export default function InventoryPage() {
                       </tr>
                     );
                   })}
-                  {filteredLogs.length === 0 && (
+                  {!logsFetching && filteredLogs.length === 0 && (
                     <tr><td colSpan={7} className="p-12 text-center text-muted-foreground italic">No stock movements match your filters.</td></tr>
                   )}
                 </tbody>

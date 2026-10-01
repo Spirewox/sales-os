@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth-context';
+import { TableSkeleton } from '@/components/ui/loading-skeletons';
 import { usePermissions } from '@/hooks/use-permissions';
 import {
   useFeedback, useCreateFeedback, useResolveFeedback, useUpdateFeedbackPriority,
@@ -66,9 +67,9 @@ function findCustomerByName(name: string, customers: Customer[]): Customer | und
 export default function InteractionsPage() {
   const { user } = useAuth();
   const { can } = usePermissions();
-  const { data: feedbacks = [] } = useFeedback();
-  const { data: enquiries = [] } = useEnquiries();
-  const { data: compensations = [] } = useCompensations();
+  const { data: feedbacks = [], isFetching: feedbackFetching } = useFeedback();
+  const { data: enquiries = [], isFetching: enquiriesFetching } = useEnquiries();
+  const { data: compensations = [], isFetching: compensationsFetching } = useCompensations();
   const { data: customerList } = useCustomers();
   const customers = customerList?.items ?? [];
   const createFeedback = useCreateFeedback();
@@ -562,7 +563,7 @@ export default function InteractionsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {filteredFeedbacks.map((f) => (
+                  {!feedbackFetching && filteredFeedbacks.map((f) => (
                     <tr key={f.id} className="hover:bg-muted/50 group">
                       <td className="p-4 text-muted-foreground whitespace-nowrap text-xs">{f.date}</td>
                       <td className="p-4 font-medium">{f.customerName}</td>
@@ -594,7 +595,10 @@ export default function InteractionsPage() {
                       </td>
                     </tr>
                   ))}
-                  {filteredFeedbacks.length === 0 && <tr><td colSpan={9} className="p-8 text-center text-muted-foreground">No feedback found.</td></tr>}
+                  {!feedbackFetching && filteredFeedbacks.length === 0 && <tr><td colSpan={9} className="p-8 text-center text-muted-foreground">No feedback found.</td></tr>}
+                  {feedbackFetching && (
+                    <tr><td colSpan={9} className="p-0"><TableSkeleton rows={6} cols={8} /></td></tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -634,7 +638,7 @@ export default function InteractionsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {filteredEnquiries.map((enq) => (
+                  {!enquiriesFetching && filteredEnquiries.map((enq) => (
                     <tr key={enq.id} className="hover:bg-muted/50 group">
                       <td className="p-4 text-muted-foreground text-xs whitespace-nowrap">{enq.date}</td>
                       <td className="p-4 font-medium"><div className="flex flex-col"><span>{enq.customerName}</span>{enq.email && <span className="text-xs text-muted-foreground">{enq.email}</span>}</div></td>
@@ -664,10 +668,13 @@ export default function InteractionsPage() {
                       </td>
                     </tr>
                   ))}
-                  {filteredEnquiries.length === 0 && (
+                  {!enquiriesFetching && filteredEnquiries.length === 0 && (
                     <tr><td colSpan={6} className="p-12 text-center">
                       <div className="flex flex-col items-center gap-3"><div className="rounded-full bg-muted p-4"><Inbox size={32} className="text-muted-foreground" /></div><p className="font-medium">No enquiries found</p><p className="text-sm text-muted-foreground">Try adjusting your search or filters.</p></div>
                     </td></tr>
+                  )}
+                  {enquiriesFetching && (
+                    <tr><td colSpan={6} className="p-0"><TableSkeleton rows={6} cols={6} /></td></tr>
                   )}
                 </tbody>
               </table>
@@ -705,7 +712,7 @@ export default function InteractionsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y">
-                  {filteredCompensations.map((comp) => (
+                  {!compensationsFetching && filteredCompensations.map((comp) => (
                     <tr key={comp.id} className="hover:bg-muted/50 group">
                       <td className="p-4 text-muted-foreground text-xs whitespace-nowrap">{comp.date}</td>
                       <td className="p-4 font-medium">{comp.customerName}</td>
@@ -749,7 +756,10 @@ export default function InteractionsPage() {
                       </td>
                     </tr>
                   ))}
-                  {filteredCompensations.length === 0 && <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">No compensations recorded.</td></tr>}
+                  {!compensationsFetching && filteredCompensations.length === 0 && <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">No compensations recorded.</td></tr>}
+                  {compensationsFetching && (
+                    <tr><td colSpan={8} className="p-0"><TableSkeleton rows={6} cols={7} /></td></tr>
+                  )}
                 </tbody>
               </table>
             </div>

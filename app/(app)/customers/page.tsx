@@ -32,7 +32,7 @@ import { MetricsPeriodBar, useMetricsPeriod } from '@/components/metrics-period-
 import { SubmitButton } from '@/components/submit-button';
 import { PaginationControls } from '@/components/ui/pagination-controls';
 import { MetricValue } from '@/components/ui/metric-value';
-import { TableSkeleton } from '@/components/ui/loading-skeletons';
+import { CardSkeleton, TableSkeleton } from '@/components/ui/loading-skeletons';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer,
 } from 'recharts';
@@ -810,6 +810,10 @@ export default function CustomersPage() {
           }
         />
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+        {customersFetching ? (
+          Array.from({ length: 9 }, (_, i) => <CardSkeleton key={i} />)
+        ) : (
+          <>
         <div className="rounded-xl border bg-card p-4">
           <div className="flex items-center gap-2 mb-1"><Users size={14} className="text-muted-foreground" /><span className="text-[10px] font-bold uppercase text-muted-foreground">Total</span></div>
           <MetricValue value={kpis.total} />
@@ -849,6 +853,8 @@ export default function CustomersPage() {
           <div className="flex items-center gap-2 mb-1"><BarChart3 size={14} className="text-orange-600" /><span className="text-[10px] font-bold uppercase text-muted-foreground">Avg Value</span></div>
           <MetricValue value={`₦${Math.round(kpis.avgValue).toLocaleString()}`} className="text-lg" />
         </div>
+          </>
+        )}
       </div>
       </div>
 
@@ -1007,7 +1013,7 @@ export default function CustomersPage() {
               </tr>
             </thead>
             <tbody>
-              {customers.map((customer) => {
+              {!customersFetching && customers.map((customer) => {
                 const status = getStatus(customer);
                 const grade = getGrade(customer);
                 const creditGrade = calculateScore(customer.id);
@@ -1079,8 +1085,8 @@ export default function CustomersPage() {
                   </tr>
                 );
               })}
-              {customers.length === 0 && !customersLoading && <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">No customers found matching your filters.</td></tr>}
-              {customersLoading && customers.length === 0 && (
+              {!customersFetching && customers.length === 0 && <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">No customers found matching your filters.</td></tr>}
+              {customersFetching && (
                 <tr>
                   <td colSpan={8} className="p-0">
                     <TableSkeleton rows={8} cols={8} />

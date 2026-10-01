@@ -12,6 +12,7 @@ import {
   ProductCategory, PaymentTerms, StockMovementType,
 } from '@/types';
 import { PRODUCT_CATEGORIES } from '@/lib/product-categories';
+import { CardSkeleton, TableSkeleton } from '@/components/ui/loading-skeletons';
 import { toast } from 'sonner';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer,
@@ -108,7 +109,7 @@ export default function SuppliersPage() {
   const [filterStatus, setFilterStatus] = useState<'All' | 'Active' | 'Inactive'>('All');
   const [codeFrom, setCodeFrom] = useState('');
   const [codeTo, setCodeTo] = useState('');
-  const { data: supplierList } = useSuppliers({
+  const { data: supplierList, isFetching: suppliersFetching } = useSuppliers({
     limit: 200,
     sort_by: sortBy ?? undefined,
     sort_dir: sortBy ? sortDir : undefined,
@@ -507,6 +508,10 @@ export default function SuppliersPage() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+        {suppliersFetching ? (
+          Array.from({ length: 5 }, (_, i) => <CardSkeleton key={i} />)
+        ) : (
+          <>
         <div className="rounded-xl border bg-card p-4">
           <div className="flex items-center gap-2 mb-1"><Truck size={14} className="text-muted-foreground" /><span className="text-[10px] font-bold uppercase text-muted-foreground">Suppliers</span></div>
           <p className="text-2xl font-black">{kpis.total}</p>
@@ -527,10 +532,12 @@ export default function SuppliersPage() {
           <div className="flex items-center gap-2 mb-1"><Clock size={14} className="text-blue-600" /><span className="text-[10px] font-bold uppercase text-muted-foreground">Avg Lead</span></div>
           <p className="text-2xl font-black">{kpis.avgLead}<span className="text-sm font-medium text-muted-foreground">d</span></p>
         </div>
+          </>
+        )}
       </div>
 
       {/* Top suppliers by spend */}
-      {topBySpend.length > 0 && (
+      {!suppliersFetching && topBySpend.length > 0 && (
         <div className="rounded-xl border bg-card p-4">
           <div className="flex items-center gap-2 mb-3"><TrendingUp size={15} className="text-primary" /><h3 className="text-sm font-semibold">Top Suppliers by Spend</h3></div>
           <div className="space-y-2.5">
@@ -643,7 +650,7 @@ export default function SuppliersPage() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((s) => {
+              {!suppliersFetching && filtered.map((s) => {
                 const spend = typeof s.totalSpend === 'number' ? s.totalSpend : (spendBySupplier[s.id]?.spend || 0);
                 const open = openIssuesBySupplier[s.id] || 0;
                 return (
@@ -696,7 +703,14 @@ export default function SuppliersPage() {
                   </tr>
                 );
               })}
-              {filtered.length === 0 && <tr><td colSpan={9} className="p-8 text-center text-muted-foreground">No suppliers found matching your filters.</td></tr>}
+              {!suppliersFetching && filtered.length === 0 && <tr><td colSpan={9} className="p-8 text-center text-muted-foreground">No suppliers found matching your filters.</td></tr>}
+              {suppliersFetching && (
+                <tr>
+                  <td colSpan={9} className="p-0">
+                    <TableSkeleton rows={8} cols={8} />
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

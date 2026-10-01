@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { HubScopeSelect } from '@/components/hub-scope-filter';
 import { SalesChannel, PaymentMode } from '@/types';
 import {
@@ -18,13 +18,33 @@ import { AddSaleModal } from './add-sale-modal';
 import { SalesImportModal } from './sales-import-modal';
 import { PaginationControls } from '@/components/ui/pagination-controls';
 import { MetricValue } from '@/components/ui/metric-value';
-import { TableSkeleton } from '@/components/ui/loading-skeletons';
+import { CardSkeleton, TableSkeleton } from '@/components/ui/loading-skeletons';
 import type { Sale } from '@/types';
 
 type SalesTableRowProps = Readonly<{
   sale: Sale;
   onSelect: (sale: Sale) => void;
 }>;
+
+function useDismissOnOutside(open: boolean, onClose: () => void) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onPointer = (event: MouseEvent) => {
+      if (!ref.current?.contains(event.target as Node)) onClose();
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    document.addEventListener('mousedown', onPointer);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onPointer);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open, onClose]);
+  return ref;
+}
 
 function SalesTableRow({ sale, onSelect }: SalesTableRowProps) {
   const paid = sale.amountPaid ?? (sale.isCredit ? 0 : sale.amount);
@@ -83,7 +103,7 @@ export default function SalesPage() {
     dateFrom, setDateFrom, dateTo, setDateTo, dateFieldFilter, setDateFieldFilter,
     quickPreset, setQuickPreset, applyPreset,
     agents, customers, customersFetching, setCustomerSearch, filteredSales, kpis, hasFilters, clearFilters,
-    salesMeta, page, setPage, salesLoading, salesFetching, activeHubs,
+    salesMeta, page, setPage, salesLoading, salesFetching, summaryFetching, activeHubs,
     searchTerm, setSearchTerm, filterAgent, setFilterAgent, filterStatus, setFilterStatus,
     filterChannel, setFilterChannel,
     filterCategories, setFilterCategories, toggleCategoryFilter, productCategories,
@@ -111,6 +131,12 @@ export default function SalesPage() {
     btnPrimary, btnSecondary,
   } = useSalesPage();
   const [showTemplateMenu, setShowTemplateMenu] = useState(false);
+  const [categoriesOpen, setCategoriesOpen] = useState(false);
+  const [skuOpen, setSkuOpen] = useState(false);
+  const closeCategories = () => setCategoriesOpen(false);
+  const closeSku = () => setSkuOpen(false);
+  const categoriesRef = useDismissOnOutside(categoriesOpen, closeCategories);
+  const skuRef = useDismissOnOutside(skuOpen, closeSku);
   const tableLoading = salesLoading || salesFetching;
 
   const openSaleDetail = (sale: Sale) => {
@@ -231,6 +257,10 @@ export default function SalesPage() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        {summaryFetching ? (
+          Array.from({ length: kpiCards.length + 1 }, (_, i) => <CardSkeleton key={i} />)
+        ) : (
+          <>
         {kpiCards.map((kpi) => (
           <div key={kpi.label} className="rounded-md border bg-card p-4">
             <div className={`flex items-center gap-2 mb-1 ${kpi.color}`}>
@@ -282,6 +312,8 @@ export default function SalesPage() {
           )}
           <p className="text-[11px] text-muted-foreground mt-2" title={unitsSoldHint}>{unitsSoldHint}</p>
         </div>
+          </>
+        )}
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">
@@ -338,16 +370,23 @@ export default function SalesPage() {
             <option value="All">All Channels</option>
             {Object.values(SalesChannel).map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
-          <div className="relative group">
-            <details className="relative">
-              <summary className="h-10 list-none cursor-pointer rounded-md border px-3 text-sm bg-background inline-flex items-center gap-2 select-none">
-                Categories
-                {filterCategories.length > 0 && (
-                  <span className="rounded-full bg-primary/15 text-primary text-[10px] font-bold px-1.5 py-0.5">
-                    {filterCategories.length}
-                  </span>
-                )}
-              </summary>
+          <div className="relative" ref={categoriesRef}>
+            <button
+              type="button"
+              onClick={() => {
+                setSkuOpen(false);
+                setCategoriesOpen((open) => !open);
+              }}
+              className="h-10 cursor-pointer rounded-md border px-3 text-sm bg-background inline-flex items-center gap-2"
+            >
+              Categories
+              {filterCategories.length > 0 && (
+                <span className="rounded-full bg-primary/15 text-primary text-[10px] font-bold px-1.5 py-0.5">
+                  {filterCategories.length}
+                </span>
+              )}
+            </button>
+            {categoriesOpen && (
               <div className="absolute z-20 mt-1 w-56 max-h-64 overflow-y-auto rounded-md border bg-background shadow-md p-2 space-y-1">
                 {productCategories.map((cat) => {
                   const checked = filterCategories.includes(cat);
@@ -373,20 +412,47 @@ export default function SalesPage() {
                   </button>
                 )}
               </div>
-            </details>
+            )}
           </div>
-          <select
-            value={filterProductId}
-            onChange={(e) => setFilterProductId(e.target.value)}
-            className="h-10 max-w-[240px] rounded-md border px-3 text-sm bg-background"
-          >
-            <option value="">All SKUs</option>
-            {skuOptions.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.sku} · {item.name}
-              </option>
-            ))}
-          </select>
+          <div className="relative" ref={skuRef}>
+            <button
+              type="button"
+              onClick={() => {
+                setCategoriesOpen(false);
+                setSkuOpen((open) => !open);
+              }}
+              className="h-10 max-w-[240px] rounded-md border px-3 text-sm bg-background inline-flex items-center"
+            >
+              <span className="truncate">{selectedSku ? `${selectedSku.sku} · ${selectedSku.name}` : 'All SKUs'}</span>
+            </button>
+            {skuOpen && (
+              <div className="absolute z-20 mt-1 w-64 max-h-64 overflow-y-auto rounded-md border bg-background shadow-md p-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFilterProductId('');
+                    setSkuOpen(false);
+                  }}
+                  className="w-full text-left px-2 py-1.5 rounded text-sm hover:bg-muted/50"
+                >
+                  All SKUs
+                </button>
+                {skuOptions.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      setFilterProductId(item.id);
+                      setSkuOpen(false);
+                    }}
+                    className="w-full text-left px-2 py-1.5 rounded text-sm hover:bg-muted/50"
+                  >
+                    {item.sku} · {item.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           {hasFilters && (
             <button type="button" onClick={clearFilters} className="h-10 px-3 rounded-md border text-sm font-medium text-muted-foreground hover:bg-accent">
               Clear
@@ -435,18 +501,21 @@ export default function SalesPage() {
               </tr>
             </thead>
             <tbody className="divide-y">
-              {filteredSales.map((sale) => (
-                <SalesTableRow key={sale.id} sale={sale} onSelect={openSaleDetail} />
-              ))}
-              {filteredSales.length === 0 && !tableLoading && (
-                <tr><td colSpan={9} className="p-12 text-center text-muted-foreground italic">No sales match your filters.</td></tr>
-              )}
-              {tableLoading && filteredSales.length === 0 && (
+              {tableLoading ? (
                 <tr>
                   <td colSpan={9} className="p-0">
                     <TableSkeleton rows={8} cols={9} />
                   </td>
                 </tr>
+              ) : (
+                <>
+                  {filteredSales.map((sale) => (
+                    <SalesTableRow key={sale.id} sale={sale} onSelect={openSaleDetail} />
+                  ))}
+                  {filteredSales.length === 0 && (
+                    <tr><td colSpan={9} className="p-12 text-center text-muted-foreground italic">No sales match your filters.</td></tr>
+                  )}
+                </>
               )}
             </tbody>
           </table>
