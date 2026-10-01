@@ -659,7 +659,7 @@ export default function InventoryPage() {
         })
         .slice()
         .sort((a, b) => a.sku.localeCompare(b.sku) || a.name.localeCompare(b.name))
-        .map((item) => ({ id: item.id, sku: item.sku, name: item.name })),
+        .map((item) => ({ id: item.id, sku: item.sku, name: item.name, location: item.location })),
     [items, hubScope, filterCategory],
   );
 

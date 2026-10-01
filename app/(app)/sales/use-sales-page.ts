@@ -148,11 +148,12 @@ export function useSalesPage() {
       .filter(
         (item) =>
           !!item.sku &&
+          hubScope.matchesHub(item.location) &&
           (cats.size === 0 || cats.has((item.category || '').toLowerCase())),
       )
       .slice()
       .sort((a, b) => a.sku.localeCompare(b.sku) || a.name.localeCompare(b.name));
-  }, [skuInventory, filterCategories]);
+  }, [skuInventory, filterCategories, hubScope]);
 
   useEffect(() => {
     if (!skuInventoryFetched) return;

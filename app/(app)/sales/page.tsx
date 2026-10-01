@@ -416,7 +416,12 @@ export default function SalesPage() {
             )}
           </div>
           <SkuMultiSelect
-            options={skuOptions.map((item) => ({ id: item.id, sku: item.sku, name: item.name }))}
+            options={skuOptions.map((item) => ({
+              id: item.id,
+              sku: item.sku,
+              name: item.name,
+              location: item.location,
+            }))}
             selectedIds={filterProductIds}
             onChange={setFilterProductIds}
           />
