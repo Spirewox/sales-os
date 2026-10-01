@@ -137,6 +137,7 @@ const EMPTY_SALES_LIST: SalesListResult = {
     deliveryCount: 0,
     revenueChange: 0,
     profitChange: 0,
+    unitsByUnit: {},
   },
 };
 
@@ -1020,6 +1021,7 @@ type SalesQueryFilters = {
   channel?: string;
   /** Comma-separated product categories */
   categories?: string;
+  product_id?: string;
   search?: string;
   exclude_voided?: boolean;
   page?: number;
@@ -1050,6 +1052,7 @@ export function useSales(
         customer_id: filters?.customer_id,
         channel: filters?.channel,
         categories: filters?.categories,
+        product_id: filters?.product_id,
         search: filters?.search,
         exclude_voided: filters?.exclude_voided,
         page: filters?.page,
@@ -1084,6 +1087,7 @@ export function useSalesSummary(
         agent_id: filters?.agent_id,
         channel: filters?.channel,
         categories: filters?.categories,
+        product_id: filters?.product_id,
         search: filters?.search,
         exclude_voided: filters?.exclude_voided,
         page: 1,

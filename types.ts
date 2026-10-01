@@ -376,6 +376,8 @@ export interface SalesListSummary {
   deliveryCount: number;
   revenueChange: number;
   profitChange: number;
+  /** Quantity sold by unit, computed by the sales summary API. */
+  unitsByUnit?: Record<string, number>;
 }
 
 export interface SalesListResult {

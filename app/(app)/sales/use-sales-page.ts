@@ -73,6 +73,7 @@ export function useSalesPage() {
   const [filterStatus, setFilterStatus] = useState('All');
   const [filterChannel, setFilterChannel] = useState<string>('All');
   const [filterCategories, setFilterCategories] = useState<string[]>([]);
+  const [filterProductId, setFilterProductId] = useState('');
   const [page, setPage] = useState(1);
   const [sortBy, setSortBy] = useState<'quantity' | 'amount' | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
@@ -92,6 +93,7 @@ export function useSalesPage() {
       ...(filterCategories.length
         ? { categories: filterCategories.join(',') }
         : {}),
+      ...(filterProductId ? { product_id: filterProductId } : {}),
     }),
     [
       hubScope.hubIdForApi,
@@ -103,6 +105,7 @@ export function useSalesPage() {
       filterStatus,
       filterChannel,
       filterCategories,
+      filterProductId,
     ],
   );
 
@@ -130,7 +133,30 @@ export function useSalesPage() {
     deliveryCount: 0,
     revenueChange: 0,
     profitChange: 0,
+    unitsByUnit: {},
   };
+
+  const { data: skuInventory = [], isFetched: skuInventoryFetched } = useInventory(
+    hubScope.hubIdForApi ? { hub_id: hubScope.hubIdForApi } : undefined,
+  );
+  const skuOptions = useMemo(() => {
+    const cats = new Set(filterCategories.map((c) => c.toLowerCase()));
+    return skuInventory
+      .filter(
+        (item) =>
+          !!item.sku &&
+          (cats.size === 0 || cats.has((item.category || '').toLowerCase())),
+      )
+      .slice()
+      .sort((a, b) => a.sku.localeCompare(b.sku) || a.name.localeCompare(b.name));
+  }, [skuInventory, filterCategories]);
+
+  useEffect(() => {
+    if (!filterProductId || !skuInventoryFetched) return;
+    if (!skuOptions.some((item) => item.id === filterProductId)) {
+      setFilterProductId('');
+    }
+  }, [filterProductId, skuInventoryFetched, skuOptions]);
 
   useEffect(() => {
     setPage(1);
@@ -144,6 +170,7 @@ export function useSalesPage() {
     filterStatus,
     filterChannel,
     filterCategories,
+    filterProductId,
     sortBy,
     sortDir,
   ]);
@@ -448,6 +475,7 @@ export function useSalesPage() {
     hubScope.filterHub !== 'All' ||
     filterChannel !== 'All' ||
     filterCategories.length > 0 ||
+    !!filterProductId ||
     dateFrom ||
     dateTo ||
     dateFieldFilter !== 'sold';
@@ -459,6 +487,7 @@ export function useSalesPage() {
     hubScope.setFilterHub(hubScope.canSwitchHubs ? 'All' : hubScope.hubName);
     setFilterChannel('All');
     setFilterCategories([]);
+    setFilterProductId('');
     setDateFrom('');
     setDateTo('');
     setDateFieldFilter('sold');
@@ -1029,6 +1058,9 @@ export function useSalesPage() {
     filterCategories,
     setFilterCategories,
     toggleCategoryFilter,
+    filterProductId,
+    setFilterProductId,
+    skuOptions,
     productCategories: PRODUCT_CATEGORIES,
     sortBy,
     sortDir,
