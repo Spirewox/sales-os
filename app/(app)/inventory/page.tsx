@@ -444,9 +444,10 @@ export default function InventoryPage() {
   const { data: transferBatches = [], isFetching: transferBatchesLoading } = useProductBatches(
     showTransferModal ? transferProduct?.id ?? null : null,
   );
-  const { data: detailApiBatches = [] } = useProductBatches(detailProductId, {
-    includeDepleted: true,
-  });
+  const { data: detailApiBatches = [], isSuccess: detailBatchesLoaded } = useProductBatches(
+    detailProductId,
+    { includeDepleted: true },
+  );
 
   const transferDestinations = useMemo(
     () =>
@@ -784,13 +785,13 @@ export default function InventoryPage() {
   }, [itemBatches]);
 
   const stockBatchMismatch = useMemo(() => {
-    if (!viewingDetailsItem) return null;
+    if (!viewingDetailsItem || !detailBatchesLoaded) return null;
     const stock = Number(viewingDetailsItem.currentStock) || 0;
     const batches = itemBatchRemainingTotal;
     const eps = (viewingDetailsItem.unitOfMeasure || '').toLowerCase() === 'kg' ? 0.01 : 0.0001;
     if (Math.abs(stock - batches) <= eps) return null;
     return { stock, batches };
-  }, [viewingDetailsItem, itemBatchRemainingTotal]);
+  }, [viewingDetailsItem, itemBatchRemainingTotal, detailBatchesLoaded]);
 
   const sellingPriceForMargin = (item: {
     unitOfMeasure?: string;
