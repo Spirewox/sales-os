@@ -40,7 +40,7 @@ const AGE_SEGMENTS: Record<string, string> = {
 
 export const SEGMENT_TAXONOMY: SegmentGroup[] = [
   { group: 'Channel', segments: ['B2B Account', 'B2C Consumer'] },
-  { group: 'Loyalty', segments: ['Prospect', 'First-Time Buyer', 'Repeat Buyer', 'Regular', 'Loyal'] },
+  { group: 'Loyalty', segments: ['Prospect', 'First-Time Buyer', 'Repeat Buyer', 'Loyal'] },
   { group: 'Value', segments: ['VIP / Key Account', 'High Value', 'Mid Value', 'Low Value'] },
   {
     group: 'Business Type',
@@ -95,8 +95,7 @@ export function deriveSegments(c: Customer): string[] {
 
   if (c.totalOrders <= 0) set.add('Prospect');
   else if (c.totalOrders === 1) set.add('First-Time Buyer');
-  else if (c.totalOrders <= 5) set.add('Repeat Buyer');
-  else if (c.totalOrders <= 15) set.add('Regular');
+  else if (c.totalOrders <= 4) set.add('Repeat Buyer');
   else set.add('Loyal');
 
   if (c.totalSpent >= 1_000_000) set.add('VIP / Key Account');
