@@ -119,7 +119,7 @@ export default function SalesPage() {
     selectedSale, setSelectedSale, detailTab, setDetailTab, isEditing, setIsEditing,
     editForm, setEditForm, showVoidConfirm, setShowVoidConfirm,
     saleStockLogs, customerSalesHistory, closeDetailPanel,
-    handleUpdateDeliveryStatus, startEditing, saveEdit, handleVoidSale,
+    handleUpdateDeliveryStatus, startEditing, saveEdit, handleVoidSale, editBatchPriceError,
     showAddModal, setShowAddModal, newSale, setNewSale, selectedHub, setSelectedHub,
     selectedProductId, setSelectedProductId, selectedBatchNumber, setSelectedBatchNumber,
     productBatches, batchesLoading, quantity, saleUnit, paymentMode, setPaymentMode,
@@ -529,6 +529,7 @@ export default function SalesPage() {
           onSelectSale={openSaleDetail}
           onStartEditing={startEditing}
           onSaveEdit={saveEdit}
+          batchPriceError={editBatchPriceError}
           onVoidSale={handleVoidSale}
           onUpdateDeliveryStatus={handleUpdateDeliveryStatus}
           savingEdit={savingEdit}

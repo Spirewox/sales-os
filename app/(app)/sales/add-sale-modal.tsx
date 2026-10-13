@@ -423,6 +423,20 @@ export function AddSaleModal({
               <input id="sale-amount" type="number" step="0.01" value={newSale.amount || ''} onChange={(e) => setNewSale({ ...newSale, amount: Number(e.target.value) || 0 })} className={`${INPUT_CLS} ${touched.amount && validationErrors.amount ? 'border-red-500' : ''}`} />
               {touched.amount && validationErrors.amount && <p className="text-xs text-red-500">{validationErrors.amount}</p>}
             </div>
+            {!isMealSale && (
+              <div className="space-y-2">
+                <label htmlFor="sale-discount" className={LABEL_CLS}>Discount ({NAIRA})</label>
+                <input
+                  id="sale-discount"
+                  type="number"
+                  step="0.01"
+                  min={0}
+                  value={newSale.discount || ''}
+                  onChange={(e) => setNewSale({ ...newSale, discount: Number(e.target.value) || 0 })}
+                  className={INPUT_CLS}
+                />
+              </div>
+            )}
           </div>
           {/* Live price breakdown from selected batch list price */}
           {selectedInventoryItem && !isMealSale && quantity > 0 && (
@@ -435,7 +449,9 @@ export function AddSaleModal({
                 );
                 const listTotal = unitPrice * quantity;
                 const charged = Number(newSale.amount) || 0;
-                const underList = listTotal > 0 && charged < listTotal - 0.005;
+                const discount = Number(newSale.discount) || 0;
+                const discountMatches = listTotal > 0 && Math.abs(charged + discount - listTotal) < 0.01;
+                const underList = listTotal > 0 && charged < listTotal - 0.005 && !discountMatches;
                 const pctOff =
                   underList && listTotal > 0
                     ? Math.round(((listTotal - charged) / listTotal) * 1000) / 10
@@ -453,6 +469,9 @@ export function AddSaleModal({
                         Under list price ({fmt(charged)}
                         {pctOff > 0 ? ` · ${pctOff}% off` : ''})
                       </span>
+                    )}
+                    {discountMatches && discount > 0 && (
+                      <span className="text-foreground font-medium">Discount {fmt(discount)}</span>
                     )}
                     {!underList && charged > listTotal + 0.005 && listTotal > 0 && (
                       <span className="text-orange-600 font-medium">

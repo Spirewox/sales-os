@@ -1,4 +1,5 @@
 import { Sale, PaymentMode, SalesChannel, DeliveryStatus } from '@/types';
+import { defaultVolumeUnit, isVolumeUom, volumeUnitPrice } from '@/lib/volume-units';
 
 export type DetailTab = 'overview' | 'delivery' | 'history';
 export type QuickDatePreset = 'today' | 'week' | 'month' | '30days' | 'all';
@@ -86,6 +87,82 @@ export function getAmountPaidForMode(paymentMode: PaymentMode, amount: number, a
   if (paymentMode === PaymentMode.FULL_PAYMENT) return amount;
   if (paymentMode === PaymentMode.FULL_CREDIT) return 0;
   return amountPaid;
+}
+
+function money(n: number): number {
+  return Math.round((Number(n) || 0) * 100) / 100;
+}
+
+/** Same rule as the API: amount + discount must equal the selected batch price times quantity. */
+export function catalogBatchPriceError(args: {
+  batchUnitPrice: number;
+  unitOfMeasure?: string;
+  saleUnit?: string;
+  cartonWeight?: number;
+  quantity: number;
+  batchNumber: string;
+  amount: number;
+  discount: number;
+  amountPaid: number;
+  paymentMode: string;
+}): string | null {
+  const batch = Number(args.batchUnitPrice);
+  const uom = (args.unitOfMeasure || '').trim().toLowerCase();
+  const unit = (args.saleUnit || '').trim().toLowerCase();
+  let unitPrice: number | null = null;
+  if (batch > 0) {
+    if (uom === 'cartons') {
+      if (unit === 'kg') unitPrice = money(batch);
+      else if (Number(args.cartonWeight) > 0) unitPrice = money(batch * Number(args.cartonWeight));
+    } else if (isVolumeUom(args.unitOfMeasure)) {
+      const entered = unit === 'ml' ? 'ml' : unit === 'liters' || unit === 'liter' ? 'Liters' : (defaultVolumeUnit(args.unitOfMeasure) ?? 'Liters');
+      unitPrice = money(volumeUnitPrice(args.unitOfMeasure, batch, entered));
+    } else {
+      unitPrice = money(batch);
+    }
+  }
+  if (unitPrice == null) {
+    if (uom === 'cartons' && unit !== 'kg' && !(Number(args.cartonWeight) > 0)) {
+      return `Set carton weight on this product before selling batch ${args.batchNumber} by carton.`;
+    }
+    return `Batch ${args.batchNumber} has no selling price.`;
+  }
+  const listTotal = money(unitPrice * args.quantity);
+  const amount = money(args.amount);
+  const discount = money(args.discount);
+  const paid = money(args.amountPaid);
+  const combined = money(amount + discount);
+  const gap = money(listTotal - amount);
+  if (amount < 0) return 'Sale amount cannot be negative.';
+  if (discount > listTotal) {
+    return `Discount cannot be more than the batch price times quantity (${fmt(listTotal)}).`;
+  }
+  if (paid > listTotal) {
+    return `Amount paid cannot be more than the batch price times quantity (${fmt(listTotal)}).`;
+  }
+  if (amount > listTotal) {
+    return `Sale amount cannot be more than the batch price times quantity (${fmt(listTotal)}).`;
+  }
+  if (combined > listTotal) {
+    return `Sale amount plus discount cannot be more than the batch price times quantity (${fmt(listTotal)}).`;
+  }
+  if (combined !== listTotal) {
+    if (args.paymentMode === PaymentMode.FULL_PAYMENT) {
+      const modeHint = paid <= 0
+        ? 'or change Full Payment to Full Credit'
+        : paid < listTotal
+          ? 'or change Full Payment to Partial Credit'
+          : 'or change the payment mode';
+      return `This sale is ${fmt(gap)} below the batch price of ${fmt(listTotal)}. Add a discount of ${fmt(gap)} so the total matches, ${modeHint}.`;
+    }
+    return `Sale amount plus discount must equal the batch total of ${fmt(listTotal)}. Set the sale amount to ${fmt(listTotal)}, or enter a discount for the difference.`;
+  }
+  if (args.paymentMode === PaymentMode.FULL_PAYMENT && paid !== amount) {
+    if (paid <= 0) return 'Change Full Payment to Full Credit, or pay the full sale amount.';
+    if (paid < amount) return 'Change Full Payment to Partial Credit, or pay the full sale amount.';
+    return 'Amount paid cannot be more than the sale amount.';
+  }
+  return null;
 }
 
 export function creditWarningText(row: { totalOutstanding: number; overdueCount: number }): string {

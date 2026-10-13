@@ -259,6 +259,7 @@ export function mapSale(s: ApiSale, hubMap?: Record<string, string>): Sale {
     customerId: refId(s.customer),
     customerName: s.customer_name,
     amount: s.amount,
+    discount: s.discount ?? 0,
     profitMargin: s.profit_margin ?? 0,
     profitAmount: s.profit_amount ?? 0,
     date: toDateStr(s.date),
