@@ -1082,6 +1082,42 @@ export function useSales(
 }
 
 /** KPI summary only — omits page so paging the table does not refetch metrics. */
+export function useExportSales() {
+  return useMutation({
+    mutationFn: async (filters?: Omit<SalesQueryFilters, 'page' | 'limit'>) => {
+      const params: Record<string, string | number | boolean | undefined> = {
+        status: filters?.status,
+        date_from: filters?.date_from,
+        date_to: filters?.date_to,
+        date_field: filters?.date_field,
+        payment_mode: filters?.payment_mode,
+        hub_id: filters?.hub_id,
+        agent_id: filters?.agent_id,
+        customer_id: filters?.customer_id,
+        channel: filters?.channel,
+        categories: filters?.categories,
+        product_ids: filters?.product_ids,
+        search: filters?.search,
+        exclude_voided: filters?.exclude_voided,
+        sort_by: filters?.sort_by,
+        sort_dir: filters?.sort_dir,
+      };
+      const buffer = await axiosGetBlob(`sales/export${buildQuery(params)}`, true);
+      const blob = new Blob([buffer], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `fudfarmer-sales-${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    },
+  });
+}
+
 export function useSalesSummary(
   filters?: Omit<SalesQueryFilters, 'page' | 'limit'>,
   options?: UseQueryEnabledOptions,
