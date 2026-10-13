@@ -256,6 +256,7 @@ export interface ApiSale {
   customer: string;
   customer_name: string;
   amount: number;
+  discount?: number;
   profit_margin?: number;
   profit_amount?: number;
   date: string;

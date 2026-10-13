@@ -35,6 +35,7 @@ export type SaleDetailPanelProps = Readonly<{
   isCompanyAdmin: boolean;
   hubScope: HubScopeFilter;
   activeHubs: Hub[];
+  batchPriceError?: string | null;
 }>;
 
 function DetailPanelHeader({
@@ -106,6 +107,7 @@ export function SaleDetailPanel({
   isCompanyAdmin,
   hubScope,
   activeHubs,
+  batchPriceError,
 }: SaleDetailPanelProps) {
   return (
     <ModalDialog onClose={onClose} align="end">
@@ -156,6 +158,7 @@ export function SaleDetailPanel({
             isCompanyAdmin={isCompanyAdmin}
             hubScope={hubScope}
             activeHubs={activeHubs}
+            batchPriceError={batchPriceError}
           />
         </div>
       </div>

@@ -37,6 +37,7 @@ export type SaleDetailTabProps = Readonly<{
   isCompanyAdmin: boolean;
   hubScope: HubScopeFilter;
   activeHubs: Hub[];
+  batchPriceError?: string | null;
 }>;
 
 function DeliveryAdvanceButton({
@@ -76,6 +77,7 @@ function DeliveryAdvanceButton({
 function OverviewTab({
   sale, isEditing, editForm, setEditForm, showVoidConfirm, setShowVoidConfirm,
   saleStockLogs, onVoidSale, voidingSale = false, can, isCompanyAdmin, hubScope, activeHubs,
+  batchPriceError,
 }: SaleDetailTabProps) {
   const currentItem = editForm.item ?? sale.item;
   const currentCategory = currentItem?.category?.trim() ?? '';
@@ -90,6 +92,17 @@ function OverviewTab({
             <input type="number" step="0.01" value={editForm.amount || ''} onChange={(e) => setEditForm({ ...editForm, amount: Number(e.target.value) })} className={`${INPUT_CLS} h-8 text-lg font-bold`} />
           ) : (
             <p className="text-xl font-bold">{fmt(sale.amount)}</p>
+          )}
+          {isEditing ? (
+            <div className="mt-3">
+              <p className="text-xs font-medium text-muted-foreground mb-1">Discount</p>
+              <input type="number" step="0.01" min={0} value={editForm.discount ?? 0} onChange={(e) => setEditForm({ ...editForm, discount: Number(e.target.value) || 0 })} className={`${INPUT_CLS} h-8`} />
+            </div>
+          ) : (sale.discount ?? 0) > 0 ? (
+            <p className="text-xs text-muted-foreground mt-1">Discount: {fmt(sale.discount)}</p>
+          ) : null}
+          {isEditing && batchPriceError && (
+            <p className="text-xs text-red-500 mt-2">{batchPriceError}</p>
           )}
         </div>
         <div className="p-4 rounded-md border bg-muted/20">

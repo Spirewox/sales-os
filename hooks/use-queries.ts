@@ -1143,6 +1143,7 @@ export function useCreateSale() {
       customer_id: string;
       hub_id: string;
       amount: number;
+      discount?: number;
       amount_paid?: number;
       payment_mode: string;
       payment_type?: string;

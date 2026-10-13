@@ -40,6 +40,7 @@ import {
   getDateRange,
   creditWarningText,
   getAmountPaidForMode,
+  catalogBatchPriceError,
   BTN_PRIMARY,
   BTN_SECONDARY,
   INPUT_CLS,
@@ -302,6 +303,11 @@ export function useSalesPage() {
   const { data: productBatches = [], isFetching: batchesLoading } = useProductBatches(
     showAddModal ? catalogProductId : null,
   );
+  const editCatalogProductId =
+    isEditing && selectedSale?.item?.productId ? selectedSale.item.productId : null;
+  const { data: editBatches = [] } = useProductBatches(editCatalogProductId, {
+    includeDepleted: true,
+  });
 
   useEffect(() => {
     if (!catalogProductId || batchesLoading) return;
@@ -326,6 +332,7 @@ export function useSalesPage() {
   ) => {
     if (!item) return 0;
     const batchList = Number(batch?.unitPrice) || 0;
+    if (batch && !(batchList > 0)) return 0;
     if (item.unitOfMeasure === 'Cartons') {
       if (unit === 'Kg') {
         return batchList > 0 ? batchList : item.baseSellingPrice;
@@ -333,6 +340,7 @@ export function useSalesPage() {
       if (batchList > 0 && item.cartonWeight && item.cartonWeight > 0) {
         return Math.round(batchList * item.cartonWeight * 100) / 100;
       }
+      if (batch) return 0;
       return item.cartonPrice && item.cartonPrice > 0 ? item.cartonPrice : 0;
     }
     const catalogPrice = batchList > 0 ? batchList : item.baseSellingPrice;
@@ -371,8 +379,8 @@ export function useSalesPage() {
             : defaultVolumeUnit(selectedInventoryItem.unitOfMeasure) || ''),
         batch,
       );
-      if (prev.amount === next) return prev;
-      return { ...prev, amount: next };
+      if (prev.amount === next && !prev.discount) return prev;
+      return { ...prev, amount: next, discount: 0 };
     });
     // Only re-default when batch selection changes — not on every amount edit.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: batch-driven default only
@@ -397,22 +405,35 @@ export function useSalesPage() {
       if (isHistoricalSale && (!newSale.amount || newSale.amount <= 0)) {
         errors.amount = 'Amount is required for historical sales.';
       }
+      if (selectedInventoryItem && selectedBatch && quantity > 0) {
+        const amount = Number(newSale.amount) || 0;
+        const batchError = catalogBatchPriceError({
+          batchUnitPrice: selectedBatch.unitPrice,
+          unitOfMeasure: selectedInventoryItem.unitOfMeasure,
+          saleUnit: saleUnit || selectedInventoryItem.unitOfMeasure,
+          cartonWeight: selectedInventoryItem.cartonWeight,
+          quantity,
+          batchNumber: selectedBatch.batchNumber,
+          amount,
+          discount: Number(newSale.discount) || 0,
+          amountPaid: getAmountPaidForMode(paymentMode, amount, amountPaid),
+          paymentMode,
+        });
+        if (batchError) errors.amount = batchError;
+      }
       if (isCartonProduct) {
         if (!saleUnit) errors.saleUnit = 'Select Carton or Kg.';
         if (!selectedInventoryItem?.cartonWeight || selectedInventoryItem.cartonWeight <= 0) {
           errors.saleUnit = 'Set carton weight on this product before recording a sale.';
         } else if (saleUnit === 'Carton') {
           const batchList = Number(selectedBatch?.unitPrice) || 0;
-          const hasCartonList =
-            (batchList > 0 && selectedInventoryItem.cartonWeight > 0) ||
-            !!(selectedInventoryItem.cartonPrice && selectedInventoryItem.cartonPrice > 0);
-          if (!hasCartonList) {
-            errors.saleUnit = 'Set carton selling price (or batch list price) before selling by Carton.';
+          if (!(batchList > 0 && selectedInventoryItem.cartonWeight > 0)) {
+            errors.saleUnit = 'Set a selling price on the selected batch before selling by Carton.';
           }
         } else if (saleUnit === 'Kg') {
           const batchList = Number(selectedBatch?.unitPrice) || 0;
-          if (!(batchList > 0 || selectedInventoryItem.baseSellingPrice > 0)) {
-            errors.saleUnit = 'Set unit selling price on this product or batch before selling by Kg.';
+          if (!(batchList > 0)) {
+            errors.saleUnit = 'Set a selling price on the selected batch before selling by Kg.';
           }
         }
       }
@@ -440,6 +461,8 @@ export function useSalesPage() {
     isHistoricalSale,
     isMealSale,
     productDetailsText,
+    newSale.discount,
+    amountPaid,
   ]);
   const isFormValid = Object.keys(validationErrors).length === 0;
 
@@ -512,7 +535,7 @@ export function useSalesPage() {
     if (productId === MEAL_PRODUCT_ID) {
       setSaleUnit('');
       setProductDetailsText('');
-      setNewSale((prev) => ({ ...prev, amount: 0 }));
+      setNewSale((prev) => ({ ...prev, amount: 0, discount: 0 }));
       return;
     }
     const item = inventory.find((i) => i.id === productId);
@@ -525,6 +548,7 @@ export function useSalesPage() {
       setNewSale((prev) => ({
         ...prev,
         amount: computeSaleAmount(item, quantity, nextUnit, null),
+        discount: 0,
         productDetails: `${quantity} ${nextUnit || item.unitOfMeasure} of ${item.name}`,
       }));
     }
@@ -539,6 +563,7 @@ export function useSalesPage() {
       setNewSale((prev) => ({
         ...prev,
         amount: computeSaleAmount(item, quantity, saleUnit, batch),
+        discount: 0,
       }));
     }
   };
@@ -551,6 +576,7 @@ export function useSalesPage() {
       setNewSale((prev) => ({
         ...prev,
         amount: computeSaleAmount(item, qty, saleUnit, selectedBatch),
+        discount: 0,
         productDetails: `${qty} ${saleUnit || item.unitOfMeasure} of ${item.name}`,
       }));
     }
@@ -564,6 +590,7 @@ export function useSalesPage() {
       setNewSale((prev) => ({
         ...prev,
         amount: computeSaleAmount(item, quantity, unit, selectedBatch),
+        discount: 0,
         productDetails: `${quantity} ${unit || item.unitOfMeasure} of ${item.name}`,
       }));
     }
@@ -670,6 +697,7 @@ export function useSalesPage() {
         customer_id: newSale.customerId!,
         hub_id: hubId,
         amount,
+        discount: Number(newSale.discount) || 0,
         amount_paid: finalAmountPaid,
         payment_mode: paymentMode,
         payment_type: isCreditMode ? undefined : paymentType,
@@ -716,6 +744,9 @@ export function useSalesPage() {
     if (!selectedSale) return;
     setEditForm({
       amount: selectedSale.amount,
+      discount: selectedSale.discount ?? 0,
+      amountPaid: selectedSale.amountPaid,
+      paymentMode: selectedSale.paymentMode,
       notes: selectedSale.notes,
       deliveryAddress: selectedSale.deliveryAddress,
       customerPhone: selectedSale.customerPhone,
@@ -727,14 +758,43 @@ export function useSalesPage() {
     setIsEditing(true);
   };
 
+  const editBatchPriceError = useMemo(() => {
+    if (!isEditing || !selectedSale?.item?.batchNumber || !selectedSale.item.productId) return null;
+    const product = inventory.find((item) => item.id === selectedSale.item?.productId);
+    const batch = editBatches.find((row) => row.batchNumber === selectedSale.item?.batchNumber);
+    if (!batch) return null;
+    const amount = Number(editForm.amount ?? selectedSale.amount) || 0;
+    const discount = Number(editForm.discount ?? selectedSale.discount ?? 0) || 0;
+    const paid = Number(editForm.amountPaid ?? selectedSale.amountPaid ?? 0) || 0;
+    return catalogBatchPriceError({
+      batchUnitPrice: batch.unitPrice,
+      unitOfMeasure: product?.unitOfMeasure ?? selectedSale.item.unit,
+      saleUnit: selectedSale.item.saleUnit || editForm.item?.unit || selectedSale.item.unit,
+      cartonWeight: product?.cartonWeight,
+      quantity: Number(editForm.item?.quantity ?? selectedSale.item.quantity) || 0,
+      batchNumber: selectedSale.item.batchNumber,
+      amount,
+      discount,
+      amountPaid: paid,
+      paymentMode: String(editForm.paymentMode ?? selectedSale.paymentMode ?? PaymentMode.FULL_PAYMENT),
+    });
+  }, [isEditing, selectedSale, editForm, editBatches, inventory]);
+
   const saveEdit = () => {
     if (!selectedSale) return;
+    if (editBatchPriceError) {
+      toast.error(editBatchPriceError);
+      return;
+    }
     const amount = Number(editForm.amount) || selectedSale.amount;
     const hubId = editForm.hubName ? resolveHubId(editForm.hubName) : undefined;
     updateSale.mutate(
       {
         id: selectedSale.id,
         amount,
+        discount: Number(editForm.discount ?? selectedSale.discount ?? 0) || 0,
+        amount_paid: Number(editForm.amountPaid ?? selectedSale.amountPaid ?? 0) || 0,
+        payment_mode: editForm.paymentMode ?? selectedSale.paymentMode,
         notes: editForm.notes,
         delivery_address: editForm.deliveryAddress,
         payment_terms: editForm.paymentTerms,
@@ -952,6 +1012,7 @@ export function useSalesPage() {
     handleUpdateDeliveryStatus,
     startEditing,
     saveEdit,
+    editBatchPriceError,
     handleVoidSale,
     showAddModal,
     setShowAddModal,

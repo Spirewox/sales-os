@@ -406,6 +406,7 @@ export interface Sale {
   customerId: string;
   customerName: string;
   amount: number;
+  discount?: number;
   profitMargin: number;
   profitAmount: number;
   date: string;
