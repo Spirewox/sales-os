@@ -128,7 +128,7 @@ export default function SalesPage() {
     showImportModal, setShowImportModal, importPreview, setImportPreview, importSummary, setImportSummary,
     validateAuditId, importing, importProgress, importResult, importError, showImportConfirm, setShowImportConfirm,
     validating, handleDownloadTemplate, handleImportFile, handleImportConfirm, importInputRef,
-    downloadingTemplate, handleExport,
+    downloadingTemplate, handleExport, exportingSales,
     btnPrimary, btnSecondary,
   } = useSalesPage();
   const [showTemplateMenu, setShowTemplateMenu] = useState(false);
@@ -243,8 +243,13 @@ export default function SalesPage() {
               </button>
             </>
           )}
-          <button type="button" onClick={handleExport} className={btnSecondary}>
-            <Download size={14} className="mr-1.5" /> Export
+          <button
+            type="button"
+            onClick={handleExport}
+            disabled={exportingSales}
+            className={`${btnSecondary} disabled:opacity-50`}
+          >
+            <Download size={14} className="mr-1.5" /> {exportingSales ? 'Exporting…' : 'Export'}
           </button>
           {can('sales.create') && (
             <button type="button" onClick={() => setShowAddModal(true)} className={`${btnPrimary} h-10 px-4`}>

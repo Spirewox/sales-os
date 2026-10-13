@@ -21,6 +21,7 @@ import {
   useHubs,
   useDownloadSalesImportTemplate,
   useValidateSalesImport,
+  useExportSales,
   runChunkedSalesImport,
   SALES_PAGE_SIZE,
 } from '@/hooks/use-queries';
@@ -38,7 +39,6 @@ import {
   fmt,
   getDateRange,
   creditWarningText,
-  escapeCsvCell,
   getAmountPaidForMode,
   BTN_PRIMARY,
   BTN_SECONDARY,
@@ -775,53 +775,18 @@ export function useSalesPage() {
     });
   };
 
+  const exportSales = useExportSales();
   const handleExport = () => {
-    const headers = [
-      'Date Sold',
-      'Customer',
-      'Product Name',
-      'Quantity',
-      'Unit',
-      'Category',
-      'Agent',
-      'Amount',
-      ...(isAdmin ? (['Profit', 'Margin %'] as const) : []),
-      'Status',
-      'Channel',
-      'Delivery',
-      'Payment Terms',
-      'Credit',
-      'Notes',
-    ];
-    const rows = filteredSales.map((s) => [
-      s.date,
-      s.customerName,
-      s.item?.productName || '',
-      s.item?.quantity ?? '',
-      s.item?.unit || '',
-      s.item?.category || '',
-      s.agentName,
-      s.amount,
-      ...(isAdmin ? [s.profitAmount, s.profitMargin] : []),
-      s.status,
-      s.channel || '',
-      s.deliveryStatus || '',
-      s.paymentTerms || '',
-      s.isCredit ? 'Yes' : 'No',
-      s.notes || '',
-    ]);
-    const csv = [
-      headers.join(','),
-      ...rows.map((r) => r.map((v) => escapeCsvCell(v)).join(',')),
-    ].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `fudfarmer-sales-${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success(`Exported ${filteredSales.length} sales.`);
+    exportSales.mutate(
+      {
+        ...summaryFilters,
+        ...(sortBy ? { sort_by: sortBy, sort_dir: sortDir } : {}),
+      },
+      {
+        onSuccess: () => toast.success('Sales export downloaded'),
+        onError: (err) => toast.error(err.message || 'Export failed'),
+      },
+    );
   };
 
   const handleDownloadTemplate = (type: 'catalog' | 'custom' = 'catalog') => {
@@ -1052,6 +1017,7 @@ export function useSalesPage() {
     importInputRef,
     downloadingTemplate: downloadTemplate.isPending,
     handleExport,
+    exportingSales: exportSales.isPending,
     searchTerm,
     setSearchTerm,
     filterAgent,
