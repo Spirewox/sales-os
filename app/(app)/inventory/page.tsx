@@ -79,6 +79,8 @@ const parseKgQtyInput = (raw: string) => {
 };
 
 /** Allow typing intermediate Kg values like "0." / "0.5" in controlled inputs. */
+const acceptDecimal2 = (raw: string) => raw.trim() === '' || /^\d*\.?\d{0,2}$/.test(raw.trim());
+
 const sanitizeKgQtyDraft = (raw: string): string | null => {
   const t = raw.trim();
   if (t === '') return '';
@@ -571,6 +573,7 @@ export default function InventoryPage() {
   const [editCurrentStockDraft, setEditCurrentStockDraft] = useState('');
   const [purchaseQtyDraft, setPurchaseQtyDraft] = useState('1');
   const [purchaseUom, setPurchaseUom] = useState('');
+  const [cartonWeightDraft, setCartonWeightDraft] = useState('');
 
   const resetPurchaseModal = () => {
     setShowStockMoveModal(false);
@@ -578,6 +581,7 @@ export default function InventoryPage() {
     setMoveData(emptyMoveData());
     setPurchaseQtyDraft('1');
     setPurchaseUom('');
+    setCartonWeightDraft('');
   };
 
   const openPurchaseModal = (item: InventoryItem) => {
@@ -585,6 +589,8 @@ export default function InventoryPage() {
     setMoveData(emptyMoveData(item));
     setPurchaseQtyDraft('1');
     setPurchaseUom(defaultPurchaseUom(item));
+    const weight = Number(item.cartonWeight) || 0;
+    setCartonWeightDraft(weight > 0 ? String(roundQty2(weight)) : '');
     setShowStockMoveModal(true);
   };
 
@@ -1123,19 +1129,25 @@ export default function InventoryPage() {
       return;
     }
 
-    const cartonWeight = moveData.cartonWeight || selectedProduct.cartonWeight || 0;
-    if (needsPurchaseCartonWeight(selectedProduct, purchaseUom) && !(cartonWeight > 0)) {
-      toast.error('Carton weight (kg) is required for this unit conversion.');
+    const buyingByCarton = purchaseUom === 'Carton';
+    const cartonFields = buyingByCarton || isCartonsUom(selectedProduct.unitOfMeasure);
+    const cartonWeight = roundQty2(kgQtyDraftToNumber(cartonWeightDraft) || moveData.cartonWeight);
+    if ((buyingByCarton || needsPurchaseCartonWeight(selectedProduct, purchaseUom)) && !(cartonWeight > 0)) {
+      toast.error('Carton weight (kg) is required.');
       return;
     }
 
-    if (selectedProduct.unitOfMeasure === 'Cartons') {
-      if (!(moveData.cartonPrice > 0)) {
-        toast.error('Carton selling price is required for Cartons products.');
+    if (cartonFields) {
+      if (!(moveData.unitCost > 0)) {
+        toast.error('Carton cost is required.');
         return;
       }
       if (!(moveData.unitPrice > 0)) {
-        toast.error('Unit selling price (per kg) is required for Cartons products.');
+        toast.error('Unit selling price (per kg) is required.');
+        return;
+      }
+      if (!(moveData.cartonPrice > 0)) {
+        toast.error('Carton selling price is required.');
         return;
       }
     }
@@ -1153,7 +1165,10 @@ export default function InventoryPage() {
       return;
     }
 
-    const unitCost = roundMoney2(moveData.unitCost || selectedProduct.avgUnitCost);
+    const kgStockFromCarton = buyingByCarton && !isCartonsUom(selectedProduct.unitOfMeasure);
+    const unitCost = kgStockFromCarton
+      ? roundMoney2(moveData.unitCost / cartonWeight)
+      : roundMoney2(moveData.unitCost || selectedProduct.avgUnitCost);
     const unitPrice = roundMoney2(moveData.unitPrice || selectedProduct.baseSellingPrice);
     const stockAfter = roundQty2((selectedProduct.currentStock || 0) + stockQty);
     const payload = {
@@ -1162,11 +1177,8 @@ export default function InventoryPage() {
       quantity: stockQty,
       unit_cost: unitCost,
       unit_price: unitPrice,
-      carton_price:
-        selectedProduct.unitOfMeasure === 'Cartons'
-          ? roundMoney2(moveData.cartonPrice)
-          : undefined,
-      carton_weight: needsPurchaseCartonWeight(selectedProduct, purchaseUom)
+      carton_price: cartonFields ? roundMoney2(moveData.cartonPrice) : undefined,
+      carton_weight: cartonFields || needsPurchaseCartonWeight(selectedProduct, purchaseUom)
         ? cartonWeight
         : undefined,
       notes: moveData.notes || undefined,
@@ -1183,8 +1195,20 @@ export default function InventoryPage() {
         { label: 'Product', value: `${selectedProduct.name} (${selectedProduct.sku})` },
         { label: 'Qty', value: `${enteredQty} ${purchaseUom}` },
         { label: 'Stock qty', value: `${stockQty} ${selectedProduct.unitOfMeasure}` },
-        { label: 'Cost', value: `₦${fmtMoney(unitCost)}` },
-        { label: 'Price', value: `₦${fmtMoney(unitPrice)}` },
+        ...(cartonFields
+          ? [
+              { label: 'Carton cost', value: `₦${fmtMoney(moveData.unitCost)}` },
+              { label: 'Per-kg price', value: `₦${fmtMoney(unitPrice)}` },
+              { label: 'Carton selling price', value: `₦${fmtMoney(moveData.cartonPrice)}` },
+              { label: 'Carton weight', value: `${cartonWeight} Kg` },
+              ...(kgStockFromCarton
+                ? [{ label: 'Stock cost / kg', value: `₦${fmtMoney(unitCost)}` }]
+                : []),
+            ]
+          : [
+              { label: 'Cost', value: `₦${fmtMoney(unitCost)}` },
+              { label: 'Price', value: `₦${fmtMoney(unitPrice)}` },
+            ]),
         { label: 'Stock after', value: `${stockAfter} ${selectedProduct.unitOfMeasure}` },
       ],
       confirmLabel: 'Confirm purchase',
@@ -2906,7 +2930,10 @@ export default function InventoryPage() {
                   min={0.01}
                   step="0.01"
                   value={newProduct.baseSellingPrice || ''}
-                  onChange={(e) => setNewProduct({ ...newProduct, baseSellingPrice: parseMoneyInput(e.target.value) })}
+                  onChange={(e) => {
+                    if (newProduct.unitOfMeasure === 'Cartons' && !acceptDecimal2(e.target.value)) return;
+                    setNewProduct({ ...newProduct, baseSellingPrice: parseMoneyInput(e.target.value) });
+                  }}
                   placeholder={newProduct.unitOfMeasure === 'Cartons' ? 'Price per Kg' : 'Required'}
                   className={inputCls}
                 />
@@ -2920,10 +2947,13 @@ export default function InventoryPage() {
                       min={0.01}
                       step="0.01"
                       value={newProduct.cartonPrice || ''}
-                      onChange={(e) => setNewProduct({
-                        ...newProduct,
-                        cartonPrice: e.target.value.trim() === '' ? undefined : parseMoneyInput(e.target.value),
-                      })}
+                      onChange={(e) => {
+                        if (!acceptDecimal2(e.target.value)) return;
+                        setNewProduct({
+                          ...newProduct,
+                          cartonPrice: e.target.value.trim() === '' ? undefined : parseMoneyInput(e.target.value),
+                        });
+                      }}
                       placeholder="Required for Cartons"
                       className={inputCls}
                     />
@@ -2935,10 +2965,15 @@ export default function InventoryPage() {
                       min={0.01}
                       step="0.01"
                       value={newProduct.cartonWeight || ''}
-                      onChange={(e) => setNewProduct({ ...newProduct, cartonWeight: parseFloat(e.target.value) || undefined })}
+                      onChange={(e) => {
+                        const next = sanitizeKgQtyDraft(e.target.value);
+                        if (next === null) return;
+                        setNewProduct({ ...newProduct, cartonWeight: next === '' ? undefined : kgQtyDraftToNumber(next) });
+                      }}
                       placeholder="Required for Cartons"
                       className={inputCls}
                     />
+                    <p className="text-[11px] text-muted-foreground">Up to 2 decimal places (Kg).</p>
                   </div>
                 </>
               )}
@@ -3346,44 +3381,81 @@ export default function InventoryPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className={labelCls}>
-                    {selectedProduct.unitOfMeasure === 'Cartons' ? 'Carton cost (₦)' : 'Unit Cost (₦)'}
+                    {purchaseUom === 'Carton' || isCartonsUom(selectedProduct.unitOfMeasure) ? 'Carton cost (₦)' : 'Unit Cost (₦)'}
                   </label>
-                  <input type="number" min={0} step="0.01" value={moveData.unitCost} onChange={(e) => setMoveData({ ...moveData, unitCost: parseMoneyInput(e.target.value) })} className={inputCls} />
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={moveData.unitCost || ''}
+                    onChange={(e) => {
+                      if (!acceptDecimal2(e.target.value)) return;
+                      setMoveData({ ...moveData, unitCost: parseMoneyInput(e.target.value) });
+                    }}
+                    className={inputCls}
+                  />
+                  {purchaseUom === 'Carton' || isCartonsUom(selectedProduct.unitOfMeasure) ? (
+                    <p className="text-[11px] text-muted-foreground">Cost per carton.</p>
+                  ) : null}
                 </div>
                 <div className="space-y-2">
                   <label className={labelCls}>
-                    {selectedProduct.unitOfMeasure === 'Cartons' ? 'Unit selling price (₦) *' : 'Selling Price (₦)'}
+                    {purchaseUom === 'Carton' || isCartonsUom(selectedProduct.unitOfMeasure) ? 'Unit selling price (₦) *' : 'Selling Price (₦)'}
                   </label>
-                  <input type="number" min={0} step="0.01" value={moveData.unitPrice} onChange={(e) => setMoveData({ ...moveData, unitPrice: parseMoneyInput(e.target.value) })} className={inputCls} />
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={moveData.unitPrice || ''}
+                    placeholder={purchaseUom === 'Carton' || isCartonsUom(selectedProduct.unitOfMeasure) ? 'Price per Kg' : undefined}
+                    onChange={(e) => {
+                      if (!acceptDecimal2(e.target.value)) return;
+                      setMoveData({ ...moveData, unitPrice: parseMoneyInput(e.target.value) });
+                    }}
+                    className={inputCls}
+                  />
                 </div>
               </div>
 
-              {selectedProduct.unitOfMeasure === 'Cartons' && (
+              {(purchaseUom === 'Carton' || isCartonsUom(selectedProduct.unitOfMeasure)) && (
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className={labelCls}>Carton selling price (₦) *</label>
-                    <input type="number" min={0} step="0.01" value={moveData.cartonPrice} onChange={(e) => setMoveData({ ...moveData, cartonPrice: parseMoneyInput(e.target.value) })} className={inputCls} />
+                    <input
+                      type="number"
+                      min={0.01}
+                      step="0.01"
+                      value={moveData.cartonPrice || ''}
+                      onChange={(e) => {
+                        if (!acceptDecimal2(e.target.value)) return;
+                        setMoveData({ ...moveData, cartonPrice: parseMoneyInput(e.target.value) });
+                      }}
+                      className={inputCls}
+                    />
                   </div>
                   <div className="space-y-2">
-                    <label className={labelCls}>Carton weight (kg) *</label>
-                    <input type="number" min={0.01} step="0.01" value={moveData.cartonWeight} onChange={(e) => setMoveData({ ...moveData, cartonWeight: parseFloat(e.target.value) || 0 })} className={inputCls} />
+                    <label className={labelCls}>Carton weight (Kg) *</label>
+                    <input
+                      type="number"
+                      min={0.01}
+                      step="0.01"
+                      value={cartonWeightDraft}
+                      placeholder="Kg per carton"
+                      onChange={(e) => {
+                        const next = sanitizeKgQtyDraft(e.target.value);
+                        if (next === null) return;
+                        setCartonWeightDraft(next);
+                        setMoveData({ ...moveData, cartonWeight: kgQtyDraftToNumber(next) });
+                      }}
+                      onBlur={() => {
+                        const n = kgQtyDraftToNumber(cartonWeightDraft);
+                        setCartonWeightDraft(n > 0 ? String(n) : '');
+                        setMoveData((prev) => ({ ...prev, cartonWeight: n }));
+                      }}
+                      className={inputCls}
+                    />
+                    <p className="text-[11px] text-muted-foreground">Up to 2 decimal places (Kg).</p>
                   </div>
-                </div>
-              )}
-
-              {selectedProduct.unitOfMeasure === 'Kg' && purchaseUom === 'Carton' && (
-                <div className="space-y-2">
-                  <label className={labelCls}>Carton weight (kg) *</label>
-                  <input
-                    type="number"
-                    min={0.01}
-                    step="0.01"
-                    value={moveData.cartonWeight || ''}
-                    onChange={(e) => setMoveData({ ...moveData, cartonWeight: parseFloat(e.target.value) || 0 })}
-                    placeholder="Kg per carton"
-                    className={inputCls}
-                  />
-                  <p className="text-[11px] text-muted-foreground">Required to convert cartons into Kg stock.</p>
                 </div>
               )}
 

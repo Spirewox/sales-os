@@ -99,6 +99,7 @@ export function catalogBatchPriceError(args: {
   unitOfMeasure?: string;
   saleUnit?: string;
   cartonWeight?: number;
+  cartonPrice?: number;
   quantity: number;
   batchNumber: string;
   amount: number;
@@ -109,11 +110,14 @@ export function catalogBatchPriceError(args: {
   const batch = Number(args.batchUnitPrice);
   const uom = (args.unitOfMeasure || '').trim().toLowerCase();
   const unit = (args.saleUnit || '').trim().toLowerCase();
+  const byCarton = unit === 'carton' || unit === 'cartons' || (uom === 'cartons' && unit !== 'kg');
   let unitPrice: number | null = null;
-  if (batch > 0) {
+  if (byCarton) {
+    const carton = Number(args.cartonPrice);
+    unitPrice = carton > 0 ? money(carton) : null;
+  } else if (batch > 0) {
     if (uom === 'cartons') {
-      if (unit === 'kg') unitPrice = money(batch);
-      else if (Number(args.cartonWeight) > 0) unitPrice = money(batch * Number(args.cartonWeight));
+      unitPrice = money(batch);
     } else if (isVolumeUom(args.unitOfMeasure)) {
       const entered = unit === 'ml' ? 'ml' : unit === 'liters' || unit === 'liter' ? 'Liters' : (defaultVolumeUnit(args.unitOfMeasure) ?? 'Liters');
       unitPrice = money(volumeUnitPrice(args.unitOfMeasure, batch, entered));
@@ -122,8 +126,8 @@ export function catalogBatchPriceError(args: {
     }
   }
   if (unitPrice == null) {
-    if (uom === 'cartons' && unit !== 'kg' && !(Number(args.cartonWeight) > 0)) {
-      return `Set carton weight on this product before selling batch ${args.batchNumber} by carton.`;
+    if (byCarton) {
+      return `Batch ${args.batchNumber} has no carton selling price.`;
     }
     return `Batch ${args.batchNumber} has no selling price.`;
   }

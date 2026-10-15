@@ -329,21 +329,20 @@ export function useSalesPage() {
   const listUnitPriceForSale = (
     item: typeof selectedInventoryItem,
     unit: SaleFormUnit,
-    batch?: { unitPrice: number } | null,
+    batch?: { unitPrice: number; cartonPrice?: number } | null,
   ) => {
     if (!item) return 0;
     const batchList = Number(batch?.unitPrice) || 0;
-    if (batch && !(batchList > 0)) return 0;
     if (item.unitOfMeasure === 'Cartons') {
       if (unit === 'Kg') {
-        return batchList > 0 ? batchList : item.baseSellingPrice;
+        if (batch) return batchList > 0 ? batchList : 0;
+        return item.baseSellingPrice;
       }
-      if (batchList > 0 && item.cartonWeight && item.cartonWeight > 0) {
-        return Math.round(batchList * item.cartonWeight * 100) / 100;
-      }
-      if (batch) return 0;
+      const carton = Number(batch?.cartonPrice) || 0;
+      if (batch) return carton > 0 ? carton : 0;
       return item.cartonPrice && item.cartonPrice > 0 ? item.cartonPrice : 0;
     }
+    if (batch && !(batchList > 0)) return 0;
     const catalogPrice = batchList > 0 ? batchList : item.baseSellingPrice;
     if (isVolumeUom(item.unitOfMeasure) && unit) {
       return volumeUnitPrice(item.unitOfMeasure, catalogPrice, unit);
@@ -355,7 +354,7 @@ export function useSalesPage() {
     item: typeof selectedInventoryItem,
     qty: number,
     unit: SaleFormUnit,
-    batch?: { unitPrice: number } | null,
+    batch?: { unitPrice: number; cartonPrice?: number } | null,
   ) => {
     if (!item || qty <= 0) return 0;
     return listUnitPriceForSale(item, unit, batch) * qty;
@@ -410,9 +409,10 @@ export function useSalesPage() {
         const amount = Number(newSale.amount) || 0;
         const batchError = catalogBatchPriceError({
           batchUnitPrice: selectedBatch.unitPrice,
+          cartonPrice: selectedBatch.cartonPrice,
           unitOfMeasure: selectedInventoryItem.unitOfMeasure,
           saleUnit: saleUnit || selectedInventoryItem.unitOfMeasure,
-          cartonWeight: selectedInventoryItem.cartonWeight,
+          cartonWeight: selectedBatch.cartonWeight || selectedInventoryItem.cartonWeight,
           quantity,
           batchNumber: selectedBatch.batchNumber,
           amount,
@@ -424,16 +424,15 @@ export function useSalesPage() {
       }
       if (isCartonProduct) {
         if (!saleUnit) errors.saleUnit = 'Select Carton or Kg.';
-        if (!selectedInventoryItem?.cartonWeight || selectedInventoryItem.cartonWeight <= 0) {
-          errors.saleUnit = 'Set carton weight on this product before recording a sale.';
+        const batchWeight = selectedBatch?.cartonWeight || selectedInventoryItem?.cartonWeight || 0;
+        if (!(batchWeight > 0)) {
+          errors.saleUnit = 'Set carton weight on this batch before recording a sale.';
         } else if (saleUnit === 'Carton') {
-          const batchList = Number(selectedBatch?.unitPrice) || 0;
-          if (!(batchList > 0 && selectedInventoryItem.cartonWeight > 0)) {
-            errors.saleUnit = 'Set a selling price on the selected batch before selling by Carton.';
+          if (!(Number(selectedBatch?.cartonPrice) > 0)) {
+            errors.saleUnit = 'Set a carton selling price on the selected batch before selling by Carton.';
           }
         } else if (saleUnit === 'Kg') {
-          const batchList = Number(selectedBatch?.unitPrice) || 0;
-          if (!(batchList > 0)) {
+          if (!(Number(selectedBatch?.unitPrice) > 0)) {
             errors.saleUnit = 'Set a selling price on the selected batch before selling by Kg.';
           }
         }
@@ -773,9 +772,10 @@ export function useSalesPage() {
     const paid = Number(editForm.amountPaid ?? selectedSale.amountPaid ?? 0) || 0;
     return catalogBatchPriceError({
       batchUnitPrice: batch.unitPrice,
+      cartonPrice: batch.cartonPrice,
       unitOfMeasure: product?.unitOfMeasure ?? selectedSale.item.unit,
       saleUnit: selectedSale.item.saleUnit || editForm.item?.unit || selectedSale.item.unit,
-      cartonWeight: product?.cartonWeight,
+      cartonWeight: batch.cartonWeight || product?.cartonWeight,
       quantity: Number(editForm.item?.quantity ?? selectedSale.item.quantity) || 0,
       batchNumber: selectedSale.item.batchNumber,
       amount,
