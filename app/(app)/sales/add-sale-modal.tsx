@@ -50,6 +50,8 @@ export interface AddSaleModalProps {
     quantityRemaining: number;
     unitCost: number;
     unitPrice: number;
+    cartonPrice?: number;
+    cartonWeight?: number;
     expiryDate?: string;
     receivedDate?: string;
     supplier?: string;
@@ -63,11 +65,13 @@ export interface AddSaleModalProps {
     batchNumber: string;
     unitCost: number;
     unitPrice: number;
+    cartonPrice?: number;
+    cartonWeight?: number;
   };
   listUnitPriceForSale: (
     item: InventoryItem | undefined,
     unit: SaleFormUnit,
-    batch?: { unitPrice: number } | null,
+    batch?: { unitPrice: number; cartonPrice?: number } | null,
   ) => number;
   quantity: number;
   handleQuantityChange: (qty: number) => void;
@@ -303,8 +307,8 @@ export function AddSaleModal({
             {selectedInventoryItem && !isMealSale && (
               <div className="flex items-center gap-3 text-xs text-muted-foreground">
                 <span>Catalog ref: {selectedInventoryItem.currentStock} {selectedInventoryItem.unitOfMeasure} on hand (informational)</span>
-                {isCartonProduct && selectedInventoryItem.cartonWeight ? (
-                  <span>&middot; {selectedInventoryItem.cartonWeight} Kg / carton</span>
+                {isCartonProduct && (selectedBatch?.cartonWeight || selectedInventoryItem.cartonWeight) ? (
+                  <span>&middot; {selectedBatch?.cartonWeight || selectedInventoryItem.cartonWeight} Kg / carton</span>
                 ) : null}
                 <span>
                   &middot;{' '}
@@ -358,6 +362,7 @@ export function AddSaleModal({
                   <option key={b.batchNumber} value={b.batchNumber}>
                     {b.batchNumber}
                     {` · ${b.quantityRemaining} ${b.uom || selectedInventoryItem?.unitOfMeasure || ''} left`}
+                    {b.cartonPrice && b.cartonPrice > 0 ? ` · carton ${fmt(b.cartonPrice)}` : ''}
                     {b.unitPrice > 0 ? ` · list ${fmt(b.unitPrice)}` : ''}
                     {b.expiryDate ? ` · exp ${b.expiryDate}` : ''}
                     {b.supplier ? ` · ${b.supplier}` : ''}
