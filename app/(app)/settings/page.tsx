@@ -43,6 +43,7 @@ import { Agent, Hub, OwnershipType } from '@/types';
 import { hubOptionLabel } from '@/lib/api-mappers';
 import { toast } from 'sonner';
 import { SubmitButton } from '@/components/submit-button';
+import { TillRegistration } from '@/components/till-registration';
 import {
   Save, User, Lock, Moon, Sun, Trash2, AlertTriangle,
   Users, Plus, X, Pencil, MapPin, Building2, Shield, KeyRound,
@@ -118,6 +119,7 @@ export default function SettingsPage() {
 
   // Hub management state
   const [showHubModal, setShowHubModal] = useState(false);
+  const [tillHub, setTillHub] = useState<Hub | null>(null);
   const [editingHub, setEditingHub] = useState<Partial<Hub>>({ isActive: true, locationType: 'hub' });
   const [hubTypeFilter, setHubTypeFilter] = useState<'all' | 'hub' | 'rsp'>('all');
   const [downgradingHub, setDowngradingHub] = useState<Hub | null>(null);
@@ -681,6 +683,7 @@ export default function SettingsPage() {
                           <td className="p-3">
                             <div className="flex flex-wrap gap-2">
                               <button onClick={() => { setEditingHub(hub); setShowHubModal(true); }} className="text-xs text-primary hover:underline">Edit</button>
+                              <button onClick={() => setTillHub(hub)} className="text-xs text-primary hover:underline">Tills</button>
                               <button onClick={() => handleToggleHub(hub)} className="text-xs text-muted-foreground hover:underline">
                                 {hub.isActive ? 'Deactivate' : 'Activate'}
                               </button>
@@ -705,6 +708,9 @@ export default function SettingsPage() {
 
             {!canManageHubs && (
               <p className="text-xs text-muted-foreground italic">You don&apos;t have permission to manage hubs.</p>
+            )}
+            {canManageHubs && tillHub && (
+              <TillRegistration hubId={tillHub.id} hubName={tillHub.name} onClose={() => setTillHub(null)} />
             )}
           </div>
         </div>

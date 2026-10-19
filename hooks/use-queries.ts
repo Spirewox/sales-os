@@ -508,6 +508,48 @@ export function useUpdateHub() {
   });
 }
 
+export type PosTillRow = {
+  deviceId: string;
+  label: string;
+  lastSeen: string | null;
+  boundAt: string | null;
+  passkey: boolean;
+};
+
+export function usePosTills(hubId?: string) {
+  return useQuery({
+    queryKey: ['pos-tills', hubId],
+    enabled: Boolean(hubId),
+    queryFn: async () => {
+      requireApi();
+      const res = await axiosGet(`hub/${hubId}/pos-devices`, true) as { data: PosTillRow[] };
+      return res.data ?? [];
+    },
+  });
+}
+
+export function useCreateTillCode() {
+  return useMutation({
+    mutationFn: async (hubId: string) => {
+      requireApi();
+      return axiosPost(`hub/${hubId}/pos-enrollment-codes`, {}, true) as Promise<{
+        data: { code: string; expiresAt: string; hubId: string; hubName: string };
+      }>;
+    },
+  });
+}
+
+export function useRevokeTill() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ hubId, deviceId }: { hubId: string; deviceId: string }) => {
+      requireApi();
+      return axiosDelete(`hub/${hubId}/pos-devices/${encodeURIComponent(deviceId)}`, true);
+    },
+    onSuccess: (_data, vars) => qc.invalidateQueries({ queryKey: ['pos-tills', vars.hubId] }),
+  });
+}
+
 export function useUpgradeHub() {
   const qc = useQueryClient();
   return useMutation({
