@@ -114,11 +114,16 @@ export const axiosDelete = async (endpoint: string, withAuth?: boolean) => {
   }
 };
 
-export const axiosGetBlob = async (endpoint: string, withAuth?: boolean) => {
+export const axiosGetBlob = async (
+  endpoint: string,
+  withAuth?: boolean,
+  timeoutMs?: number,
+) => {
   try {
     const res = await axios.get(`${base_url}${endpoint}`, {
       ...authConfig(withAuth),
       responseType: 'arraybuffer',
+      ...(timeoutMs != null ? { timeout: timeoutMs } : {}),
     });
     return res.data as ArrayBuffer;
   } catch (error) {

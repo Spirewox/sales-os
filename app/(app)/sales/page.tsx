@@ -6,7 +6,7 @@ import { SalesChannel, PaymentMode } from '@/types';
 import {
   Plus, Banknote, Search, TrendingUp, ChevronRight, CreditCard,
   ArrowUpRight, ArrowDownRight, Calendar, Upload, Download, ShoppingCart, Truck, BarChart3,
-  ArrowUpDown, ArrowUp, ArrowDown, Package,
+  ArrowUpDown, ArrowUp, ArrowDown, Package, Loader2,
 } from 'lucide-react';
 import {
   fmt, paymentModeBadgeClass, paymentModeLabel, resolveSalePaymentMode,
@@ -201,9 +201,14 @@ export default function SalesPage() {
                   type="button"
                   onClick={() => setShowTemplateMenu((open) => !open)}
                   disabled={downloadingTemplate}
-                  className={btnSecondary}
+                  className={`${btnSecondary} disabled:opacity-50`}
                 >
-                  <Download size={14} className="mr-1.5" /> Download Template
+                  {downloadingTemplate ? (
+                    <Loader2 size={14} className="mr-1.5 animate-spin" />
+                  ) : (
+                    <Download size={14} className="mr-1.5" />
+                  )}
+                  {downloadingTemplate ? 'Preparing template…' : 'Download Template'}
                 </button>
                 {showTemplateMenu && (
                   <>

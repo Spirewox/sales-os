@@ -1273,7 +1273,11 @@ export function useDownloadSalesImportTemplate() {
   return useMutation({
     mutationFn: async (type: 'catalog' | 'custom' = 'catalog') => {
       requireApi();
-      const buffer = await axiosGetBlob(`sales/import/template?type=${type}`, true);
+      const buffer = await axiosGetBlob(
+        `sales/import/template?type=${type}`,
+        true,
+        SALES_IMPORT_TIMEOUT_MS,
+      );
       const blob = new Blob([buffer], {
         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       });
