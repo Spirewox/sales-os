@@ -130,11 +130,15 @@
   html {
     @apply font-sans;
   }
-  /* Windows paints the open select list on a light surface. Keep option text dark so it stays readable. */
+  /* Windows paints native select lists on a light surface. Long lists ignore option colors and follow the page's dark scheme, so force the popup itself to light. */
+  .dark select {
+    color-scheme: light;
+    color: var(--foreground);
+  }
   .dark select option,
   .dark select optgroup {
-    background-color: #ffffff;
-    color: #171717;
+    background-color: #ffffff !important;
+    color: #171717 !important;
   }
 }
 
