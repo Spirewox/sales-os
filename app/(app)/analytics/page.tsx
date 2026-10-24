@@ -33,8 +33,10 @@ const fmtK = (n: number) => n >= 1_000_000 ? `${NAIRA}${(n / 1_000_000).toFixed(
 const pct = (a: number, b: number) => b > 0 ? Math.round((a / b) * 100) : 0;
 
 const TT = {
-  contentStyle: { backgroundColor: 'hsl(var(--popover))', borderColor: 'hsl(var(--border))', borderRadius: 'var(--radius)', fontSize: 12 },
-  cursor: { fill: 'hsl(var(--muted))', opacity: 0.2 },
+  contentStyle: { backgroundColor: 'var(--popover)', borderColor: 'var(--border)', color: 'var(--popover-foreground)', borderRadius: 'var(--radius)', fontSize: 12 },
+  itemStyle: { color: 'var(--popover-foreground)' },
+  labelStyle: { color: 'var(--popover-foreground)' },
+  cursor: { fill: 'var(--muted)', opacity: 0.2 },
 };
 
 const CHART_COLORS = ['#0891b2', '#ea580c', '#7c3aed', '#dc2626', '#ca8a04', '#16a34a', '#2563eb', '#f59e0b', '#ec4899', '#6b7280'];
@@ -450,9 +452,9 @@ function SalesAnalysis({
                     <stop offset="95%" stopColor="#0891b2" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} dy={8} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} tickFormatter={(v) => fmtK(v)} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }} dy={8} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }} tickFormatter={(v) => fmtK(v)} />
                 <Tooltip {...TT} formatter={(value) => fmt(Number(value))} />
                 <Area type="monotone" dataKey="revenue" name="Revenue" stroke="#0891b2" strokeWidth={2} fill="url(#revGrad)" dot={effGrain !== 'day'} />
               </AreaChart>
@@ -483,19 +485,19 @@ function SalesAnalysis({
           <div className="p-5 h-[260px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={dayOfWeekPattern} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+                <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }} />
                 <YAxis
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+                  tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }}
                   tickFormatter={(v) => (dowMetric === 'orders' ? String(v) : fmtK(v))}
                 />
                 <Tooltip
                   {...TT}
                   formatter={(value) => (dowMetric === 'orders' ? Number(value) : fmt(Number(value)))}
                 />
-                <Bar dataKey={dowDataKey} name={dowName} fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} barSize={28} />
+                <Bar dataKey={dowDataKey} name={dowName} fill="var(--primary)" radius={[4, 4, 0, 0]} barSize={28} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -519,9 +521,9 @@ function SalesAnalysis({
             {aovSeries.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={aovSeries} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                  <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} tickFormatter={(v) => fmtK(v)} />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+                  <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }} tickFormatter={(v) => fmtK(v)} />
                   <Tooltip {...TT} formatter={(value) => fmt(Number(value))} />
                   <Line type="monotone" dataKey="aov" name="AOV" stroke="#7c3aed" strokeWidth={2.5} dot={{ fill: '#7c3aed', r: 3 }} />
                 </LineChart>
@@ -852,15 +854,15 @@ function ProductPerformance({ data }: { data: AnalyticsOverviewData['products'] 
             {sortedCategories.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={sortedCategories} layout="vertical" margin={{ top: 0, right: 10, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--border)" />
                   <XAxis
                     type="number"
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+                    tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }}
                     tickFormatter={(v) => (catMetric === 'revenue' ? fmtK(v) : String(v))}
                   />
-                  <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} width={100} />
+                  <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }} width={100} />
                   <Tooltip
                     {...TT}
                     formatter={(value) =>
@@ -1064,10 +1066,10 @@ function CustomerInsights({
                     <stop offset="95%" stopColor="#7c3aed" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} dy={8} />
-                <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} />
-                <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }} dy={8} />
+                <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }} />
+                <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }} />
                 <Tooltip {...TT} />
                 <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
                 <Bar yAxisId="left" dataKey="new" name="New Customers" fill="#7c3aed" radius={[4, 4, 0, 0]} barSize={16} />
@@ -1130,12 +1132,12 @@ function CustomerInsights({
           <div className="p-5 h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={clvDistribution} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 9 }} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+                <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 9 }} />
                 <YAxis
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+                  tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }}
                   tickFormatter={(v) => (clvMetric === 'revenue' ? fmtK(v) : String(v))}
                 />
                 <Tooltip
@@ -1147,7 +1149,7 @@ function CustomerInsights({
                 <Bar
                   dataKey={clvMetric}
                   name={clvMetric === 'count' ? 'Customers' : 'Revenue'}
-                  fill="hsl(var(--primary))"
+                  fill="var(--primary)"
                   radius={[4, 4, 0, 0]}
                   barSize={32}
                 />
@@ -1241,15 +1243,15 @@ function CustomerInsights({
           <div className="p-5 h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={sortedSegments} layout="vertical" margin={{ top: 0, right: 10, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--border)" />
                 <XAxis
                   type="number"
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+                  tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }}
                   tickFormatter={(v) => (segMetric === 'revenue' ? fmtK(v) : String(v))}
                 />
-                <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} width={120} />
+                <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }} width={120} />
                 <Tooltip
                   {...TT}
                   formatter={(value) =>
@@ -1530,9 +1532,9 @@ function CreditRisk({
           <div className="p-5 h-[260px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={collSeries} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} tickFormatter={(v) => fmtK(v)} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }} tickFormatter={(v) => fmtK(v)} />
                 <Tooltip {...TT} formatter={(value) => fmt(Number(value))} />
                 <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
                 <Bar dataKey="issued" name="Issued" fill="#f59e0b" radius={[4, 4, 0, 0]} barSize={18} />

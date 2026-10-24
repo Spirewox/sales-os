@@ -863,9 +863,15 @@ export function useSalesPage() {
   };
 
   const handleDownloadTemplate = (type: 'catalog' | 'custom' = 'catalog') => {
+    const toastId = toast.loading('Preparing your template…');
     downloadTemplate.mutate(type, {
-      onSuccess: () => toast.success(`${type === 'custom' ? 'Custom' : 'Catalog'} template downloaded.`),
-      onError: (err) => toast.error(err.message || 'Failed to download template.'),
+      onSuccess: () =>
+        toast.success(
+          `${type === 'custom' ? 'Custom' : 'Catalog'} template downloaded.`,
+          { id: toastId },
+        ),
+      onError: (err) =>
+        toast.error(err.message || 'Failed to download template.', { id: toastId }),
     });
   };
 
