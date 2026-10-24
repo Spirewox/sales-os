@@ -49,6 +49,7 @@
 }
 
 :root {
+  color-scheme: light;
   --background: oklch(0.985 0.002 155);
   --foreground: oklch(0.17 0.02 155);
   --card: oklch(1 0 0);
@@ -84,6 +85,7 @@
 }
 
 .dark {
+  color-scheme: dark;
   --background: oklch(0.14 0.015 155);
   --foreground: oklch(0.95 0.005 155);
   --card: oklch(0.19 0.015 155);
@@ -127,6 +129,12 @@
   }
   html {
     @apply font-sans;
+  }
+  /* Windows paints the open select list on a light surface. Keep option text dark so it stays readable. */
+  .dark select option,
+  .dark select optgroup {
+    background-color: #ffffff;
+    color: #171717;
   }
 }
 
