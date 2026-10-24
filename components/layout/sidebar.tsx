@@ -62,7 +62,8 @@ export function Sidebar() {
     <div className="flex h-full flex-col bg-sidebar border-r border-sidebar-border">
       {/* Brand */}
       <div className="flex items-center px-5 py-4 border-b border-sidebar-border">
-        <BrandLogo variant="color" width={152} />
+        <BrandLogo variant="color" width={152} className="dark:hidden" />
+        <BrandLogo variant="white" width={152} className="hidden dark:block" />
       </div>
 
       {/* Nav */}

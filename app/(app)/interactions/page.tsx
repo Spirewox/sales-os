@@ -494,7 +494,7 @@ export default function InteractionsPage() {
                   <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                   <YAxis />
                   <RechartsTooltip />
-                  <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="value" fill="var(--primary)" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

@@ -128,9 +128,9 @@ function ResultChart({ rows, chart, measureLabel, measureKind, groupLabel }: { r
         <ResponsiveContainer width="100%" height="100%">
           {chart === 'line' ? (
             <LineChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-              <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} minTickGap={16} />
-              <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} tickFormatter={(v) => fmtVal(v, measureKind)} />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+              <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }} axisLine={false} tickLine={false} minTickGap={16} />
+              <YAxis tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }} axisLine={false} tickLine={false} tickFormatter={(v) => fmtVal(v, measureKind)} />
               <Tooltip formatter={(v: any) => fmtVal(Number(v), measureKind)} contentStyle={{ fontSize: 12, borderRadius: 8 }} />
               <Line type="monotone" dataKey="value" name={measureLabel} stroke="#0891b2" strokeWidth={2} dot={{ r: 3 }} />
             </LineChart>
@@ -142,17 +142,17 @@ function ResultChart({ rows, chart, measureLabel, measureKind, groupLabel }: { r
             </PieChart>
           ) : chart === 'bar' ? (
             <BarChart data={data} layout="vertical" margin={{ top: 0, right: 10, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
-              <XAxis type="number" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} tickFormatter={(v) => fmtVal(v, measureKind)} />
-              <YAxis type="category" dataKey="label" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} width={130} />
+              <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--border)" />
+              <XAxis type="number" tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }} axisLine={false} tickLine={false} tickFormatter={(v) => fmtVal(v, measureKind)} />
+              <YAxis type="category" dataKey="label" tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }} axisLine={false} tickLine={false} width={130} />
               <Tooltip formatter={(v: any) => fmtVal(Number(v), measureKind)} contentStyle={{ fontSize: 12, borderRadius: 8 }} />
               <Bar dataKey="value" name={measureLabel} radius={[0, 4, 4, 0]} barSize={18}>{data.map((_, i) => <Cell key={i} fill={PALETTE[i % PALETTE.length]} />)}</Bar>
             </BarChart>
           ) : (
             <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-              <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} interval={0} angle={-30} textAnchor="end" height={60} />
-              <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} tickFormatter={(v) => fmtVal(v, measureKind)} />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+              <XAxis dataKey="label" tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }} axisLine={false} tickLine={false} interval={0} angle={-30} textAnchor="end" height={60} />
+              <YAxis tick={{ fontSize: 10, fill: 'var(--muted-foreground)' }} axisLine={false} tickLine={false} tickFormatter={(v) => fmtVal(v, measureKind)} />
               <Tooltip formatter={(v: any) => fmtVal(Number(v), measureKind)} contentStyle={{ fontSize: 12, borderRadius: 8 }} />
               <Bar dataKey="value" name={measureLabel} radius={[4, 4, 0, 0]} barSize={26}>{data.map((_, i) => <Cell key={i} fill={PALETTE[i % PALETTE.length]} />)}</Bar>
             </BarChart>

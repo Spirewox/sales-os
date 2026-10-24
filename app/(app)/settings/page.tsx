@@ -504,8 +504,8 @@ export default function SettingsPage() {
     <div className="space-y-6 animate-in fade-in duration-500 max-w-5xl mx-auto">
       <div><h1 className="text-2xl font-semibold tracking-tight">Settings</h1><p className="text-muted-foreground">Manage your profile, team, hubs, roles, and preferences.</p></div>
 
-      <div className="flex border-b overflow-x-auto">{tabs.map((tab) => (
-        <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-[1px] whitespace-nowrap flex items-center gap-1.5 ${activeTab === tab ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}>
+      <div className="flex flex-wrap border-b">{tabs.map((tab) => (
+        <button key={tab} onClick={() => setActiveTab(tab)} className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-[1px] flex items-center gap-1.5 ${activeTab === tab ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}>
           {tab === 'Roles & Permissions' && <Shield size={14} />}
           {tab}
         </button>
