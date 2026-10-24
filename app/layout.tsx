@@ -45,10 +45,13 @@ export const metadata: Metadata = {
   },
 };
 
+const themeBootScript = `(function(){try{if(localStorage.getItem('fudfarmer_theme')==='dark'){document.documentElement.classList.add('dark')}}catch(e){}})()`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="h-full antialiased">
+    <html lang="en" className="h-full antialiased" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
         <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
       </head>
       <body className="min-h-full font-sans">

@@ -27,8 +27,10 @@ const fmtK = (n: number) => n >= 1_000_000 ? `${NAIRA}${(n / 1_000_000).toFixed(
 const pct = (a: number, b: number) => b > 0 ? Math.round((a / b) * 100) : 0;
 
 const TT = {
-  contentStyle: { backgroundColor: 'hsl(var(--popover))', borderColor: 'hsl(var(--border))', borderRadius: 'var(--radius)', fontSize: 12 },
-  cursor: { fill: 'hsl(var(--muted))', opacity: 0.2 },
+  contentStyle: { backgroundColor: 'var(--popover)', borderColor: 'var(--border)', color: 'var(--popover-foreground)', borderRadius: 'var(--radius)', fontSize: 12 },
+  itemStyle: { color: 'var(--popover-foreground)' },
+  labelStyle: { color: 'var(--popover-foreground)' },
+  cursor: { fill: 'var(--muted)', opacity: 0.2 },
 };
 
 const CAT_COLORS = PRODUCT_CATEGORY_COLORS;
@@ -293,23 +295,23 @@ export default function DashboardPage() {
         ) : (
           <>
         {/* Today's Revenue */}
-        <button onClick={() => router.push('/sales')} className="group relative rounded-xl border bg-card p-4 hover:border-emerald-300 transition-all text-left">
+        <button onClick={() => router.push('/sales')} className="group relative rounded-xl border bg-card p-4 hover:border-emerald-300 dark:hover:border-emerald-700 transition-all text-left">
           <div className="flex items-center gap-2 mb-2">
-            <div className="h-8 w-8 rounded-lg bg-emerald-100 flex items-center justify-center">
-              <Banknote size={16} className="text-emerald-600" />
+            <div className="h-8 w-8 rounded-lg bg-emerald-100 dark:bg-emerald-950/60 flex items-center justify-center">
+              <Banknote size={16} className="text-emerald-600 dark:text-emerald-400" />
             </div>
             <ArrowUpRight size={14} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity ml-auto" />
           </div>
-          <p className="text-xl font-black text-emerald-600">{tracker.todayRevenue > 0 ? fmtK(tracker.todayRevenue) : `${NAIRA}0`}</p>
+          <p className="text-xl font-black text-emerald-600 dark:text-emerald-400">{tracker.todayRevenue > 0 ? fmtK(tracker.todayRevenue) : `${NAIRA}0`}</p>
           <p className="text-[10px] font-bold text-muted-foreground uppercase mt-0.5">Today&apos;s Revenue</p>
           {tracker.todayOrders > 0 && <p className="text-[10px] text-muted-foreground">{tracker.todayOrders} order{tracker.todayOrders !== 1 ? 's' : ''}</p>}
         </button>
 
         {/* Total Outstanding */}
-        <button onClick={() => router.push('/credits')} className="group relative rounded-xl border bg-card p-4 hover:border-amber-300 transition-all text-left">
+        <button onClick={() => router.push('/credits')} className="group relative rounded-xl border bg-card p-4 hover:border-amber-300 dark:hover:border-amber-700 transition-all text-left">
           <div className="flex items-center gap-2 mb-2">
-            <div className="h-8 w-8 rounded-lg bg-amber-100 flex items-center justify-center">
-              <Wallet size={16} className="text-amber-600" />
+            <div className="h-8 w-8 rounded-lg bg-amber-100 dark:bg-amber-950/60 flex items-center justify-center">
+              <Wallet size={16} className="text-amber-600 dark:text-amber-400" />
             </div>
             <ArrowUpRight size={14} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity ml-auto" />
           </div>
@@ -318,39 +320,39 @@ export default function DashboardPage() {
         </button>
 
         {/* Overdue */}
-        <button onClick={() => router.push('/credits')} className={`group relative rounded-xl border p-4 transition-all text-left ${tracker.overdueCredits > 0 ? 'bg-red-50/50 border-red-200 hover:border-red-400' : 'bg-card hover:border-muted-foreground/30'}`}>
+        <button onClick={() => router.push('/credits')} className={`group relative rounded-xl border p-4 transition-all text-left ${tracker.overdueCredits > 0 ? 'bg-red-50/50 border-red-200 hover:border-red-400 dark:bg-red-950/40 dark:border-red-900 dark:hover:border-red-700' : 'bg-card hover:border-muted-foreground/30'}`}>
           <div className="flex items-center gap-2 mb-2">
-            <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${tracker.overdueCredits > 0 ? 'bg-red-100' : 'bg-muted'}`}>
-              <CreditCard size={16} className={tracker.overdueCredits > 0 ? 'text-red-600' : 'text-muted-foreground'} />
+            <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${tracker.overdueCredits > 0 ? 'bg-red-100 dark:bg-red-950/60' : 'bg-muted'}`}>
+              <CreditCard size={16} className={tracker.overdueCredits > 0 ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground'} />
             </div>
             {tracker.overdueCredits > 0 && <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white">{tracker.overdueCredits}</span>}
           </div>
-          <p className={`text-xl font-black ${tracker.overdueCredits > 0 ? 'text-red-600' : ''}`}>{tracker.overdueAmount > 0 ? fmtK(tracker.overdueAmount) : `${NAIRA}0`}</p>
+          <p className={`text-xl font-black ${tracker.overdueCredits > 0 ? 'text-red-600 dark:text-red-400' : ''}`}>{tracker.overdueAmount > 0 ? fmtK(tracker.overdueAmount) : `${NAIRA}0`}</p>
           <p className="text-[10px] font-bold text-muted-foreground uppercase mt-0.5">Overdue</p>
         </button>
 
         {/* Stock Alerts */}
-        <button onClick={() => router.push('/inventory')} className={`group relative rounded-xl border p-4 transition-all text-left ${tracker.stockAlerts > 0 ? 'bg-amber-50/50 border-amber-200 hover:border-amber-400' : 'bg-card hover:border-muted-foreground/30'}`}>
+        <button onClick={() => router.push('/inventory')} className={`group relative rounded-xl border p-4 transition-all text-left ${tracker.stockAlerts > 0 ? 'bg-amber-50/50 border-amber-200 hover:border-amber-400 dark:bg-amber-950/40 dark:border-amber-900 dark:hover:border-amber-700' : 'bg-card hover:border-muted-foreground/30'}`}>
           <div className="flex items-center gap-2 mb-2">
-            <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${tracker.stockAlerts > 0 ? 'bg-amber-100' : 'bg-muted'}`}>
-              <Package size={16} className={tracker.stockAlerts > 0 ? 'text-amber-600' : 'text-muted-foreground'} />
+            <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${tracker.stockAlerts > 0 ? 'bg-amber-100 dark:bg-amber-950/60' : 'bg-muted'}`}>
+              <Package size={16} className={tracker.stockAlerts > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'} />
             </div>
             {tracker.stockAlerts > 0 && <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1.5 text-[10px] font-bold text-white">{tracker.stockAlerts}</span>}
           </div>
-          <p className={`text-xl font-black ${tracker.stockAlerts > 0 ? 'text-amber-600' : ''}`}>{tracker.stockAlerts}</p>
+          <p className={`text-xl font-black ${tracker.stockAlerts > 0 ? 'text-amber-600 dark:text-amber-400' : ''}`}>{tracker.stockAlerts}</p>
           <p className="text-[10px] font-bold text-muted-foreground uppercase mt-0.5">Stock Alerts</p>
           {tracker.stockAlerts > 0 && <p className="text-[10px] text-muted-foreground">{tracker.lowStock} low &middot; {tracker.outOfStock} out</p>}
         </button>
 
         {/* Open Tickets */}
-        <button onClick={() => router.push('/interactions')} className={`group relative rounded-xl border p-4 transition-all text-left ${tracker.openTickets > 0 ? 'bg-blue-50/50 border-blue-200 hover:border-blue-400' : 'bg-card hover:border-muted-foreground/30'}`}>
+        <button onClick={() => router.push('/interactions')} className={`group relative rounded-xl border p-4 transition-all text-left ${tracker.openTickets > 0 ? 'bg-blue-50/50 border-blue-200 hover:border-blue-400 dark:bg-blue-950/40 dark:border-blue-900 dark:hover:border-blue-700' : 'bg-card hover:border-muted-foreground/30'}`}>
           <div className="flex items-center gap-2 mb-2">
-            <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${tracker.openTickets > 0 ? 'bg-blue-100' : 'bg-muted'}`}>
-              <MessageSquare size={16} className={tracker.openTickets > 0 ? 'text-blue-600' : 'text-muted-foreground'} />
+            <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${tracker.openTickets > 0 ? 'bg-blue-100 dark:bg-blue-950/60' : 'bg-muted'}`}>
+              <MessageSquare size={16} className={tracker.openTickets > 0 ? 'text-blue-600 dark:text-blue-400' : 'text-muted-foreground'} />
             </div>
             {tracker.openTickets > 0 && <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-500 px-1.5 text-[10px] font-bold text-white">{tracker.openTickets}</span>}
           </div>
-          <p className={`text-xl font-black ${tracker.openTickets > 0 ? 'text-blue-600' : ''}`}>{tracker.openTickets}</p>
+          <p className={`text-xl font-black ${tracker.openTickets > 0 ? 'text-blue-600 dark:text-blue-400' : ''}`}>{tracker.openTickets}</p>
           <p className="text-[10px] font-bold text-muted-foreground uppercase mt-0.5">Open Tickets</p>
           {tracker.openTickets > 0 && <p className="text-[10px] text-muted-foreground">{tracker.openFeedback} feedback &middot; {tracker.openEnquiries} enquiries</p>}
         </button>
@@ -358,14 +360,14 @@ export default function DashboardPage() {
         {/* Customers */}
         <button onClick={() => router.push('/customers')} className="group relative rounded-xl border bg-card p-4 hover:border-purple-300 transition-all text-left">
           <div className="flex items-center gap-2 mb-2">
-            <div className="h-8 w-8 rounded-lg bg-purple-100 flex items-center justify-center">
-              <Users size={16} className="text-purple-600" />
+            <div className="h-8 w-8 rounded-lg bg-purple-100 dark:bg-purple-950/60 flex items-center justify-center">
+              <Users size={16} className="text-purple-600 dark:text-purple-400" />
             </div>
             <ArrowUpRight size={14} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity ml-auto" />
           </div>
           <p className="text-xl font-black">{tracker.totalCustomers}</p>
           <p className="text-[10px] font-bold text-muted-foreground uppercase mt-0.5">Customers</p>
-          {tracker.newCustomersThisMonth > 0 && <p className="text-[10px] text-emerald-600 font-semibold">+{tracker.newCustomersThisMonth} this month</p>}
+          {tracker.newCustomersThisMonth > 0 && <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">+{tracker.newCustomersThisMonth} this month</p>}
         </button>
           </>
         )}
@@ -432,7 +434,7 @@ export default function DashboardPage() {
               <>
             <div>
               <p className="text-[10px] font-bold text-muted-foreground uppercase">Revenue</p>
-              <p className="text-2xl font-black text-emerald-600">{salesData.revenue > 0 ? fmtK(salesData.revenue) : '—'}</p>
+              <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400">{salesData.revenue > 0 ? fmtK(salesData.revenue) : '—'}</p>
             </div>
             <div>
               <p className="text-[10px] font-bold text-muted-foreground uppercase">Orders</p>
@@ -447,8 +449,8 @@ export default function DashboardPage() {
             )}
             <div>
               <p className="text-[10px] font-bold text-muted-foreground uppercase">Cash / Credit</p>
-              <p className="text-sm font-bold text-emerald-600">{fmtK(salesData.cashRevenue)}</p>
-              {salesData.creditRevenue > 0 && <p className="text-[10px] font-semibold text-amber-600">{fmtK(salesData.creditRevenue)} credit</p>}
+              <p className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{fmtK(salesData.cashRevenue)}</p>
+              {salesData.creditRevenue > 0 && <p className="text-[10px] font-semibold text-amber-600 dark:text-amber-400">{fmtK(salesData.creditRevenue)} credit</p>}
             </div>
               </>
             )}
@@ -488,14 +490,14 @@ export default function DashboardPage() {
                           <stop offset="100%" stopColor={salesChartStyle.strokeColor} stopOpacity={salesChartStyle.bottomOpacity} />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
                       <XAxis
                         dataKey="date"
                         axisLine={false}
                         tickLine={false}
                         interval={0}
                         padding={{ left: 8, right: 8 }}
-                        tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+                        tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }}
                         dy={8}
                         angle={salesData.trend.length > 16 ? -35 : 0}
                         textAnchor={salesData.trend.length > 16 ? 'end' : 'middle'}
@@ -504,7 +506,7 @@ export default function DashboardPage() {
                       <YAxis
                         axisLine={false}
                         tickLine={false}
-                        tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+                        tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }}
                         tickFormatter={(v) => `${NAIRA}${(v / 1000).toFixed(0)}k`}
                         width={48}
                       />
@@ -530,7 +532,7 @@ export default function DashboardPage() {
                 ) : salesData.trend.length === 1 ? (
                   <div className="flex items-center justify-center h-full">
                     <div className="text-center">
-                      <p className="text-3xl font-black text-emerald-600">{fmt(salesData.trend[0].revenue)}</p>
+                      <p className="text-3xl font-black text-emerald-600 dark:text-emerald-400">{fmt(salesData.trend[0].revenue)}</p>
                       <p className="text-xs text-muted-foreground mt-1">{salesData.trend[0].date}</p>
                     </div>
                   </div>
@@ -567,9 +569,9 @@ export default function DashboardPage() {
               <div className="h-[260px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={categoryData} layout="vertical" margin={{ top: 0, right: 10, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
-                    <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} tickFormatter={(v) => `${NAIRA}${(v / 1000).toFixed(0)}k`} />
-                    <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} width={100} />
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--border)" />
+                    <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }} tickFormatter={(v) => `${NAIRA}${(v / 1000).toFixed(0)}k`} />
+                    <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }} width={100} />
                     <Tooltip {...TT} formatter={(value) => fmt(Number(value))} />
                     <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={20}>
                       {categoryData.map((entry, idx) => (
@@ -723,9 +725,9 @@ export default function DashboardPage() {
                 <p className="text-[10px] font-bold text-muted-foreground uppercase mb-2">Value by Category</p>
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={invData.catChart} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 9 }} interval={0} angle={-35} textAnchor="end" height={50} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 9 }} tickFormatter={(v) => fmtK(v)} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 9 }} interval={0} angle={-35} textAnchor="end" height={50} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 9 }} tickFormatter={(v) => fmtK(v)} />
                     <Tooltip {...TT} formatter={(value) => fmt(Number(value))} />
                     <Bar dataKey="value" name="Stock Value" radius={[3, 3, 0, 0]} barSize={20}>
                       {invData.catChart.map((entry, idx) => (
@@ -786,8 +788,8 @@ export default function DashboardPage() {
                 <p className="text-xl font-black">{creditData.outstanding}</p>
                 <p className="text-[9px] font-bold text-muted-foreground uppercase">Outstanding</p>
               </div>
-              <div className={`p-3 rounded-lg border text-center ${creditData.overdue > 0 ? 'bg-red-50 border-red-200' : 'bg-muted/10'}`}>
-                <p className={`text-xl font-black ${creditData.overdue > 0 ? 'text-red-600' : ''}`}>{creditData.overdue}</p>
+              <div className={`p-3 rounded-lg border text-center ${creditData.overdue > 0 ? 'bg-red-50 border-red-200 dark:bg-red-950/40 dark:border-red-900' : 'bg-muted/10'}`}>
+                <p className={`text-xl font-black ${creditData.overdue > 0 ? 'text-red-600 dark:text-red-400' : ''}`}>{creditData.overdue}</p>
                 <p className="text-[9px] font-bold text-muted-foreground uppercase">Overdue</p>
               </div>
               <div className="p-3 rounded-lg border bg-muted/10 text-center">
@@ -807,7 +809,7 @@ export default function DashboardPage() {
                       ))}
                     </Pie>
                     <Tooltip {...TT} formatter={(value) => fmt(Number(value))} />
-                    <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11 }} />
+                    <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11, color: 'var(--foreground)' }} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -818,9 +820,9 @@ export default function DashboardPage() {
                 <p className="text-[10px] font-bold text-muted-foreground uppercase">Total Owed</p>
                 <p className="text-xl font-black">{creditData.totalOwed > 0 ? fmtK(creditData.totalOwed) : '—'}</p>
               </div>
-              <div className={`p-3 rounded-lg border ${creditData.overdueTotal > 0 ? 'border-red-200' : ''}`}>
+              <div className={`p-3 rounded-lg border ${creditData.overdueTotal > 0 ? 'border-red-200 dark:border-red-900' : ''}`}>
                 <p className="text-[10px] font-bold text-muted-foreground uppercase">Overdue Amount</p>
-                <p className={`text-xl font-black ${creditData.overdueTotal > 0 ? 'text-red-600' : ''}`}>{creditData.overdueTotal > 0 ? fmtK(creditData.overdueTotal) : fmt(0)}</p>
+                <p className={`text-xl font-black ${creditData.overdueTotal > 0 ? 'text-red-600 dark:text-red-400' : ''}`}>{creditData.overdueTotal > 0 ? fmtK(creditData.overdueTotal) : fmt(0)}</p>
               </div>
             </div>
 
