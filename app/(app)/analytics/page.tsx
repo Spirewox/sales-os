@@ -332,12 +332,12 @@ function SalesAnalysis({
   return (
     <div className="space-y-5">
       {growth && (
-        <div className="rounded-xl border bg-gradient-to-br from-cyan-50 to-card p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex flex-col gap-4 rounded-xl border bg-card p-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground mb-1">
+            <p className="mb-1 text-[11px] font-bold uppercase tracking-wide text-foreground/75">
               Revenue Growth Rate (MoM %)
             </p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-foreground/80">
               Month-over-month revenue change vs {growth.prevMonth}
             </p>
           </div>
@@ -345,10 +345,10 @@ function SalesAnalysis({
             <span
               className={`inline-flex items-center gap-1 text-3xl font-black ${
                 growth.revGrowth > 0
-                  ? 'text-emerald-600'
+                  ? 'text-emerald-700 dark:text-emerald-400'
                   : growth.revGrowth < 0
-                    ? 'text-red-600'
-                    : 'text-muted-foreground'
+                    ? 'text-red-700 dark:text-red-400'
+                    : 'text-foreground'
               }`}
             >
               {growth.revGrowth > 0 ? (
