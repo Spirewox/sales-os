@@ -14,6 +14,7 @@ import {
   useInventorySalesMetrics, useSuppliers, useProductSuppliers, useProductSalesPerformance,
 } from '@/hooks/use-queries';
 import { SkuMultiSelect } from '@/components/sku-multi-select';
+import { FilterSelect } from '@/components/filter-select';
 import { CardSkeleton, TableSkeleton } from '@/components/ui/loading-skeletons';
 import { ConfirmPreviewModal, type ConfirmPreviewRow } from '@/components/confirm-preview-modal';
 import { InventoryItem, StockLog, StockMovementType } from '@/types';
@@ -1694,18 +1695,17 @@ export default function InventoryPage() {
                 <label className="text-xs font-medium text-muted-foreground" htmlFor="inventory-category">
                   Category
                 </label>
-                <div className="flex h-10 items-center gap-2 rounded-md border bg-background px-3">
-                  <Filter size={14} className="text-muted-foreground" />
-                  <select
-                    id="inventory-category"
-                    value={filterCategory}
-                    onChange={(e) => setFilterCategory(e.target.value as ProductCategory | 'All')}
-                    className="min-w-0 flex-1 bg-transparent text-sm font-medium focus:outline-none"
-                  >
-                    <option value="All">All Categories</option>
-                    {PRODUCT_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
+                <FilterSelect
+                  id="inventory-category"
+                  ariaLabel="Category"
+                  value={filterCategory}
+                  onChange={(value) => setFilterCategory(value as ProductCategory | 'All')}
+                  icon={<Filter size={14} className="text-muted-foreground" />}
+                  options={[
+                    { value: 'All', label: 'All Categories' },
+                    ...PRODUCT_CATEGORIES.map((category) => ({ value: category, label: category })),
+                  ]}
+                />
               </div>
               <div className="space-y-1.5">
                 <span className="text-xs font-medium text-muted-foreground">SKU</span>
@@ -1985,15 +1985,16 @@ export default function InventoryPage() {
                 <label className="text-xs font-medium text-muted-foreground" htmlFor="ledger-type">
                   Movement type
                 </label>
-                <select
+                <FilterSelect
                   id="ledger-type"
+                  ariaLabel="Movement type"
                   value={ledgerTypeFilter}
-                  onChange={(e) => setLedgerTypeFilter(e.target.value as StockMovementType | 'All')}
-                  className="h-10 w-full rounded-md border bg-background px-3 text-sm font-medium"
-                >
-                  <option value="All">All Types</option>
-                  {Object.values(StockMovementType).map((t) => <option key={t} value={t}>{t}</option>)}
-                </select>
+                  onChange={(value) => setLedgerTypeFilter(value as StockMovementType | 'All')}
+                  options={[
+                    { value: 'All', label: 'All Types' },
+                    ...Object.values(StockMovementType).map((type) => ({ value: type, label: type })),
+                  ]}
+                />
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-muted-foreground" htmlFor="ledger-date-from">

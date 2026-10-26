@@ -12,6 +12,7 @@ import {
   ProductCategory, PaymentTerms, StockMovementType,
 } from '@/types';
 import { PRODUCT_CATEGORIES } from '@/lib/product-categories';
+import { FilterSelect } from '@/components/filter-select';
 import { CardSkeleton, TableSkeleton } from '@/components/ui/loading-skeletons';
 import { toast } from 'sonner';
 import {
@@ -581,35 +582,51 @@ export default function SuppliersPage() {
               className="w-[5.5rem] bg-transparent border-none text-sm font-medium focus:outline-none"
             />
           </div>
-          <div className="flex items-center gap-2 border rounded-md px-3 py-2 bg-background">
-            <Filter size={14} className="text-muted-foreground" />
-            <select value={filterType} onChange={(e) => setFilterType(e.target.value)} className="bg-transparent border-none text-sm font-medium focus:outline-none">
-              <option value="All">All Types</option>
-              {BUSINESS_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-            </select>
-          </div>
-          <div className="flex items-center gap-2 border rounded-md px-3 py-2 bg-background">
-            <MapPin size={14} className="text-muted-foreground" />
-            <select value={filterLocation} onChange={(e) => setFilterLocation(e.target.value)} className="bg-transparent border-none text-sm font-medium focus:outline-none">
-              <option value="All">All Locations</option>
-              {activeHubs.map((h) => <option key={h.id} value={h.name}>{h.name}</option>)}
-            </select>
-          </div>
-          <div className="flex items-center gap-2 border rounded-md px-3 py-2 bg-background">
-            <Tag size={14} className="text-muted-foreground" />
-            <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="bg-transparent border-none text-sm font-medium focus:outline-none">
-              <option value="All">All Categories</option>
-              {PRODUCT_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
-          </div>
-          <div className="flex items-center gap-2 border rounded-md px-3 py-2 bg-background">
-            <ShieldCheck size={14} className="text-muted-foreground" />
-            <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value as 'All' | 'Active' | 'Inactive')} className="bg-transparent border-none text-sm font-medium focus:outline-none">
-              <option value="All">All Status</option>
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
-            </select>
-          </div>
+          <FilterSelect
+            ariaLabel="Business type"
+            value={filterType}
+            onChange={setFilterType}
+            icon={<Filter size={14} className="text-muted-foreground" />}
+            className="w-fit"
+            options={[
+              { value: 'All', label: 'All Types' },
+              ...BUSINESS_TYPES.map((type) => ({ value: type, label: type })),
+            ]}
+          />
+          <FilterSelect
+            ariaLabel="Location"
+            value={filterLocation}
+            onChange={setFilterLocation}
+            icon={<MapPin size={14} className="text-muted-foreground" />}
+            className="w-fit"
+            options={[
+              { value: 'All', label: 'All Locations' },
+              ...activeHubs.map((hub) => ({ value: hub.name, label: hub.name })),
+            ]}
+          />
+          <FilterSelect
+            ariaLabel="Category"
+            value={filterCategory}
+            onChange={setFilterCategory}
+            icon={<Tag size={14} className="text-muted-foreground" />}
+            className="w-fit"
+            options={[
+              { value: 'All', label: 'All Categories' },
+              ...PRODUCT_CATEGORIES.map((category) => ({ value: category, label: category })),
+            ]}
+          />
+          <FilterSelect
+            ariaLabel="Status"
+            value={filterStatus}
+            onChange={(value) => setFilterStatus(value as 'All' | 'Active' | 'Inactive')}
+            icon={<ShieldCheck size={14} className="text-muted-foreground" />}
+            className="w-fit"
+            options={[
+              { value: 'All', label: 'All Status' },
+              { value: 'Active', label: 'Active' },
+              { value: 'Inactive', label: 'Inactive' },
+            ]}
+          />
         </div>
         <span className="text-xs text-muted-foreground ml-auto whitespace-nowrap">{filtered.length} supplier{filtered.length !== 1 ? 's' : ''}</span>
       </div>
