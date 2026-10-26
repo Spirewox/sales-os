@@ -19,6 +19,7 @@ import { SalesImportModal } from './sales-import-modal';
 import { PaginationControls } from '@/components/ui/pagination-controls';
 import { MetricValue } from '@/components/ui/metric-value';
 import { SkuMultiSelect } from '@/components/sku-multi-select';
+import { FilterSelect } from '@/components/filter-select';
 import { CardSkeleton, TableSkeleton } from '@/components/ui/loading-skeletons';
 import type { Sale } from '@/types';
 
@@ -356,10 +357,16 @@ export default function SalesPage() {
           />
         </div>
         <div className="flex flex-1 flex-wrap items-center gap-2 min-w-0">
-          <select value={dateFieldFilter} onChange={(e) => setDateFieldFilter(e.target.value as SaleDateFieldFilter)} className="h-10 rounded-md border px-3 text-sm bg-background">
-            <option value="sold">Date Sold</option>
-            <option value="created">Date Recorded</option>
-          </select>
+          <FilterSelect
+            ariaLabel="Date field"
+            value={dateFieldFilter}
+            onChange={(value) => setDateFieldFilter(value as SaleDateFieldFilter)}
+            className="w-fit"
+            options={[
+              { value: 'sold', label: 'Date Sold' },
+              { value: 'created', label: 'Date Recorded' },
+            ]}
+          />
           <div className="flex items-center gap-1.5">
             <span className="text-xs font-medium text-muted-foreground">From</span>
             <input type="date" value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); setQuickPreset('all'); }} className="h-10 px-2 rounded-md border text-sm bg-background" />
@@ -368,22 +375,40 @@ export default function SalesPage() {
             <span className="text-xs font-medium text-muted-foreground">To</span>
             <input type="date" value={dateTo} onChange={(e) => { setDateTo(e.target.value); setQuickPreset('all'); }} className="h-10 px-2 rounded-md border text-sm bg-background" />
           </div>
-          <select value={filterAgent} onChange={(e) => setFilterAgent(e.target.value)} className="h-10 rounded-md border px-3 text-sm bg-background">
-            <option value="All">All Agents</option>
-            {agents.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
-          </select>
-          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="h-10 rounded-md border px-3 text-sm bg-background">
-            <option value="All">All Status</option>
-            <option>Pending</option>
-            <option>Approved</option>
-            <option>Paid</option>
-            <option>Voided</option>
-          </select>
+          <FilterSelect
+            ariaLabel="Agent"
+            value={filterAgent}
+            onChange={setFilterAgent}
+            className="w-fit"
+            options={[
+              { value: 'All', label: 'All Agents' },
+              ...agents.map((agent) => ({ value: agent.id, label: agent.name })),
+            ]}
+          />
+          <FilterSelect
+            ariaLabel="Sale status"
+            value={filterStatus}
+            onChange={setFilterStatus}
+            className="w-fit"
+            options={[
+              { value: 'All', label: 'All Status' },
+              { value: 'Pending', label: 'Pending' },
+              { value: 'Approved', label: 'Approved' },
+              { value: 'Paid', label: 'Paid' },
+              { value: 'Voided', label: 'Voided' },
+            ]}
+          />
           <HubScopeSelect scope={hubScope} />
-          <select value={filterChannel} onChange={(e) => setFilterChannel(e.target.value)} className="h-10 rounded-md border px-3 text-sm bg-background">
-            <option value="All">All Channels</option>
-            {Object.values(SalesChannel).map((c) => <option key={c} value={c}>{c}</option>)}
-          </select>
+          <FilterSelect
+            ariaLabel="Channel"
+            value={filterChannel}
+            onChange={setFilterChannel}
+            className="w-fit"
+            options={[
+              { value: 'All', label: 'All Channels' },
+              ...Object.values(SalesChannel).map((channel) => ({ value: channel, label: channel })),
+            ]}
+          />
           <div className="relative" ref={categoriesRef}>
             <button
               type="button"

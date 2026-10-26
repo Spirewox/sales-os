@@ -18,6 +18,7 @@ import {
 import { toast } from 'sonner';
 import { SubmitButton } from '@/components/submit-button';
 import { SearchableCustomerSelect } from '@/components/searchable-customer-select';
+import { FilterSelect } from '@/components/filter-select';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
   ResponsiveContainer, PieChart, Pie, Cell,
@@ -538,9 +539,37 @@ export default function InteractionsPage() {
               <input type="text" placeholder="Search feedback..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 pl-9 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
             </div>
             <div className="flex flex-wrap gap-2">
-              <select value={fbFilterStatus} onChange={(e) => setFbFilterStatus(e.target.value as typeof fbFilterStatus)} className="h-10 rounded-md border px-3 text-sm bg-background"><option value="All">All Status</option><option>Open</option><option>Resolved</option></select>
-              <select value={fbFilterType} onChange={(e) => setFbFilterType(e.target.value as FeedbackType | 'All')} className="h-10 rounded-md border px-3 text-sm bg-background"><option value="All">All Types</option>{Object.values(FeedbackType).map((t) => <option key={t} value={t}>{t}</option>)}</select>
-              <select value={fbFilterPriority} onChange={(e) => setFbFilterPriority(e.target.value as FeedbackPriority | 'All')} className="h-10 rounded-md border px-3 text-sm bg-background"><option value="All">All Priorities</option>{Object.values(FeedbackPriority).map((p) => <option key={p} value={p}>{p}</option>)}</select>
+              <FilterSelect
+                ariaLabel="Feedback status"
+                value={fbFilterStatus}
+                onChange={(value) => setFbFilterStatus(value as typeof fbFilterStatus)}
+                className="w-fit"
+                options={[
+                  { value: 'All', label: 'All Status' },
+                  { value: 'Open', label: 'Open' },
+                  { value: 'Resolved', label: 'Resolved' },
+                ]}
+              />
+              <FilterSelect
+                ariaLabel="Feedback type"
+                value={fbFilterType}
+                onChange={(value) => setFbFilterType(value as FeedbackType | 'All')}
+                className="w-fit"
+                options={[
+                  { value: 'All', label: 'All Types' },
+                  ...Object.values(FeedbackType).map((type) => ({ value: type, label: type })),
+                ]}
+              />
+              <FilterSelect
+                ariaLabel="Priority"
+                value={fbFilterPriority}
+                onChange={(value) => setFbFilterPriority(value as FeedbackPriority | 'All')}
+                className="w-fit"
+                options={[
+                  { value: 'All', label: 'All Priorities' },
+                  ...Object.values(FeedbackPriority).map((priority) => ({ value: priority, label: priority })),
+                ]}
+              />
             </div>
             <span className="text-xs text-muted-foreground ml-auto whitespace-nowrap">{filteredFeedbacks.length} result{filteredFeedbacks.length !== 1 ? 's' : ''}</span>
           </div>

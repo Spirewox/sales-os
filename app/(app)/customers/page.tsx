@@ -28,6 +28,7 @@ import { deriveSegments, SEGMENT_GROUP_OF, SEGMENT_TAXONOMY } from '@/lib/segmen
 import { usePermissions } from '@/hooks/use-permissions';
 import { useHubScopeFilter } from '@/hooks/use-hub-scope';
 import { HubScopeFilterBar } from '@/components/hub-scope-filter';
+import { FilterSelect } from '@/components/filter-select';
 import { MetricsPeriodBar, useMetricsPeriod } from '@/components/metrics-period-bar';
 import { SubmitButton } from '@/components/submit-button';
 import { PaginationControls } from '@/components/ui/pagination-controls';
@@ -865,25 +866,33 @@ export default function CustomersPage() {
           <input type="text" placeholder="Search name, email, company..." className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 pl-9 text-sm focus:outline-none focus:ring-2 focus:ring-ring" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
         </div>
         <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-          <div className="flex items-center gap-2 border rounded-md px-3 py-2 bg-background">
-            <Filter size={14} className="text-muted-foreground" />
-            <select value={filterType} onChange={(e) => setFilterType(e.target.value as CustomerType | 'All')} className="bg-transparent border-none text-sm font-medium focus:outline-none">
-              <option value="All">All Types</option><option value={CustomerType.B2C}>B2C</option><option value={CustomerType.B2B}>B2B</option>
-            </select>
-          </div>
+          <FilterSelect
+            ariaLabel="Customer type"
+            value={filterType}
+            onChange={(value) => setFilterType(value as CustomerType | 'All')}
+            icon={<Filter size={14} className="text-muted-foreground" />}
+            className="w-fit"
+            options={[
+              { value: 'All', label: 'All Types' },
+              { value: CustomerType.B2C, label: 'B2C' },
+              { value: CustomerType.B2B, label: 'B2B' },
+            ]}
+          />
           <HubScopeFilterBar scope={hubScope} />
-          <div className="flex items-center gap-2 border rounded-md px-3 py-2 bg-background">
-            <ShoppingCart size={14} className="text-muted-foreground shrink-0" />
-            <select
+          <div className="flex items-center gap-2">
+            <FilterSelect
+              ariaLabel="Orders"
               value={ordersFilterMode}
-              onChange={(e) => setOrdersFilterMode(e.target.value as OrdersFilterMode)}
-              className="bg-transparent border-none text-sm font-medium focus:outline-none"
-            >
-              <option value="all">All orders</option>
-              <option value="once">Purchased once</option>
-              <option value="exact">Exact count…</option>
-              <option value="min">At least…</option>
-            </select>
+              onChange={(value) => setOrdersFilterMode(value as OrdersFilterMode)}
+              icon={<ShoppingCart size={14} className="text-muted-foreground" />}
+              className="w-fit"
+              options={[
+                { value: 'all', label: 'All orders' },
+                { value: 'once', label: 'Purchased once' },
+                { value: 'exact', label: 'Exact count…' },
+                { value: 'min', label: 'At least…' },
+              ]}
+            />
             {(ordersFilterMode === 'exact' || ordersFilterMode === 'min') && (
               <input
                 type="number"

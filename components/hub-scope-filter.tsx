@@ -3,6 +3,7 @@
 import { Layers, MapPin } from 'lucide-react';
 import type { HubScopeFilter } from '@/hooks/use-hub-scope';
 import type { LocationType } from '@/types';
+import { FilterSelect } from '@/components/filter-select';
 import { hubOptionLabel } from '@/lib/api-mappers';
 
 type HubScopeFilterProps = {
@@ -137,17 +138,16 @@ export function HubScopeSelect({
   }
 
   return (
-    <select
+    <FilterSelect
+      ariaLabel="Hub"
       value={filterHub}
-      onChange={(e) => setFilterHub(e.target.value)}
-      className={`h-10 rounded-md border px-3 text-sm bg-background ${className}`}
-    >
-      <option value="All">All Hubs</option>
-      {hubOptionsDetailed.map((hub) => (
-        <option key={hub.id} value={hub.name}>
-          {hubOptionLabel(hub)}
-        </option>
-      ))}
-    </select>
+      onChange={setFilterHub}
+      className={`w-fit ${className}`}
+      icon={<MapPin size={14} className="text-primary" />}
+      options={[
+        { value: 'All', label: 'All Hubs' },
+        ...hubOptionsDetailed.map((hub) => ({ value: hub.name, label: hubOptionLabel(hub) })),
+      ]}
+    />
   );
 }
