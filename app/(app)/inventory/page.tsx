@@ -293,6 +293,15 @@ function getExpiryLabel(expiryDate?: string): string {
   return `${daysUntil}d left`;
 }
 
+/** Open batches that are already expired or expire within 30 days. */
+function expiringOpenBatches(batches: FifoBatch[], now = Date.now()): FifoBatch[] {
+  const cutoff = now + 30 * 24 * 60 * 60 * 1000;
+  return batches.filter((batch) => {
+    if (!batch.expiryDate || batch.quantityRemaining <= 0) return false;
+    return new Date(batch.expiryDate).getTime() <= cutoff;
+  });
+}
+
 /* ────────────────── Supplier autocomplete helper ────────────────── */
 
 function getUniqueSuppliers(logs: StockLog[]): string[] {
@@ -364,6 +373,9 @@ export default function InventoryPage() {
   const [activeView, setActiveView] = useState<'Products' | 'Ledger' | 'Requests'>('Products');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterLowStock, setFilterLowStock] = useState(false);
+  const [filterExpiring, setFilterExpiring] = useState(false);
+  const productTableRef = useRef<HTMLDivElement>(null);
+  const [productScrollToken, setProductScrollToken] = useState(0);
   const [filterCategory, setFilterCategory] = useState<ProductCategory | 'All'>('All');
   const [filterProductIds, setFilterProductIds] = useState<string[]>([]);
   const [inventoryPage, setInventoryPage] = useState(1);
@@ -623,6 +635,17 @@ export default function InventoryPage() {
 
   /* ──────── Computed data ──────── */
 
+  const expiringBatchesByItem = useMemo(() => {
+    const map = new Map<string, FifoBatch[]>();
+    for (const item of items) {
+      if (item.isActive === false) continue;
+      if (!hubScope.matchesHub(item.location)) continue;
+      const batches = expiringOpenBatches(buildFifoBatches(logs, item.id));
+      if (batches.length > 0) map.set(item.id, batches);
+    }
+    return map;
+  }, [items, logs, hubScope]);
+
   const filteredItems = useMemo(() => {
     const rows = items.filter((i) => {
       const matchesSearch = i.name.toLowerCase().includes(searchTerm.toLowerCase()) || i.sku.toLowerCase().includes(searchTerm.toLowerCase());
@@ -631,7 +654,8 @@ export default function InventoryPage() {
       const matchesCategory = filterCategory === 'All' || i.category === filterCategory;
       const matchesSku = filterProductIds.length === 0 || filterProductIds.includes(i.id);
       const matchesActive = i.isActive !== false;
-      return matchesSearch && matchesLowStock && matchesHub && matchesCategory && matchesSku && matchesActive;
+      const matchesExpiring = !filterExpiring || expiringBatchesByItem.has(i.id);
+      return matchesSearch && matchesLowStock && matchesHub && matchesCategory && matchesSku && matchesActive && matchesExpiring;
     });
     if (!sortBy) return rows;
     const dir = sortDir === 'asc' ? 1 : -1;
@@ -640,7 +664,7 @@ export default function InventoryPage() {
       const bVal = sortBy === 'avgUnitCost' ? b.avgUnitCost : b.currentStock * b.avgUnitCost;
       return (aVal - bVal) * dir;
     });
-  }, [items, searchTerm, filterLowStock, hubScope, filterCategory, filterProductIds, sortBy, sortDir]);
+  }, [items, searchTerm, filterLowStock, filterExpiring, expiringBatchesByItem, hubScope, filterCategory, filterProductIds, sortBy, sortDir]);
 
   const inventoryTotalPages = Math.max(
     1,
@@ -654,7 +678,7 @@ export default function InventoryPage() {
 
   useEffect(() => {
     setInventoryPage(1);
-  }, [searchTerm, filterLowStock, filterCategory, filterProductIds, hubScope.filterHub, sortBy, sortDir]);
+  }, [searchTerm, filterLowStock, filterExpiring, filterCategory, filterProductIds, hubScope.filterHub, sortBy, sortDir]);
 
   const inventorySkuOptions = useMemo(
     () =>
@@ -707,27 +731,67 @@ export default function InventoryPage() {
   }, [filteredItems]);
   const lowStockItems = useMemo(() => items.filter((i) => i.currentStock <= i.minStockLevel && i.isActive !== false && hubScope.matchesHub(i.location)), [items, hubScope]);
 
-  // Expiring soon count
-  const expiringSoonCount = useMemo(() => {
-    const now = new Date();
-    const thirtyDays = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-    const seen = new Set<string>();
-    for (const item of items) {
-      if (item.isActive === false) continue;
-      if (!hubScope.matchesHub(item.location)) continue;
-      const batches = buildFifoBatches(logs, item.id);
-      for (const batch of batches) {
-        if (batch.expiryDate) {
-          const exp = new Date(batch.expiryDate);
-          if (exp <= thirtyDays && batch.quantityRemaining > 0) {
-            seen.add(item.id);
-            break;
-          }
-        }
-      }
+  const expiringSoonCount = expiringBatchesByItem.size;
+
+  const listFiltersAreClear = searchTerm === '' && filterCategory === 'All' && filterProductIds.length === 0;
+  const lowStockCardActive = filterLowStock && !filterExpiring && listFiltersAreClear;
+  const expiringCardActive = filterExpiring && !filterLowStock && listFiltersAreClear;
+  const mealsCardActive = filterCategory === 'Kitchen' && !filterLowStock && !filterExpiring && searchTerm === '' && filterProductIds.length === 0;
+
+  const focusProductTable = () => {
+    setActiveView('Products');
+    setProductScrollToken((token) => token + 1);
+  };
+
+  const clearProductSearchFilters = () => {
+    setSearchTerm('');
+    setFilterCategory('All');
+    setFilterProductIds([]);
+  };
+
+  const onMetricCardClick = (card: 'value' | 'skus' | 'units' | 'meals' | 'low' | 'expiring' | 'retail') => {
+    if (card === 'value' || card === 'skus' || card === 'units' || card === 'retail') {
+      focusProductTable();
+      return;
     }
-    return seen.size;
-  }, [items, logs, hubScope]);
+    if (card === 'low') {
+      if (lowStockCardActive) {
+        setFilterLowStock(false);
+      } else {
+        clearProductSearchFilters();
+        setFilterExpiring(false);
+        setFilterLowStock(true);
+      }
+      focusProductTable();
+      return;
+    }
+    if (card === 'expiring') {
+      if (expiringCardActive) {
+        setFilterExpiring(false);
+      } else {
+        clearProductSearchFilters();
+        setFilterLowStock(false);
+        setFilterExpiring(true);
+      }
+      focusProductTable();
+      return;
+    }
+    if (mealsCardActive) {
+      setFilterCategory('All');
+    } else {
+      setSearchTerm('');
+      setFilterProductIds([]);
+      setFilterLowStock(false);
+      setFilterExpiring(false);
+      setFilterCategory('Kitchen');
+    }
+    focusProductTable();
+  };
+
+  useEffect(() => {
+    if (productScrollToken === 0 || activeView !== 'Products') return;
+    productTableRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [productScrollToken, activeView]);
 
   // Ledger filtered logs
   const filteredLogs = useMemo(() => {
@@ -1528,7 +1592,11 @@ export default function InventoryPage() {
                   )}
                   <div className="h-px bg-border my-1" />
                   <button
-                    onClick={() => { setFilterLowStock(!filterLowStock); setShowActionDropdown(false); }}
+                    onClick={() => {
+                      if (!filterLowStock) setFilterExpiring(false);
+                      setFilterLowStock(!filterLowStock);
+                      setShowActionDropdown(false);
+                    }}
                     className="flex items-center gap-3 w-full px-4 py-2.5 text-sm hover:bg-muted transition-colors text-left"
                   >
                     <AlertTriangle size={14} className="text-orange-500" />
@@ -1564,7 +1632,15 @@ export default function InventoryPage() {
             <h4 className="font-semibold text-red-900">Inventory Alert: {lowStockItems.length} items critically low{hubScope.filterHub !== 'All' ? ` in ${hubScope.filterHub}` : ''}!</h4>
             <p className="text-red-700 text-xs">{lowStockItems.slice(0, 3).map((i) => i.name).join(', ')}{lowStockItems.length > 3 ? ` +${lowStockItems.length - 3} more` : ''}</p>
           </div>
-          <button onClick={() => setFilterLowStock(!filterLowStock)} className="px-3 py-1.5 rounded-md text-xs font-medium bg-white text-red-700 border border-red-200 hover:bg-red-50">
+          <button
+            type="button"
+            onClick={() => {
+              if (!filterLowStock) setFilterExpiring(false);
+              setFilterLowStock(!filterLowStock);
+              focusProductTable();
+            }}
+            className="px-3 py-1.5 rounded-md text-xs font-medium bg-white text-red-700 border border-red-200 hover:bg-red-50"
+          >
             {filterLowStock ? 'Show All' : 'Show Critical'}
           </button>
         </div>
@@ -1577,25 +1653,33 @@ export default function InventoryPage() {
         ) : (
           <>
         {[
-          { label: 'Inventory Value (Cost)', value: `\u20A6${fmtMoney(inventoryValue)}`, icon: <BarChart4 size={14} />, color: 'text-primary', sub: null as string | null },
-          { label: 'Total Active SKUs', value: filteredItems.length, icon: <Package size={14} />, color: 'text-blue-600', sub: null },
+          { id: 'value' as const, label: 'Inventory Value (Cost)', value: `\u20A6${fmtMoney(inventoryValue)}`, icon: <BarChart4 size={14} />, color: 'text-primary', sub: null as string | null, active: false },
+          { id: 'skus' as const, label: 'Total Active SKUs', value: filteredItems.length, icon: <Package size={14} />, color: 'text-blue-600', sub: null, active: false },
           {
+            id: 'units' as const,
             label: 'Total Units',
             value: totalUnits.toLocaleString(),
             icon: <Boxes size={14} />,
             color: 'text-indigo-600',
             sub: unitsByUom.length > 0 ? unitsByUom.slice(0, 3).map(([uom, qty]) => `${qty.toLocaleString()} ${uom}`).join(' · ') : null,
+            active: false,
           },
-          { label: 'Meals Served', value: mealsServed.toLocaleString(), icon: <UtensilsCrossed size={14} />, color: 'text-pink-600', sub: 'Kitchen · Food plate' },
-          { label: 'Low Stock Alerts', value: lowStockItems.length, icon: <AlertTriangle size={14} />, color: lowStockItems.length > 0 ? 'text-red-600' : 'text-muted-foreground', sub: null },
-          { label: 'Expiring Soon', value: expiringSoonCount, icon: <Thermometer size={14} />, color: expiringSoonCount > 0 ? 'text-orange-600' : 'text-muted-foreground', sub: null },
-          ...(isAdmin ? [{ label: 'Retail Value', value: `\u20A6${fmtMoney(retailValue)}`, icon: <span className="text-sm font-bold">₦</span>, color: 'text-green-600', sub: null }] : []),
-        ].map((kpi, i) => (
-          <div key={i} className="rounded-md border bg-card p-4">
+          { id: 'meals' as const, label: 'Meals Served', value: mealsServed.toLocaleString(), icon: <UtensilsCrossed size={14} />, color: 'text-pink-600', sub: 'Kitchen · Food plate', active: mealsCardActive },
+          { id: 'low' as const, label: 'Low Stock Alerts', value: lowStockItems.length, icon: <AlertTriangle size={14} />, color: lowStockItems.length > 0 ? 'text-red-600' : 'text-muted-foreground', sub: null, active: lowStockCardActive },
+          { id: 'expiring' as const, label: 'Expiring Soon', value: expiringSoonCount, icon: <Thermometer size={14} />, color: expiringSoonCount > 0 ? 'text-orange-600' : 'text-muted-foreground', sub: null, active: expiringCardActive },
+          ...(isAdmin ? [{ id: 'retail' as const, label: 'Retail Value', value: `\u20A6${fmtMoney(retailValue)}`, icon: <span className="text-sm font-bold">₦</span>, color: 'text-green-600', sub: null, active: false }] : []),
+        ].map((kpi) => (
+          <button
+            key={kpi.id}
+            type="button"
+            aria-pressed={kpi.active}
+            onClick={() => onMetricCardClick(kpi.id)}
+            className={`rounded-md border bg-card p-4 text-left transition-colors hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${kpi.active ? 'ring-2 ring-primary' : ''}`}
+          >
             <div className={`flex items-center gap-2 mb-1 ${kpi.color}`}>{kpi.icon}<span className="text-xs font-medium text-muted-foreground">{kpi.label}</span></div>
             <p className="text-xl font-bold">{kpi.value}</p>
             {kpi.sub && <p className="text-[10px] text-muted-foreground mt-1 truncate" title={kpi.sub}>{kpi.sub}</p>}
-          </div>
+          </button>
         ))}
           </>
         )}
@@ -1721,7 +1805,10 @@ export default function InventoryPage() {
               <div className="flex flex-wrap items-end gap-2 md:col-span-2 xl:col-span-1 xl:justify-end">
                 <button
                   type="button"
-                  onClick={() => setFilterLowStock(!filterLowStock)}
+                  onClick={() => {
+                    if (!filterLowStock) setFilterExpiring(false);
+                    setFilterLowStock(!filterLowStock);
+                  }}
                   className={`inline-flex h-10 items-center gap-2 rounded-md border px-3 text-sm font-medium transition-colors ${
                     filterLowStock
                       ? 'border-orange-300 bg-orange-50 text-orange-700'
@@ -1733,6 +1820,25 @@ export default function InventoryPage() {
                 </button>
               </div>
             </div>
+            {(filterLowStock || filterExpiring || filterCategory === 'Kitchen') && (
+              <div className="flex flex-wrap items-center gap-2">
+                {filterLowStock && (
+                  <button type="button" onClick={() => setFilterLowStock(false)} className="inline-flex items-center gap-1 rounded-full border border-orange-300 bg-orange-50 px-2.5 py-1 text-xs font-medium text-orange-800">
+                    Low stock <X size={12} />
+                  </button>
+                )}
+                {filterExpiring && (
+                  <button type="button" onClick={() => setFilterExpiring(false)} className="inline-flex items-center gap-1 rounded-full border border-orange-300 bg-orange-50 px-2.5 py-1 text-xs font-medium text-orange-800">
+                    Expiring within 30 days <X size={12} />
+                  </button>
+                )}
+                {filterCategory === 'Kitchen' && (
+                  <button type="button" onClick={() => setFilterCategory('All')} className="inline-flex items-center gap-1 rounded-full border border-pink-300 bg-pink-50 px-2.5 py-1 text-xs font-medium text-pink-800">
+                    Kitchen <X size={12} />
+                  </button>
+                )}
+              </div>
+            )}
             <div className="flex flex-wrap items-center gap-2 border-t pt-3">
               <input type="file" accept=".xlsx" ref={importInputRef} className="hidden" onChange={handleInventoryImportFile} />
               {can('inventory.import') && (
@@ -1762,7 +1868,7 @@ export default function InventoryPage() {
           </div>
 
           {/* Products Table */}
-          <div className="rounded-md border bg-card">
+          <div ref={productTableRef} className="scroll-mt-4 rounded-md border bg-card">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="[&_tr]:border-b">
@@ -1841,6 +1947,17 @@ export default function InventoryPage() {
                               <Tag size={10} /> {item.sku}
                               {item.supplier && <span className="ml-1.5 text-muted-foreground/60">via {item.supplier}</span>}
                             </span>
+                            {filterExpiring && (expiringBatchesByItem.get(item.id) ?? []).map((batch) => (
+                              <span key={`${batch.logId}-${batch.batchNumber}`} className="mt-1 block text-[11px] text-muted-foreground">
+                                <span className="font-medium text-foreground">Batch {batch.batchNumber || '—'}</span>
+                                {' · '}
+                                {batch.quantityRemaining.toLocaleString()} {item.unitOfMeasure} left
+                                {' · '}
+                                <span className={`inline-flex rounded px-1.5 py-0.5 text-[10px] font-medium ${getExpiryColor(batch.expiryDate)}`}>
+                                  {getExpiryLabel(batch.expiryDate)}
+                                </span>
+                              </span>
+                            ))}
                           </div>
                         </td>
                         <td className="p-4">
