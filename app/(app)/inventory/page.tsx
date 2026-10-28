@@ -834,7 +834,7 @@ export default function InventoryPage() {
     if (!viewingDetailsItem) return [];
     return detailApiBatches
       .map((b) => ({
-        logId: b.purchaseLogId ?? '',
+        logId: b.stockLogId ?? b.purchaseLogId ?? '',
         batchNumber: b.batchNumber,
         date: b.receivedDate ?? '',
         expiryDate: b.expiryDate,
@@ -2685,7 +2685,7 @@ export default function InventoryPage() {
                   ) : (
                     <div className="space-y-2">
                       {itemBatches.map((batch, idx) => {
-                        const isPurchaseBatch = !!batch.logId;
+                        const canEditBatchPrices = !!batch.logId;
                         const editing = batchPriceEdit?.logId === batch.logId;
                         const isSpent = batch.quantityRemaining <= 0;
                         return (
@@ -2713,7 +2713,7 @@ export default function InventoryPage() {
                           <div className="flex items-center justify-between text-xs gap-2 flex-wrap">
                             <div className="flex items-center gap-3 flex-wrap">
                               <span className="text-muted-foreground">Cost: <span className="font-bold text-foreground">&#8358;{fmtMoney(batch.unitCost)}</span></span>
-                              {isPurchaseBatch && (
+                              {canEditBatchPrices && (
                                 <span className="text-muted-foreground">Price: <span className="font-bold text-foreground">&#8358;{fmtMoney(batch.unitPrice)}</span></span>
                               )}
                               {batch.supplier && <span className="text-muted-foreground">via <span className="font-medium">{batch.supplier}</span></span>}
@@ -2724,7 +2724,7 @@ export default function InventoryPage() {
                                   {getExpiryLabel(batch.expiryDate)}
                                 </span>
                               )}
-                              {isPurchaseBatch && can('inventory.edit') && !editing && (
+                              {canEditBatchPrices && can('inventory.edit') && !editing && (
                                 <button
                                   type="button"
                                   className="text-xs font-medium text-primary hover:underline"
@@ -2741,7 +2741,7 @@ export default function InventoryPage() {
                               )}
                             </div>
                           </div>
-                          {isPurchaseBatch && editing && batchPriceEdit && (
+                          {canEditBatchPrices && editing && batchPriceEdit && (
                             <div className="mt-3 pt-3 border-t space-y-3">
                               <div className="grid grid-cols-2 gap-3">
                                 <div className="space-y-1">
