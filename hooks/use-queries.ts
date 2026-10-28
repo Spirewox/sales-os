@@ -1571,6 +1571,7 @@ export function useProductBatches(
         unitPrice: number;
         cartonPrice?: number;
         cartonWeight?: number;
+        stockLogId?: string;
         purchaseLogId?: string;
         expiryDate?: string;
         receivedDate?: string;
@@ -1591,6 +1592,7 @@ export function useProductBatches(
           unit_price?: number;
           carton_price?: number;
           carton_weight?: number;
+          stock_log_id?: string;
           purchase_log_id?: string;
           expiry_date?: string;
           received_date?: string;
@@ -1605,6 +1607,7 @@ export function useProductBatches(
         unitPrice: b.unit_price ?? 0,
         cartonPrice: b.carton_price ?? 0,
         cartonWeight: b.carton_weight ?? 0,
+        stockLogId: b.stock_log_id ?? b.purchase_log_id,
         purchaseLogId: b.purchase_log_id,
         expiryDate: b.expiry_date ? String(b.expiry_date).slice(0, 10) : undefined,
         receivedDate: b.received_date ? String(b.received_date).slice(0, 10) : undefined,
