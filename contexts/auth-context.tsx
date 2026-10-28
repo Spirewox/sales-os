@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useRef, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { AuthContextType } from '@/types';
 import { useWhoAmI } from '@/hooks/use-queries';
@@ -20,6 +20,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     isPending,
     refetch,
   } = useWhoAmI();
+
+  const scopeKey = user ? JSON.stringify([user.id, user.hubId, user.visibleHubIds, user.permissions, user.dataScope]) : '';
+  const previousScope = useRef(scopeKey);
+  useEffect(() => {
+    if (previousScope.current !== scopeKey) {
+      // Remove data from the previous user/scope instead of displaying it during refetch.
+      void queryClient.cancelQueries({ predicate: (query) => query.queryKey[0] !== 'whoami' }).then(() =>
+        queryClient.resetQueries({ predicate: (query) => query.queryKey[0] !== 'whoami' }));
+      previousScope.current = scopeKey;
+    }
+  }, [scopeKey, queryClient]);
 
   // Only block when there is no cached/resolved user yet
   const loading = isPending && !user;
@@ -41,7 +52,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       await axiosPost('auth/logout', {}, true);
     } finally {
       clearWhoAmICache();
-      queryClient.setQueryData(['whoami'], null);
+      queryClient.clear();
       router.push('/login');
     }
   };

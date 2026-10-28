@@ -4,6 +4,7 @@ import type { Customer, Sale, InventoryItem, Feedback, Enquiry } from '@/types';
 import type { CreditCustomerSummary } from '@/types/credits';
 
 export interface ApiUser {
+  visible_hub_ids?: string[];
   _id: string;
   full_name: string;
   email: string;
@@ -19,6 +20,7 @@ export interface ApiUser {
 }
 
 export interface AppUser {
+  visibleHubIds?: string[];
   id: string;
   name: string;
   email: string;

@@ -25,6 +25,7 @@ export function mapApiUser(u: ApiUser): AppUser {
   const hubName = u.hub?.name ?? null;
   return {
     id: u._id,
+    visibleHubIds: u.visible_hub_ids,
     name: u.full_name,
     email: u.email,
     phone: u.phone,

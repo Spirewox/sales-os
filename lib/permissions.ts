@@ -4,6 +4,8 @@ import { AppUser } from '@/types/api';
 export const ALL_PERMISSIONS = [
   'dashboard.view',
   'analytics.view',
+  'pos.view',
+  'pos.manage_tills',
   'inventory.view',
   'inventory.create',
   'inventory.edit',
@@ -64,6 +66,14 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
     icon: 'BarChart3',
     permissions: [
       { key: 'analytics.view', label: 'View analytics & reports' },
+    ],
+  },
+  {
+    label: 'POS',
+    icon: 'Monitor',
+    permissions: [
+      { key: 'pos.view', label: 'View tills & POS metrics' },
+      { key: 'pos.manage_tills', label: 'Register & revoke tills' },
     ],
   },
   {
@@ -156,6 +166,8 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
 export const PERMISSION_MAP: Record<Permission, string> = {
   'dashboard.view': 'view_dashboard',
   'analytics.view': 'view_analytics',
+  'pos.view': 'view_pos',
+  'pos.manage_tills': 'manage_pos_tills',
   'inventory.view': 'view_inventory',
   'inventory.create': 'create_sku',
   'inventory.edit': 'edit_product_detail',
@@ -201,6 +213,7 @@ export type RoleName = Agent['role'];
 export const DEFAULT_ROLE_PERMISSIONS: Record<RoleName, Permission[]> = {
   'Company Admin': [...ALL_PERMISSIONS],
   'Hub Manager': [
+    'pos.view',
     'dashboard.view',
     'analytics.view',
     'inventory.view', 'inventory.create', 'inventory.edit', 'inventory.adjust_stock', 'inventory.transfer', 'inventory.request', 'inventory.fulfill_requests', 'inventory.import', 'inventory.export',

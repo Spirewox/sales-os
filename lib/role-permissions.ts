@@ -11,6 +11,7 @@ import {
 export const BACKEND_MODULE_SUBMODULES: Record<string, string[]> = {
   dashboard: ['view_dashboard'],
   analytics: ['view_analytics'],
+  pos: ['view_pos', 'manage_pos_tills'],
   inventory: [
     'view_inventory',
     'create_sku',

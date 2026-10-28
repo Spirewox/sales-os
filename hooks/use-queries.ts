@@ -370,6 +370,7 @@ export function useWhoAmI() {
 
   return useQuery({
     queryKey: ['whoami'],
+    refetchInterval: 60_000,
     queryFn: async () => {
       const res = await axiosGet('auth/whoami', true) as ApiResponse<ApiUser>;
       const user = mapApiUser(res.data);
@@ -445,7 +446,8 @@ export function useHubs() {
   return useQuery({
     queryKey: ['hubs'],
     queryFn: fetchHubsList,
-    staleTime: HUBS_STALE_MS,
+    staleTime: 30_000,
+    refetchInterval: 60_000,
   });
 }
 
@@ -516,9 +518,9 @@ export type PosTillRow = {
   passkey: boolean;
 };
 
-export function usePosTills(hubId?: string) {
+export function usePosTills(hubId?: string, scopeKey?: string) {
   return useQuery({
-    queryKey: ['pos-tills', hubId],
+    queryKey: ['pos-tills', hubId, scopeKey],
     enabled: Boolean(hubId),
     queryFn: async () => {
       requireApi();
@@ -546,7 +548,9 @@ export function useRevokeTill() {
       requireApi();
       return axiosDelete(`hub/${hubId}/pos-devices/${encodeURIComponent(deviceId)}`, true);
     },
-    onSuccess: (_data, vars) => qc.invalidateQueries({ queryKey: ['pos-tills', vars.hubId] }),
+    onSuccess: async (_data, vars) => {
+      await Promise.all([qc.invalidateQueries({ queryKey: ['pos-tills', vars.hubId] }), qc.invalidateQueries({ queryKey: ['pos-overview'] })]);
+    },
   });
 }
 

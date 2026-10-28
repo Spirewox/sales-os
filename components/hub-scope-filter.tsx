@@ -87,7 +87,7 @@ export function HubScopeFilterBar({ scope, className = '' }: HubScopeFilterProps
         }`}
       >
         <Layers size={12} />
-        All Hubs
+        All permitted locations
       </button>
       {hubOptionsDetailed.map((hub) => (
         <button
@@ -145,7 +145,7 @@ export function HubScopeSelect({
       className={`w-fit ${className}`}
       icon={<MapPin size={14} className="text-primary" />}
       options={[
-        { value: 'All', label: 'All Hubs' },
+        { value: 'All', label: 'All permitted locations' },
         ...hubOptionsDetailed.map((hub) => ({ value: hub.name, label: hubOptionLabel(hub) })),
       ]}
     />

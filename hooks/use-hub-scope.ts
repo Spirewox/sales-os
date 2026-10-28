@@ -1,16 +1,18 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useDataScope } from '@/hooks/use-data-scope';
 import { useHubs } from '@/hooks/use-queries';
-import type { Hub } from '@/types';
 
 import { HAS_API } from '@/lib/require-api';
 
 export function useHubScopeFilter() {
-  const { canSwitchHubs, hubId, hubName } = useDataScope();
+  const { canSwitchHubs: isGlobal, hubId, hubName } = useDataScope();
   const { data: hubs = [] } = useHubs();
-  const activeHubs = useMemo(() => hubs.filter((h) => h.isActive), [hubs]);
+  // The API returns permitted locations. Also constrain cached results while a session changes.
+  const activeHubs = useMemo(() => hubs.filter((h) => h.isActive &&
+    (isGlobal || h.id === hubId || h.parentHubId === hubId)), [hubs, isGlobal, hubId]);
+  const canSwitchHubs = isGlobal || activeHubs.length > 1;
 
   const lockedHubName = useMemo(() => {
     if (hubName) return hubName;
@@ -21,15 +23,8 @@ export function useHubScopeFilter() {
     return activeHubs[0]?.name ?? '';
   }, [hubName, hubId, activeHubs]);
 
-  const [filterHub, setFilterHub] = useState<string>(() =>
-    canSwitchHubs ? 'All' : lockedHubName || 'All',
-  );
-
-  useEffect(() => {
-    if (!canSwitchHubs && lockedHubName) {
-      setFilterHub(lockedHubName);
-    }
-  }, [canSwitchHubs, lockedHubName]);
+  const [selectedHub, setFilterHub] = useState<string>('All');
+  const filterHub = activeHubs.some((h) => h.name === selectedHub) ? selectedHub : 'All';
 
   const hubIdForApi = useMemo(() => {
     if (!HAS_API || !canSwitchHubs || filterHub === 'All') return undefined;
@@ -54,9 +49,9 @@ export function useHubScopeFilter() {
   );
 
   const matchesHub = (locationName: string | undefined) =>
-    filterHub === 'All' || !locationName || locationName === filterHub;
+    filterHub === 'All' || locationName === filterHub;
 
-  const defaultHubName = canSwitchHubs
+  const defaultHubName = isGlobal
     ? activeHubs[0]?.name ?? lockedHubName
     : lockedHubName;
 

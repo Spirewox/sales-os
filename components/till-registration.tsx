@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { useCreateTillCode, usePosTills, useRevokeTill } from '@/hooks/use-queries';
+import { usePermissions } from '@/hooks/use-permissions';
+import { useAuth } from '@/contexts/auth-context';
 
 export function TillRegistration({
   hubId,
@@ -13,7 +15,10 @@ export function TillRegistration({
   hubName: string;
   onClose: () => void;
 }) {
-  const tills = usePosTills(hubId);
+  const { can } = usePermissions();
+  const { user } = useAuth();
+  const canManage = can('pos.manage_tills');
+  const tills = usePosTills(hubId, JSON.stringify([user?.id, user?.visibleHubIds, user?.permissions]));
   const createCode = useCreateTillCode();
   const revoke = useRevokeTill();
   const [issued, setIssued] = useState<{ code: string; expiresAt: string } | null>(null);
@@ -35,21 +40,23 @@ export function TillRegistration({
           <p className="mt-0.5 text-xs text-muted-foreground">A new till stays closed until someone enters a code on that device and creates its passkey.</p>
         </div>
         <div className="flex gap-2">
-          <button type="button" onClick={() => void issue()} disabled={createCode.isPending} className="h-9 rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground disabled:opacity-50">
+          {canManage && <button type="button" onClick={() => void issue()} disabled={createCode.isPending} className="h-9 rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground disabled:opacity-50">
             {createCode.isPending ? 'Creating…' : 'New registration code'}
-          </button>
+          </button>}
           <button type="button" onClick={onClose} className="h-9 rounded-md border px-3 text-sm">Close</button>
         </div>
       </div>
 
-      {issued && (
+      {canManage && issued && (
         <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
           <p className="text-xs text-muted-foreground">Show this code once. It can be used on one till and expires {new Date(issued.expiresAt).toLocaleString()}.</p>
           <p className="mt-2 font-mono text-2xl font-black tracking-[0.25em]">{issued.code}</p>
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-lg border">
+      {tills.isPending && <p role="status" className="text-sm text-muted-foreground">Loading tills…</p>}
+      {tills.isError && <div role="alert" className="text-sm text-destructive">{tills.error.message} <button type="button" className="underline" onClick={() => void tills.refetch()}>Retry</button></div>}
+      <div className="relative overflow-x-auto rounded-lg border">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b bg-muted/40 text-left text-xs text-muted-foreground">
@@ -69,7 +76,7 @@ export function TillRegistration({
                 <td className="p-3">{till.passkey ? 'Yes' : 'Not yet'}</td>
                 <td className="p-3 text-muted-foreground">{till.lastSeen ? new Date(till.lastSeen).toLocaleString() : '—'}</td>
                 <td className="p-3 text-right">
-                  <button
+                  {canManage && <button
                     type="button"
                     className="text-xs text-destructive hover:underline"
                     disabled={revoke.isPending}
@@ -81,7 +88,7 @@ export function TillRegistration({
                     }}
                   >
                     Revoke
-                  </button>
+                  </button>}
                 </td>
               </tr>
             ))}
