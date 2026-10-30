@@ -85,7 +85,7 @@ function money(n: number): number {
   return Math.round((Number(n) || 0) * 100) / 100;
 }
 
-/** Same rule as the API: amount + discount must equal the selected batch price times quantity. */
+/** Same rule as the API: amount + discount must equal the selected SKU price times quantity. */
 export function catalogBatchPriceError(args: {
   batchUnitPrice: number;
   unitOfMeasure?: string;
@@ -119,9 +119,9 @@ export function catalogBatchPriceError(args: {
   }
   if (unitPrice == null) {
     if (byCarton) {
-      return `Batch ${args.batchNumber} has no carton selling price.`;
+      return `This SKU has no carton selling price.`;
     }
-    return `Batch ${args.batchNumber} has no selling price.`;
+    return `This SKU has no selling price.`;
   }
   const listTotal = money(unitPrice * args.quantity);
   const amount = money(args.amount);
@@ -131,16 +131,16 @@ export function catalogBatchPriceError(args: {
   const gap = money(listTotal - amount);
   if (amount < 0) return 'Sale amount cannot be negative.';
   if (discount > listTotal) {
-    return `Discount cannot be more than the batch price times quantity (${fmt(listTotal)}).`;
+    return `Discount cannot be more than the SKU price times quantity (${fmt(listTotal)}).`;
   }
   if (paid > listTotal) {
-    return `Amount paid cannot be more than the batch price times quantity (${fmt(listTotal)}).`;
+    return `Amount paid cannot be more than the SKU price times quantity (${fmt(listTotal)}).`;
   }
   if (amount > listTotal) {
-    return `Sale amount cannot be more than the batch price times quantity (${fmt(listTotal)}).`;
+    return `Sale amount cannot be more than the SKU price times quantity (${fmt(listTotal)}).`;
   }
   if (combined > listTotal) {
-    return `Sale amount plus discount cannot be more than the batch price times quantity (${fmt(listTotal)}).`;
+    return `Sale amount plus discount cannot be more than the SKU price times quantity (${fmt(listTotal)}).`;
   }
   if (combined !== listTotal) {
     if (args.paymentMode === PaymentMode.FULL_PAYMENT) {
@@ -149,7 +149,7 @@ export function catalogBatchPriceError(args: {
         : paid < listTotal
           ? 'or change Full Payment to Partial Credit'
           : 'or change the payment mode';
-      return `This sale is ${fmt(gap)} below the batch price of ${fmt(listTotal)}. Add a discount of ${fmt(gap)} so the total matches, ${modeHint}.`;
+      return `This sale is ${fmt(gap)} below the SKU price of ${fmt(listTotal)}. Add a discount of ${fmt(gap)} so the total matches, ${modeHint}.`;
     }
     return `Sale amount plus discount must equal the batch total of ${fmt(listTotal)}. Set the sale amount to ${fmt(listTotal)}, or enter a discount for the difference.`;
   }

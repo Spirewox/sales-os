@@ -161,7 +161,7 @@ export function SalesImportModal({
             <>
               <p><strong>All dates:</strong> product_name + quantity required; product must match the fulfillment hub catalog.</p>
               <p><strong>Live (today+):</strong> amount from catalog price. <strong>Historical:</strong> amount from the sheet.</p>
-              <p>When stock tracking is on, batch_number is required for live and historical catalog rows.</p>
+              <p>Catalog sales use SKU prices and allocate stock automatically using FIFO. No batch selection is required.</p>
               <p>Follow the Instructions sheet in the downloaded template for stock/batch rules.</p>
             </>
           )}

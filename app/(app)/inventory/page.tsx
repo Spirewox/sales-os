@@ -208,9 +208,6 @@ function buildFifoBatches(
     const targetBatch = (log.batchNumber || '').trim();
     // FEFO: sort by expiry date first (soonest first), then by date received (FIFO)
     const sortedBatches = [...batches].sort((a, b) => {
-      if (a.expiryDate && b.expiryDate) return a.expiryDate.localeCompare(b.expiryDate);
-      if (a.expiryDate) return -1;
-      if (b.expiryDate) return 1;
       return a.date.localeCompare(b.date);
     });
     const pool = targetBatch
@@ -254,9 +251,6 @@ function getFifoCostForSale(allLogs: StockLog[], itemId: string, saleQty: number
   const batches = buildFifoBatches(allLogs, itemId);
   // FEFO sort
   batches.sort((a, b) => {
-    if (a.expiryDate && b.expiryDate) return a.expiryDate.localeCompare(b.expiryDate);
-    if (a.expiryDate) return -1;
-    if (b.expiryDate) return 1;
     return a.date.localeCompare(b.date);
   });
   let remaining = saleQty;
@@ -841,9 +835,6 @@ export default function InventoryPage() {
         supplier: b.supplier,
       }))
       .sort((a, b) => {
-        if (a.expiryDate && b.expiryDate) return a.expiryDate.localeCompare(b.expiryDate);
-        if (a.expiryDate) return -1;
-        if (b.expiryDate) return 1;
         return a.date.localeCompare(b.date);
       });
   }, [viewingDetailsItem, detailApiBatches]);
@@ -1117,6 +1108,8 @@ export default function InventoryPage() {
       unit_of_measure: editProduct.unitOfMeasure,
       min_stock_level: editProduct.minStockLevel,
       carton_weight: editProduct.cartonWeight,
+      base_selling_price: roundMoney2(editProduct.baseSellingPrice ?? original.baseSellingPrice),
+      carton_price: editProduct.unitOfMeasure === 'Cartons' ? roundMoney2(editProduct.cartonPrice ?? original.cartonPrice ?? 0) : undefined,
       ...(hub?.id ? { hub_id: hub.id } : {}),
       ...(stockChanged
         ? {
@@ -1143,6 +1136,8 @@ export default function InventoryPage() {
     pushChange('UOM', original.unitOfMeasure, editProduct.unitOfMeasure);
     pushChange('Min stock', original.minStockLevel, editProduct.minStockLevel);
     pushChange('Location', original.location, editProduct.location || original.location);
+    pushChange('Selling price (all batches)', original.baseSellingPrice, editProduct.baseSellingPrice, true);
+    pushChange('Carton selling price (all batches)', original.cartonPrice, editProduct.cartonPrice, true);
     pushChange('Carton weight', original.cartonWeight, editProduct.cartonWeight);
     if (stockChanged) {
       pushChange('Current stock', original.currentStock, nextStock);
@@ -1204,11 +1199,11 @@ export default function InventoryPage() {
         toast.error('Carton cost is required.');
         return;
       }
-      if (!(moveData.unitPrice > 0)) {
+      if (!(selectedProduct.baseSellingPrice > 0)) {
         toast.error('Unit selling price (per kg) is required.');
         return;
       }
-      if (!(moveData.cartonPrice > 0)) {
+      if (!(Number(selectedProduct.cartonPrice) > 0)) {
         toast.error('Carton selling price is required.');
         return;
       }
@@ -1231,7 +1226,7 @@ export default function InventoryPage() {
     const unitCost = kgStockFromCarton
       ? roundMoney2(moveData.unitCost / cartonWeight)
       : roundMoney2(moveData.unitCost || selectedProduct.avgUnitCost);
-    const unitPrice = roundMoney2(moveData.unitPrice || selectedProduct.baseSellingPrice);
+    const unitPrice = roundMoney2(selectedProduct.baseSellingPrice);
     const stockAfter = roundQty2((selectedProduct.currentStock || 0) + stockQty);
     const payload = {
       item_id: selectedProduct.id,
@@ -1239,7 +1234,7 @@ export default function InventoryPage() {
       quantity: stockQty,
       unit_cost: unitCost,
       unit_price: unitPrice,
-      carton_price: cartonFields ? roundMoney2(moveData.cartonPrice) : undefined,
+      carton_price: cartonFields ? roundMoney2(selectedProduct.cartonPrice || 0) : undefined,
       carton_weight: cartonFields || needsPurchaseCartonWeight(selectedProduct, purchaseUom)
         ? cartonWeight
         : undefined,
@@ -2711,7 +2706,7 @@ export default function InventoryPage() {
                             <div className="flex items-center gap-3 flex-wrap">
                               <span className="text-muted-foreground">Cost: <span className="font-bold text-foreground">&#8358;{fmtMoney(batch.unitCost)}</span></span>
                               {canEditBatchPrices && (
-                                <span className="text-muted-foreground">Price: <span className="font-bold text-foreground">&#8358;{fmtMoney(batch.unitPrice)}</span></span>
+                                <span className="text-muted-foreground">Price: <span className="font-bold text-foreground">&#8358;{fmtMoney(viewingDetailsItem.baseSellingPrice)}</span></span>
                               )}
                               {batch.supplier && <span className="text-muted-foreground">via <span className="font-medium">{batch.supplier}</span></span>}
                             </div>
@@ -2733,7 +2728,7 @@ export default function InventoryPage() {
                                     })
                                   }
                                 >
-                                  Edit prices
+                                  Edit cost
                                 </button>
                               )}
                             </div>
@@ -2754,19 +2749,7 @@ export default function InventoryPage() {
                                     className={inputCls}
                                   />
                                 </div>
-                                <div className="space-y-1">
-                                  <label className={labelCls}>Unit price (₦)</label>
-                                  <input
-                                    type="number"
-                                    min={0}
-                                    step="0.01"
-                                    value={batchPriceEdit.unitPrice}
-                                    onChange={(e) =>
-                                      setBatchPriceEdit({ ...batchPriceEdit, unitPrice: e.target.value })
-                                    }
-                                    className={inputCls}
-                                  />
-                                </div>
+
                               </div>
                               <div className="flex justify-end gap-2">
                                 <button
@@ -2783,7 +2766,7 @@ export default function InventoryPage() {
                                     const unit_cost = roundMoney2(parseMoneyInput(batchPriceEdit.unitCost));
                                     const unit_price = roundMoney2(parseMoneyInput(batchPriceEdit.unitPrice));
                                     setConfirmPreview({
-                                      title: 'Review batch prices',
+                                      title: 'Review batch cost',
                                       subtitle: batch.batchNumber
                                         ? `Batch ${batch.batchNumber}`
                                         : viewingDetailsItem?.name,
@@ -2793,19 +2776,15 @@ export default function InventoryPage() {
                                           label: 'Unit cost',
                                           value: `₦${fmtMoney(batch.unitCost)} → ₦${fmtMoney(unit_cost)}`,
                                         },
-                                        {
-                                          label: 'Unit price',
-                                          value: `₦${fmtMoney(batch.unitPrice)} → ₦${fmtMoney(unit_price)}`,
-                                        },
                                       ],
-                                      confirmLabel: 'Update prices',
+                                      confirmLabel: 'Update cost',
                                       run: () => {
                                         updatePurchaseBatch.mutate(
-                                          { logId: batch.logId, unit_cost, unit_price },
+                                          { logId: batch.logId, unit_cost },
                                           {
                                             onSuccess: () => {
                                               setBatchPriceEdit(null);
-                                              toast.success('Batch prices updated.');
+                                              toast.success('Batch cost updated.');
                                             },
                                             onError: (err) => toast.error(err.message),
                                           },
@@ -2814,7 +2793,7 @@ export default function InventoryPage() {
                                     });
                                   }}
                                 >
-                                  Review prices
+                                  Review cost
                                 </button>
                               </div>
                             </div>
@@ -3358,6 +3337,15 @@ export default function InventoryPage() {
                   <input type="text" readOnly disabled value={editProduct.location || hubScope.hubName} className={`${inputCls} opacity-80 cursor-not-allowed`} />
                 )}
               </div>
+              <div className="space-y-2">
+                <label className={labelCls}>Selling price (₦){editProduct.unitOfMeasure === 'Cartons' ? ' per Kg' : ''}</label>
+                <input type="number" min={0} step="0.01" value={editProduct.baseSellingPrice ?? ''} onChange={event => setEditProduct({ ...editProduct, baseSellingPrice: parseMoneyInput(event.target.value) })} className={inputCls} />
+                <p className="text-[11px] text-muted-foreground">Applies to all available batches of this SKU.</p>
+              </div>
+              {editProduct.unitOfMeasure === 'Cartons' && <div className="space-y-2">
+                <label className={labelCls}>Carton selling price (₦)</label>
+                <input type="number" min={0} step="0.01" value={editProduct.cartonPrice ?? ''} onChange={event => setEditProduct({ ...editProduct, cartonPrice: parseMoneyInput(event.target.value) })} className={inputCls} />
+              </div>}
               {editProduct.unitOfMeasure === 'Cartons' && (
                 <div className="space-y-2">
                   <label className={labelCls}>Carton Weight (Kg) *</label>
@@ -3371,7 +3359,7 @@ export default function InventoryPage() {
                     className={inputCls}
                   />
                   <p className="text-[11px] text-muted-foreground">
-                    Cost and selling price are edited on each purchase batch.
+                    Selling prices apply to every batch of this SKU. Batch costs stay attached to receipts.
                   </p>
                 </div>
               )}
@@ -3515,13 +3503,13 @@ export default function InventoryPage() {
                 </div>
                 <div className="space-y-2">
                   <label className={labelCls}>
-                    {purchaseUom === 'Carton' || isCartonsUom(selectedProduct.unitOfMeasure) ? 'Unit selling price (₦) *' : 'Selling Price (₦)'}
+                    {purchaseUom === 'Carton' || isCartonsUom(selectedProduct.unitOfMeasure) ? 'SKU selling price per Kg (₦)' : 'SKU selling price (₦)'}
                   </label>
                   <input
                     type="number"
                     min={0}
                     step="0.01"
-                    value={moveData.unitPrice || ''}
+                    readOnly value={selectedProduct.baseSellingPrice || ''}
                     placeholder={purchaseUom === 'Carton' || isCartonsUom(selectedProduct.unitOfMeasure) ? 'Price per Kg' : undefined}
                     onChange={(e) => {
                       if (!acceptDecimal2(e.target.value)) return;
@@ -3540,7 +3528,7 @@ export default function InventoryPage() {
                       type="number"
                       min={0.01}
                       step="0.01"
-                      value={moveData.cartonPrice || ''}
+                      readOnly value={selectedProduct.cartonPrice || ''}
                       onChange={(e) => {
                         if (!acceptDecimal2(e.target.value)) return;
                         setMoveData({ ...moveData, cartonPrice: parseMoneyInput(e.target.value) });

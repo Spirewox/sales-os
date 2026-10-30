@@ -426,6 +426,7 @@ export interface Sale {
     stockQuantity?: number;
     category?: string;
     batchNumber?: string;
+    batchAllocations?: { batchNumber: string; quantity: number; unitCost: number }[];
     unitCost?: number;
     unitPrice?: number;
   };
