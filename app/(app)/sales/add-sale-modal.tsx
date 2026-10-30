@@ -307,15 +307,15 @@ export function AddSaleModal({
             {selectedInventoryItem && !isMealSale && (
               <div className="flex items-center gap-3 text-xs text-muted-foreground">
                 <span>Catalog ref: {selectedInventoryItem.currentStock} {selectedInventoryItem.unitOfMeasure} on hand (informational)</span>
-                {isCartonProduct && (selectedBatch?.cartonWeight || selectedInventoryItem.cartonWeight) ? (
+                {isCartonProduct && (selectedInventoryItem.cartonWeight) ? (
                   <span>&middot; {selectedBatch?.cartonWeight || selectedInventoryItem.cartonWeight} Kg / carton</span>
                 ) : null}
                 <span>
                   &middot;{' '}
                   {isCartonProduct
                     ? selectedBatch
-                      ? `${fmt(listUnitPriceForSale(selectedInventoryItem, 'Carton', selectedBatch))}/Carton · ${fmt(listUnitPriceForSale(selectedInventoryItem, 'Kg', selectedBatch))}/Kg (batch)`
-                      : `${fmt(selectedInventoryItem.cartonPrice ?? 0)}/Carton · ${fmt(selectedInventoryItem.baseSellingPrice)}/Kg (avg)`
+                      ? `${fmt(listUnitPriceForSale(selectedInventoryItem, 'Carton', selectedBatch))}/Carton · ${fmt(listUnitPriceForSale(selectedInventoryItem, 'Kg', selectedBatch))}/Kg (SKU)`
+                      : `${fmt(selectedInventoryItem.cartonPrice ?? 0)}/Carton · ${fmt(selectedInventoryItem.baseSellingPrice)}/Kg (SKU)`
                     : isVolumeProduct
                       ? selectedBatch
                         ? volumeUnitOptions(selectedInventoryItem.unitOfMeasure)
@@ -323,16 +323,16 @@ export function AddSaleModal({
                               (u) =>
                                 `${fmt(listUnitPriceForSale(selectedInventoryItem, u, selectedBatch))}/${u}`,
                             )
-                            .join(' · ') + ' (batch)'
+                            .join(' · ') + ' (SKU)'
                         : volumeUnitOptions(selectedInventoryItem.unitOfMeasure)
                             .map(
                               (u) =>
                                 `${fmt(listUnitPriceForSale(selectedInventoryItem, u, null))}/${u}`,
                             )
-                            .join(' · ') + ' (avg)'
+                            .join(' · ') + ' (SKU)'
                       : selectedBatch
-                        ? `${fmt(listUnitPriceForSale(selectedInventoryItem, '', selectedBatch))}/${selectedInventoryItem.unitOfMeasure} (batch)`
-                        : `${fmt(selectedInventoryItem.baseSellingPrice)}/${selectedInventoryItem.unitOfMeasure} (avg)`}
+                        ? `${fmt(listUnitPriceForSale(selectedInventoryItem, '', selectedBatch))}/${selectedInventoryItem.unitOfMeasure} (SKU)`
+                        : `${fmt(selectedInventoryItem.baseSellingPrice)}/${selectedInventoryItem.unitOfMeasure} (SKU)`}
                 </span>
                 {selectedInventoryItem.currentStock <= selectedInventoryItem.minStockLevel && (
                   <span className="text-red-500 font-medium flex items-center gap-1"><AlertTriangle size={10} /> Low stock</span>
@@ -341,42 +341,7 @@ export function AddSaleModal({
             )}
           </div>
 
-          {!isMealSale && selectedProductId && (
-            <div className="space-y-2">
-              <label htmlFor="sale-batch" className={LABEL_CLS}>Batch *</label>
-              <select
-                id="sale-batch"
-                value={selectedBatchNumber}
-                onChange={(e) => handleBatchChange(e.target.value)}
-                className={`${INPUT_CLS} ${touched.batchNumber && validationErrors.batchNumber ? 'border-red-500' : ''}`}
-                disabled={batchesLoading || productBatches.length === 0}
-              >
-                <option value="">
-                  {batchesLoading
-                    ? 'Loading batches…'
-                    : productBatches.length === 0
-                      ? 'No open batches — record a Purchase first'
-                      : '-- Select batch --'}
-                </option>
-                {productBatches.map((b) => (
-                  <option key={b.batchNumber} value={b.batchNumber}>
-                    {b.batchNumber}
-                    {` · ${b.quantityRemaining} ${b.uom || selectedInventoryItem?.unitOfMeasure || ''} left`}
-                    {b.cartonPrice && b.cartonPrice > 0 ? ` · carton ${fmt(b.cartonPrice)}` : ''}
-                    {b.unitPrice > 0 ? ` · list ${fmt(b.unitPrice)}` : ''}
-                    {b.expiryDate ? ` · exp ${b.expiryDate}` : ''}
-                    {b.supplier ? ` · ${b.supplier}` : ''}
-                  </option>
-                ))}
-              </select>
-              {touched.batchNumber && validationErrors.batchNumber && (
-                <p className="text-xs text-red-500">{validationErrors.batchNumber}</p>
-              )}
-              <p className="text-[11px] text-muted-foreground">
-                Stock is deducted from the selected purchase batch only.
-              </p>
-            </div>
-          )}
+          {!isMealSale && selectedProductId && <p className="text-xs text-muted-foreground">Stock is allocated automatically from the oldest receipts (FIFO).</p>}
 
           {/* Quantity, sale unit & Amount */}
           <div className={`grid grid-cols-1 ${(isCartonProduct || isVolumeProduct) && !isMealSale ? 'sm:grid-cols-3' : 'sm:grid-cols-2'} gap-4`}>
@@ -467,7 +432,7 @@ export function AddSaleModal({
                       List: {quantity} {saleUnit || selectedInventoryItem.unitOfMeasure} &times;{' '}
                       {fmt(unitPrice)} ={' '}
                       <span className="font-medium text-foreground">{fmt(listTotal)}</span>
-                      {selectedBatch ? ' (batch)' : ''}
+                      {selectedBatch ? ' (SKU)' : ''}
                     </span>
                     {underList && (
                       <span className="text-amber-700 font-medium">

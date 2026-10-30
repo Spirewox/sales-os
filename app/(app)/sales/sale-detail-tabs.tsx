@@ -230,7 +230,7 @@ function OverviewTab({
         ) : (
           <div className="text-sm space-y-1">
             <p><span className="text-muted-foreground">Name:</span> {sale.item?.productName || '—'}</p>
-            <p><span className="text-muted-foreground">Batch:</span> {sale.item?.batchNumber || '—'}</p>
+            <p><span className="text-muted-foreground">Batch:</span> {sale.item?.batchAllocations?.map(allocation => `${allocation.batchNumber}: ${allocation.quantity}`).join(', ') || sale.item?.batchNumber || '—'}</p>
             <p><span className="text-muted-foreground">Quantity:</span> {sale.item?.quantity ?? '—'}</p>
             <p><span className="text-muted-foreground">Unit:</span> {sale.item?.unit || '—'}</p>
             <p><span className="text-muted-foreground">Category:</span> {sale.item?.category || '—'}</p>
@@ -244,7 +244,7 @@ function OverviewTab({
                 )}
                 {sale.item?.unitPrice != null && (
                   <p>
-                    <span className="text-muted-foreground">Batch list price:</span>{' '}
+                    <span className="text-muted-foreground">Recorded SKU price:</span>{' '}
                     {fmt(sale.item.unitPrice)}
                     {sale.item.saleUnit !== 'Carton' &&
                     sale.item.quantity != null &&
