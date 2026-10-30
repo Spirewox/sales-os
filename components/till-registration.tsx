@@ -1,5 +1,6 @@
 'use client';
 
+import { PosPaymentSettings } from '@/components/pos-payment-settings';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { useCreateTillCode, usePosTills, useRevokeTill } from '@/hooks/use-queries';
@@ -54,6 +55,7 @@ export function TillRegistration({
         </div>
       )}
 
+      {user?.roleName === 'company_admin' && <PosPaymentSettings hubId={hubId} />}
       {tills.isPending && <p role="status" className="text-sm text-muted-foreground">Loading tills…</p>}
       {tills.isError && <div role="alert" className="text-sm text-destructive">{tills.error.message} <button type="button" className="underline" onClick={() => void tills.refetch()}>Retry</button></div>}
       <div className="relative overflow-x-auto rounded-lg border">
