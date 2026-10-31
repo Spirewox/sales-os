@@ -247,13 +247,6 @@ export function AddSaleModal({
             </div>
           )}
 
-          {!isMealSale && (
-            <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-800">
-              {isHistoricalSale
-                ? 'Historical sales must use a catalog product on the fulfillment hub so inventory stays linked.'
-                : 'Select a catalog product and batch. Inventory is deducted when stock tracking is enabled.'}
-            </div>
-          )}
           {isMealSale && (
             <div className="rounded-md border border-pink-200 bg-pink-50 p-3 text-sm text-pink-900">
               Meal sale — category Kitchen, unit Food plate.
