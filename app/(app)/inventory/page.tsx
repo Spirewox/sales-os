@@ -2357,17 +2357,17 @@ export default function InventoryPage() {
                   </div>
 
                   {/* Margin */}
-                  <div className={`p-4 rounded-md border ${itemMargin < 0 ? 'bg-red-50 border-red-200' : itemMargin < 15 ? 'bg-amber-50 border-amber-200' : 'bg-green-50 border-green-200'}`}>
+                  <div className={`p-4 rounded-md border ${itemMargin < 0 ? 'bg-red-50 border-red-200 text-red-800' : itemMargin < 15 ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-green-50 border-green-200 text-green-800'}`}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Percent size={16} className={itemMargin < 0 ? 'text-red-600' : itemMargin < 15 ? 'text-amber-600' : 'text-green-600'} />
+                        <Percent size={16} />
                         <span className="text-sm font-medium">Margin</span>
                       </div>
-                      <span className={`text-lg font-bold ${itemMargin < 0 ? 'text-red-600' : itemMargin < 15 ? 'text-amber-600' : 'text-green-600'}`}>
+                      <span className="text-lg font-bold">
                         {itemMargin.toFixed(1)}%
                       </span>
                     </div>
-                    {itemMargin < 0 && <p className="text-xs text-red-600 mt-1 font-medium">Warning: Selling below cost!</p>}
+                    {itemMargin < 0 && <p className="text-xs mt-1 font-medium">Warning: Selling below cost!</p>}
                   </div>
 
                   <div className="grid grid-cols-2 gap-4 text-sm">
