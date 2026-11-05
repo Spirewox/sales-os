@@ -1202,11 +1202,11 @@ export default function InventoryPage() {
         toast.error('Carton cost is required.');
         return;
       }
-      if (!(selectedProduct.baseSellingPrice > 0)) {
+      if (!(moveData.unitPrice > 0)) {
         toast.error('Unit selling price (per kg) is required.');
         return;
       }
-      if (!(Number(selectedProduct.cartonPrice) > 0)) {
+      if (!(moveData.cartonPrice > 0)) {
         toast.error('Carton selling price is required.');
         return;
       }
@@ -1229,7 +1229,7 @@ export default function InventoryPage() {
     const unitCost = kgStockFromCarton
       ? roundMoney2(moveData.unitCost / cartonWeight)
       : roundMoney2(moveData.unitCost || selectedProduct.avgUnitCost);
-    const unitPrice = roundMoney2(selectedProduct.baseSellingPrice);
+    const unitPrice = roundMoney2(moveData.unitPrice);
     const stockAfter = roundQty2((selectedProduct.currentStock || 0) + stockQty);
     const payload = {
       item_id: selectedProduct.id,
@@ -1237,7 +1237,7 @@ export default function InventoryPage() {
       quantity: stockQty,
       unit_cost: unitCost,
       unit_price: unitPrice,
-      carton_price: cartonFields ? roundMoney2(selectedProduct.cartonPrice || 0) : undefined,
+      carton_price: cartonFields ? roundMoney2(moveData.cartonPrice) : undefined,
       carton_weight: cartonFields || needsPurchaseCartonWeight(selectedProduct, purchaseUom)
         ? cartonWeight
         : undefined,
@@ -3512,7 +3512,7 @@ export default function InventoryPage() {
                     type="number"
                     min={0}
                     step="0.01"
-                    readOnly value={selectedProduct.baseSellingPrice || ''}
+                    value={moveData.unitPrice || ''}
                     placeholder={purchaseUom === 'Carton' || isCartonsUom(selectedProduct.unitOfMeasure) ? 'Price per Kg' : undefined}
                     onChange={(e) => {
                       if (!acceptDecimal2(e.target.value)) return;
@@ -3523,6 +3523,7 @@ export default function InventoryPage() {
                 </div>
               </div>
 
+              <p className="text-xs text-muted-foreground">Selling price changes apply to all batches of this SKU when you confirm the purchase.</p>
               {(purchaseUom === 'Carton' || isCartonsUom(selectedProduct.unitOfMeasure)) && (
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -3531,7 +3532,7 @@ export default function InventoryPage() {
                       type="number"
                       min={0.01}
                       step="0.01"
-                      readOnly value={selectedProduct.cartonPrice || ''}
+                      value={moveData.cartonPrice || ''}
                       onChange={(e) => {
                         if (!acceptDecimal2(e.target.value)) return;
                         setMoveData({ ...moveData, cartonPrice: parseMoneyInput(e.target.value) });
