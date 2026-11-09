@@ -82,7 +82,7 @@ export default function EngagementPage() {
   }
 
   return (
-    <div className="space-y-6 p-6 md:p-8">
+    <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-black tracking-tight flex items-center gap-2">
@@ -130,19 +130,19 @@ export default function EngagementPage() {
         />
       </div>
 
-      <div className="rounded-xl border overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="rounded-md border bg-card">
+        <div className="relative w-full overflow-auto">
           <table className="w-full text-sm">
-            <thead className="bg-muted/40 text-left text-[11px] uppercase tracking-wide text-muted-foreground">
-              <tr>
-                <th className="p-3 font-semibold">Customer</th>
-                <th className="p-3 font-semibold">Phone</th>
-                <th className="p-3 font-semibold">Hub</th>
-                <th className="p-3 font-semibold">Loyalty</th>
-                <th className="p-3 font-semibold">Activity</th>
-                <th className="p-3 font-semibold">Days late</th>
-                <th className="p-3 font-semibold">Recommended action</th>
-                <th className="p-3 font-semibold" />
+            <thead className="[&_tr]:border-b bg-muted/40 text-left text-[11px] uppercase tracking-wide text-muted-foreground">
+              <tr className="border-b">
+                <th className="h-12 px-4 font-medium">Customer</th>
+                <th className="h-12 px-4 font-medium">Phone</th>
+                <th className="h-12 px-4 font-medium">Hub</th>
+                <th className="h-12 px-4 font-medium">Loyalty</th>
+                <th className="h-12 px-4 font-medium">Activity</th>
+                <th className="h-12 px-4 font-medium">Days late</th>
+                <th className="h-12 px-4 font-medium">Recommended action</th>
+                <th className="h-12 px-4 font-medium" />
               </tr>
             </thead>
             <tbody>
@@ -205,7 +205,7 @@ export default function EngagementPage() {
                         vs ~{Math.round(row.avgInterval) || '—'}d cadence
                       </p>
                     </td>
-                    <td className="p-3 max-w-[320px] text-muted-foreground leading-snug">
+                    <td className="p-3 text-muted-foreground leading-snug">
                       {row.recommendedAction}
                     </td>
                     <td className="p-3">
