@@ -619,8 +619,23 @@ export default function CustomersPage() {
     const biggest = asc.reduce((m, s) => (s.amount > m.amount ? s : m), asc[0]);
 
     let rec = { tone: 'neutral' as 'good' | 'warn' | 'neutral', text: '' };
-    if (activity === 'Dormant') rec = { tone: 'warn', text: `No order in ${daysSinceLast} days (usually every ~${Math.round(avgInterval) || '—'}). Win-back outreach recommended.` };
-    else if (activity === 'At Risk') rec = { tone: 'warn', text: `Overdue for a reorder — ${daysSinceLast} days since last vs ~${Math.round(avgInterval)}-day cadence. Follow up now.` };
+    const cadenceDays = Math.round(avgInterval);
+    const hasCadence = cadenceDays > 0;
+    if (activity === 'Dormant') {
+      rec = {
+        tone: 'warn',
+        text: hasCadence
+          ? `No order in ${daysSinceLast} days (usually every ~${cadenceDays}). Win-back outreach recommended.`
+          : `No order in ${daysSinceLast} days. Win-back outreach recommended.`,
+      };
+    } else if (activity === 'At Risk') {
+      rec = {
+        tone: 'warn',
+        text: hasCadence
+          ? `Overdue for a reorder — ${daysSinceLast} days since last vs ~${cadenceDays}-day cadence. Follow up now.`
+          : `No reorder in ${daysSinceLast} days. Follow up now.`,
+      };
+    }
     else if (trend === 'Growing' && totalSpent >= 200000) rec = { tone: 'good', text: `Spend up ${trendPct}% recently — strong account. Upsell higher-margin lines or offer priority delivery.` };
     else if (regularity === 'Regular') rec = { tone: 'good', text: `Predictable buyer (~every ${Math.round(avgInterval)} days). Good candidate for a standing order or subscription.` };
     else if (trend === 'Declining') rec = { tone: 'warn', text: `Spend down ${Math.abs(trendPct)}% vs prior quarter. Check satisfaction and re-engage.` };
