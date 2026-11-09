@@ -246,6 +246,7 @@ export interface ApiSaleItem {
   unit?: string;
   sale_unit?: 'Carton' | 'Kg' | 'Liters' | 'ml';
   stock_quantity?: number;
+  sale_weight_kg?: number;
   category?: string;
   batch_number?: string;
   unit_cost?: number;

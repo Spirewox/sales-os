@@ -881,6 +881,47 @@ export type CustomerExportFilters = {
   max_orders?: number;
 };
 
+export type EngagementCustomer = {
+  id: string;
+  name: string;
+  phone?: string;
+  hub: string;
+  loyalty: string;
+  loyaltyGrade: string | null;
+  activity: 'At Risk' | 'Dormant';
+  daysSinceLast: number;
+  avgInterval: number;
+  daysLate: number;
+  lastOrderDate: string;
+  recommendedAction: string;
+  ltv: number;
+  totalOrders: number;
+};
+
+export function useCustomerEngagement(filters?: {
+  activity?: 'At Risk' | 'Dormant' | 'All';
+  loyalty?: string;
+  hub_id?: string;
+}, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: ['customers', 'engagement', filters],
+    enabled: options?.enabled ?? true,
+    queryFn: async (): Promise<{ items: EngagementCustomer[]; total: number }> => {
+      if (!HAS_API) return { items: [], total: 0 };
+      const raw = await axiosGet(
+        `customers/engagement${buildQuery({
+          activity: filters?.activity,
+          loyalty: filters?.loyalty,
+          hub_id: filters?.hub_id,
+        })}`,
+        true,
+      ) as { data?: EngagementCustomer[]; meta?: { total?: number } };
+      const items = Array.isArray(raw?.data) ? raw.data : [];
+      return { items, total: raw?.meta?.total ?? items.length };
+    },
+  });
+}
+
 export function useExportCustomers() {
   return useMutation({
     mutationFn: async (filters?: CustomerExportFilters) => {

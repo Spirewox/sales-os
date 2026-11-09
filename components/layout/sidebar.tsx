@@ -9,7 +9,7 @@ import { Permission } from '@/lib/permissions';
 import {
   LayoutDashboard, Package, Users, Banknote,
   CreditCard, History, MessageSquare,
-  Settings, LogOut, Menu, X, BarChart3, Truck, Monitor,
+  Settings, LogOut, Menu, X, BarChart3, Truck, Monitor, Megaphone,
   // Sparkles — temporarily unused while Insights nav is hidden
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
@@ -24,6 +24,7 @@ const navItems: { href: string; label: string; icon: typeof LayoutDashboard; per
   { href: '/inventory', label: 'Inventory', icon: Package, permission: 'inventory.view' },
   { href: '/suppliers', label: 'Suppliers', icon: Truck, permission: 'suppliers.view' },
   { href: '/customers', label: 'Customers', icon: Users, permission: 'customers.view' },
+  { href: '/engagement', label: 'Engagement', icon: Megaphone, permission: 'customers.view' },
   { href: '/sales', label: 'Sales', icon: Banknote, permission: 'sales.view' },
   { href: '/credits', label: 'Credits', icon: CreditCard, permission: 'credits.view' },
   { href: '/interactions', label: 'Interactions', icon: MessageSquare, permission: 'interactions.view' },

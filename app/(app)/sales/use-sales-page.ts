@@ -216,6 +216,7 @@ export function useSalesPage() {
   }, [hubScope.defaultHubName]);
   const [quantity, setQuantity] = useState(1);
   const [saleUnit, setSaleUnit] = useState<SaleFormUnit>('');
+  const [saleWeightKg, setSaleWeightKg] = useState<number>(0);
   const [paymentMode, setPaymentMode] = useState<PaymentMode>(PaymentMode.FULL_PAYMENT);
   const [paymentType, setPaymentType] = useState<PaymentType>(PaymentType.CASH);
   const [amountPaid, setAmountPaid] = useState(0);
@@ -402,6 +403,13 @@ export function useSalesPage() {
           if (!(Number(selectedInventoryItem?.cartonPrice) > 0)) {
             errors.saleUnit = 'Set a carton selling price on the SKU before selling by Carton.';
           }
+          const doubled = quantity * 2;
+          if (!(quantity > 0) || Math.abs(doubled - Math.round(doubled)) > 1e-6) {
+            errors.quantity = 'Carton quantity must be a multiple of 0.5.';
+          }
+          if (!(saleWeightKg > 0)) {
+            errors.saleWeightKg = 'Weighed kg is required for Carton sales.';
+          }
         } else if (saleUnit === 'Kg') {
           if (!(Number(selectedInventoryItem?.baseSellingPrice) > 0)) {
             errors.saleUnit = 'Set a selling price on the SKU before selling by Kg.';
@@ -423,6 +431,7 @@ export function useSalesPage() {
     selectedBatchNumber,
     quantity,
     saleUnit,
+    saleWeightKg,
     selectedInventoryItem,
     selectedBatch,
     isCartonProduct,
@@ -539,10 +548,19 @@ export function useSalesPage() {
     }
   };
 
+  const suggestedCartonWeightKg = (qty: number, item?: typeof selectedInventoryItem) => {
+    const weight = Number(item?.cartonWeight) || 0;
+    if (!(qty > 0) || !(weight > 0)) return 0;
+    return Math.round(qty * weight * 100) / 100;
+  };
+
   const handleQuantityChange = (qty: number) => {
     setQuantity(qty);
     setTouched((t) => ({ ...t, quantity: true }));
     const item = inventory.find((i) => i.id === selectedProductId);
+    if (saleUnit === 'Carton' && item) {
+      setSaleWeightKg(suggestedCartonWeightKg(qty, item));
+    }
     if (item) {
       setNewSale((prev) => ({
         ...prev,
@@ -557,6 +575,11 @@ export function useSalesPage() {
     setSaleUnit(unit);
     setTouched((t) => ({ ...t, saleUnit: true }));
     const item = inventory.find((i) => i.id === selectedProductId);
+    if (unit === 'Carton' && item) {
+      setSaleWeightKg(suggestedCartonWeightKg(quantity, item));
+    } else {
+      setSaleWeightKg(0);
+    }
     if (item) {
       setNewSale((prev) => ({
         ...prev,
@@ -565,6 +588,11 @@ export function useSalesPage() {
         productDetails: `${quantity} ${unit || item.unitOfMeasure} of ${item.name}`,
       }));
     }
+  };
+
+  const handleSaleWeightChange = (kg: number) => {
+    setSaleWeightKg(kg);
+    setTouched((t) => ({ ...t, saleWeightKg: true }));
   };
 
   const resetForm = () => {
@@ -581,6 +609,7 @@ export function useSalesPage() {
     setSelectedBatchNumber('');
     setQuantity(1);
     setSaleUnit('');
+    setSaleWeightKg(0);
     setPaymentMode(PaymentMode.FULL_PAYMENT);
     setPaymentType(PaymentType.CASH);
     setAmountPaid(0);
@@ -605,6 +634,7 @@ export function useSalesPage() {
             batchNumber: true,
             quantity: true,
             saleUnit: true,
+            ...(saleUnit === 'Carton' ? { saleWeightKg: true } : {}),
             ...(isHistoricalSale ? { amount: true } : {}),
           }),
     };
@@ -650,6 +680,9 @@ export function useSalesPage() {
                 : inventoryItem
                   ? { unit: inventoryItem.unitOfMeasure }
                   : {}),
+              ...(saleUnit === 'Carton' && saleWeightKg > 0
+                ? { sale_weight_kg: saleWeightKg }
+                : {}),
             },
           }
         : null;
@@ -997,6 +1030,8 @@ export function useSalesPage() {
     batchesLoading,
     quantity,
     saleUnit,
+    saleWeightKg,
+    handleSaleWeightChange,
     paymentMode,
     setPaymentMode,
     paymentType,

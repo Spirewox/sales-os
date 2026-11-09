@@ -233,6 +233,9 @@ function OverviewTab({
             <p><span className="text-muted-foreground">Batch:</span> {sale.item?.batchAllocations?.map(allocation => `${allocation.batchNumber}: ${allocation.quantity}`).join(', ') || sale.item?.batchNumber || '—'}</p>
             <p><span className="text-muted-foreground">Quantity:</span> {sale.item?.quantity ?? '—'}</p>
             <p><span className="text-muted-foreground">Unit:</span> {sale.item?.unit || '—'}</p>
+            {sale.item?.saleUnit === 'Carton' && sale.item?.saleWeightKg != null && (
+              <p><span className="text-muted-foreground">Weighed kg:</span> {sale.item.saleWeightKg}</p>
+            )}
             <p><span className="text-muted-foreground">Category:</span> {sale.item?.category || '—'}</p>
             {(sale.item?.unitCost != null || sale.item?.unitPrice != null) && (
               <>
