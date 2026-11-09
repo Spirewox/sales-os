@@ -201,9 +201,13 @@ export default function EngagementPage() {
                     </td>
                     <td className="p-3">
                       <p className="font-semibold">{row.daysLate}d</p>
-                      <p className="text-[10px] text-muted-foreground">
-                        vs ~{Math.round(row.avgInterval) || '—'}d cadence
-                      </p>
+                      {Math.round(row.avgInterval) > 0 ? (
+                        <p className="text-[10px] text-muted-foreground">
+                          vs ~{Math.round(row.avgInterval)}d cadence
+                        </p>
+                      ) : (
+                        <p className="text-[10px] text-muted-foreground">Single purchase</p>
+                      )}
                     </td>
                     <td className="p-3 text-muted-foreground leading-snug">
                       {row.recommendedAction}
