@@ -278,6 +278,7 @@ export function mapSale(s: ApiSale, hubMap?: Record<string, string>): Sale {
           unit: item.unit,
           saleUnit: item.sale_unit,
           stockQuantity: item.stock_quantity,
+          saleWeightKg: item.sale_weight_kg,
           category: item.category,
           batchNumber: item.batch_number,
           batchAllocations: (item as any).batch_allocations?.map((allocation: any) => ({ batchNumber: allocation.batch_number, quantity: allocation.quantity, unitCost: allocation.unit_cost })),

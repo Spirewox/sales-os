@@ -117,14 +117,14 @@ export default function SalesPage() {
     handleUpdateDeliveryStatus, startEditing, saveEdit, handleVoidSale, editBatchPriceError,
     showAddModal, setShowAddModal, newSale, setNewSale, selectedHub, setSelectedHub,
     selectedProductId, setSelectedProductId, selectedBatchNumber, setSelectedBatchNumber,
-    productBatches, batchesLoading, quantity, saleUnit, paymentMode, setPaymentMode,
+    productBatches, batchesLoading, quantity, saleUnit, saleWeightKg, paymentMode, setPaymentMode,
     paymentType, setPaymentType, amountPaid, setAmountPaid, dueDate, setDueDate,
     touched, setTouched, validationErrors, isFormValid, isHistoricalSale, isMealSale,
     productDetailsText, setProductDetailsText, customerCreditWarning,
     selectedFormCustomer, availableInventory, selectedInventoryItem, isCartonProduct,
     isVolumeProduct,
     handleProductChange, handleBatchChange, handleQuantityChange, handleSaleUnitChange,
-    listUnitPriceForSale, selectedBatch, handleSaveSale,
+    handleSaleWeightChange, listUnitPriceForSale, selectedBatch, handleSaveSale,
     savingSale, savingEdit, voidingSale, updatingDelivery,
     showImportModal, setShowImportModal, importPreview, setImportPreview, importSummary, setImportSummary,
     validateAuditId, importing, importProgress, importResult, importError, showImportConfirm, setShowImportConfirm,
@@ -596,6 +596,8 @@ export default function SalesPage() {
         handleQuantityChange={handleQuantityChange}
         saleUnit={saleUnit}
         handleSaleUnitChange={handleSaleUnitChange}
+        saleWeightKg={saleWeightKg}
+        handleSaleWeightChange={handleSaleWeightChange}
         isCartonProduct={isCartonProduct}
         isVolumeProduct={isVolumeProduct}
         paymentMode={paymentMode}

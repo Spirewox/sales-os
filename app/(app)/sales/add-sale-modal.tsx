@@ -77,6 +77,8 @@ export interface AddSaleModalProps {
   handleQuantityChange: (qty: number) => void;
   saleUnit: SaleFormUnit;
   handleSaleUnitChange: (unit: SaleFormUnit) => void;
+  saleWeightKg: number;
+  handleSaleWeightChange: (kg: number) => void;
   isCartonProduct: boolean;
   isVolumeProduct: boolean;
   paymentMode: PaymentMode;
@@ -130,6 +132,8 @@ export function AddSaleModal({
   handleQuantityChange,
   saleUnit,
   handleSaleUnitChange,
+  saleWeightKg,
+  handleSaleWeightChange,
   isCartonProduct,
   isVolumeProduct,
   paymentMode,
@@ -373,14 +377,40 @@ export function AddSaleModal({
               <input
                 id="sale-quantity"
                 type="number"
-                min={0.01}
-                step="0.01"
+                min={saleUnit === 'Carton' ? 0.5 : 0.01}
+                step={saleUnit === 'Carton' ? '0.5' : '0.01'}
                 value={quantity}
                 onChange={(e) => handleQuantityChange(Number(e.target.value) || 0)}
                 className={`${INPUT_CLS} ${touched.quantity && validationErrors.quantity ? 'border-red-500' : ''}`}
               />
               {touched.quantity && validationErrors.quantity && <p className="text-xs text-red-500">{validationErrors.quantity}</p>}
+              {saleUnit === 'Carton' && (
+                <p className="text-[10px] text-muted-foreground">Carton qty steps of 0.5</p>
+              )}
             </div>
+            {isCartonProduct && saleUnit === 'Carton' && !isMealSale && (
+              <div className="space-y-2">
+                <label htmlFor="sale-weight-kg" className={LABEL_CLS}>Weighed kg *</label>
+                <input
+                  id="sale-weight-kg"
+                  type="number"
+                  min={0.01}
+                  step="0.01"
+                  value={saleWeightKg || ''}
+                  onChange={(e) => handleSaleWeightChange(Number(e.target.value) || 0)}
+                  className={`${INPUT_CLS} ${touched.saleWeightKg && validationErrors.saleWeightKg ? 'border-red-500' : ''}`}
+                />
+                {selectedInventoryItem?.cartonWeight ? (
+                  <p className="text-[10px] text-muted-foreground">
+                    Hint: {quantity} × {selectedInventoryItem.cartonWeight} Kg ={' '}
+                    {Math.round(quantity * selectedInventoryItem.cartonWeight * 100) / 100} Kg (editable)
+                  </p>
+                ) : null}
+                {touched.saleWeightKg && validationErrors.saleWeightKg && (
+                  <p className="text-xs text-red-500">{validationErrors.saleWeightKg}</p>
+                )}
+              </div>
+            )}
             <div className="space-y-2">
               <label htmlFor="sale-amount" className={LABEL_CLS}>Amount ({NAIRA}){isHistoricalSale || isMealSale ? ' *' : ''}</label>
               <input id="sale-amount" type="number" step="0.01" value={newSale.amount || ''} onChange={(e) => setNewSale({ ...newSale, amount: Number(e.target.value) || 0 })} className={`${INPUT_CLS} ${touched.amount && validationErrors.amount ? 'border-red-500' : ''}`} />

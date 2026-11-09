@@ -424,6 +424,7 @@ export interface Sale {
     unit?: string;
     saleUnit?: 'Carton' | 'Kg' | 'Liters' | 'ml';
     stockQuantity?: number;
+    saleWeightKg?: number;
     category?: string;
     batchNumber?: string;
     batchAllocations?: { batchNumber: string; quantity: number; unitCost: number }[];

@@ -1547,9 +1547,17 @@ export default function CustomersPage() {
                   <div className="space-y-5">
                     <div className={`flex items-start gap-2.5 rounded-xl border p-3 ${recClr}`}>
                       <Sparkles size={16} className="mt-0.5 shrink-0" />
-                      <div>
+                      <div className="min-w-0 flex-1">
                         <p className="text-[10px] font-bold uppercase tracking-wide opacity-70">Recommended Action</p>
                         <p className="text-sm font-medium leading-snug">{pa.rec.text}</p>
+                        {(pa.activity === 'At Risk' || pa.activity === 'Dormant') && (
+                          <a
+                            href={`/engagement?activity=${encodeURIComponent(pa.activity)}`}
+                            className="mt-1.5 inline-flex text-xs font-semibold underline underline-offset-2 opacity-80 hover:opacity-100"
+                          >
+                            View on Engagement list
+                          </a>
+                        )}
                       </div>
                     </div>
 
