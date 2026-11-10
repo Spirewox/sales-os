@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Award, Crown, Megaphone, Phone } from 'lucide-react';
+import { Award, Crown, Megaphone, Phone, X } from 'lucide-react';
 import { HubScopeSelect } from '@/components/hub-scope-filter';
 import { TableSkeleton } from '@/components/ui/loading-skeletons';
 import { FilterSelect } from '@/components/filter-select';
@@ -9,7 +9,8 @@ import { useHubScopeFilter } from '@/hooks/use-hub-scope';
 import { useCustomer, useCustomerEngagement } from '@/hooks/use-queries';
 import { usePermissions } from '@/hooks/use-permissions';
 import { Customer } from '@/types';
-import { CustomerDetailPanel } from '../customers/customer-detail-panel';
+import { Skeleton } from '@/components/ui/skeleton';
+import { CustomerDetailPanel, CustomerDrawer } from '../customers/customer-detail-panel';
 
 const LOYALTY_OPTIONS = [
   'All',
@@ -69,10 +70,15 @@ export default function EngagementPage() {
     { enabled: can('customers.view') },
   );
 
-  const { data: fetchedCustomer, isFetching: openCustomerLoading } = useCustomer(openCustomerId);
+  const { data: fetchedCustomer, isFetching: openCustomerLoading, isError: openCustomerError } = useCustomer(openCustomerId);
   const openCustomer = openCustomerOverride?.id === openCustomerId
     ? openCustomerOverride
     : (fetchedCustomer ?? null);
+
+  const closeCustomer = () => {
+    setOpenCustomerId(null);
+    setOpenCustomerOverride(null);
+  };
 
   const rows = data?.items ?? [];
   const totals = useMemo(() => {
@@ -249,19 +255,39 @@ export default function EngagementPage() {
         </div>
       </div>
 
-      {openCustomerId && openCustomerLoading && !openCustomer ? (
-        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center">
-          <p className="text-sm text-muted-foreground">Loading customer…</p>
-        </div>
+      {openCustomerId && !openCustomer ? (
+        <CustomerDrawer onClose={closeCustomer}>
+          <div className="flex items-center justify-between border-b p-6">
+            <h2 className="text-lg font-semibold">Customer details</h2>
+            <button type="button" onClick={closeCustomer} aria-label="Close customer details" className="p-1 text-muted-foreground hover:text-foreground">
+              <X size={20} />
+            </button>
+          </div>
+          {openCustomerError && !openCustomerLoading ? (
+            <p role="alert" className="p-6 text-sm text-destructive">Couldn’t load customer details. Close the drawer and try again.</p>
+          ) : (
+            <div className="space-y-6 p-6" role="status" aria-label="Loading customer details" aria-busy="true">
+              <div className="flex items-center gap-3">
+                <Skeleton className="size-12 rounded-full" />
+                <div className="space-y-2">
+                  <Skeleton className="h-5 w-40" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {Array.from({ length: 4 }, (_, index) => <Skeleton key={index} className="h-16 rounded-lg" />)}
+              </div>
+              <Skeleton className="h-28 rounded-lg" />
+            </div>
+          )}
+        </CustomerDrawer>
       ) : null}
 
       {openCustomer ? (
         <CustomerDetailPanel
           customer={openCustomer}
-          onClose={() => {
-            setOpenCustomerId(null);
-            setOpenCustomerOverride(null);
-          }}
+          onClose={closeCustomer}
+          animate={false}
           onUpdated={setOpenCustomerOverride}
         />
       ) : null}
