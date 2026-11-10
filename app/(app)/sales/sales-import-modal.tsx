@@ -112,37 +112,37 @@ export function SalesImportModal({
         )}
 
         {importError && (
-          <div className="mb-4 p-3 rounded-md border border-red-300 bg-red-50 text-sm">
-            <p className="font-medium text-red-800 mb-1 flex items-center gap-1.5">
+          <div className="mb-4 p-3 rounded-md border border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-950 text-sm">
+            <p className="font-medium text-red-950 dark:text-red-100 mb-1 flex items-center gap-1.5">
               <AlertCircle size={14} /> Import rolled back
             </p>
-            <p className="text-red-700">{importError}</p>
-            <p className="text-xs text-red-600/80 mt-2">
+            <p className="text-red-950 dark:text-red-100">{importError}</p>
+            <p className="text-xs text-red-950 dark:text-red-100 mt-2">
               No sales from this file were saved. Fix the issue and try again.
             </p>
           </div>
         )}
 
         {importResult && (importResult.failed_so_far ?? importResult.failed) > 0 && (
-          <div className="mb-4 p-3 rounded-md border border-orange-300 bg-orange-50 text-sm">
-            <p className="font-medium text-orange-800 mb-2">
+          <div className="mb-4 p-3 rounded-md border border-orange-300 bg-orange-50 dark:border-orange-800 dark:bg-orange-950 text-sm">
+            <p className="font-medium text-orange-950 dark:text-orange-100 mb-2">
               {(importResult.failed_so_far ?? importResult.failed)} row(s) failed to import
             </p>
           </div>
         )}
 
         {hasInvalid && (
-          <div className="mb-4 p-3 rounded-md border border-orange-300 bg-orange-50 text-sm">
-            <p className="font-medium text-orange-800 mb-1">
+          <div className="mb-4 p-3 rounded-md border border-orange-300 bg-orange-50 dark:border-orange-800 dark:bg-orange-950 text-sm">
+            <p className="font-medium text-orange-950 dark:text-orange-100 mb-1">
               {summary?.invalid ?? invalidRows.length} row(s) have validation errors and will not be imported.
             </p>
-            <p className="text-orange-700 text-xs mb-2">
+            <p className="text-orange-950 dark:text-orange-100 text-xs mb-2">
               Fix the Errors column below (or re-download a fresh template), then upload again.
             </p>
             <button
               type="button"
               onClick={() => onDownloadTemplate(freshTemplateType)}
-              className="text-orange-800 underline text-xs flex items-center gap-1 mt-1 hover:text-orange-900"
+              className="text-orange-950 dark:text-orange-100 underline text-xs flex items-center gap-1 mt-1 hover:text-orange-950 dark:hover:text-orange-50"
             >
               <Download size={12} /> Download a fresh template
             </button>
@@ -161,7 +161,7 @@ export function SalesImportModal({
             <>
               <p><strong>All dates:</strong> product_name + quantity required; product must match the fulfillment hub catalog.</p>
               <p><strong>Live (today+):</strong> amount from catalog price. <strong>Historical:</strong> amount from the sheet.</p>
-              <p>Catalog sales use SKU prices and allocate stock automatically using FIFO. No batch selection is required.</p>
+              <p>Carton rows use the carton price times quantity and require the actual weight in sale_weight_kg. When stock tracking is enabled, catalog sales allocate stock automatically using FIFO.</p>
               <p>Follow the Instructions sheet in the downloaded template for stock/batch rules.</p>
             </>
           )}
@@ -178,7 +178,7 @@ export function SalesImportModal({
           <div className="rounded-md border overflow-hidden mb-4">
             <div className="overflow-x-auto max-h-72">
               <table className="w-full text-xs">
-                <thead className="bg-muted/50 border-b sticky top-0">
+                <thead className="bg-muted border-b sticky top-0 z-10">
                   <tr>
                     <th className="h-8 px-3 text-left font-medium text-muted-foreground">#</th>
                     <th className="h-8 px-3 text-left font-medium text-muted-foreground">Date</th>
@@ -197,7 +197,7 @@ export function SalesImportModal({
                   {previewRows.map((row) => (
                     <tr
                       key={`import-row-${row.lineNo}`}
-                      className={row.valid ? 'hover:bg-muted/30' : 'bg-orange-50/50'}
+                      className={row.valid ? 'hover:bg-muted/30' : 'bg-orange-50 dark:bg-orange-950'}
                     >
                       <td className="px-3 py-2 text-muted-foreground">{row.lineNo}</td>
                       <td className="px-3 py-2 whitespace-nowrap">{row.date_sold}</td>
@@ -220,12 +220,12 @@ export function SalesImportModal({
                       </td>
                       <td className="px-3 py-2 text-center">
                         {row.valid ? (
-                          <Check size={14} className="text-green-600 mx-auto" />
+                          <Check size={14} className="text-green-700 dark:text-green-300 mx-auto" />
                         ) : (
-                          <AlertCircle size={14} className="text-orange-600 mx-auto" />
+                          <AlertCircle size={14} className="text-orange-700 dark:text-orange-300 mx-auto" />
                         )}
                       </td>
-                      <td className="px-3 py-2 text-orange-800 max-w-[280px]">
+                      <td className="px-3 py-2 text-orange-950 dark:text-orange-100 max-w-[280px]">
                         {row.valid ? (
                           <span className="text-muted-foreground">—</span>
                         ) : (
@@ -243,8 +243,8 @@ export function SalesImportModal({
         )}
 
         {hasInvalid && (
-          <div className="mb-4 max-h-40 overflow-y-auto space-y-1 rounded-md border border-orange-200 bg-orange-50/60 p-3 text-xs text-orange-800">
-            <p className="font-medium text-orange-900 mb-1">All validation errors</p>
+          <div className="mb-4 max-h-40 overflow-y-auto space-y-1 rounded-md border border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-950 p-3 text-xs text-orange-950 dark:text-orange-100">
+            <p className="font-medium text-orange-950 dark:text-orange-100 mb-1">All validation errors</p>
             {invalidRows.map((r) => (
               <p key={`err-${r.lineNo}`}>
                 Row {r.lineNo}: {(r.errors ?? []).join('; ') || 'Invalid row'}
