@@ -1080,9 +1080,9 @@ export default function SuppliersPage() {
                       <div className="grid grid-cols-2 gap-3">
                         <div className="p-4 rounded-xl border bg-muted/20"><p className="text-[10px] font-bold uppercase text-muted-foreground flex items-center gap-1"><Boxes size={11} /> Units Sold</p><p className="text-2xl font-black">{retailPerf.unitsSold.toLocaleString()}</p></div>
                         <div className="p-4 rounded-xl border bg-muted/20"><p className="text-[10px] font-bold uppercase text-muted-foreground flex items-center gap-1"><CircleDollarSign size={11} /> Retail Revenue</p><p className="text-2xl font-black">{fmt(retailPerf.revenue)}</p></div>
-                        <div className="p-4 rounded-xl border-2 border-green-200 bg-green-50/50">
+                        <div className="p-4 rounded-xl border-2 border-green-500/40 bg-green-500/10">
                           <p className="text-[10px] font-bold uppercase text-muted-foreground flex items-center gap-1"><Wallet size={11} /> Gross Profit</p>
-                          <div className="flex items-baseline gap-2"><p className="text-2xl font-black text-green-700">{fmt(retailPerf.profit)}</p><span className="inline-flex items-center rounded-full bg-green-100 px-1.5 py-0.5 text-[10px] font-bold text-green-700 border border-green-200">{retailPerf.margin.toFixed(0)}%</span></div>
+                          <div className="flex items-baseline gap-2"><p className="text-2xl font-black text-green-400">{fmt(retailPerf.profit)}</p><span className="inline-flex items-center rounded-full bg-green-500/20 px-1.5 py-0.5 text-[10px] font-bold text-green-400 border border-green-500/30">{retailPerf.margin.toFixed(0)}%</span></div>
                         </div>
                         <div className="p-4 rounded-xl border bg-muted/20"><p className="text-[10px] font-bold uppercase text-muted-foreground flex items-center gap-1"><Repeat size={11} /> Sales Frequency</p><p className="text-2xl font-black">{retailPerf.txns}</p><p className="text-[10px] text-muted-foreground">{retailPerf.avgPerMonth.toFixed(1)}/mo ┬╖ across {retailPerf.months} month{retailPerf.months !== 1 ? 's' : ''}</p></div>
                       </div>
@@ -1096,8 +1096,8 @@ export default function SuppliersPage() {
 
                       {/* Best seller callout */}
                       {retailPerf.bestSeller && (
-                        <div className="flex items-center gap-3 p-3 rounded-lg border border-orange-200 bg-orange-50/50">
-                          <div className="h-9 w-9 rounded-lg bg-orange-100 flex items-center justify-center text-orange-600 shrink-0"><Flame size={17} /></div>
+                        <div className="flex items-center gap-3 p-3 rounded-lg border border-orange-500/40 bg-orange-500/10">
+                          <div className="h-9 w-9 rounded-lg bg-orange-500/20 flex items-center justify-center text-orange-400 shrink-0"><Flame size={17} /></div>
                           <div className="flex-1 min-w-0"><p className="text-[10px] font-bold uppercase text-muted-foreground">Best Seller</p><p className="text-sm font-semibold truncate">{retailPerf.bestSeller.itemName}</p></div>
                           <div className="text-right shrink-0"><p className="text-sm font-black">{fmt(retailPerf.bestSeller.revenue)}</p><p className="text-[10px] text-muted-foreground">{retailPerf.bestSeller.units} {retailPerf.bestSeller.uom} sold</p></div>
                         </div>
