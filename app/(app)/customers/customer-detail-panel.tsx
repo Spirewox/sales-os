@@ -148,11 +148,32 @@ function getScoreBadge(grade: CreditGrade) {
   return <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-black border ${colors[grade] || colors['N/A']}`}>SCORE {grade}</span>;
 }
 
+export function CustomerDrawer({ children, onClose, animate = true }: {
+  children: React.ReactNode;
+  onClose: () => void;
+  animate?: boolean;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end bg-background/80 backdrop-blur-sm" onClick={onClose}>
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Customer details"
+        className={'h-full w-full max-w-2xl overflow-y-auto border-l bg-card shadow-xl' + (animate ? ' animate-in slide-in-from-right duration-200 motion-reduce:animate-none' : '')}
+        onClick={(event) => event.stopPropagation()}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
 export type CustomerDetailPanelProps = Readonly<{
   customer: Customer;
   onClose: () => void;
   onUpdated?: (customer: Customer) => void;
   prioritySegmentNames?: string[];
+  animate?: boolean;
 }>;
 
 export function CustomerDetailPanel({
@@ -160,6 +181,7 @@ export function CustomerDetailPanel({
   onClose,
   onUpdated,
   prioritySegmentNames = [],
+  animate,
 }: CustomerDetailPanelProps) {
   const { can } = usePermissions();
   const hubScope = useHubScopeFilter();
@@ -393,8 +415,7 @@ export function CustomerDetailPanel({
   const activeFilterSegmentNames = prioritySegmentNames;
 
   return (
-<div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex justify-end" onClick={handleClose}>
-          <div className="w-full max-w-2xl bg-card border-l shadow-xl h-full overflow-y-auto animate-in slide-in-from-right duration-200" onClick={(e) => e.stopPropagation()}>
+    <CustomerDrawer onClose={handleClose} animate={animate}>
 
             {/* Panel Header */}
             <div className="p-6 border-b">
@@ -1023,7 +1044,6 @@ export function CustomerDetailPanel({
                 </div>
               )}
             </div>
-          </div>
-        </div>
+    </CustomerDrawer>
   );
 }
