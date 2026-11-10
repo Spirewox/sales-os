@@ -1,14 +1,15 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { Award, Crown, ExternalLink, Megaphone, Phone } from 'lucide-react';
+import { Award, Crown, Megaphone, Phone } from 'lucide-react';
 import { HubScopeSelect } from '@/components/hub-scope-filter';
 import { TableSkeleton } from '@/components/ui/loading-skeletons';
 import { FilterSelect } from '@/components/filter-select';
 import { useHubScopeFilter } from '@/hooks/use-hub-scope';
-import { useCustomerEngagement } from '@/hooks/use-queries';
+import { useCustomer, useCustomerEngagement } from '@/hooks/use-queries';
 import { usePermissions } from '@/hooks/use-permissions';
+import { Customer } from '@/types';
+import { CustomerDetailPanel } from '../customers/customer-detail-panel';
 
 const LOYALTY_OPTIONS = [
   'All',
@@ -49,6 +50,8 @@ export default function EngagementPage() {
   const hubScope = useHubScopeFilter();
   const [activity, setActivity] = useState<'All' | 'At Risk' | 'Dormant'>('All');
   const [loyalty, setLoyalty] = useState<string>('All');
+  const [openCustomerId, setOpenCustomerId] = useState<string | null>(null);
+  const [openCustomerOverride, setOpenCustomerOverride] = useState<Customer | null>(null);
 
   useEffect(() => {
     const activityParam = new URLSearchParams(window.location.search).get('activity');
@@ -65,6 +68,11 @@ export default function EngagementPage() {
     },
     { enabled: can('customers.view') },
   );
+
+  const { data: fetchedCustomer, isFetching: openCustomerLoading } = useCustomer(openCustomerId);
+  const openCustomer = openCustomerOverride?.id === openCustomerId
+    ? openCustomerOverride
+    : (fetchedCustomer ?? null);
 
   const rows = data?.items ?? [];
   const totals = useMemo(() => {
@@ -166,7 +174,14 @@ export default function EngagementPage() {
                     ? 'bg-orange-100 text-orange-700 border-orange-200'
                     : 'bg-red-100 text-red-700 border-red-200';
                 return (
-                  <tr key={row.id} className="border-t hover:bg-muted/20">
+                  <tr
+                    key={row.id}
+                    onClick={() => {
+                      setOpenCustomerOverride(null);
+                      setOpenCustomerId(row.id);
+                    }}
+                    className="border-t hover:bg-muted/20 cursor-pointer"
+                  >
                     <td className="p-3">
                       <p className="font-semibold">{row.name}</p>
                       <p className="text-[11px] text-muted-foreground">
@@ -177,6 +192,7 @@ export default function EngagementPage() {
                       {row.phone ? (
                         <a
                           href={`tel:${row.phone}`}
+                          onClick={(e) => e.stopPropagation()}
                           className="inline-flex items-center gap-1 text-primary hover:underline"
                         >
                           <Phone size={12} /> {row.phone}
@@ -213,12 +229,17 @@ export default function EngagementPage() {
                       {row.recommendedAction}
                     </td>
                     <td className="p-3">
-                      <Link
-                        href={`/customers?open=${row.id}`}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenCustomerOverride(null);
+                          setOpenCustomerId(row.id);
+                        }}
                         className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
                       >
-                        Open <ExternalLink size={12} />
-                      </Link>
+                        Open
+                      </button>
                     </td>
                   </tr>
                 );
@@ -227,6 +248,23 @@ export default function EngagementPage() {
           </table>
         </div>
       </div>
+
+      {openCustomerId && openCustomerLoading && !openCustomer ? (
+        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center">
+          <p className="text-sm text-muted-foreground">Loading customer…</p>
+        </div>
+      ) : null}
+
+      {openCustomer ? (
+        <CustomerDetailPanel
+          customer={openCustomer}
+          onClose={() => {
+            setOpenCustomerId(null);
+            setOpenCustomerOverride(null);
+          }}
+          onUpdated={setOpenCustomerOverride}
+        />
+      ) : null}
     </div>
   );
 }
