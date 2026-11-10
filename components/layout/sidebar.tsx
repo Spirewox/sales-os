@@ -80,7 +80,7 @@ export function Sidebar() {
               className={`flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150 ${
                 isActive
                   ? 'bg-primary text-primary-foreground shadow-sm'
-                  : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+                  : 'text-sidebar-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
               }`}
             >
               <item.icon size={16} strokeWidth={isActive ? 2.25 : 1.75} />
@@ -113,7 +113,7 @@ export function Sidebar() {
           className={`flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-150 ${
             pathname === '/settings'
               ? 'bg-primary text-primary-foreground shadow-sm'
-              : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+              : 'text-sidebar-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
           }`}
         >
           <Settings size={16} strokeWidth={pathname === '/settings' ? 2.25 : 1.75} />
@@ -130,7 +130,7 @@ export function Sidebar() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[13px] font-medium truncate text-sidebar-foreground">{user.name}</p>
-              <p className="text-[10px] text-muted-foreground" title={user.roleName || undefined}>
+              <p className="text-[10px] text-sidebar-foreground/75" title={user.roleName || undefined}>
                 {user.role} &middot; {user.hubName ?? 'All Hubs'}
               </p>
             </div>

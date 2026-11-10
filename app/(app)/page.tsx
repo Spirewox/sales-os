@@ -328,7 +328,7 @@ export default function DashboardPage() {
             {tracker.overdueCredits > 0 && <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white">{tracker.overdueCredits}</span>}
           </div>
           <p className={`text-xl font-black ${tracker.overdueCredits > 0 ? 'text-red-600 dark:text-red-400' : ''}`}>{tracker.overdueAmount > 0 ? fmtK(tracker.overdueAmount) : `${NAIRA}0`}</p>
-          <p className="text-[10px] font-bold text-muted-foreground uppercase mt-0.5">Overdue</p>
+          <p className={`text-[10px] font-bold uppercase mt-0.5 ${tracker.overdueCredits > 0 ? 'text-red-700/80 dark:text-red-200/90' : 'text-muted-foreground'}`}>Overdue</p>
         </button>
 
         {/* Stock Alerts */}
@@ -340,8 +340,8 @@ export default function DashboardPage() {
             {tracker.stockAlerts > 0 && <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1.5 text-[10px] font-bold text-white">{tracker.stockAlerts}</span>}
           </div>
           <p className={`text-xl font-black ${tracker.stockAlerts > 0 ? 'text-amber-600 dark:text-amber-400' : ''}`}>{tracker.stockAlerts}</p>
-          <p className="text-[10px] font-bold text-muted-foreground uppercase mt-0.5">Stock Alerts</p>
-          {tracker.stockAlerts > 0 && <p className="text-[10px] text-muted-foreground">{tracker.lowStock} low &middot; {tracker.outOfStock} out</p>}
+          <p className={`text-[10px] font-bold uppercase mt-0.5 ${tracker.stockAlerts > 0 ? 'text-amber-800/80 dark:text-amber-200/90' : 'text-muted-foreground'}`}>Stock Alerts</p>
+          {tracker.stockAlerts > 0 && <p className="text-[10px] text-amber-800/80 dark:text-amber-200/90">{tracker.lowStock} low &middot; {tracker.outOfStock} out</p>}
         </button>
 
         {/* Open Tickets */}
@@ -353,12 +353,12 @@ export default function DashboardPage() {
             {tracker.openTickets > 0 && <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-500 px-1.5 text-[10px] font-bold text-white">{tracker.openTickets}</span>}
           </div>
           <p className={`text-xl font-black ${tracker.openTickets > 0 ? 'text-blue-600 dark:text-blue-400' : ''}`}>{tracker.openTickets}</p>
-          <p className="text-[10px] font-bold text-muted-foreground uppercase mt-0.5">Open Tickets</p>
-          {tracker.openTickets > 0 && <p className="text-[10px] text-muted-foreground">{tracker.openFeedback} feedback &middot; {tracker.openEnquiries} enquiries</p>}
+          <p className={`text-[10px] font-bold uppercase mt-0.5 ${tracker.openTickets > 0 ? 'text-blue-800/80 dark:text-blue-200/90' : 'text-muted-foreground'}`}>Open Tickets</p>
+          {tracker.openTickets > 0 && <p className="text-[10px] text-blue-800/80 dark:text-blue-200/90">{tracker.openFeedback} feedback &middot; {tracker.openEnquiries} enquiries</p>}
         </button>
 
         {/* Customers */}
-        <button onClick={() => router.push('/customers')} className="group relative rounded-xl border bg-card p-4 hover:border-purple-300 transition-all text-left">
+        <button onClick={() => router.push('/customers')} className="group relative rounded-xl border bg-card p-4 hover:border-purple-300 dark:hover:border-purple-700 transition-all text-left">
           <div className="flex items-center gap-2 mb-2">
             <div className="h-8 w-8 rounded-lg bg-purple-100 dark:bg-purple-950/60 flex items-center justify-center">
               <Users size={16} className="text-purple-600 dark:text-purple-400" />
@@ -379,32 +379,32 @@ export default function DashboardPage() {
       <div className="flex items-center gap-2 overflow-x-auto pb-1 mb-2">
         <span className="text-[10px] font-bold text-muted-foreground uppercase shrink-0 mr-1">Quick Actions</span>
         {can('sales.create') && (
-          <button onClick={() => router.push('/sales')} className="inline-flex items-center gap-1.5 shrink-0 rounded-lg border bg-card px-3.5 py-2 text-xs font-semibold hover:border-emerald-300 hover:bg-emerald-50 transition-all">
-            <Receipt size={14} className="text-emerald-600" /> Record Sale
+          <button onClick={() => router.push('/sales')} className="inline-flex items-center gap-1.5 shrink-0 rounded-lg border bg-card px-3.5 py-2 text-xs font-semibold hover:border-emerald-300 hover:bg-emerald-50 dark:hover:border-emerald-700 dark:hover:bg-emerald-950/40 transition-all">
+            <Receipt size={14} className="text-emerald-600 dark:text-emerald-400" /> Record Sale
           </button>
         )}
         {can('customers.create') && (
-          <button onClick={() => router.push('/customers')} className="inline-flex items-center gap-1.5 shrink-0 rounded-lg border bg-card px-3.5 py-2 text-xs font-semibold hover:border-purple-300 hover:bg-purple-50 transition-all">
-            <UserPlus size={14} className="text-purple-600" /> Add Customer
+          <button onClick={() => router.push('/customers')} className="inline-flex items-center gap-1.5 shrink-0 rounded-lg border bg-card px-3.5 py-2 text-xs font-semibold hover:border-purple-300 hover:bg-purple-50 dark:hover:border-purple-700 dark:hover:bg-purple-950/40 transition-all">
+            <UserPlus size={14} className="text-purple-600 dark:text-purple-400" /> Add Customer
           </button>
         )}
         {can('inventory.create') && (
-          <button onClick={() => router.push('/inventory')} className="inline-flex items-center gap-1.5 shrink-0 rounded-lg border bg-card px-3.5 py-2 text-xs font-semibold hover:border-blue-300 hover:bg-blue-50 transition-all">
-            <PackagePlus size={14} className="text-blue-600" /> Add Stock
+          <button onClick={() => router.push('/inventory')} className="inline-flex items-center gap-1.5 shrink-0 rounded-lg border bg-card px-3.5 py-2 text-xs font-semibold hover:border-blue-300 hover:bg-blue-50 dark:hover:border-blue-700 dark:hover:bg-blue-950/40 transition-all">
+            <PackagePlus size={14} className="text-blue-600 dark:text-blue-400" /> Add Stock
           </button>
         )}
         {can('credits.view') && (
-          <button onClick={() => router.push('/credits')} className="inline-flex items-center gap-1.5 shrink-0 rounded-lg border bg-card px-3.5 py-2 text-xs font-semibold hover:border-amber-300 hover:bg-amber-50 transition-all">
-            <Wallet size={14} className="text-amber-600" /> Manage Credits
+          <button onClick={() => router.push('/credits')} className="inline-flex items-center gap-1.5 shrink-0 rounded-lg border bg-card px-3.5 py-2 text-xs font-semibold hover:border-amber-300 hover:bg-amber-50 dark:hover:border-amber-700 dark:hover:bg-amber-950/40 transition-all">
+            <Wallet size={14} className="text-amber-600 dark:text-amber-400" /> Manage Credits
           </button>
         )}
         {can('interactions.create') && (
-          <button onClick={() => router.push('/interactions')} className="inline-flex items-center gap-1.5 shrink-0 rounded-lg border bg-card px-3.5 py-2 text-xs font-semibold hover:border-sky-300 hover:bg-sky-50 transition-all">
-            <MessageSquare size={14} className="text-sky-600" /> Log Feedback
+          <button onClick={() => router.push('/interactions')} className="inline-flex items-center gap-1.5 shrink-0 rounded-lg border bg-card px-3.5 py-2 text-xs font-semibold hover:border-sky-300 hover:bg-sky-50 dark:hover:border-sky-700 dark:hover:bg-sky-950/40 transition-all">
+            <MessageSquare size={14} className="text-sky-600 dark:text-sky-400" /> Log Feedback
           </button>
         )}
-        <button onClick={() => router.push('/analytics')} className="inline-flex items-center gap-1.5 shrink-0 rounded-lg border bg-card px-3.5 py-2 text-xs font-semibold hover:border-indigo-300 hover:bg-indigo-50 transition-all">
-          <BarChart3 size={14} className="text-indigo-600" /> Analytics
+        <button onClick={() => router.push('/analytics')} className="inline-flex items-center gap-1.5 shrink-0 rounded-lg border bg-card px-3.5 py-2 text-xs font-semibold hover:border-indigo-300 hover:bg-indigo-50 dark:hover:border-indigo-700 dark:hover:bg-indigo-950/40 transition-all">
+          <BarChart3 size={14} className="text-indigo-600 dark:text-indigo-400" /> Analytics
         </button>
       </div>
 
@@ -414,7 +414,7 @@ export default function DashboardPage() {
       <div className="rounded-xl border bg-card">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-5 border-b">
           <div className="flex items-center gap-2">
-            <Banknote size={16} className="text-emerald-600" />
+            <Banknote size={16} className="text-emerald-600 dark:text-emerald-400" />
             <h2 className="text-sm font-bold">Sales</h2>
             <span className="text-[10px] font-medium text-muted-foreground">{salesWindowCaption}</span>
           </div>
@@ -633,7 +633,7 @@ export default function DashboardPage() {
                   <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/30 transition-colors">
                     <span className="text-xs font-black text-muted-foreground w-5 text-center">{idx + 1}</span>
                     <p className="text-sm font-semibold flex-1 truncate">{c.name}</p>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${c.type === 'B2B' ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${c.type === 'B2B' ? 'bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300'}`}>
                       {c.type}
                     </span>
                     <span className="text-sm font-black text-emerald-600 w-20 text-right">{fmtK(c.totalSpent)}</span>
@@ -670,7 +670,7 @@ export default function DashboardPage() {
                                   <td className="px-3 py-2 font-medium whitespace-nowrap">{new Date(s.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</td>
                                   <td className="px-3 py-2 truncate max-w-[160px]" title={s.productDetails}>{s.productDetails || '—'}</td>
                                   <td className="px-3 py-2 text-center">
-                                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${s.isCredit ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>{s.isCredit ? 'Credit' : 'Cash'}</span>
+                                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${s.isCredit ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300'}`}>{s.isCredit ? 'Credit' : 'Cash'}</span>
                                   </td>
                                   <td className="px-3 py-2 text-right font-black text-emerald-600">{fmt(s.amount)}</td>
                                 </tr>
@@ -744,7 +744,7 @@ export default function DashboardPage() {
                 <p className="text-[10px] font-bold text-amber-600 uppercase mb-2 flex items-center gap-1"><AlertTriangle size={10} /> Low Stock ({invData.low.length})</p>
                 <div className="flex flex-wrap gap-1.5">
                   {invData.low.slice(0, 6).map((i) => (
-                    <span key={i.id} className="text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full">
+                    <span key={i.id} className="text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800 px-2 py-0.5 rounded-full">
                       {i.name} ({i.currentStock})
                     </span>
                   ))}
@@ -757,7 +757,7 @@ export default function DashboardPage() {
                 <p className="text-[10px] font-bold text-red-600 uppercase mb-2 flex items-center gap-1"><AlertTriangle size={10} /> Out of Stock ({invData.out.length})</p>
                 <div className="flex flex-wrap gap-1.5">
                   {invData.out.slice(0, 6).map((i) => (
-                    <span key={i.id} className="text-[10px] font-medium bg-red-50 text-red-700 border border-red-200 px-2 py-0.5 rounded-full">
+                    <span key={i.id} className="text-[10px] font-medium bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800 px-2 py-0.5 rounded-full">
                       {i.name}
                     </span>
                   ))}
@@ -835,7 +835,7 @@ export default function DashboardPage() {
                     <div key={cr.id} className="flex items-center gap-3 py-2 border-b last:border-0">
                       <div className={`w-2 h-2 rounded-full shrink-0 ${cr.status === 'Overdue' ? 'bg-red-500' : 'bg-amber-500'}`} />
                       <span className="text-xs font-semibold flex-1 truncate">{cr.customerName}</span>
-                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${cr.status === 'Overdue' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}>
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${cr.status === 'Overdue' ? 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300'}`}>
                         {cr.status}
                       </span>
                       <span className="text-xs font-black">{fmtK(cr.amountOwed)}</span>
