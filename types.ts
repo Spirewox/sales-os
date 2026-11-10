@@ -221,6 +221,7 @@ export interface InventoryItem {
   avgUnitCost: number;
   baseSellingPrice: number;
   cartonPrice?: number;
+  cartonCost?: number;
   cartonWeight?: number;
   lastStockUpdate: string;
   location: string;

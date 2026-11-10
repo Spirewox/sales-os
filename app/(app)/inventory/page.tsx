@@ -917,6 +917,7 @@ export default function InventoryPage() {
       currentStock: item.currentStock,
       baseSellingPrice: item.baseSellingPrice,
       cartonPrice: item.cartonPrice,
+      cartonCost: item.cartonCost,
       cartonWeight: item.cartonWeight,
       location: item.location,
       avgUnitCost: item.avgUnitCost,
@@ -1090,6 +1091,18 @@ export default function InventoryPage() {
       }
     }
 
+    const cartonPrice = editProduct.cartonPrice === original.cartonPrice ? undefined : editProduct.cartonPrice;
+    const cartonCost = editProduct.cartonCost === original.cartonCost ? undefined : editProduct.cartonCost;
+    if (
+      editProduct.unitOfMeasure === 'Kg' &&
+      [cartonPrice, cartonCost].some(
+        (value) => value != null && (!(value > 0) || value !== roundMoney2(value)),
+      )
+    ) {
+      toast.error('Carton prices must be positive amounts with at most two decimal places.');
+      return;
+    }
+
     const hub = activeHubs.find((h) => h.name === (editProduct.location || original.location));
     const nextStock =
       editProduct.unitOfMeasure === 'Kg'
@@ -1109,7 +1122,12 @@ export default function InventoryPage() {
       min_stock_level: editProduct.minStockLevel,
       carton_weight: editProduct.cartonWeight,
       base_selling_price: roundMoney2(editProduct.baseSellingPrice ?? original.baseSellingPrice),
-      carton_price: editProduct.unitOfMeasure === 'Cartons' ? roundMoney2(editProduct.cartonPrice ?? original.cartonPrice ?? 0) : undefined,
+      carton_price: editProduct.unitOfMeasure === 'Kg'
+        ? cartonPrice
+        : editProduct.unitOfMeasure === 'Cartons'
+          ? roundMoney2(editProduct.cartonPrice ?? original.cartonPrice ?? 0)
+          : undefined,
+      carton_cost: editProduct.unitOfMeasure === 'Kg' ? cartonCost : undefined,
       ...(hub?.id ? { hub_id: hub.id } : {}),
       ...(stockChanged
         ? {
@@ -1137,7 +1155,12 @@ export default function InventoryPage() {
     pushChange('Min stock', original.minStockLevel, editProduct.minStockLevel);
     pushChange('Location', original.location, editProduct.location || original.location);
     pushChange('Selling price (all batches)', original.baseSellingPrice, editProduct.baseSellingPrice, true);
-    pushChange('Carton selling price (all batches)', original.cartonPrice, editProduct.cartonPrice, true);
+    if (payload.carton_price != null) {
+      pushChange('Carton selling price (all batches)', original.cartonPrice, payload.carton_price, true);
+    }
+    if (payload.carton_cost != null) {
+      pushChange('Carton cost', original.cartonCost, payload.carton_cost, true);
+    }
     pushChange('Carton weight', original.cartonWeight, editProduct.cartonWeight);
     if (stockChanged) {
       pushChange('Current stock', original.currentStock, nextStock);
@@ -1234,6 +1257,7 @@ export default function InventoryPage() {
       quantity: stockQty,
       unit_cost: unitCost,
       unit_price: unitPrice,
+      carton_cost: kgStockFromCarton ? roundMoney2(moveData.unitCost) : undefined,
       carton_price: cartonFields ? roundMoney2(moveData.cartonPrice) : undefined,
       carton_weight: cartonFields || needsPurchaseCartonWeight(selectedProduct, purchaseUom)
         ? cartonWeight
@@ -3342,10 +3366,27 @@ export default function InventoryPage() {
                 <input type="number" min={0} step="0.01" value={editProduct.baseSellingPrice ?? ''} onChange={event => setEditProduct({ ...editProduct, baseSellingPrice: parseMoneyInput(event.target.value) })} className={inputCls} />
                 <p className="text-[11px] text-muted-foreground">Applies to all available batches of this SKU.</p>
               </div>
-              {editProduct.unitOfMeasure === 'Cartons' && <div className="space-y-2">
+              {(editProduct.unitOfMeasure === 'Cartons' || editProduct.unitOfMeasure === 'Kg') && <div className="space-y-2">
                 <label className={labelCls}>Carton selling price (₦)</label>
-                <input type="number" min={0} step="0.01" value={editProduct.cartonPrice ?? ''} onChange={event => setEditProduct({ ...editProduct, cartonPrice: parseMoneyInput(event.target.value) })} className={inputCls} />
+                <input type="number" min={0} step="0.01" value={editProduct.cartonPrice ?? ''} onChange={event => setEditProduct({ ...editProduct, cartonPrice: event.target.value === '' ? undefined : Number(event.target.value) })} className={inputCls} />
               </div>}
+              {editProduct.unitOfMeasure === 'Kg' && (
+                <div className="space-y-2">
+                  <label htmlFor="edit-carton-cost" className={labelCls}>Carton cost (₦, optional)</label>
+                  <input
+                    id="edit-carton-cost"
+                    type="number"
+                    min={0.01}
+                    step="0.01"
+                    value={editProduct.cartonCost ?? ''}
+                    onChange={(event) => setEditProduct({
+                      ...editProduct,
+                      cartonCost: event.target.value === '' ? undefined : Number(event.target.value),
+                    })}
+                    className={inputCls}
+                  />
+                </div>
+              )}
               {editProduct.unitOfMeasure === 'Cartons' && (
                 <div className="space-y-2">
                   <label className={labelCls}>Carton Weight (Kg) *</label>
