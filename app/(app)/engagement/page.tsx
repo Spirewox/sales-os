@@ -105,6 +105,10 @@ export default function EngagementPage() {
           <p className="text-sm text-muted-foreground mt-1">
             Off-cadence customers for win-back and follow-up outreach.
           </p>
+          {data?.summaryUpdatedAt && <p className="mt-1 text-xs text-muted-foreground">
+            Summary updated <time dateTime={data.summaryUpdatedAt}>{new Date(data.summaryUpdatedAt).toLocaleString('en-NG', { timeZone: 'Africa/Lagos' })}</time>
+            {data.summaryStale && ' · Updates pending'}
+          </p>}
         </div>
         <HubScopeSelect scope={hubScope} />
       </div>

@@ -906,7 +906,7 @@ export function useCustomerEngagement(filters?: {
   return useQuery({
     queryKey: ['customers', 'engagement', filters],
     enabled: options?.enabled ?? true,
-    queryFn: async (): Promise<{ items: EngagementCustomer[]; total: number }> => {
+    queryFn: async (): Promise<{ items: EngagementCustomer[]; total: number; summaryUpdatedAt?: string; summaryStale?: boolean }> => {
       if (!HAS_API) return { items: [], total: 0 };
       const raw = await axiosGet(
         `customers/engagement${buildQuery({
@@ -915,9 +915,9 @@ export function useCustomerEngagement(filters?: {
           hub_id: filters?.hub_id,
         })}`,
         true,
-      ) as { data?: EngagementCustomer[]; meta?: { total?: number } };
+      ) as { data?: EngagementCustomer[]; meta?: { total?: number; summaryUpdatedAt?: string; summaryStale?: boolean } };
       const items = Array.isArray(raw?.data) ? raw.data : [];
-      return { items, total: raw?.meta?.total ?? items.length };
+      return { items, total: raw?.meta?.total ?? items.length, summaryUpdatedAt: raw?.meta?.summaryUpdatedAt, summaryStale: raw?.meta?.summaryStale };
     },
   });
 }
