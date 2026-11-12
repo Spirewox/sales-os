@@ -298,6 +298,7 @@ export interface ApiProduct {
   avg_unit_cost: number;
   base_selling_price: number;
   carton_price?: number;
+  image_url?: string;
   carton_cost?: number;
   carton_weight?: number;
   last_stock_update?: string;

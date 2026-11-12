@@ -313,6 +313,7 @@ export function mapInventoryItem(p: ApiProduct, hubMap?: Record<string, string>)
     avgUnitCost: p.avg_unit_cost ?? 0,
     baseSellingPrice: p.base_selling_price ?? 0,
     cartonPrice: p.carton_price,
+    imageUrl: p.image_url,
     cartonCost: p.carton_cost,
     cartonWeight: p.carton_weight,
     lastStockUpdate: toDateStr(p.last_stock_update) || new Date().toISOString().split('T')[0],

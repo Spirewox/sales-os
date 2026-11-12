@@ -1,5 +1,6 @@
 'use client';
 
+import { ProductImageEditor, SkuPhoto, productImagePayload, type ImageDraft } from '@/components/product-image-editor';
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import { useHubScopeFilter } from '@/hooks/use-hub-scope';
 import { HubScopeFilterBar } from '@/components/hub-scope-filter';
@@ -336,6 +337,8 @@ export default function InventoryPage() {
   const mealsServed = salesMetrics?.mealsServed ?? 0;
   const topSellers = salesMetrics?.topSellers ?? [];
   const mostVolatile = salesMetrics?.mostVolatile ?? [];
+  const [imageDraft, setImageDraft] = useState<ImageDraft>();
+  const [imageProgress, setImageProgress] = useState<number>();
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct();
   const recordStockMove = useRecordStockMove();
@@ -916,6 +919,7 @@ export default function InventoryPage() {
       id: item.id,
       sku: item.sku,
       name: item.name,
+      imageUrl: item.imageUrl,
       category: item.category,
       unitOfMeasure: item.unitOfMeasure,
       minStockLevel: item.minStockLevel,
@@ -936,6 +940,7 @@ export default function InventoryPage() {
           ? ''
           : '',
     );
+    setImageDraft(undefined);
     setShowEditModal(true);
   }, []);
 
@@ -1069,15 +1074,19 @@ export default function InventoryPage() {
       subtitle: payload.name,
       rows,
       confirmLabel: 'Create product',
-      run: () => {
-        createProduct.mutate(payload, {
-          onSuccess: (created) => {
-            setShowAddProductModal(false);
-            resetNewProduct();
-            toast.success(created?.sku ? `Product created (${created.sku}).` : 'Product created successfully.');
-          },
-          onError: (err) => toast.error(err.message),
-        });
+      run: async () => {
+        try {
+          if (imageDraft && 'file' in imageDraft) setImageProgress(0);
+          const image = await productImagePayload(imageDraft, { hubId }, setImageProgress);
+          const created = await createProduct.mutateAsync({ ...payload, ...image });
+          setShowAddProductModal(false);
+          resetNewProduct();
+          toast.success(created?.sku ? `Product created (${created.sku}).` : 'Product created successfully.');
+        } catch (error) {
+          toast.error(error instanceof Error ? error.message : 'Could not save the product.');
+        } finally {
+          setImageProgress(undefined);
+        }
       },
     });
   };
@@ -1171,6 +1180,9 @@ export default function InventoryPage() {
       pushChange('Current stock', original.currentStock, nextStock);
     }
 
+    if (imageDraft) {
+      rows.push({ label: 'Product image', value: 'url' in imageDraft && !imageDraft.url ? 'Remove' : 'Replace' });
+    }
     if (rows.length === 0) {
       toast.error('No changes to save.');
       return;
@@ -1182,17 +1194,21 @@ export default function InventoryPage() {
       rows,
       warning: undefined,
       confirmLabel: 'Save changes',
-      run: () => {
-        updateProduct.mutate(payload, {
-          onSuccess: (updated) => {
-            if (viewingDetailsItem?.id === editProduct.id) setViewingDetailsItem(updated);
-            setShowEditModal(false);
-            setEditProduct({});
-            setEditCurrentStockDraft('');
-            toast.success('Product updated successfully.');
-          },
-          onError: (err) => toast.error(err.message),
-        });
+      run: async () => {
+        try {
+          if (imageDraft && 'file' in imageDraft) setImageProgress(0);
+          const image = await productImagePayload(imageDraft, { productId: payload.id }, setImageProgress);
+          const updated = await updateProduct.mutateAsync({ ...payload, ...image });
+          if (viewingDetailsItem?.id === editProduct.id) setViewingDetailsItem(updated);
+          setShowEditModal(false);
+          setEditProduct({});
+          setEditCurrentStockDraft('');
+          toast.success('Product updated successfully.');
+        } catch (error) {
+          toast.error(error instanceof Error ? error.message : 'Could not save the product.');
+        } finally {
+          setImageProgress(undefined);
+        }
       },
     });
   };
@@ -1530,7 +1546,7 @@ export default function InventoryPage() {
           </div>
           {can('inventory.create') && activeView === 'Products' && (
             <button
-              onClick={() => setShowAddProductModal(true)}
+              onClick={() => { setImageDraft(undefined); setShowAddProductModal(true); }}
               className="inline-flex items-center rounded-md text-sm font-medium bg-primary text-primary-foreground shadow hover:bg-primary/90 h-10 px-4 py-2"
             >
               <Plus size={16} className="mr-2" /> Create SKU
@@ -1965,7 +1981,7 @@ export default function InventoryPage() {
                         )}
                         <td className="p-4">
                           <div className="flex flex-col">
-                            <span className="font-medium group-hover:text-primary transition-colors">{item.name}</span>
+                            <span className="flex items-center gap-2 font-medium group-hover:text-primary transition-colors"><SkuPhoto url={item.imageUrl} className="h-8 w-8" />{item.name}</span>
                             <span className="text-xs text-muted-foreground font-mono flex items-center gap-1 mt-0.5">
                               <Tag size={10} /> {item.sku}
                               {item.supplier && <span className="ml-1.5 text-muted-foreground/60">via {item.supplier}</span>}
@@ -2268,7 +2284,7 @@ export default function InventoryPage() {
             <div className="p-6 border-b flex justify-between items-start sticky top-0 bg-card z-10">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-xl font-bold truncate">{viewingDetailsItem.name}</h2>
+                  <div className="flex min-w-0 items-center gap-2"><SkuPhoto url={viewingDetailsItem.imageUrl} className="h-10 w-10" /><h2 className="text-xl font-bold truncate">{viewingDetailsItem.name}</h2></div>
                   <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${getStockStatus(viewingDetailsItem).color}`}>
                     {getStockStatus(viewingDetailsItem).label}
                   </span>
@@ -2941,8 +2957,12 @@ export default function InventoryPage() {
           <div className="w-full max-w-lg rounded-xl border bg-card p-6 shadow-xl animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold">Create New SKU</h2>
-              <button onClick={() => setShowAddProductModal(false)} className="text-muted-foreground hover:text-foreground"><X size={20} /></button>
+              <button disabled={imageProgress !== undefined} onClick={() => setShowAddProductModal(false)} className="text-muted-foreground hover:text-foreground"><X size={20} /></button>
             </div>
+            <fieldset disabled={imageProgress !== undefined}>
+              <ProductImageEditor draft={imageDraft} onChange={setImageDraft} />
+            </fieldset>
+            {imageProgress !== undefined && <progress aria-label="Image upload progress" max={100} value={imageProgress} className="mb-3 w-full" />}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2 col-span-2">
                 <label className={labelCls}>Product code</label>
@@ -3242,8 +3262,8 @@ export default function InventoryPage() {
               </div>
             ) : null}
             <div className="mt-6 flex justify-end gap-3">
-              <button onClick={() => setShowAddProductModal(false)} className={btnSecondary}>Cancel</button>
-              <SubmitButton onClick={handleSaveProduct} loading={createProduct.isPending} className={btnPrimary}>Review & create</SubmitButton>
+              <button disabled={imageProgress !== undefined} onClick={() => setShowAddProductModal(false)} className={btnSecondary}>Cancel</button>
+              <SubmitButton onClick={handleSaveProduct} loading={createProduct.isPending || imageProgress !== undefined} className={btnPrimary}>Review & create</SubmitButton>
             </div>
           </div>
         </div>
@@ -3255,8 +3275,12 @@ export default function InventoryPage() {
           <div className="w-full max-w-lg rounded-xl border bg-card p-6 shadow-xl animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold">Edit SKU</h2>
-              <button onClick={() => { setShowEditModal(false); setEditProduct({}); setEditCurrentStockDraft(''); }} className="text-muted-foreground hover:text-foreground"><X size={20} /></button>
+              <button disabled={imageProgress !== undefined} onClick={() => { setShowEditModal(false); setEditProduct({}); setEditCurrentStockDraft(''); }} className="text-muted-foreground hover:text-foreground"><X size={20} /></button>
             </div>
+            <fieldset disabled={imageProgress !== undefined}>
+              <ProductImageEditor saved={editProduct.imageUrl} draft={imageDraft} onChange={setImageDraft} />
+            </fieldset>
+            {imageProgress !== undefined && <progress aria-label="Image upload progress" max={100} value={imageProgress} className="mb-3 w-full" />}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2 col-span-2">
                 <label className={labelCls}>Product code</label>
@@ -3414,7 +3438,7 @@ export default function InventoryPage() {
             </div>
             <div className="mt-6 flex justify-end gap-3">
               <button onClick={() => { setShowEditModal(false); setEditProduct({}); setEditCurrentStockDraft(''); }} className={btnSecondary}>Cancel</button>
-              {can('inventory.edit') && <SubmitButton onClick={handleEditProduct} loading={updateProduct.isPending} className={btnPrimary}>Review changes</SubmitButton>}
+              {can('inventory.edit') && <SubmitButton onClick={handleEditProduct} loading={updateProduct.isPending || imageProgress !== undefined} className={btnPrimary}>Review changes</SubmitButton>}
             </div>
           </div>
         </div>
