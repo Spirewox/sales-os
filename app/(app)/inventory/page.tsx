@@ -396,6 +396,8 @@ export default function InventoryPage() {
   const [importPreview, setImportPreview] = useState<InventoryImportPreviewRow[]>([]);
   const [importSummary, setImportSummary] = useState<{ total: number; valid: number; invalid: number } | null>(null);
   const [importingMovements, setImportingMovements] = useState(false);
+  const [importAuditId, setImportAuditId] = useState<string>();
+  const [importProcessed, setImportProcessed] = useState(0);
   const [importError, setImportError] = useState<string | null>(null);
 
   // Detail panel
@@ -1440,6 +1442,7 @@ export default function InventoryPage() {
       onSuccess: (data) => {
         setImportPreview(data.rows);
         setImportSummary(data.summary);
+        setImportAuditId(data.validate_audit_id);
         if (data.summary.total === 0) {
           toast.error('No data rows found on the Movements sheet.');
           setShowImportModal(false);
@@ -1460,7 +1463,8 @@ export default function InventoryPage() {
     }
     setImportingMovements(true);
     setImportError(null);
-    importInventory.mutate(rows, {
+    setImportProcessed(0);
+    importInventory.mutate({ rows, auditId: importAuditId, onProgress: setImportProcessed }, {
       onSuccess: (result) => {
         setImportingMovements(false);
         setShowImportModal(false);
@@ -3844,6 +3848,7 @@ export default function InventoryPage() {
         previewRows={importPreview}
         summary={importSummary}
         importing={importingMovements}
+        processed={importProcessed}
         validating={validateInventoryImport.isPending}
         importError={importError}
         onConfirm={handleInventoryImportConfirm}

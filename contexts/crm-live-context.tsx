@@ -1,4 +1,6 @@
 'use client';
+import Link from 'next/link';
+import { bulkJobReference } from '@/lib/bulk-jobs';
 
 import { createContext, useContext, useEffect, useState } from 'react';
 import { Bell } from 'lucide-react';
@@ -124,6 +126,7 @@ export function CrmNotifications() {
       <ul className="absolute right-0 z-30 mt-2 max-h-72 w-64 space-y-3 overflow-auto rounded-xl border bg-card p-4 text-sm shadow-lg">
         {notices.map(item => <li key={item.id}>
           <p className="font-medium">{item.title}</p>
+          {bulkJobReference(item.reference) && <Link className="block text-primary underline" href={`/jobs/${bulkJobReference(item.reference)}`}>View job</Link>}
           <time dateTime={item.createdAt} className="text-xs text-muted-foreground">{new Date(item.createdAt).toLocaleString('en-NG', { timeZone: 'Africa/Lagos' })}</time>
         </li>)}
         {!notices.length && <li className="text-muted-foreground">No notifications yet</li>}

@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { useLayoutEffect } from 'react';
 import { HAS_API, requireApi } from '@/lib/require-api';
+import { downloadBulkExport, saveSalesWorkbook, submitBulkJob, waitForBulkJob } from '@/lib/bulk-jobs';
 import { axiosGet, axiosPost, axiosPatch, axiosDelete, axiosGetBlob, axiosPostForm } from '@/lib/api';
 import { customerTypeToApi, customerCompanyNameForApi, customerPhoneForApi } from '@/lib/customer-helpers';
 import { mapApiUser } from '@/lib/utils';
@@ -1189,18 +1190,9 @@ export function useExportSales() {
         sort_by: filters?.sort_by,
         sort_dir: filters?.sort_dir,
       };
-      const buffer = await axiosGetBlob(`sales/export${buildQuery(params)}`, true);
-      const blob = new Blob([buffer], {
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `fudfarmer-sales-${new Date().toISOString().split('T')[0]}.xlsx`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
+      const job = await submitBulkJob('sales-export', { ...params, request_id: crypto.randomUUID() });
+      if (job) return downloadBulkExport(await waitForBulkJob(job));
+      saveSalesWorkbook(await axiosGetBlob(`sales/export${buildQuery(params)}`, true));
     },
   });
 }
@@ -1455,6 +1447,17 @@ export async function runChunkedSalesImport(
   onProgress?: (progress: { processed: number; total: number; imported: number; failed: number }) => void,
 ): Promise<SalesImportChunkResult> {
   onProgress?.({ processed: 0, total, imported: 0, failed: 0 });
+  const queued = await submitBulkJob('sales-import', { validate_audit_id: validateAuditId });
+  if (queued) {
+    const job = await waitForBulkJob(queued, progress => onProgress?.({
+      processed: progress.processed, total: progress.total ?? total,
+      imported: progress.result?.imported ?? 0, failed: progress.result?.failed ?? 0,
+    }));
+    if (!job.result) throw new Error('The import result is unavailable.');
+    const { imported, failed } = job.result;
+    return { ...job.result, offset: 0, next_offset: total, total, done: true,
+      imported_so_far: imported, failed_so_far: failed, imported_in_chunk: imported, failed_in_chunk: failed };
+  }
   const last = await confirmSalesImport({ validate_audit_id: validateAuditId });
   onProgress?.({
     processed: last.total ?? total,
@@ -1504,11 +1507,21 @@ export function useValidateInventoryImport() {
 export function useImportInventory() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (rows: ApiBulkImportMovementRow[]) => {
+    mutationFn: async ({ rows, auditId, onProgress }: {
+      rows: ApiBulkImportMovementRow[]; auditId?: string; onProgress?: (processed: number) => void;
+    }) => {
       requireApi();
+      if (auditId) {
+        const queued = await submitBulkJob('inventory-import', { validate_audit_id: auditId });
+        if (queued) {
+          const job = await waitForBulkJob(queued, progress => onProgress?.(progress.processed));
+          if (!job.result) throw new Error('The import result is unavailable.');
+          return job.result;
+        }
+      }
       const res = await axiosPost(
         'inventory/import',
-        { rows },
+        { rows, ...(auditId ? { validate_audit_id: auditId } : {}) },
         true,
         120_000,
       ) as ApiListResponse<InventoryImportResult> | InventoryImportResult;

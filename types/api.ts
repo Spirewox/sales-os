@@ -793,6 +793,7 @@ export interface InventoryImportPreviewRow {
 }
 
 export interface InventoryImportValidateResponse {
+  validate_audit_id?: string;
   rows: InventoryImportPreviewRow[];
   summary: { total: number; valid: number; invalid: number };
 }

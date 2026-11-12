@@ -12,6 +12,7 @@ export interface InventoryImportModalProps {
   previewRows: InventoryImportPreviewRow[];
   summary: { total: number; valid: number; invalid: number } | null;
   importing: boolean;
+  processed: number;
   validating: boolean;
   importError: string | null;
   onConfirm: () => void;
@@ -24,6 +25,7 @@ export function InventoryImportModal({
   previewRows,
   summary,
   importing,
+  processed,
   validating,
   importError,
   onConfirm,
@@ -42,7 +44,7 @@ export function InventoryImportModal({
 
   const movementLabel = validRows.length === 1 ? 'Movement' : 'Movements';
   const importButtonLabel = importing
-    ? 'Importing…'
+    ? `Importing… ${processed}/${validRows.length}`
     : `Import ${validRows.length} ${movementLabel}`;
 
   return (
