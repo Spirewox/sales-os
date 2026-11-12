@@ -13,6 +13,7 @@ import { useHubs } from '@/hooks/use-queries';
 import { usePosOverview } from '@/hooks/use-pos-overview';
 import { TillRegistration } from '@/components/till-registration';
 import { LocationTypeTag } from '@/components/hub-scope-filter';
+import { LivePosPanel } from '@/components/live-pos-panel';
 
 const money = (value: number) =>
   new Intl.NumberFormat('en-NG', {
@@ -136,6 +137,7 @@ function PosWorkspace() {
           current state. Offline sales appear after syncing.
         </p>
       </div>
+      <LivePosPanel locationId={locationId} locationNames={Object.fromEntries(locations.map(location => [location.id, location.name]))} />
       {invalidRange && (
         <p role="alert" className="text-sm text-destructive">
           Choose a valid start and end date.

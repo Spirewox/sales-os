@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Sidebar } from '@/components/layout/sidebar';
 import { BrandLoader } from '@/components/brand';
+import { CrmLiveProvider, CrmNotifications } from '@/contexts/crm-live-context';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, user, loading } = useAuth();
@@ -22,11 +23,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <CrmLiveProvider key={user.id}><div className="flex h-screen overflow-hidden">
       <Sidebar />
       <main className="min-w-0 flex-1 overflow-y-auto bg-background p-5 pt-14 md:p-8 md:pt-8 lg:p-10 lg:pt-10">
+        <CrmNotifications />
         {children}
       </main>
-    </div>
+    </div></CrmLiveProvider>
   );
 }
