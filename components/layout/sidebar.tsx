@@ -8,7 +8,7 @@ import { useInventory, useFeedback, useEnquiries, useCreditSummary } from '@/hoo
 import { Permission } from '@/lib/permissions';
 import {
   LayoutDashboard, Package, Users, Banknote,
-  CreditCard, History, MessageSquare,
+  CreditCard, History,
   Settings, LogOut, Menu, X, BarChart3, Truck, Monitor, Megaphone,
   // Sparkles — temporarily unused while Insights nav is hidden
 } from 'lucide-react';
@@ -24,10 +24,9 @@ const navItems: { href: string; label: string; icon: typeof LayoutDashboard; per
   { href: '/inventory', label: 'Inventory', icon: Package, permission: 'inventory.view' },
   { href: '/suppliers', label: 'Suppliers', icon: Truck, permission: 'suppliers.view' },
   { href: '/customers', label: 'Customers', icon: Users, permission: 'customers.view' },
-  { href: '/engagement', label: 'Engagement', icon: Megaphone, permission: 'customers.view' },
+  { href: '/engagement', label: 'Engagement', icon: Megaphone },
   { href: '/sales', label: 'Sales', icon: Banknote, permission: 'sales.view' },
   { href: '/credits', label: 'Credits', icon: CreditCard, permission: 'credits.view' },
-  { href: '/interactions', label: 'Interactions', icon: MessageSquare, permission: 'interactions.view' },
   { href: '/audit', label: 'Audit Trail', icon: History, permission: 'audit.view' },
 ];
 
@@ -36,8 +35,9 @@ export function Sidebar() {
   const { user, logout } = useAuth();
   const { can } = usePermissions();
   const { data: inventory } = useInventory();
-  const { data: feedback } = useFeedback();
-  const { data: enquiries } = useEnquiries();
+  const canViewInteractions = can('interactions.view');
+  const { data: feedback } = useFeedback(undefined, { enabled: canViewInteractions });
+  const { data: enquiries } = useEnquiries(undefined, { enabled: canViewInteractions });
   const { data: creditSummary = [] } = useCreditSummary();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -70,7 +70,7 @@ export function Sidebar() {
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5">
-        {navItems.filter((item) => !item.permission || can(item.permission)).map((item) => {
+        {navItems.filter((item) => item.href === '/engagement' ? can('customers.view') || canViewInteractions : !item.permission || can(item.permission)).map((item) => {
           const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
           return (
             <Link
@@ -90,7 +90,7 @@ export function Sidebar() {
                   {lowStockCount}
                 </span>
               )}
-              {item.label === 'Interactions' && (openFeedbackCount + openEnquiriesCount) > 0 && (
+              {item.href === '/engagement' && canViewInteractions && (openFeedbackCount + openEnquiriesCount) > 0 && (
                 <span className="ml-auto inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-white">
                   {openFeedbackCount + openEnquiriesCount}
                 </span>

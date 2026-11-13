@@ -345,7 +345,7 @@ export default function DashboardPage() {
         </button>
 
         {/* Open Tickets */}
-        <button onClick={() => router.push('/interactions')} className={`group relative rounded-xl border p-4 transition-all text-left ${tracker.openTickets > 0 ? 'bg-blue-50/50 border-blue-200 hover:border-blue-400 dark:bg-blue-950/40 dark:border-blue-900 dark:hover:border-blue-700' : 'bg-card hover:border-muted-foreground/30'}`}>
+        <button onClick={() => router.push('/engagement?tab=interactions')} className={`group relative rounded-xl border p-4 transition-all text-left ${tracker.openTickets > 0 ? 'bg-blue-50/50 border-blue-200 hover:border-blue-400 dark:bg-blue-950/40 dark:border-blue-900 dark:hover:border-blue-700' : 'bg-card hover:border-muted-foreground/30'}`}>
           <div className="flex items-center gap-2 mb-2">
             <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${tracker.openTickets > 0 ? 'bg-blue-100 dark:bg-blue-950/60' : 'bg-muted'}`}>
               <MessageSquare size={16} className={tracker.openTickets > 0 ? 'text-blue-600 dark:text-blue-400' : 'text-muted-foreground'} />
@@ -399,7 +399,7 @@ export default function DashboardPage() {
           </button>
         )}
         {can('interactions.create') && (
-          <button onClick={() => router.push('/interactions')} className="inline-flex items-center gap-1.5 shrink-0 rounded-lg border bg-card px-3.5 py-2 text-xs font-semibold hover:border-sky-300 hover:bg-sky-50 dark:hover:border-sky-700 dark:hover:bg-sky-950/40 transition-all">
+          <button onClick={() => router.push('/engagement?tab=interactions')} className="inline-flex items-center gap-1.5 shrink-0 rounded-lg border bg-card px-3.5 py-2 text-xs font-semibold hover:border-sky-300 hover:bg-sky-50 dark:hover:border-sky-700 dark:hover:bg-sky-950/40 transition-all">
             <MessageSquare size={14} className="text-sky-600 dark:text-sky-400" /> Log Feedback
           </button>
         )}
