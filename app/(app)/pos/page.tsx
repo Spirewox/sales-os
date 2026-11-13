@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import {
   Banknote,
   Monitor,
@@ -8,6 +8,8 @@ import {
   RefreshCw,
   ShieldCheck,
 } from 'lucide-react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { PosOperations } from './operations';
 import { usePermissions } from '@/hooks/use-permissions';
 import { useHubs } from '@/hooks/use-queries';
 import { usePosOverview } from '@/hooks/use-pos-overview';
@@ -41,12 +43,20 @@ export default function PosPage() {
         </p>
       </div>
     );
-  return <PosWorkspace />;
+  return <Suspense fallback={<p role="status">Loading POS…</p>}><PosWorkspace /></Suspense>;
 }
 
 function PosWorkspace() {
-  const [locationId, setLocationId] = useState('');
-  const [from, setFrom] = useState(today);
+  const params = useSearchParams();
+  const router = useRouter();
+  const section = params.get('tab') || 'overview';
+  const [locationId, setLocationId] = useState(params.get('hub_id') || '');
+  const switchTab = (tab: string, hub = locationId) => {
+    const next = new URLSearchParams({ tab, date_from: from, date_to: to });
+    if (hub) next.set('hub_id', hub);
+    router.replace(`?${next}`, { scroll: false });
+  };
+  const [from, setFrom] = useState(() => params.get('date_from') || today());
   const [to, setTo] = useState(today);
   const [tillLocation, setTillLocation] = useState<{
     id: string;
@@ -60,12 +70,25 @@ function PosWorkspace() {
     date_to: to,
   });
   const data = overview.data;
+  const [locationSearch, setLocationSearch] = useState('');
+  const [locationPage, setLocationPage] = useState(0);
+  const matchingLocations = data?.locations.filter(location => location.name.toLowerCase().includes(locationSearch.trim().toLowerCase())) ?? [];
+  const currentPage = Math.min(locationPage, Math.max(0, Math.ceil(matchingLocations.length / 50) - 1));
   const locations = hubs.data?.filter((hub) => hub.isActive) ?? [];
   const inputClass =
     'h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-2 focus-visible:outline-primary';
 
   return (
     <div className="space-y-6">
+      <nav aria-label="POS sections" className="flex flex-wrap gap-2 border-b pb-2">
+        {Object.entries({ overview: 'Overview', transactions: 'Transactions', tills: 'Tills', shifts: 'Shifts', reviews: 'Payment Review' }).map(([id, label]) => (
+          <button key={id} type="button" aria-current={section === id ? 'page' : undefined}
+            className={`rounded-md px-3 py-2 text-sm font-medium ${section === id ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}`}
+            onClick={() => switchTab(id)}>{label}</button>
+        ))}
+      </nav>
+      {['transactions', 'tills', 'shifts', 'reviews'].includes(section) && <PosOperations key={section} section={section} locations={locations.map(location => ({ id: location.id, name: location.name }))} />}
+      {section === 'overview' && <>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
@@ -244,7 +267,7 @@ function PosWorkspace() {
                   </tr>
                 </thead>
                 <tbody>
-                  {data.locations.map((location) => (
+                  {matchingLocations.slice(currentPage * 50, (currentPage + 1) * 50).map((location) => (
                     <tr key={location.id} className="border-t">
                       <td className="p-4">
                         <div className="flex items-center gap-2 font-medium">
@@ -297,6 +320,12 @@ function PosWorkspace() {
             </div>
           </section>
 
+          <div className="flex flex-wrap items-center gap-3">
+            <input aria-label="Search locations" placeholder="Search locations" className={inputClass}
+              value={locationSearch} onChange={event => { setLocationSearch(event.target.value); setLocationPage(0); }} />
+            <button disabled={currentPage === 0} onClick={() => setLocationPage(currentPage - 1)}>Previous locations</button>
+            <button disabled={(currentPage + 1) * 50 >= matchingLocations.length} onClick={() => setLocationPage(currentPage + 1)}>Next locations</button>
+          </div>
           {tillLocation &&
             data.locations.some(
               (location) => location.id === tillLocation.id,
@@ -342,6 +371,7 @@ function PosWorkspace() {
           </section>
         </>
       )}
+      </>}
     </div>
   );
 }
