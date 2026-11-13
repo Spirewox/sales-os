@@ -28,6 +28,7 @@ import { InventoryRequestsPanel } from './inventory-requests-panel';
 import { hubOptionLabel } from '@/lib/api-mappers';
 import {
   formatInventoryStockDisplay,
+  formatStockQuantity,
   formatStockLogReference,
 } from '@/lib/format-carton-stock';
 import {
@@ -3376,7 +3377,7 @@ export default function InventoryPage() {
               ) : editProduct.id && !editSalesPerf.isLoading ? (
                 <div className="space-y-2 col-span-2">
                   <p className="text-xs text-muted-foreground">
-                    Stock is locked after sales. Current stock: {editProduct.currentStock ?? '—'}. Use stock movements to adjust.
+                    Stock is locked after sales. Current stock: {editProduct.currentStock == null ? '—' : formatStockQuantity(editProduct.currentStock, editProduct.unitOfMeasure)}. Use stock movements to adjust.
                   </p>
                 </div>
               ) : null}
@@ -3824,7 +3825,7 @@ export default function InventoryPage() {
                       <div className="flex-1">
                         <span className="font-bold text-sm">{item.name}</span>
                         <span className="text-xs text-muted-foreground ml-2">{item.sku}</span>
-                        <span className="text-xs text-muted-foreground ml-2">(Stock: {item.currentStock})</span>
+                        <span className="text-xs text-muted-foreground ml-2">(Stock: {formatStockQuantity(item.currentStock, item.unitOfMeasure)})</span>
                       </div>
                       <input
                         type="number"

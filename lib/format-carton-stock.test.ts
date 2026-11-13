@@ -31,6 +31,11 @@ describe('formatInventoryStockDisplay', () => {
       }), '9 cartons 99kg');
   });
 
+  it('hides floating-point tails while preserving liters precision', () => {
+    assert.equal(formatInventoryStockDisplay({ currentStock: 18.049999999999997, unitOfMeasure: 'Kg' }), '18.05 Kg');
+    assert.equal(formatInventoryStockDisplay({ currentStock: 0.125000000000001, unitOfMeasure: 'Litres' }), '0.125 Litres');
+  });
+
   it('falls back for non-carton UOM', () => {
     assert.equal(formatInventoryStockDisplay({
         currentStock: 12,

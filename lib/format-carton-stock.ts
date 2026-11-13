@@ -1,3 +1,8 @@
+export function formatStockQuantity(quantity: number, unit?: string): string {
+  const liters = /^(liters?|litres?|l)$/i.test(unit?.trim() ?? '');
+  return new Intl.NumberFormat('en-NG', { useGrouping: false, maximumFractionDigits: liters ? 3 : 2 }).format(quantity);
+}
+
 /** Format carton stock as whole cartons + remaining kg (display only). */
 export function formatCartonStock(
   currentStock: number,
@@ -6,15 +11,14 @@ export function formatCartonStock(
   const stock = Number(currentStock) || 0;
   const weight = Number(cartonWeight) || 0;
   if (weight <= 0) {
-    return `${stock} carton${stock === 1 ? '' : 's'}`;
+    return `${formatStockQuantity(stock)} carton${stock === 1 ? '' : 's'}`;
   }
 
   const totalKg = stock * weight;
   const eps = 1e-9;
   let wholeCartons = Math.floor(totalKg / weight + eps);
   let remKg = totalKg - wholeCartons * weight;
-  // Float-safe rounding to nearest 1kg (or 0.01 if fractional kg matter)
-  remKg = Math.round(remKg * 1000) / 1000;
+  remKg = Math.round(remKg * 100) / 100;
   if (remKg < 0) remKg = 0;
   if (remKg >= weight - eps) {
     wholeCartons += 1;
@@ -23,7 +27,7 @@ export function formatCartonStock(
 
   const cartonLabel = `${wholeCartons} carton${wholeCartons === 1 ? '' : 's'}`;
   if (remKg < eps) return cartonLabel;
-  const kgLabel = Number.isInteger(remKg) ? String(remKg) : String(remKg);
+  const kgLabel = formatStockQuantity(remKg);
   return `${cartonLabel} ${kgLabel}kg`;
 }
 
@@ -40,7 +44,7 @@ export function formatInventoryStockDisplay(item: {
     return formatCartonStock(item.currentStock, item.cartonWeight);
   }
   const uom = item.unitOfMeasure || '';
-  return `${item.currentStock}${uom ? ` ${uom}` : ''}`.trim();
+  return `${formatStockQuantity(item.currentStock, uom)}${uom ? ` ${uom}` : ''}`.trim();
 }
 
 /** Prefer human notes over raw Mongo sale ids for stock log references. */
