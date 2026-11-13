@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { axiosGet } from '@/lib/api';
@@ -11,6 +12,7 @@ type Row = {
   client_sale_id?: string; client_shift_id?: string; cashier_name?: string; kind?: string; status?: string;
   total_kobo?: number; createdAt?: string; opened_at?: string; closed_at?: string; last_seen?: string; variance?: number;
   receipt?: { lines?: { name: string; qty: number; lineTotal: number }[]; receiptPayment?: { checkoutReference?: string; provider?: string; actualMethod?: string } };
+  checkoutReference?: string;
   review_reason?: string; evidence?: { amountKobo?: number; terminalSerial?: string; reference?: string; transactionReference?: string };
 };
 const dateTime = (value?: string) => value ? new Date(value).toLocaleString('en-NG', { timeZone: 'Africa/Lagos' }) : '—';
@@ -32,6 +34,7 @@ export function PosOperations({ section, locations }: { section: string; locatio
   function navigate(update: Record<string, string>) {
     const next = new URLSearchParams(params);
     next.delete('before');
+    if (Object.keys(update).some(key => key !== 'before')) next.delete('reference');
     for (const [key, value] of Object.entries(update)) {
       if (value) next.set(key, value);
       else next.delete(key);
@@ -69,7 +72,7 @@ export function PosOperations({ section, locations }: { section: string; locatio
           </select>
         </>}
         {section === 'transactions' && <select name="kind" aria-label="Transaction type" defaultValue={params.get('kind') || ''} className={input}>
-          <option value="">All transaction types</option><option value="sale">Sale</option><option value="repayment">Repayment</option>
+          <option value="">All transaction types</option><option value="sale">Sale</option><option value="repayment">Repayment</option><option value="refund">Refund</option><option value="void">Void</option>
         </select>}
         <button className="min-h-10 rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground">Apply filters</button>
       </form>
@@ -93,6 +96,12 @@ export function PosOperations({ section, locations }: { section: string; locatio
                   {row.closed_at && <div>Closed · {dateTime(row.closed_at)}</div>}
                   {row.evidence?.transactionReference && <div>{row.evidence.transactionReference}</div>}
                   {row.review_reason && <div>{row.review_reason}</div>}
+                  {row.checkoutReference && <Link className="underline" href={`?${new URLSearchParams({
+                    tab: 'transactions', hub_id: row.hub, reference: row.checkoutReference,
+                    date_from: '2000-01-01', date_to: dateTime(row.createdAt).includes('—')
+                      ? new Date().toISOString().slice(0, 10)
+                      : new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Lagos', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(row.createdAt!)),
+                  })}`}>Open checkout and receipt details</Link>}
                   {row.receipt?.receiptPayment && <div>{row.receipt.receiptPayment.actualMethod} · {row.receipt.receiptPayment.checkoutReference}</div>}
                   {row.receipt?.lines?.map((line, index) => <div key={index}>{line.qty} × {line.name} · {money(line.lineTotal)}</div>)}
                 </dl>
