@@ -1,5 +1,7 @@
 'use client';
 
+import { useTheme } from 'next-themes';
+
 import { useState, useEffect, useMemo, useCallback, type SubmitEvent } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import {
@@ -44,7 +46,7 @@ import { hubOptionLabel } from '@/lib/api-mappers';
 import { toast } from 'sonner';
 import { SubmitButton } from '@/components/submit-button';
 import {
-  Save, User, Lock, Moon, Sun, Trash2, AlertTriangle,
+  Save, User, Lock, Moon, Trash2, AlertTriangle,
   Users, Plus, X, Pencil, MapPin, Building2, Shield, KeyRound,
   ChevronDown, ChevronRight, Check, RotateCcw,
 } from 'lucide-react';
@@ -111,7 +113,7 @@ export default function SettingsPage() {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [darkMode, setDarkMode] = useState(true);
+  const { theme, setTheme } = useTheme();
   const [showUserModal, setShowUserModal] = useState(false);
   const [editingUser, setEditingUser] = useState<Partial<Agent>>({ role: 'Hub Manager', location: activeHubs[0]?.name || 'Lagos' });
   const [confirmAction, setConfirmAction] = useState<{ type: ConfirmActionType; payload?: string } | null>(null);
@@ -154,10 +156,6 @@ export default function SettingsPage() {
       setSelectedRoleId(defaultRole._id);
     }
   }, [apiRoles, selectedRoleId]);
-
-  useEffect(() => {
-    setDarkMode(document.documentElement.classList.contains('dark'));
-  }, []);
 
   useEffect(() => {
     syncRolesFromApi();
@@ -206,13 +204,6 @@ export default function SettingsPage() {
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to update password.');
     }
-  };
-
-  const toggleDarkMode = () => {
-    const next = !darkMode;
-    setDarkMode(next);
-    if (next) { document.documentElement.classList.add('dark'); localStorage.setItem('fudfarmer_theme', 'dark'); }
-    else { document.documentElement.classList.remove('dark'); localStorage.setItem('fudfarmer_theme', 'light'); }
   };
 
   const isAdminRole = (roleLabelName: string) => isCompanyAdminSelection(apiRoles, roleLabelName);
@@ -889,8 +880,19 @@ export default function SettingsPage() {
         <div className="rounded-xl border bg-card p-6 space-y-6">
           <h3 className="font-bold">Appearance</h3>
           <div className="flex items-center justify-between p-4 rounded-lg border">
-            <div className="flex items-center gap-3">{darkMode ? <Moon size={20} /> : <Sun size={20} />}<div><p className="font-medium">Dark Mode</p><p className="text-xs text-muted-foreground">Toggle between light and dark theme</p></div></div>
-            <button onClick={toggleDarkMode} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${darkMode ? 'bg-primary' : 'bg-muted'}`}><span className={`inline-block h-4 w-4 rounded-full bg-white transition-transform ${darkMode ? 'translate-x-6' : 'translate-x-1'}`} /></button>
+            <div className="flex items-center gap-3">
+              <Moon size={20} />
+              <div>
+                <label htmlFor="appearance-theme" className="font-medium">Theme</label>
+                <p className="text-xs text-muted-foreground">System follows your device setting</p>
+              </div>
+            </div>
+            <select id="appearance-theme" value={theme ?? 'system'} onChange={event => setTheme(event.target.value)}
+              className="rounded-md border border-input bg-background px-3 py-2 text-sm">
+              <option value="system">System</option>
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+            </select>
           </div>
         </div>
       )}
