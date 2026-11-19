@@ -6,6 +6,11 @@ export const ALL_PERMISSIONS = [
   'analytics.view',
   'pos.view',
   'pos.manage_tills',
+  'kitchen.view',
+  'kitchen.manage_jobs',
+  'kitchen.view_costs',
+  'kitchen.manage_pricing',
+  'kitchen.archive',
   'inventory.view',
   'inventory.create',
   'inventory.edit',
@@ -74,6 +79,17 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
     permissions: [
       { key: 'pos.view', label: 'View tills & POS metrics' },
       { key: 'pos.manage_tills', label: 'Register & revoke tills' },
+    ],
+  },
+  {
+    label: 'Kitchen',
+    icon: 'ChefHat',
+    permissions: [
+      { key: 'kitchen.view', label: 'View kitchen board & jobs' },
+      { key: 'kitchen.manage_jobs', label: 'Take, quote, move & cancel jobs; record payments' },
+      { key: 'kitchen.view_costs', label: 'See cost, profit & margin' },
+      { key: 'kitchen.manage_pricing', label: 'Edit ingredients, recipes, running costs & alert rules' },
+      { key: 'kitchen.archive', label: 'Archive jobs' },
     ],
   },
   {
@@ -168,6 +184,11 @@ export const PERMISSION_MAP: Record<Permission, string> = {
   'analytics.view': 'view_analytics',
   'pos.view': 'view_pos',
   'pos.manage_tills': 'manage_pos_tills',
+  'kitchen.view': 'view_kitchen',
+  'kitchen.manage_jobs': 'manage_kitchen_jobs',
+  'kitchen.view_costs': 'view_kitchen_costs',
+  'kitchen.manage_pricing': 'manage_kitchen_pricing',
+  'kitchen.archive': 'archive_kitchen_jobs',
   'inventory.view': 'view_inventory',
   'inventory.create': 'create_sku',
   'inventory.edit': 'edit_product_detail',
@@ -243,6 +264,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<RoleName, Permission[]> = {
     'interactions.view', 'interactions.create', 'interactions.resolve',
   ],
   Cashier: [],
+  'Kitchen Manager': ['kitchen.view', 'kitchen.manage_jobs', 'kitchen.view_costs'],
 };
 
 export function hasPermission(user: AppUser | null, permission: Permission): boolean {
