@@ -57,7 +57,10 @@ function ReadValue({ label, value }: { label: string; value: React.ReactNode }) 
 
 export function KitchenSettingsSection({ hubScope }: { hubScope: HubScopeFilter }) {
   const { can } = usePermissions();
-  const [costHub, setCostHub] = useState<string>('');
+  // Outlet-bound users (e.g. a Kitchen manager) start on their own outlet's running costs.
+  // Hubs load after the first render, so derive the default until the user picks an outlet.
+  const [pickedHub, setCostHub] = useState<string | null>(null);
+  const costHub = pickedHub ?? (hubScope.canSwitchHubs ? '' : hubScope.defaultHubId ?? '');
   const settings = useKitchenSettings(costHub || undefined);
 
   if (settings.isPending) return <PanelSkeleton label="Loading kitchen settings…" />;
@@ -195,7 +198,7 @@ function RunningCostsCard({ running, source, hubId, setHubId, hubScope, hasOverr
           {hubScope.activeHubs.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
         </select>
       </Field>
-      <p className="text-xs text-muted-foreground">{scopeLabel}{source === 'company' && hubId ? '. Saving creates its own figures.' : '.'}</p>
+      <p className="text-xs text-muted-foreground">{scopeLabel}{source === 'company' && hubId && canEdit ? '. Saving creates its own figures.' : '.'}</p>
       {!r ? (
         <p className="text-sm italic text-muted-foreground">Running costs are only shown to people who can see costs.</p>
       ) : (
@@ -262,7 +265,9 @@ function AlertRulesCard({ rules, canEdit, canListUsers }: { rules: KitchenAlertR
   const roles = useRoles();
   const agents = useAgents(undefined, { enabled: canEdit && canListUsers });
   const roleOptions = (roles.data ?? []).map((r) => ({ name: r.name, label: r.label || r.name }));
-  const roleLabel = (name?: string) => roleOptions.find((r) => r.name === name)?.label ?? name ?? '';
+  // Without access to the roles list, show the role name tidied up (finance → Finance).
+  const roleLabel = (name?: string) =>
+    roleOptions.find((r) => r.name === name)?.label ?? (name ?? '').split('_').map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w)).join(' ');
   const userName = (id?: string) => agents.data?.find((a) => a.id === id)?.name ?? 'Named person';
   const recipientText = (r: KitchenAlertRecipient) =>
     r.kind === 'outlet_role' ? `${roleLabel(r.role)} at the outlet` : r.kind === 'company_role' ? `${roleLabel(r.role)} (company-wide)` : r.kind === 'user' ? userName(r.user) : RECIPIENT_LABELS[r.kind];
