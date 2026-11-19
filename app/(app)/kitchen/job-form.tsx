@@ -153,7 +153,9 @@ function JobFormInner({ mode, job, hubScope, onClose, onSaved }: { mode: JobForm
       ];
   const [stepIdx, setStepIdx] = useState(0);
   const step = steps[Math.min(stepIdx, steps.length - 1)].id;
-  const hubId = job ? (typeof job.hub === 'string' ? job.hub : job.hub._id) : input.hub_id;
+  // Hubs can load after the form opens, so fall back to the default outlet at use time.
+  const hubId = job ? (typeof job.hub === 'string' ? job.hub : job.hub._id) : input.hub_id || hubScope.defaultHubId;
+  const noOutlet = !job && !hubId;
 
   const set = (patch: Partial<KitchenJobInput>) => setInput((prev) => ({ ...prev, ...patch }));
   const setMode = (m: KitchenMode) =>
@@ -171,7 +173,8 @@ function JobFormInner({ mode, job, hubScope, onClose, onSaved }: { mode: JobForm
   const saving = create.isPending || update.isPending || action.isPending;
 
   const payload = (): KitchenJobInput => {
-    const { hub_id, ...rest } = input;
+    const rest: KitchenJobInput = { ...input };
+    delete rest.hub_id;
     const out: KitchenJobInput = { ...rest, due_at: input.due_at || null };
     if (!canCosts) {
       // Without cost access the API keeps stored unit costs and rates; never send blanks over them.
@@ -179,10 +182,12 @@ function JobFormInner({ mode, job, hubScope, onClose, onSaved }: { mode: JobForm
       out.labour = input.labour?.map((l) => ({ role: l.role, people: l.people, days: l.days }));
     }
     if (quick) out.bill_lines = (input.bill_lines ?? []).filter((b) => b.desc.trim() && b.qty > 0);
-    return mode === 'edit' ? out : { ...out, hub_id };
+    return mode === 'edit' ? out : { ...out, hub_id: hubId };
   };
 
-  const confirmBlocker = !(ticket.total > 0) ? 'Add a menu or dishes with a price first.' : !input.customer_name?.trim() && !input.customer_id ? 'Add the customer first.' : null;
+  const confirmBlocker = noOutlet
+    ? 'Add an outlet (Settings › Hubs) before taking kitchen jobs.'
+    : !(ticket.total > 0) ? 'Add a menu or dishes with a price first.' : !input.customer_name?.trim() && !input.customer_id ? 'Add the customer first.' : null;
 
   const save = async (then: 'draft' | 'quote' | 'confirm') => {
     try {
@@ -247,7 +252,7 @@ function JobFormInner({ mode, job, hubScope, onClose, onSaved }: { mode: JobForm
             {!last && <button type="button" className={btnSecondary} onClick={() => setStepIdx((i) => i + 1)}>Next <ChevronRight size={14} /></button>}
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            {confirmBlocker && last && isDraftish && <span className="text-xs text-muted-foreground">{confirmBlocker}</span>}
+            {confirmBlocker && (last || noOutlet) && isDraftish && <span className="text-xs text-muted-foreground">{confirmBlocker}</span>}
             {mode === 'edit' ? (
               <>
                 {isDraftish ? (
@@ -259,8 +264,8 @@ function JobFormInner({ mode, job, hubScope, onClose, onSaved }: { mode: JobForm
               </>
             ) : (
               <>
-                <button type="button" className={btnGhost} disabled={saving} onClick={() => void save('draft')}>Save draft</button>
-                {!quick && <button type="button" className={btnSecondary} disabled={saving || !(ticket.total > 0)} onClick={() => void save('quote')}>Save as quote</button>}
+                <button type="button" className={btnGhost} disabled={saving || noOutlet} onClick={() => void save('draft')}>Save draft</button>
+                {!quick && <button type="button" className={btnSecondary} disabled={saving || noOutlet || !(ticket.total > 0)} onClick={() => void save('quote')}>Save as quote</button>}
                 <SubmitButton type="button" loading={saving} disabled={!!confirmBlocker} onClick={() => void save('confirm')} className="h-9 px-4 text-sm">Confirm order</SubmitButton>
               </>
             )}
@@ -386,7 +391,7 @@ function CustomerStep({ input, set, setMode, quick, hubScope, lockedHub }: {
         </Field>
         {hubScope.canSwitchHubs && !lockedHub && (
           <Field label="Outlet" htmlFor="outlet">
-            <select id="outlet" className={inputClass} value={input.hub_id ?? ''} onChange={(e) => set({ hub_id: e.target.value })}>
+            <select id="outlet" className={inputClass} value={input.hub_id || hubScope.defaultHubId || ''} onChange={(e) => set({ hub_id: e.target.value })}>
               {hubScope.activeHubs.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
             </select>
           </Field>

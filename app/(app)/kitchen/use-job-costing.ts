@@ -12,7 +12,7 @@ export function previewBillLines(input: KitchenJobInput, costing: Pick<CostingRe
   if (input.mode === 'chef') {
     return [{ desc: `Private chef for ${costing.count} guests (fees, transport and service charge)`, qty: 1, unit_price: costing.price }];
   }
-  const words = { packs: 'packs', buffet: 'guests (buffet)', trays: 'trays', chef: 'guests' } as const;
+  const words = { packs: 'Food packs', buffet: 'Buffet (per guest)', trays: 'Trays & bowls', chef: 'Private chef' } as const;
   return [{ desc: input.title?.trim() || words[input.mode ?? 'packs'], qty: costing.count, unit_price: costing.price_per_unit }];
 }
 

@@ -174,7 +174,7 @@ export function KitchenBoard({
             <span className="font-semibold">{counts.new ?? 0} waiting</span>
             {overdue > 0 && <span className="font-semibold text-destructive">{overdue} overdue</span>}
             {dueSoon > 0 && <span className="font-semibold text-amber-600">{dueSoon} due soon</span>}
-            <span role="status" className="text-sm text-muted-foreground">{jobs.isFetching ? 'Refreshing…' : `Updated ${new Date(jobs.dataUpdatedAt || now).toLocaleTimeString('en-NG', { timeZone: 'Africa/Lagos', hour: 'numeric', minute: '2-digit' })}`}</span>
+            <span role="status" className="text-sm text-muted-foreground">{jobs.isFetching ? 'Refreshing…' : `Updated ${new Date(jobs.dataUpdatedAt || now).toLocaleTimeString('en-NG', { timeZone: 'Africa/Lagos', hour: 'numeric', minute: '2-digit', hour12: true })}`}</span>
             <button type="button" className={btnSecondary} onClick={toggleSound} aria-pressed={sound}>
               {sound ? <Bell size={14} /> : <BellOff size={14} />} {sound ? 'Chime on' : 'Chime off'}
             </button>

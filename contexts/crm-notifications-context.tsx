@@ -18,7 +18,7 @@ import { disablePush, enablePush, pushStatus, type PushStatus } from '@/lib/push
 const INBOX_KEY = ['crm-notifications'] as const;
 type Inbox = { data: CrmNotification[]; unread: number; live: boolean };
 
-const Ctx = createContext({ connected: false, unread: 0 });
+const Ctx = createContext<{ connected: boolean; unread: number; inbox: Inbox | undefined; loading: boolean }>({ connected: false, unread: 0, inbox: undefined, loading: true });
 export const useCrmNotifications = () => useContext(Ctx);
 
 export function CrmNotificationsProvider({ children }: { children: React.ReactNode }) {
@@ -100,7 +100,7 @@ export function CrmNotificationsProvider({ children }: { children: React.ReactNo
     };
   }, [qc]);
 
-  return <Ctx.Provider value={{ connected, unread: inbox.data?.unread ?? 0 }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ connected, unread: inbox.data?.unread ?? 0, inbox: inbox.data, loading: inbox.isPending }}>{children}</Ctx.Provider>;
 }
 
 const when = (iso: string) => {
@@ -122,11 +122,8 @@ const PUSH_TEXT: Record<PushStatus, string> = {
 
 export function NotificationBell() {
   const qc = useQueryClient();
-  const { connected } = useCrmNotifications();
+  const { connected, inbox: data, loading } = useCrmNotifications();
   const [open, setOpen] = useState(false);
-  // Reads the cache the provider fills; never fetches on its own.
-  const inbox = useQuery<Inbox>({ queryKey: INBOX_KEY, enabled: false });
-  const data = inbox.data;
   const [push, setPush] = useState<PushStatus | null>(null);
   const [pushBusy, setPushBusy] = useState(false);
   const panel = useRef<HTMLDivElement>(null);
@@ -199,7 +196,7 @@ export function NotificationBell() {
             </div>
           </div>
           <ul className="max-h-96 divide-y overflow-auto" aria-live="polite">
-            {inbox.isPending && <li className="px-4 py-6 text-center text-sm text-muted-foreground">Loading…</li>}
+            {loading && <li className="px-4 py-6 text-center text-sm text-muted-foreground">Loading…</li>}
             {items.map((n) => (
               <li key={n._id} className={cn(!n.readAt && 'bg-primary/5')}>
                 <Link
@@ -216,7 +213,7 @@ export function NotificationBell() {
                 </Link>
               </li>
             ))}
-            {!inbox.isPending && !items.length && <li className="px-4 py-6 text-center text-sm text-muted-foreground">No notifications yet</li>}
+            {!loading && !items.length && <li className="px-4 py-6 text-center text-sm text-muted-foreground">No notifications yet</li>}
           </ul>
           <div className="border-t bg-muted/30 px-4 py-3 text-xs">
             <p className="text-muted-foreground">{push ? PUSH_TEXT[push] : 'Checking device notifications…'}</p>

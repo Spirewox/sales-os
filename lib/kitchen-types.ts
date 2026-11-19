@@ -283,7 +283,7 @@ export function formatDue(iso: string | null | undefined, now = Date.now()): str
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return 'No due time';
   const day = (x: Date) => new Intl.DateTimeFormat('en-CA', { timeZone: LAGOS }).format(x);
-  const time = d.toLocaleTimeString('en-NG', { timeZone: LAGOS, hour: 'numeric', minute: '2-digit' });
+  const time = d.toLocaleTimeString('en-NG', { timeZone: LAGOS, hour: 'numeric', minute: '2-digit', hour12: true });
   const today = day(new Date(now));
   const tomorrow = day(new Date(now + 864e5));
   if (day(d) === today) return `Today ${time}`;
