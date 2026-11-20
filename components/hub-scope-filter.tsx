@@ -30,11 +30,7 @@ export function LocationTypeTag({
   const isRsp = locationType === 'rsp';
   return (
     <span
-      className={`inline-flex items-center rounded px-1 py-0 text-[9px] font-bold uppercase tracking-wide leading-4 ${
-        isRsp
-          ? 'bg-amber-100 text-amber-800'
-          : 'bg-cyan-100 text-cyan-800'
-      } ${className}`.trim()}
+      className={`inline-flex items-center rounded-full border bg-muted px-1.5 text-xs font-medium leading-4 text-muted-foreground ${className}`.trim()}
     >
       {isRsp ? 'RSP' : 'Hub'}
     </span>
@@ -64,9 +60,9 @@ export function HubScopeFilterBar({ scope, className = '' }: HubScopeFilterProps
     const lockedType = resolveLocationType(hubName, activeHubs);
     return (
       <div
-        className={`inline-flex items-center gap-1.5 rounded-md border bg-muted/50 px-3 py-1.5 text-xs font-semibold text-muted-foreground ${className}`}
+        className={`inline-flex items-center gap-1.5 rounded-md border bg-muted/50 px-3 py-1.5 text-xs font-medium text-muted-foreground ${className}`}
       >
-        <MapPin size={12} className="text-primary" />
+        <MapPin size={14} className="text-muted-foreground" aria-hidden />
         {hubName}
         {lockedType && <LocationTypeTag locationType={lockedType} />}
       </div>
@@ -75,32 +71,36 @@ export function HubScopeFilterBar({ scope, className = '' }: HubScopeFilterProps
 
   return (
     <div
-      className={`flex flex-wrap items-center gap-1 rounded-lg border bg-muted/30 p-1 ${className}`}
+      role="group"
+      aria-label="Location"
+      className={`flex flex-wrap items-center gap-1 rounded-md border bg-muted/40 p-0.5 ${className}`}
     >
       <button
         type="button"
+        aria-pressed={filterHub === 'All'}
         onClick={() => setFilterHub('All')}
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-[calc(var(--radius)-2px)] text-xs font-medium transition-colors ${
           filterHub === 'All'
-            ? 'bg-background shadow-sm text-primary'
-            : 'text-muted-foreground hover:bg-background/50'
+            ? 'bg-background shadow-sm text-foreground'
+            : 'text-muted-foreground hover:text-foreground'
         }`}
       >
-        <Layers size={12} />
+        <Layers size={14} aria-hidden />
         All permitted locations
       </button>
       {hubOptionsDetailed.map((hub) => (
         <button
           key={hub.id}
           type="button"
+          aria-pressed={filterHub === hub.name}
           onClick={() => setFilterHub(hub.name)}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-[calc(var(--radius)-2px)] text-xs font-medium transition-colors ${
             filterHub === hub.name
-              ? 'bg-background shadow-sm text-primary'
-              : 'text-muted-foreground hover:bg-background/50'
+              ? 'bg-background shadow-sm text-foreground'
+              : 'text-muted-foreground hover:text-foreground'
           }`}
         >
-          <MapPin size={12} />
+          <MapPin size={14} aria-hidden />
           {hub.name}
           <LocationTypeTag locationType={hub.locationType} />
         </button>
@@ -130,7 +130,7 @@ export function HubScopeSelect({
       <span
         className={`inline-flex items-center gap-1 rounded-md border bg-muted/50 px-3 py-2 text-sm font-medium text-muted-foreground ${className}`}
       >
-        <MapPin size={14} className="text-primary" />
+        <MapPin size={14} className="text-muted-foreground" aria-hidden />
         {hubName}
         {lockedType && <LocationTypeTag locationType={lockedType} />}
       </span>
@@ -143,7 +143,7 @@ export function HubScopeSelect({
       value={filterHub}
       onChange={setFilterHub}
       className={`w-fit ${className}`}
-      icon={<MapPin size={14} className="text-primary" />}
+      icon={<MapPin size={14} className="text-muted-foreground" aria-hidden />}
       options={[
         { value: 'All', label: 'All permitted locations' },
         ...hubOptionsDetailed.map((hub) => ({ value: hub.name, label: hubOptionLabel(hub) })),

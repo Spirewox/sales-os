@@ -35,7 +35,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
       !/\d/.test(newPassword)
     ) {
       setError(
-        'Use 8–128 characters with an uppercase letter, lowercase letter, and number.',
+        'Use 8 to 128 characters with an uppercase letter, lowercase letter, and number.',
       );
       return;
     }
@@ -57,15 +57,13 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary/5 via-background to-primary/10 p-4">
       <div className="w-full max-w-sm">
-        <div className="rounded-2xl border bg-card p-8 shadow-xl shadow-primary/5">
+        <div className="rounded-xl border bg-card p-8 shadow-lg">
           <div className="mb-8 flex flex-col items-center text-center">
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary shadow-lg shadow-primary/25">
-              {completed ? (
-                <CheckCircle2 className="text-primary-foreground" size={22} />
-              ) : (
-                <LockKeyhole className="text-primary-foreground" size={22} />
-              )}
-            </div>
+            {completed ? (
+              <CheckCircle2 className="mb-4 text-primary" size={24} aria-hidden />
+            ) : (
+              <LockKeyhole className="mb-4 text-muted-foreground" size={24} aria-hidden />
+            )}
             <h1 className="text-xl font-semibold tracking-tight">
               {completed ? 'Password updated' : 'Create a new password'}
             </h1>
@@ -81,7 +79,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
               <div className="space-y-1.5">
                 <label
                   htmlFor="new-password"
-                  className="text-[13px] font-medium text-foreground/80"
+                  className="text-sm font-medium"
                 >
                   New password
                 </label>
@@ -94,17 +92,17 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
                   required
                   minLength={8}
                   maxLength={128}
-                  className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm transition-colors placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/40"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm transition-colors placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/40"
                 />
                 <p className="text-xs text-muted-foreground">
-                  8–128 characters, including uppercase, lowercase, and a number.
+                  8 to 128 characters, including uppercase, lowercase, and a number.
                 </p>
               </div>
 
               <div className="space-y-1.5">
                 <label
                   htmlFor="confirm-password"
-                  className="text-[13px] font-medium text-foreground/80"
+                  className="text-sm font-medium"
                 >
                   Confirm password
                 </label>
@@ -117,12 +115,12 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
                   required
                   minLength={8}
                   maxLength={128}
-                  className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm transition-colors placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/40"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm transition-colors placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/40"
                 />
               </div>
 
               {error && (
-                <p className="rounded-lg bg-destructive/8 px-3 py-2 text-[13px] font-medium text-destructive">
+                <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">
                   {error}
                 </p>
               )}
@@ -130,7 +128,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
               <SubmitButton
                 type="submit"
                 loading={completeReset.isPending}
-                className="h-10 w-full rounded-lg shadow-md shadow-primary/20 active:scale-[0.98]"
+                className="h-10 w-full rounded-md"
               >
                 Reset password
               </SubmitButton>
@@ -139,7 +137,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
 
           {!token && !completed && (
             <div className="space-y-4">
-              <p className="rounded-lg bg-destructive/8 px-3 py-2 text-[13px] font-medium text-destructive">
+              <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">
                 This password reset link is invalid or incomplete.
               </p>
               <Link
@@ -154,7 +152,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
           {completed && (
             <Link
               href="/login"
-              className="flex h-10 w-full items-center justify-center rounded-lg bg-primary text-sm font-medium text-primary-foreground shadow-md shadow-primary/20 hover:bg-primary/90"
+              className="flex h-10 w-full items-center justify-center rounded-md bg-primary text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
             >
               Sign in
             </Link>

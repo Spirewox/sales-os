@@ -8,7 +8,7 @@ import { deriveSegments } from './segmentation';
  * Every data domain in the system (Sales, Customers, Inventory, Suppliers,
  * Stock Movements, Credits, Supplier Issues) is exposed as a queryable dataset
  * with enriched dimensions and measures. The UI lets anyone slice any dataset:
- * pick a measure, a breakdown, any combination of filters, and a chart style —
+ * pick a measure, a breakdown, any combination of filters, and a chart style -
  * mixing data across the whole system.
  */
 
@@ -22,7 +22,7 @@ export type FieldTime = 'month' | 'dow' | undefined;
 export interface FieldDef { key: string; label: string; multi?: boolean; time?: FieldTime }
 export interface MeasureDef { key: string; label: string; kind: 'money' | 'number'; resolve: (acc: Acc) => number }
 
-/** A single real record, for "find" mode — a concrete order/customer/supplier/credit the user can open. */
+/** A single real record, for "find" mode, a concrete order/customer/supplier/credit the user can open. */
 export interface RecordMeta {
   id: string;
   title: string;
@@ -64,7 +64,7 @@ const mRatioDistinct = (key: string, label: string, field: string, id: string, k
 export const DATASETS: Dataset[] = [
   // ─────────── SALES (line items) ───────────
   {
-    key: 'sales', label: 'Sales', desc: 'Every sale line — what sold, to whom, when & how',
+    key: 'sales', label: 'Sales', desc: 'Every sale line, what sold, to whom, when & how',
     fields: [
       { key: 'DayOfWeek', label: 'Day of Week', time: 'dow' }, { key: 'Month', label: 'Month', time: 'month' }, { key: 'WeekPart', label: 'Weekend / Weekday' },
       { key: 'Product', label: 'Product' }, { key: 'Category', label: 'Category' },
@@ -91,7 +91,7 @@ export const DATASETS: Dataset[] = [
         rows.push({
           date: dateStr,
           record: {
-            id: saleId, title: cust?.name || sale?.customerName || 'Unknown', subtitle: item?.name || '—',
+            id: saleId, title: cust?.name || sale?.customerName || 'Unknown', subtitle: item?.name || '-',
             date: dateStr, amount: qty * price, amountKind: 'money', link: `/sales?open=${saleId}`,
             tags: [chan, pm, st].filter(Boolean) as string[], rollup: true,
           },
@@ -100,14 +100,14 @@ export const DATASETS: Dataset[] = [
           multi: { Segment: cust ? deriveSegments(cust) : [] },
           dims: {
             DayOfWeek: DOW[dt.getDay()], Month: dateStr.slice(0, 7), WeekPart: (dt.getDay() === 0 || dt.getDay() === 6) ? 'Weekend' : 'Weekday',
-            Product: item?.name || '—', Category: item?.category || '—',
-            Customer: cust?.name || sale?.customerName || 'Unknown', CustomerType: cust?.type || '—',
-            Location: cust?.location || '—', BusinessCategory: cust?.businessCategory || '—', FamilyType: cust?.familyType || '—',
-            MaritalStatus: cust?.maritalStatus || '—', AgeGroup: cust?.ageGroup || '—', Lifestyle: cust?.lifestyle || '—',
-            Employment: cust?.employmentStatus || '—', Religion: cust?.religion || '—',
-            Channel: sale?.channel || '—', PaymentMode: sale?.paymentMode || (sale?.isCredit ? 'Credit' : 'Full Payment'),
-            PaymentType: sale?.paymentType || (sale?.isCredit ? '—' : 'Cash'), CashCredit: sale?.isCredit ? 'Credit' : 'Cash',
-            Status: sale?.status || '—', Hub: sale?.hubName || extractHub(sale?.productDetails) || cust?.location || '—', Agent: sale?.agentName || '—',
+            Product: item?.name || '-', Category: item?.category || '-',
+            Customer: cust?.name || sale?.customerName || 'Unknown', CustomerType: cust?.type || '-',
+            Location: cust?.location || '-', BusinessCategory: cust?.businessCategory || '-', FamilyType: cust?.familyType || '-',
+            MaritalStatus: cust?.maritalStatus || '-', AgeGroup: cust?.ageGroup || '-', Lifestyle: cust?.lifestyle || '-',
+            Employment: cust?.employmentStatus || '-', Religion: cust?.religion || '-',
+            Channel: sale?.channel || '-', PaymentMode: sale?.paymentMode || (sale?.isCredit ? 'Credit' : 'Full Payment'),
+            PaymentType: sale?.paymentType || (sale?.isCredit ? '-' : 'Cash'), CashCredit: sale?.isCredit ? 'Credit' : 'Cash',
+            Status: sale?.status || '-', Hub: sale?.hubName || extractHub(sale?.productDetails) || cust?.location || '-', Agent: sale?.agentName || '-',
           },
         });
       };
@@ -147,7 +147,7 @@ export const DATASETS: Dataset[] = [
       return {
         date: c.joinedDate,
         record: {
-          id: c.id, title: c.name, subtitle: [c.type, c.location].filter(Boolean).join(' · ') || undefined,
+          id: c.id, title: c.name, subtitle: [c.type, c.location].filter(Boolean).join(', ') || undefined,
           date: c.joinedDate, amount: c.totalSpent, amountKind: 'money', link: `/customers?open=${c.id}`,
           tags: [status !== 'None' ? status : '', ...deriveSegments(c).slice(0, 2)].filter(Boolean) as string[],
         },
@@ -155,9 +155,9 @@ export const DATASETS: Dataset[] = [
         ids: { customer: c.id },
         multi: { Segment: deriveSegments(c) },
         dims: {
-          CustomerType: c.type, Location: c.location || '—', BusinessCategory: c.businessCategory || '—', FamilyType: c.familyType || '—',
-          MaritalStatus: c.maritalStatus || '—', AgeGroup: c.ageGroup || '—', Lifestyle: c.lifestyle || '—', Employment: c.employmentStatus || '—',
-          Religion: c.religion || '—', CreditStatus: status, JoinedMonth: (c.joinedDate || '').slice(0, 7) || '—',
+          CustomerType: c.type, Location: c.location || '-', BusinessCategory: c.businessCategory || '-', FamilyType: c.familyType || '-',
+          MaritalStatus: c.maritalStatus || '-', AgeGroup: c.ageGroup || '-', Lifestyle: c.lifestyle || '-', Employment: c.employmentStatus || '-',
+          Religion: c.religion || '-', CreditStatus: status, JoinedMonth: (c.joinedDate || '').slice(0, 7) || '-',
         },
       };
     }),
@@ -179,7 +179,7 @@ export const DATASETS: Dataset[] = [
       const status = i.currentStock <= 0 ? 'Out of Stock' : i.currentStock <= i.minStockLevel ? 'Low' : 'Healthy';
       return {
         record: {
-          id: i.id, title: i.name, subtitle: [i.category, i.location].filter(Boolean).join(' · ') || undefined,
+          id: i.id, title: i.name, subtitle: [i.category, i.location].filter(Boolean).join(', ') || undefined,
           amount: i.currentStock * i.avgUnitCost, amountKind: 'money',
           tags: [status, `${i.currentStock} ${i.unitOfMeasure}`].filter(Boolean) as string[],
         },
@@ -187,8 +187,8 @@ export const DATASETS: Dataset[] = [
         ids: { sku: i.id },
         multi: {},
         dims: {
-          Category: i.category, Location: i.location || '—', UoM: i.unitOfMeasure,
-          Supplier: sup?.name || i.supplier || '—', StockStatus: status, Active: i.isActive === false ? 'No' : 'Yes',
+          Category: i.category, Location: i.location || '-', UoM: i.unitOfMeasure,
+          Supplier: sup?.name || i.supplier || '-', StockStatus: status, Active: i.isActive === false ? 'No' : 'Yes',
         },
       };
     }),
@@ -213,7 +213,7 @@ export const DATASETS: Dataset[] = [
       const openIssues = d.supplierIssues.filter((i) => i.supplierId === s.id && i.status === 'Open').length;
       return {
         record: {
-          id: s.id, title: s.name, subtitle: [s.businessType, s.location].filter(Boolean).join(' · ') || undefined,
+          id: s.id, title: s.name, subtitle: [s.businessType, s.location].filter(Boolean).join(', ') || undefined,
           amount: spend, amountKind: 'money', link: `/suppliers?open=${s.id}`,
           tags: [s.rating ? `${s.rating}★` : '', openIssues ? `${openIssues} open` : ''].filter(Boolean) as string[],
         },
@@ -221,15 +221,15 @@ export const DATASETS: Dataset[] = [
         ids: { supplier: s.id },
         multi: { Categories: s.categories || [] },
         dims: {
-          BusinessType: s.businessType || '—', Location: s.location || '—', Active: s.isActive ? 'Yes' : 'No',
-          RatingBand: s.rating ? `${s.rating}★` : '—',
+          BusinessType: s.businessType || '-', Location: s.location || '-', Active: s.isActive ? 'Yes' : 'No',
+          RatingBand: s.rating ? `${s.rating}★` : '-',
         },
       };
     }),
   },
   // ─────────── STOCK MOVEMENTS ───────────
   {
-    key: 'movements', label: 'Stock Movements', desc: 'Every inventory movement — in, out, transfers',
+    key: 'movements', label: 'Stock Movements', desc: 'Every inventory movement, in, out, transfers',
     fields: [
       { key: 'Type', label: 'Movement Type' }, { key: 'Product', label: 'Product' }, { key: 'Category', label: 'Category' },
       { key: 'Supplier', label: 'Supplier' }, { key: 'Hub', label: 'Hub' }, { key: 'Month', label: 'Month', time: 'month' }, { key: 'Agent', label: 'Agent' },
@@ -245,7 +245,7 @@ export const DATASETS: Dataset[] = [
         return {
           date: l.date,
           record: {
-            id: l.id, title: l.itemName || item?.name || '—', subtitle: [l.type, l.supplier].filter(Boolean).join(' · ') || undefined,
+            id: l.id, title: l.itemName || item?.name || '-', subtitle: [l.type, l.supplier].filter(Boolean).join(', ') || undefined,
             date: l.date, amount: Math.abs(l.quantity) * l.unitCost, amountKind: 'money',
             tags: [l.type, `${Math.abs(l.quantity)} units`].filter(Boolean) as string[],
           },
@@ -253,9 +253,9 @@ export const DATASETS: Dataset[] = [
           ids: { log: l.id },
           multi: {},
           dims: {
-            Type: l.type, Product: l.itemName || item?.name || '—', Category: item?.category || '—',
-            Supplier: l.supplier || '—', Hub: item?.location || l.toLocation || l.fromLocation || '—',
-            Month: l.date.slice(0, 7), Agent: agentById[l.agentId]?.name || l.agentId || '—',
+            Type: l.type, Product: l.itemName || item?.name || '-', Category: item?.category || '-',
+            Supplier: l.supplier || '-', Hub: item?.location || l.toLocation || l.fromLocation || '-',
+            Month: l.date.slice(0, 7), Agent: agentById[l.agentId]?.name || l.agentId || '-',
           },
         };
       });
@@ -276,7 +276,7 @@ export const DATASETS: Dataset[] = [
       return d.credits.map((c) => ({
         date: c.dateIssued,
         record: {
-          id: c.id, title: c.customerName, subtitle: [c.status, c.paymentTerms].filter(Boolean).join(' · ') || undefined,
+          id: c.id, title: c.customerName, subtitle: [c.status, c.paymentTerms].filter(Boolean).join(', ') || undefined,
           date: c.dateIssued, amount: c.amountOwed, amountKind: 'money',
           link: c.customerId ? `/customers?open=${c.customerId}` : undefined,
           tags: [c.status, c.flagged ? 'Flagged' : ''].filter(Boolean) as string[],
@@ -285,8 +285,8 @@ export const DATASETS: Dataset[] = [
         ids: { credit: c.id },
         multi: {},
         dims: {
-          Status: c.status, Customer: c.customerName, CustomerType: custById[c.customerId]?.type || '—',
-          PaymentTerms: c.paymentTerms || '—', Flagged: c.flagged ? 'Yes' : 'No', IssuedMonth: (c.dateIssued || '').slice(0, 7) || '—',
+          Status: c.status, Customer: c.customerName, CustomerType: custById[c.customerId]?.type || '-',
+          PaymentTerms: c.paymentTerms || '-', Flagged: c.flagged ? 'Yes' : 'No', IssuedMonth: (c.dateIssued || '').slice(0, 7) || '-',
         },
       }));
     },
@@ -304,7 +304,7 @@ export const DATASETS: Dataset[] = [
       return d.supplierIssues.map((i) => ({
         date: i.date,
         record: {
-          id: i.id, title: i.supplierName, subtitle: [i.type, i.severity].filter(Boolean).join(' · ') || undefined,
+          id: i.id, title: i.supplierName, subtitle: [i.type, i.severity].filter(Boolean).join(', ') || undefined,
           date: i.date, amountKind: 'number',
           link: i.supplierId ? `/suppliers?open=${i.supplierId}` : undefined,
           tags: [i.status, i.severity].filter(Boolean) as string[],
@@ -314,7 +314,7 @@ export const DATASETS: Dataset[] = [
         multi: {},
         dims: {
           Type: i.type, Severity: i.severity, Status: i.status, Supplier: i.supplierName,
-          Product: i.relatedItemId ? (itemById[i.relatedItemId]?.name || '—') : '—', Month: (i.date || '').slice(0, 7) || '—',
+          Product: i.relatedItemId ? (itemById[i.relatedItemId]?.name || '-') : '-', Month: (i.date || '').slice(0, 7) || '-',
         },
       }));
     },
@@ -323,7 +323,7 @@ export const DATASETS: Dataset[] = [
 
 export function fieldValues(rows: Row[], field: FieldDef): string[] {
   const set = new Set<string>();
-  rows.forEach((r) => { if (field.multi) (r.multi[field.key] || []).forEach((s) => set.add(s)); else set.add(r.dims[field.key] ?? '—'); });
+  rows.forEach((r) => { if (field.multi) (r.multi[field.key] || []).forEach((s) => set.add(s)); else set.add(r.dims[field.key] ?? '-'); });
   return Array.from(set).sort();
 }
 
@@ -334,7 +334,7 @@ function matchRow(r: Row, filters: Filter[]): boolean {
   return filters.every((f) => {
     if (f.values.length === 0) return true;
     if (f.multi) return (r.multi[f.field] || []).some((s) => f.values.includes(s));
-    return f.values.includes(r.dims[f.field] ?? '—');
+    return f.values.includes(r.dims[f.field] ?? '-');
   });
 }
 
@@ -351,8 +351,8 @@ export function runQuery(ds: Dataset, rows: Row[], filters: Filter[], groupBy: s
     Object.entries(r.ids).forEach(([f, v]) => { (a!.distinct[f] = a!.distinct[f] || new Set()).add(v); });
   };
   filtered.forEach((r) => {
-    if (gDef?.multi) (r.multi[groupBy]?.length ? r.multi[groupBy] : ['—']).forEach((s) => bump(s, r));
-    else bump(r.dims[groupBy] ?? '—', r);
+    if (gDef?.multi) (r.multi[groupBy]?.length ? r.multi[groupBy] : ['-']).forEach((s) => bump(s, r));
+    else bump(r.dims[groupBy] ?? '-', r);
   });
 
   let out = Array.from(groups.entries()).map(([key, a]) => ({ key, label: gDef?.time === 'month' ? monthLabel(key) : key, value: measure.resolve(a) }));
@@ -404,7 +404,7 @@ export function findRecords(
   // 1. dimension + date filter on raw rows
   const kept = rows.filter((r) => matchRow(r, filters) && inRange(r.date || r.record?.date, dateRange) && r.record);
 
-  // 2. build records (rollup line-items into one per id where flagged — e.g. sales orders)
+  // 2. build records (rollup line-items into one per id where flagged, e.g. sales orders)
   const map = new Map<string, FoundRecord>();
   for (const r of kept) {
     const rec = r.record!;
@@ -413,9 +413,9 @@ export function findRecords(
       if (cur) {
         cur.amount = (cur.amount || 0) + (rec.amount || 0);
         cur.count = (cur.count || 1) + 1;
-        if (rec.subtitle && rec.subtitle !== '—' && !cur.lines!.includes(rec.subtitle)) cur.lines!.push(rec.subtitle);
+        if (rec.subtitle && rec.subtitle !== '-' && !cur.lines!.includes(rec.subtitle)) cur.lines!.push(rec.subtitle);
       } else {
-        map.set(rec.id, { ...rec, count: 1, lines: rec.subtitle && rec.subtitle !== '—' ? [rec.subtitle] : [] });
+        map.set(rec.id, { ...rec, count: 1, lines: rec.subtitle && rec.subtitle !== '-' ? [rec.subtitle] : [] });
       }
     } else {
       map.set(rec.id + ':' + map.size, { ...rec });
@@ -425,7 +425,7 @@ export function findRecords(
   // finalize rollup subtitles → "3 items: Rice, Chicken…"
   recs.forEach((r) => {
     if (r.lines && r.lines.length) {
-      r.subtitle = r.lines.length > 1 ? `${r.lines.length} items · ${r.lines.slice(0, 3).join(', ')}${r.lines.length > 3 ? '…' : ''}` : r.lines[0];
+      r.subtitle = r.lines.length > 1 ? `${r.lines.length} items: ${r.lines.slice(0, 3).join(', ')}${r.lines.length > 3 ? '…' : ''}` : r.lines[0];
     }
   });
 
@@ -449,7 +449,7 @@ export function findRecords(
   return { records: withNum.slice(0, limit), shown: Math.min(matched, limit), matched, totalAmount, amountKind, entityLabel: nounPlural };
 }
 
-/** Latest activity date across the dataset — used to anchor relative ranges ("last week"). */
+/** Latest activity date across the dataset, used to anchor relative ranges ("last week"). */
 export function latestActivity(bundle: DataBundle): string {
   let max = '';
   const scan = (d?: string) => { if (d && d.slice(0, 10) > max) max = d.slice(0, 10); };

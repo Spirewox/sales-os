@@ -100,22 +100,22 @@ export function ProductImageEditor({ saved, draft, onChange }: {
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold">Product image</p>
           <div className="mt-2 flex flex-wrap gap-2">
-            <label htmlFor={id} className="cursor-pointer rounded-md border bg-background px-2 py-1.5 text-xs font-medium focus-within:ring-2">
+            <label htmlFor={id} className="cursor-pointer rounded-md border bg-card px-2 py-1.5 text-xs font-medium hover:bg-muted focus-within:ring-2 focus-within:ring-ring">
               {preview ? 'Replace file' : 'Choose file'}
               <input id={id} type="file" accept={types.join(',')} className="sr-only" onChange={(event) => {
                 selectFile(event.target.files?.[0]);
                 event.target.value = '';
               }} />
             </label>
-            <button type="button" className="rounded-md border bg-background px-2 py-1.5 text-xs" onClick={() => setShowLink(!showLink)}>Use image link</button>
-            {preview && <button type="button" className="px-2 text-xs text-destructive" onClick={() => { setError(''); onChange({ url: null }); }}>Remove</button>}
-            {draft && <button type="button" className="px-2 text-xs" onClick={() => { setError(''); onChange(undefined); }}>Undo</button>}
+            <button type="button" className="rounded-md border bg-card px-2 py-1.5 text-xs font-medium hover:bg-muted" aria-pressed={showLink} onClick={() => setShowLink(!showLink)}>Use image link</button>
+            {preview && <button type="button" className="rounded-md px-2 text-xs text-destructive hover:bg-muted" onClick={() => { setError(''); onChange({ url: null }); }}>Remove</button>}
+            {draft && <button type="button" className="rounded-md px-2 text-xs text-muted-foreground hover:bg-muted hover:text-foreground" onClick={() => { setError(''); onChange(undefined); }}>Undo</button>}
           </div>
         </div>
       </div>
       {showLink && <div className="mt-3 flex flex-wrap gap-2">
         <input aria-label="Public HTTPS image link" type="url" placeholder="https://…" value={link} onChange={(event) => setLink(event.target.value)} className="min-w-0 flex-1 rounded-md border bg-background px-2 py-1.5 text-sm" />
-        <button type="button" className="rounded-md border bg-background px-2 text-xs" onClick={() => {
+        <button type="button" className="rounded-md border bg-card px-2 text-xs font-medium hover:bg-muted" onClick={() => {
           const value = link.trim();
           try {
             const url = new URL(value);

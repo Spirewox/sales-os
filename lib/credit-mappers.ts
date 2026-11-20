@@ -23,6 +23,13 @@ export function mapCreditCustomerSummary(row: ApiCreditCustomerSummary): CreditC
     overdueCount: row.overdue_count,
     oldestDueDate: row.oldest_due_date ? toDateStr(row.oldest_due_date) : null,
     flaggedCount: row.flagged_count ?? 0,
+    phone: row.customer_phone || undefined,
+    hubId: row.hub_id || undefined,
+    hubName: row.hub_name || undefined,
+    overdueAmount: row.overdue_amount,
+    lastPaymentDate: row.last_payment_date ? toDateStr(row.last_payment_date) : row.last_payment_date,
+    dueThisWeekCount: row.due_this_week_count,
+    dueThisWeekAmount: row.due_this_week_amount,
   };
 }
 

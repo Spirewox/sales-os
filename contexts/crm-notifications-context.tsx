@@ -10,7 +10,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Bell, BellOff, BellRing, CheckCheck, Settings2 } from 'lucide-react';
 import { axiosGet, axiosPost } from '@/lib/api';
-import { HAS_API } from '@/lib/require-api';
+import { HAS_API, REAL_API } from '@/lib/require-api';
 import { cn } from '@/lib/utils';
 import type { CrmNotification } from '@/lib/kitchen-types';
 import { disablePush, enablePush, pushStatus, type PushStatus } from '@/lib/push';
@@ -40,7 +40,7 @@ export function CrmNotificationsProvider({ children }: { children: React.ReactNo
   }, [router]);
 
   useEffect(() => {
-    if (!HAS_API || typeof EventSource === 'undefined') return;
+    if (!REAL_API || typeof EventSource === 'undefined') return;
     let stopped = false;
     let source: EventSource | undefined;
     let retry: ReturnType<typeof setTimeout> | undefined;
@@ -122,7 +122,7 @@ export const PUSH_TEXT: Record<PushStatus, string> = {
   'ios-install': 'On iPhone, add Sales OS to the Home Screen to get notifications.',
 };
 
-export function NotificationBell() {
+export function NotificationBell({ placement = 'page' }: Readonly<{ placement?: 'page' | 'sidebar' }> = {}) {
   const qc = useQueryClient();
   const { connected, inbox: data, loading } = useCrmNotifications();
   const [open, setOpen] = useState(false);
@@ -176,29 +176,33 @@ export function NotificationBell() {
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-label={unread ? `Notifications, ${unread} unread` : 'Notifications'}
-        className="relative inline-flex h-10 items-center gap-2 rounded-md border bg-card px-3 text-sm font-medium hover:bg-accent"
+        className={cn(
+          'relative inline-flex items-center justify-center rounded-md transition-colors',
+          placement === 'sidebar'
+            ? 'h-9 w-9 text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+            : 'h-9 w-9 border bg-card hover:bg-muted',
+        )}
       >
-        <Bell size={16} />
-        <span className="hidden sm:inline">Notifications</span>
+        <Bell size={18} aria-hidden />
         {unread > 0 && (
-          <span className="absolute -right-1.5 -top-1.5 inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-white">{unread > 99 ? '99+' : unread}</span>
+          <span className="absolute -right-1 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-xs font-semibold tabular-nums text-destructive-foreground">{unread > 99 ? '99+' : unread}</span>
         )}
       </button>
       {open && (
-        <div className="absolute right-0 z-40 mt-2 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-lg border bg-card shadow-lg" role="dialog" aria-label="Notifications">
+        <div className={cn('absolute z-50 mt-2 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-xl border bg-card shadow-lg', placement === 'sidebar' ? 'left-0' : 'right-0')} role="dialog" aria-label="Notifications">
           <div className="flex items-center justify-between border-b px-4 py-2.5">
             <p className="text-sm font-semibold">Notifications</p>
             <div className="flex items-center gap-2">
-              <span className={cn('h-2 w-2 rounded-full', connected ? 'bg-green-500' : 'bg-muted-foreground/40')} title={connected ? 'Live' : 'Checking every minute'} aria-hidden />
+              <span className={cn('h-2 w-2 rounded-full', connected ? 'bg-primary' : 'bg-muted-foreground/40')} title={connected ? 'Live' : 'Checking every minute'} aria-hidden />
               {unread > 0 && (
                 <button type="button" onClick={() => void markAll()} className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">
-                  <CheckCheck size={12} /> Mark all read
+                  <CheckCheck size={14} aria-hidden /> Mark all read
                 </button>
               )}
             </div>
           </div>
           <ul className="max-h-96 divide-y overflow-auto" aria-live="polite">
-            {loading && <li className="px-4 py-6 text-center text-sm text-muted-foreground">Loading…</li>}
+            {loading && <li className="px-4 py-6 text-center text-sm text-muted-foreground">Loading</li>}
             {items.map((n) => (
               <li key={n._id} className={cn(!n.readAt && 'bg-primary/5')}>
                 <Link
@@ -211,7 +215,7 @@ export function NotificationBell() {
                 >
                   <p className={cn('text-sm', !n.readAt && 'font-semibold', n.critical && 'text-destructive')}>{n.title}</p>
                   {n.body && <p className="mt-0.5 text-xs text-muted-foreground">{n.body}</p>}
-                  <time dateTime={n.createdAt} className="mt-1 block text-[11px] text-muted-foreground">{when(n.createdAt)}</time>
+                  <time dateTime={n.createdAt} className="mt-1 block text-xs text-muted-foreground">{when(n.createdAt)}</time>
                 </Link>
               </li>
             ))}
@@ -220,9 +224,9 @@ export function NotificationBell() {
           <div className="border-t bg-muted/30 px-4 py-3 text-xs">
             <div className="mb-2 flex items-center justify-between">
               <span className="font-semibold">This device</span>
-              <Link href="/settings?tab=alerts" onClick={() => setOpen(false)} className="inline-flex items-center gap-1 font-medium text-primary hover:underline"><Settings2 size={12} /> Alert settings</Link>
+              <Link href="/settings?tab=alerts" onClick={() => setOpen(false)} className="inline-flex items-center gap-1 font-medium text-primary hover:underline"><Settings2 size={14} aria-hidden /> Alert settings</Link>
             </div>
-            <p className="text-muted-foreground">{push ? PUSH_TEXT[push] : 'Checking device notifications…'}</p>
+            <p className="text-muted-foreground">{push ? PUSH_TEXT[push] : 'Checking device notifications'}</p>
             {(push === 'on' || push === 'off') && (
               <button type="button" disabled={pushBusy} onClick={() => void togglePush()} className="mt-2 inline-flex h-8 items-center gap-1.5 rounded-md border bg-background px-3 font-medium hover:bg-accent disabled:opacity-50">
                 {push === 'on' ? <><BellOff size={12} /> Turn off on this device</> : <><BellRing size={12} /> Enable notifications</>}

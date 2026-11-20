@@ -16,6 +16,7 @@ import { useNarrateInsight } from '@/hooks/use-queries';
 import {
   EntityKind, ENTITY_KINDS, type CompareResult,
 } from '@/lib/insights';
+import { CHART_TOOLTIP } from '@/lib/format';
 
 type CompareScope = 'product' | 'customer' | 'general';
 type ViewMode = 'chart' | 'table';
@@ -26,21 +27,42 @@ const SCOPE_KINDS: Record<CompareScope, EntityKind[]> = {
   general: ['supplier', 'hub', 'agent', 'product', 'customer', 'category', 'segment'],
 };
 
+const scopeForKind = (k: EntityKind): CompareScope =>
+  SCOPE_KINDS.product.includes(k) ? 'product' : SCOPE_KINDS.customer.includes(k) ? 'customer' : 'general';
+
+/** Compact axis ticks: 2.4M, 450k, 12. Values here mix money and counts, so no currency sign. */
+function fmtCompactAxis(v: number): string {
+  const n = Math.abs(v);
+  if (n >= 1_000_000) return `${+(v / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${Math.round(v / 1_000)}k`;
+  return String(v);
+}
+
 const selCls =
   'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-ring';
 
+/**
+ * The one Compare view (Insights' duplicate was removed). `initialKind/A/B` come from the URL
+ * (?tab=compare&kind=product&a=<id>&b=<id>), e.g. old /insights?mode=compare links.
+ */
 export function AnalyticsCompareTab({
   periodLabel,
   scope = {},
+  initialKind,
+  initialA,
+  initialB,
 }: {
   periodLabel: string;
   scope?: InsightScopeParams;
+  initialKind?: EntityKind;
+  initialA?: string;
+  initialB?: string;
 }) {
-  const [cmpScope, setCmpScope] = useState<CompareScope>('product');
+  const [cmpScope, setCmpScope] = useState<CompareScope>(initialKind ? scopeForKind(initialKind) : 'product');
   const allowedKinds = SCOPE_KINDS[cmpScope];
-  const [kind, setKind] = useState<EntityKind>(allowedKinds[0]);
-  const [aId, setAId] = useState('');
-  const [bId, setBId] = useState('');
+  const [kind, setKind] = useState<EntityKind>(initialKind ?? allowedKinds[0]);
+  const [aId, setAId] = useState(initialA ?? '');
+  const [bId, setBId] = useState(initialB ?? '');
   const [view, setView] = useState<ViewMode>('chart');
   const [result, setResult] = useState<CompareResult | null>(null);
   const [narrative, setNarrative] = useState<string | null>(null);
@@ -109,7 +131,7 @@ export function AnalyticsCompareTab({
             group: g.group,
             label: row.label,
             a: row.a.display,
-            b: row.b?.display ?? '—',
+            b: row.b?.display ?? '-',
             winner: row.winner ?? undefined,
             deltaPct: row.deltaPct,
           })),
@@ -123,18 +145,11 @@ export function AnalyticsCompareTab({
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h2 className="text-sm font-bold flex items-center gap-2">
-            <ArrowLeftRight size={16} className="text-primary" /> Compare
-          </h2>
-          <p className="text-xs text-muted-foreground">
-            Side-by-side metrics for the selected hub and period.
-          </p>
-        </div>
-      </div>
+      <p className="text-sm text-muted-foreground">
+        Two products, customers, suppliers, locations or agents side by side, for the selected location and period.
+      </p>
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div role="group" aria-label="Compare scope" className="inline-flex flex-wrap items-center rounded-md border bg-muted/40 p-0.5">
         {(
           [
             ['product', 'Products'],
@@ -145,11 +160,12 @@ export function AnalyticsCompareTab({
           <button
             key={key}
             type="button"
+            aria-pressed={cmpScope === key}
             onClick={() => setCmpScope(key)}
-            className={`rounded-lg border px-3 py-2 text-xs font-semibold transition-all ${
+            className={`rounded-[calc(var(--radius)-2px)] px-2.5 py-1 text-xs font-medium transition-colors ${
               cmpScope === key
-                ? 'bg-primary text-primary-foreground border-primary'
-                : 'bg-card hover:bg-accent text-muted-foreground'
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             {label}
@@ -158,14 +174,15 @@ export function AnalyticsCompareTab({
       </div>
 
       {cmpScope === 'general' && (
-        <div className="flex flex-wrap items-center gap-2">
+        <div role="group" aria-label="Entity type" className="inline-flex flex-wrap items-center rounded-md border bg-muted/40 p-0.5">
           {ENTITY_KINDS.filter((k) => allowedKinds.includes(k.key)).map((k) => (
             <button
               key={k.key}
               type="button"
+              aria-pressed={kind === k.key}
               onClick={() => setKind(k.key)}
-              className={`rounded-md border px-2.5 py-1.5 text-[11px] font-semibold ${
-                kind === k.key ? 'bg-background shadow-sm' : 'text-muted-foreground'
+              className={`rounded-[calc(var(--radius)-2px)] px-2.5 py-1 text-xs font-medium transition-colors ${
+                kind === k.key ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               {k.label}
@@ -175,16 +192,17 @@ export function AnalyticsCompareTab({
       )}
 
       {cmpScope !== 'general' && allowedKinds.length > 1 && (
-        <div className="flex flex-wrap items-center gap-2">
+        <div role="group" aria-label="Entity type" className="inline-flex flex-wrap items-center rounded-md border bg-muted/40 p-0.5">
           {allowedKinds.map((k) => {
             const meta = ENTITY_KINDS.find((e) => e.key === k);
             return (
               <button
                 key={k}
                 type="button"
+                aria-pressed={kind === k}
                 onClick={() => setKind(k)}
-                className={`rounded-md border px-2.5 py-1.5 text-[11px] font-semibold ${
-                  kind === k ? 'bg-background shadow-sm' : 'text-muted-foreground'
+                className={`rounded-[calc(var(--radius)-2px)] px-2.5 py-1 text-xs font-medium transition-colors ${
+                  kind === k ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 {meta?.label ?? k}
@@ -196,8 +214,8 @@ export function AnalyticsCompareTab({
 
       <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] items-center gap-3">
         <div className="space-y-1">
-          <label className="text-[10px] font-bold uppercase text-primary">Entity A</label>
-          <select value={aId} onChange={(e) => setAId(e.target.value)} className={selCls} disabled={entitiesLoading}>
+          <label htmlFor="compare-entity-a" className="text-xs text-muted-foreground">Entity A</label>
+          <select id="compare-entity-a" value={aId} onChange={(e) => setAId(e.target.value)} className={selCls} disabled={entitiesLoading}>
             {entities.map((e) => (
               <option key={e.id} value={e.id}>
                 {e.label}
@@ -206,12 +224,12 @@ export function AnalyticsCompareTab({
             ))}
           </select>
         </div>
-        <div className="hidden sm:flex items-center justify-center h-10 w-10 rounded-full border bg-muted/40 text-muted-foreground shrink-0 mt-4">
-          <ArrowLeftRight size={16} />
+        <div className="hidden sm:flex items-center justify-center h-10 w-10 text-muted-foreground shrink-0 mt-4">
+          <ArrowLeftRight size={16} aria-hidden />
         </div>
         <div className="space-y-1">
-          <label className="text-[10px] font-bold uppercase text-blue-600">Entity B</label>
-          <select value={bId} onChange={(e) => setBId(e.target.value)} className={selCls} disabled={entitiesLoading}>
+          <label htmlFor="compare-entity-b" className="text-xs text-muted-foreground">Entity B</label>
+          <select id="compare-entity-b" value={bId} onChange={(e) => setBId(e.target.value)} className={selCls} disabled={entitiesLoading}>
             {entities.map((e) => (
               <option key={e.id} value={e.id}>
                 {e.label}
@@ -224,7 +242,7 @@ export function AnalyticsCompareTab({
 
       {loadingCompare ? (
         <div className="rounded-xl border bg-card p-12 text-center text-sm text-muted-foreground flex items-center justify-center gap-2">
-          <Loader2 className="animate-spin" size={16} /> Loading comparison…
+          <Loader2 className="animate-spin" size={16} aria-hidden /> Loading comparison…
         </div>
       ) : !result ? (
         <div className="rounded-xl border bg-card p-10 text-center text-sm text-muted-foreground">
@@ -233,62 +251,64 @@ export function AnalyticsCompareTab({
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-3 items-stretch gap-3">
-            <div className={`rounded-xl border p-4 ${result.aWins > result.bWins ? 'border-primary/40 bg-primary/5' : 'bg-card'}`}>
+            <div className={`rounded-xl border bg-card p-4 ${result.aWins > result.bWins ? 'border-primary/40' : ''}`}>
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase text-primary">Entity A</span>
+                <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground"><span aria-hidden className="h-2 w-2 rounded-full" style={{ background: 'var(--series-1)' }} />Entity A</span>
                 {result.aWins > result.bWins && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[9px] font-bold text-primary">
-                    <Crown size={9} /> Leader
+                  <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                    <Crown size={12} aria-hidden /> Leader
                   </span>
                 )}
               </div>
-              <p className="text-lg font-black truncate mt-1">{result.aLabel}</p>
-              <p className="text-xs text-muted-foreground">{result.aWins} metric wins</p>
+              <p className="text-lg font-semibold truncate mt-1">{result.aLabel}</p>
+              <p className="text-xs text-muted-foreground tabular-nums">{result.aWins} metric wins</p>
             </div>
-            <div className="flex flex-col items-center justify-center rounded-xl border bg-muted/20 p-4">
-              <span className="text-[10px] font-bold uppercase text-muted-foreground">Score</span>
-              <span className="text-2xl font-black">
-                {result.aWins} <span className="text-muted-foreground text-lg">–</span> {result.bWins}
+            <div className="flex flex-col items-center justify-center rounded-xl border bg-card p-4">
+              <span className="text-xs text-muted-foreground">Score</span>
+              <span className="text-2xl font-semibold tabular-nums">
+                {result.aWins} <span className="text-muted-foreground text-lg">to</span> {result.bWins}
               </span>
             </div>
-            <div className={`rounded-xl border p-4 ${result.bWins > result.aWins ? 'border-blue-500/40 bg-blue-500/5' : 'bg-card'}`}>
+            <div className={`rounded-xl border bg-card p-4 ${result.bWins > result.aWins ? 'border-primary/40' : ''}`}>
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase text-blue-600">Entity B</span>
+                <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground"><span aria-hidden className="h-2 w-2 rounded-full" style={{ background: 'var(--series-2)' }} />Entity B</span>
                 {result.bWins > result.aWins && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/10 px-1.5 py-0.5 text-[9px] font-bold text-blue-600">
-                    <Crown size={9} /> Leader
+                  <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                    <Crown size={12} aria-hidden /> Leader
                   </span>
                 )}
               </div>
-              <p className="text-lg font-black truncate mt-1">{result.bLabel}</p>
-              <p className="text-xs text-muted-foreground">{result.bWins} metric wins</p>
+              <p className="text-lg font-semibold truncate mt-1">{result.bLabel}</p>
+              <p className="text-xs text-muted-foreground tabular-nums">{result.bWins} metric wins</p>
             </div>
           </div>
 
           <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-0.5 bg-muted/40 p-0.5 rounded-lg border">
+            <div role="group" aria-label="View" className="flex items-center gap-0.5 bg-muted/40 p-0.5 rounded-md border">
               <button
                 type="button"
+                aria-pressed={view === 'chart'}
                 onClick={() => setView('chart')}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold ${view === 'chart' ? 'bg-background shadow-sm' : 'text-muted-foreground'}`}
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[calc(var(--radius)-2px)] text-xs font-medium transition-colors ${view === 'chart' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
               >
-                <BarChart3 size={13} /> Chart
+                <BarChart3 size={14} aria-hidden /> Chart
               </button>
               <button
                 type="button"
+                aria-pressed={view === 'table'}
                 onClick={() => setView('table')}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold ${view === 'table' ? 'bg-background shadow-sm' : 'text-muted-foreground'}`}
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[calc(var(--radius)-2px)] text-xs font-medium transition-colors ${view === 'table' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
               >
-                <TableIcon size={13} /> Table
+                <TableIcon size={14} aria-hidden /> Table
               </button>
             </div>
             <button
               type="button"
               onClick={() => handleNarrate(result)}
               disabled={narrate.isPending}
-              className="inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-semibold hover:bg-accent disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-md border bg-card px-2.5 py-1.5 text-xs font-medium hover:bg-muted disabled:opacity-50"
             >
-              {narrate.isPending ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+              {narrate.isPending ? <Loader2 size={14} className="animate-spin" aria-hidden /> : <Sparkles size={14} className="text-muted-foreground" aria-hidden />}
               AI summary
             </button>
           </div>
@@ -305,19 +325,21 @@ export function AnalyticsCompareTab({
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 48 }}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis dataKey="name" tick={{ fontSize: 10 }} angle={-25} textAnchor="end" height={60} />
-                    <YAxis tick={{ fontSize: 10 }} />
+                    <CartesianGrid vertical={false} stroke="var(--border)" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }} angle={-25} textAnchor="end" height={60} />
+                    <YAxis axisLine={false} tickLine={false} width={56} tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }} tickFormatter={fmtCompactAxis} />
                     <Tooltip
+                      {...CHART_TOOLTIP}
+                      cursor={{ fill: 'var(--muted)', opacity: 0.4 }}
                       formatter={(_v, name, item) => {
                         const p = item?.payload as { aDisplay?: string; bDisplay?: string };
                         return name === 'a' ? p.aDisplay ?? String(_v) : p.bDisplay ?? String(_v);
                       }}
                       labelFormatter={(_l, items) => (items?.[0]?.payload as { full?: string })?.full ?? String(_l)}
                     />
-                    <Legend />
-                    <Bar dataKey="a" name={result.aLabel} fill="#0891b2" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="b" name={result.bLabel} fill="#2563eb" radius={[4, 4, 0, 0]} />
+                    <Legend wrapperStyle={{ fontSize: 12, color: 'var(--muted-foreground)' }} />
+                    <Bar dataKey="a" name={result.aLabel} fill="var(--series-1)" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="b" name={result.bLabel} fill="var(--series-2)" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               )}
@@ -326,7 +348,7 @@ export function AnalyticsCompareTab({
             <div className="space-y-3">
               {result.groups.map((g) => (
                 <div key={g.group} className="rounded-xl border bg-card overflow-hidden">
-                  <div className="px-4 py-2 border-b bg-muted/20 text-[10px] font-bold uppercase text-muted-foreground">
+                  <div className="px-4 py-2 border-b text-xs font-medium text-muted-foreground">
                     {g.group}
                   </div>
                   <div className="divide-y">
@@ -336,13 +358,13 @@ export function AnalyticsCompareTab({
                         className="grid grid-cols-[1fr_auto_auto] sm:grid-cols-[minmax(120px,1fr)_1fr_1fr] gap-3 px-4 py-2.5 items-center"
                       >
                         <span className="text-sm text-muted-foreground">{r.label}</span>
-                        <span className={`text-sm font-bold tabular-nums text-right ${r.winner === 'a' ? 'text-primary' : ''}`}>
-                          {r.winner === 'a' && <Crown size={11} className="inline mr-1 text-primary" />}
+                        <span className={`text-sm font-semibold tabular-nums text-right ${r.winner === 'a' ? 'text-primary' : ''}`}>
+                          {r.winner === 'a' && <Crown size={14} className="inline mr-1 text-primary" aria-label="Winner" />}
                           {r.a.display}
                         </span>
-                        <span className={`text-sm font-bold tabular-nums text-right ${r.winner === 'b' ? 'text-blue-600' : ''}`}>
-                          {r.winner === 'b' && <Crown size={11} className="inline mr-1 text-blue-600" />}
-                          {r.b?.display ?? '—'}
+                        <span className={`text-sm font-semibold tabular-nums text-right ${r.winner === 'b' ? 'text-primary' : ''}`}>
+                          {r.winner === 'b' && <Crown size={14} className="inline mr-1 text-primary" aria-label="Winner" />}
+                          {r.b?.display ?? '-'}
                         </span>
                       </div>
                     ))}
@@ -352,18 +374,18 @@ export function AnalyticsCompareTab({
             </div>
           )}
 
-          <div className="rounded-xl border bg-card shadow-sm">
+          <div className="rounded-xl border bg-card">
             <div className="p-4 border-b flex items-center gap-2">
-              <Lightbulb size={16} className="text-amber-500" />
-              <h3 className="text-sm font-bold">Key Insights</h3>
+              <Lightbulb size={16} className="text-muted-foreground" aria-hidden />
+              <h3 className="text-sm font-semibold">Key insights</h3>
             </div>
             <div className="p-4 space-y-2">
               {result.insights.map((ins, i) => (
                 <div key={i} className="flex items-start gap-2.5 text-sm">
                   <span
-                    className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${
-                      ins.winner === 'a' ? 'bg-primary' : ins.winner === 'b' ? 'bg-blue-500' : 'bg-muted-foreground'
-                    }`}
+                    aria-hidden
+                    className="mt-1.5 h-2 w-2 rounded-full shrink-0"
+                    style={{ background: ins.winner === 'a' ? 'var(--series-1)' : ins.winner === 'b' ? 'var(--series-2)' : 'var(--border)' }}
                   />
                   <span>{ins.text}</span>
                 </div>
@@ -371,7 +393,7 @@ export function AnalyticsCompareTab({
             </div>
             {narrative && (
               <div className="px-4 pb-4">
-                <div className="rounded-lg border bg-muted/20 p-4 text-sm leading-relaxed whitespace-pre-wrap">
+                <div className="rounded-md border bg-muted/40 p-4 text-sm leading-relaxed whitespace-pre-wrap">
                   {narrative}
                 </div>
               </div>

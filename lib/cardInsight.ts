@@ -1,9 +1,9 @@
 /**
  * Per-card insight generator.
  *
- * Given a card's own labelled data series, produces a short narrative read —
+ * Given a card's own labelled data series, produces a short narrative read -
  * the headline, concentration, spread, trend (for time series) and a
- * recommendation — powering the "AI insight" button on every analytics card.
+ * recommendation, powering the "AI insight" button on every analytics card.
  */
 
 export interface Point { label: string; value: number }
@@ -31,9 +31,9 @@ export function generateCardInsight(title: string, series: Point[], opts: { kind
 
   // Headline
   if (n === 1) {
-    bullets.push(`Only ${clean[0].label} has data — ${fmt(clean[0].value, kind)}.`);
+    bullets.push(`Only ${clean[0].label} has data, ${fmt(clean[0].value, kind)}.`);
   } else {
-    bullets.push(`${top.label} leads with ${fmt(top.value, kind)}${total > 0 && kind !== 'percent' ? ` — ${topShare}% of the ${fmt(total, kind)} total` : ''}.`);
+    bullets.push(`${top.label} leads with ${fmt(top.value, kind)}${total > 0 && kind !== 'percent' ? `, ${topShare}% of the ${fmt(total, kind)} total` : ''}.`);
   }
 
   // Time trend
@@ -46,17 +46,17 @@ export function generateCardInsight(title: string, series: Point[], opts: { kind
     // Concentration
     let cum = 0, k = 0;
     for (const s of sorted) { cum += s.value; k++; if (cum >= total * 0.8) break; }
-    bullets.push(`Top ${k} of ${n} make up ${pctOf(cum, total)}% — ${k <= Math.ceil(n * 0.35) ? 'highly concentrated' : 'fairly spread out'}.`);
+    bullets.push(`Top ${k} of ${n} make up ${pctOf(cum, total)}%, ${k <= Math.ceil(n * 0.35) ? 'highly concentrated' : 'fairly spread out'}.`);
   }
 
   // Spread
   if (n >= 2) bullets.push(`Ranges ${fmt(bottom.value, kind)} (${bottom.label}) → ${fmt(top.value, kind)} (${top.label}); average ${fmt(avg, kind)}.`);
 
   // Recommendation
-  if (opts.time && change <= -15) bullets.push(`⚠ Downtrend — dig into what changed and act before it compounds.`);
-  else if (opts.time && change >= 15) bullets.push(`↑ Strong momentum — reinforce what's driving the lift.`);
-  else if (n >= 3 && topShare >= 45 && kind !== 'percent') bullets.push(`Heavy reliance on ${top.label} (${topShare}%) — protect it and grow the long tail.`);
-  else if (n >= 3) bullets.push(`Well balanced — the opportunity is lifting the middle of the pack.`);
+  if (opts.time && change <= -15) bullets.push(`⚠ Downtrend, dig into what changed and act before it compounds.`);
+  else if (opts.time && change >= 15) bullets.push(`↑ Strong momentum, reinforce what's driving the lift.`);
+  else if (n >= 3 && topShare >= 45 && kind !== 'percent') bullets.push(`Heavy reliance on ${top.label} (${topShare}%), protect it and grow the long tail.`);
+  else if (n >= 3) bullets.push(`Well balanced, the opportunity is lifting the middle of the pack.`);
 
   return { title, bullets: bullets.slice(0, 4) };
 }

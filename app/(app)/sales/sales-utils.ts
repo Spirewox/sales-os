@@ -8,14 +8,14 @@ export type CsvPreviewRow = { lineNo: number; [column: string]: string | number 
 
 export const NAIRA = '\u20A6';
 export const fmt = (n: number | null | undefined) => {
-  if (n == null || !Number.isFinite(Number(n))) return '—';
+  if (n == null || !Number.isFinite(Number(n))) return '-';
   return `${NAIRA}${Number(n).toLocaleString()}`;
 };
 
 export const INPUT_CLS = 'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring';
 export const LABEL_CLS = 'text-sm font-medium';
-export const BTN_PRIMARY = 'inline-flex items-center rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2';
-export const BTN_SECONDARY = 'inline-flex items-center rounded-md text-sm font-medium border border-input bg-background hover:bg-accent h-9 px-4 py-2';
+export const BTN_PRIMARY = 'inline-flex items-center rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors h-9 px-4 py-2';
+export const BTN_SECONDARY = 'inline-flex items-center rounded-md text-sm font-medium border bg-card hover:bg-muted transition-colors h-9 px-4 py-2';
 
 export const CRM_SALES_CHANNELS = Object.values(SalesChannel).filter(
   (c) => c !== SalesChannel.POS,
@@ -73,16 +73,16 @@ export function extractHub(productDetails?: string): string | null {
 }
 
 export function statusColor(s: string): string {
-  if (s === 'Paid') return 'bg-green-100 text-green-800';
-  if (s === 'Approved') return 'bg-blue-100 text-blue-800';
-  if (s === 'Voided') return 'bg-red-100 text-red-800';
-  return 'bg-yellow-100 text-yellow-800';
+  if (s === 'Paid') return 'bg-primary/10 text-primary';
+  if (s === 'Approved') return 'bg-muted text-foreground';
+  if (s === 'Voided') return 'bg-destructive/10 text-destructive';
+  return 'bg-warning/10 text-warning';
 }
 
 export function paymentModeBadgeClass(mode: PaymentMode): string {
-  if (mode === PaymentMode.FULL_PAYMENT) return 'bg-green-100 text-green-800';
-  if (mode === PaymentMode.FULL_CREDIT) return 'bg-orange-100 text-orange-800';
-  return 'bg-yellow-100 text-yellow-800';
+  if (mode === PaymentMode.FULL_PAYMENT) return 'bg-primary/10 text-primary';
+  if (mode === PaymentMode.FULL_CREDIT) return 'bg-warning/10 text-warning';
+  return 'bg-warning/10 text-warning';
 }
 
 export function paymentModeLabel(mode: PaymentMode): string {
@@ -311,3 +311,52 @@ export function computeSalesKpis(
 
   return { revenue, profit, count, avgOrder, creditCount, creditAmount, deliveryCount, revenueChange, profitChange };
 }
+
+/** Payment status vocabulary shared by the table, the filter and the drawer (StatusBadge domain="payment"). */
+export type SalePaymentStatus = 'Paid' | 'Partial' | 'Credit' | 'Overdue' | 'Voided';
+export const PAYMENT_STATUS_FILTERS: { value: string; label: SalePaymentStatus }[] = [
+  { value: 'paid', label: 'Paid' },
+  { value: 'partial', label: 'Partial' },
+  { value: 'credit', label: 'Credit' },
+  { value: 'voided', label: 'Voided' },
+];
+
+/** Paid so far and what is still owed. A linked credit record's balance wins (it includes repayments). */
+export function saleBalance(sale: Pick<Sale, 'amount' | 'amountPaid' | 'isCredit'>, creditOwed?: number | null) {
+  const owed = creditOwed ?? Math.max(0, sale.amount - (sale.amountPaid ?? (sale.isCredit ? 0 : sale.amount)));
+  const balance = Math.max(0, Math.round(owed * 100) / 100);
+  return { paid: Math.max(0, sale.amount - balance), balance };
+}
+
+export function salePaymentStatus(
+  sale: Pick<Sale, 'status' | 'amount' | 'amountPaid' | 'isCredit' | 'dueDate'>,
+  opts: { creditOwed?: number | null; overdue?: boolean; today?: string } = {},
+): SalePaymentStatus {
+  if (sale.status === 'Voided') return 'Voided';
+  const { paid, balance } = saleBalance(sale, opts.creditOwed);
+  if (balance <= 0) return 'Paid';
+  const overdue = opts.overdue ?? (!!sale.dueDate && !!opts.today && sale.dueDate < opts.today);
+  if (overdue) return 'Overdue';
+  return paid > 0 ? 'Partial' : 'Credit';
+}
+
+/** Short reference shown as "Sale #". The API has no sale number yet, so this is the id's tail. */
+export function saleRef(id: string): string {
+  return id.replace(/[^a-z0-9]/gi, '').slice(-6).toUpperCase();
+}
+
+/** "Gizzard, 12 kg" */
+export function saleItemsLabel(sale: Pick<Sale, 'item' | 'productDetails'>): string {
+  const item = sale.item;
+  if (!item?.productName) return sale.productDetails || '-';
+  const qty = Number(item.quantity);
+  if (!Number.isFinite(qty) || qty <= 0) return item.productName;
+  const unit = item.saleUnit || item.unit || '';
+  return `${item.productName}, ${qty.toLocaleString('en-NG')}${unit ? ` ${unit === 'Kg' ? 'kg' : unit}` : ''}`;
+}
+
+export const PAYMENT_MODE_LABEL: Record<PaymentMode, string> = {
+  [PaymentMode.FULL_PAYMENT]: 'Paid in full',
+  [PaymentMode.PARTIAL_CREDIT]: 'Part paid',
+  [PaymentMode.FULL_CREDIT]: 'On credit',
+};

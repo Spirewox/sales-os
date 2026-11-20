@@ -1,15 +1,19 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { axiosGet, axiosPost } from '@/lib/api';
 import { requireApi, HAS_API } from '@/lib/require-api';
 import { useHubScopeFilter } from '@/hooks/use-hub-scope';
-import { useMetricsPeriod } from '@/components/metrics-period-bar';
+import { useUrlState } from '@/hooks/use-url-state';
+import { parsePeriod, periodLabel, periodRange, periodToParams, previousRange, type Period, type PeriodPreset } from '@/lib/period';
 import type { AskResult } from '@/lib/ask';
 import type { Filter, QueryResult } from '@/lib/explore';
 import type { CompareResult, EntityKind } from '@/lib/insights';
 import type { Levers, ScenarioKey, SimOutput } from '@/lib/simulate';
+
+/** Analytics opens on the last 30 days. */
+export const DEFAULT_PERIOD: PeriodPreset = '30d';
 
 /** Insights endpoints load scoped datasets server-side — allow longer than the default 8s. */
 const INSIGHTS_TIMEOUT_MS = 60_000;
@@ -21,6 +25,12 @@ export type InsightScopeParams = {
   date_to?: string;
 };
 
+/** Reject a response that lacks the fields the view needs, so it shows an error instead of crashing. */
+function expectShape<T>(value: T, ok: (v: T) => boolean): T {
+  if (!value || !ok(value)) throw new Error('This answer is not available right now. Try again later.');
+  return value;
+}
+
 function unwrapData<T>(raw: unknown): T {
   if (raw && typeof raw === 'object' && 'data' in raw) {
     return (raw as { data: T }).data;
@@ -28,24 +38,37 @@ function unwrapData<T>(raw: unknown): T {
   return raw as T;
 }
 
+/** API params for a period: explicit Lagos-day bounds, or `period=all` for all time. */
+export function periodToApiParams(p: Period): InsightScopeParams {
+  if (p.preset === 'all') return { period: 'all' };
+  const { from, to } = periodRange(p);
+  return { ...(from ? { date_from: from } : {}), ...(to ? { date_to: to } : {}) };
+}
+
+function scopeFromKey(key: string): { scope: InsightScopeParams; prevScope: InsightScopeParams | null } {
+  const [hubId, preset, from, to] = key.split('|');
+  const p: Period = { preset: preset as Period['preset'], from: from || undefined, to: to || undefined };
+  const hub = hubId ? { hub_id: hubId } : {};
+  const prev = previousRange(p);
+  return { scope: { ...hub, ...periodToApiParams(p) }, prevScope: prev ? { ...hub, date_from: prev.from, date_to: prev.to } : null };
+}
+
+/**
+ * Location and period for Analytics (including Explore and Compare). The period lives in the URL
+ * (?period=30d, or custom from/to), defaulting to Last 30 days; the location follows the app-wide hub.
+ * `prevScope` is the equally long period before, for "vs previous" comparisons (null for all time).
+ */
 export function useInsightScope() {
   const hubScope = useHubScopeFilter();
-  const metricsPeriod = useMetricsPeriod('month');
+  const { params, set } = useUrlState();
+  const period = parsePeriod(params, DEFAULT_PERIOD);
+  const setPeriod = useCallback((p: Period) => set(periodToParams(p, DEFAULT_PERIOD)), [set]);
+  // A string key keeps `scope` stable between renders, so effects and query keys only change with it.
+  const scopeKey = [hubScope.hubIdForApi ?? '', period.preset, period.from ?? '', period.to ?? ''].join('|');
+  const scope = useMemo(() => scopeFromKey(scopeKey).scope, [scopeKey]);
+  const prevScope = useMemo(() => scopeFromKey(scopeKey).prevScope, [scopeKey]);
 
-  const scope: InsightScopeParams = useMemo(() => {
-    const params: InsightScopeParams = {};
-    if (hubScope.hubIdForApi) params.hub_id = hubScope.hubIdForApi;
-    if (metricsPeriod.apiParams.date_from) params.date_from = metricsPeriod.apiParams.date_from;
-    if (metricsPeriod.apiParams.date_to) params.date_to = metricsPeriod.apiParams.date_to;
-    if (metricsPeriod.apiParams.period) params.period = metricsPeriod.apiParams.period;
-    return params;
-  }, [hubScope.hubIdForApi, metricsPeriod.apiParams]);
-
-  const periodLabel = metricsPeriod.isCustom
-    ? `${metricsPeriod.dateFrom} → ${metricsPeriod.dateTo}`
-    : metricsPeriod.preset;
-
-  return { hubScope, metricsPeriod, scope, periodLabel };
+  return { hubScope, period, setPeriod, scope, prevScope, periodLabel: periodLabel(period) };
 }
 
 export function useAskInsight() {
@@ -53,7 +76,7 @@ export function useAskInsight() {
     mutationFn: async (payload: InsightScopeParams & { question: string }) => {
       requireApi();
       const res = await axiosPost('insights/ask', payload, true, INSIGHTS_TIMEOUT_MS);
-      return unwrapData<AskResult>(res);
+      return expectShape(unwrapData<AskResult>(res), (r) => typeof r.narrative === 'string' && Array.isArray(r.rows));
     },
   });
 }
@@ -70,9 +93,10 @@ export function useExploreQuery() {
     ) => {
       requireApi();
       const res = await axiosPost('insights/explore/query', payload, true, INSIGHTS_TIMEOUT_MS);
-      return unwrapData<
-        QueryResult & { measureLabel: string; groupLabel: string; measureKind: 'money' | 'number' }
-      >(res);
+      return expectShape(
+        unwrapData<QueryResult & { measureLabel: string; groupLabel: string; measureKind: 'money' | 'number' }>(res),
+        (r) => Array.isArray(r.rows),
+      );
     },
   });
 }
@@ -92,7 +116,8 @@ export function useExploreFieldValues(
         true,
         INSIGHTS_TIMEOUT_MS,
       );
-      return unwrapData<{ values: string[] }>(res).values;
+      const values = unwrapData<{ values?: string[] }>(res)?.values;
+      return Array.isArray(values) ? values : [];
     },
   });
 }
@@ -112,10 +137,11 @@ export function useSimulateTargets(scope: InsightScopeParams) {
         true,
         INSIGHTS_TIMEOUT_MS,
       );
-      return unwrapData<{
-        targets: { value: string; label: string }[];
-        segments: string[];
-      }>(res);
+      const data = unwrapData<{ targets?: { value: string; label: string }[]; segments?: string[] }>(res);
+      return {
+        targets: Array.isArray(data?.targets) ? data.targets : [],
+        segments: Array.isArray(data?.segments) ? data.segments : [],
+      };
     },
   });
 }
@@ -130,7 +156,7 @@ export function useSimulateInterpret() {
         true,
         INSIGHTS_TIMEOUT_MS,
       );
-      return unwrapData<{ scenario: ScenarioKey; levers: Levers; understood: string }>(res);
+      return expectShape(unwrapData<{ scenario: ScenarioKey; levers: Levers; understood: string }>(res), (r) => !!r.scenario && !!r.levers);
     },
   });
 }
@@ -142,7 +168,7 @@ export function useSimulateRun() {
     ) => {
       requireApi();
       const res = await axiosPost('insights/simulate/run', payload, true, INSIGHTS_TIMEOUT_MS);
-      return unwrapData<SimOutput>(res);
+      return expectShape(unwrapData<SimOutput>(res), (r) => Array.isArray(r.metrics) && !!r.headline && !!r.verdict);
     },
   });
 }
@@ -162,8 +188,8 @@ export function useCompareEntities(kind: EntityKind, scope: InsightScopeParams) 
         true,
         INSIGHTS_TIMEOUT_MS,
       );
-      return unwrapData<{ entities: { id: string; label: string; sublabel?: string }[] }>(res)
-        .entities;
+      const entities = unwrapData<{ entities?: { id: string; label: string; sublabel?: string }[] }>(res)?.entities;
+      return Array.isArray(entities) ? entities : [];
     },
   });
 }
@@ -175,7 +201,7 @@ export function useCompareInsight() {
     ) => {
       requireApi();
       const res = await axiosPost('insights/compare', payload, true, INSIGHTS_TIMEOUT_MS);
-      return unwrapData<CompareResult>(res);
+      return expectShape(unwrapData<CompareResult>(res), (r) => Array.isArray(r.groups) && Array.isArray(r.insights));
     },
   });
 }

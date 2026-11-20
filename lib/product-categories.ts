@@ -1,6 +1,6 @@
 import type { ProductCategory } from '@/types';
 
-/** Canonical product/sale categories — includes CRM CR sheet values + legacy catalog labels. */
+/** Canonical product/sale categories, includes CRM CR sheet values + legacy catalog labels. */
 export const PRODUCT_CATEGORIES: ProductCategory[] = [
   'Fish',
   'Seafood',

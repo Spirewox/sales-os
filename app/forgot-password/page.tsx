@@ -32,12 +32,10 @@ export default function ForgotPasswordPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary/5 via-background to-primary/10 p-4">
       <div className="w-full max-w-sm">
-        <div className="rounded-2xl border bg-card p-8 shadow-xl shadow-primary/5">
+        <div className="rounded-xl border bg-card p-8 shadow-lg">
           <div className="mb-8 flex flex-col items-center text-center">
             {submitted ? (
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary shadow-lg shadow-primary/25">
-                <MailCheck className="text-primary-foreground" size={22} />
-              </div>
+              <MailCheck className="mb-4 text-primary" size={24} aria-hidden />
             ) : (
               <div className="mb-4 flex flex-col items-center">
                 <BrandLogo variant="color" width={160} className="mb-1" />
@@ -58,7 +56,7 @@ export default function ForgotPasswordPage() {
               <div className="space-y-1.5">
                 <label
                   htmlFor="email"
-                  className="text-[13px] font-medium text-foreground/80"
+                  className="text-sm font-medium"
                 >
                   Email
                 </label>
@@ -70,12 +68,12 @@ export default function ForgotPasswordPage() {
                   placeholder="you@fudfarmer.com"
                   autoComplete="email"
                   required
-                  className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm transition-colors placeholder:text-muted-foreground/50 focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/40"
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm transition-colors placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/40"
                 />
               </div>
 
               {error && (
-                <p className="rounded-lg bg-destructive/8 px-3 py-2 text-[13px] font-medium text-destructive">
+                <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">
                   {error}
                 </p>
               )}
@@ -83,7 +81,7 @@ export default function ForgotPasswordPage() {
               <SubmitButton
                 type="submit"
                 loading={forgotPassword.isPending}
-                className="h-10 w-full rounded-lg shadow-md shadow-primary/20 active:scale-[0.98]"
+                className="h-10 w-full rounded-md"
               >
                 Send reset link
               </SubmitButton>

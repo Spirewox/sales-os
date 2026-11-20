@@ -1,647 +1,202 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { HubScopeSelect } from '@/components/hub-scope-filter';
-import { SalesChannel, PaymentMode } from '@/types';
-import {
-  Plus, Banknote, Search, TrendingUp, ChevronRight, CreditCard,
-  ArrowUpRight, ArrowDownRight, Calendar, Upload, Download, ShoppingCart, Truck, BarChart3,
-  ArrowUpDown, ArrowUp, ArrowDown, Package, Loader2,
-} from 'lucide-react';
-import {
-  fmt, paymentModeBadgeClass, paymentModeLabel, resolveSalePaymentMode,
-  type QuickDatePreset, type SaleDateFieldFilter,
-} from './sales-utils';
-import { useSalesPage } from './use-sales-page';
-import { SaleDetailPanel } from './sale-detail-panel';
-import { AddSaleModal } from './add-sale-modal';
-import { SalesImportModal } from './sales-import-modal';
-import { PaginationControls } from '@/components/ui/pagination-controls';
-import { MetricValue } from '@/components/ui/metric-value';
-import { SkuMultiSelect } from '@/components/sku-multi-select';
-import { FilterSelect } from '@/components/filter-select';
-import { CardSkeleton, TableSkeleton } from '@/components/ui/loading-skeletons';
+import { Suspense } from 'react';
+import { Download, FileSpreadsheet, Plus, Receipt, Upload } from 'lucide-react';
 import type { Sale } from '@/types';
+import { formatCount, formatDate, formatMoney, formatMoneyShort, plural } from '@/lib/format';
+import { lagosDay, periodLabel } from '@/lib/period';
+import {
+  DataTable, EmptyState, KpiStrip, OverflowMenu, PageHeader, SectionErrorBoundary, StatusBadge, type Column,
+} from '@/components/app';
+import { saleBalance, saleItemsLabel, salePaymentStatus, saleRef } from './sales-utils';
+import { useSalesPage } from './use-sales-page';
+import { SalesFilterBar } from './sales-filter-bar';
+import { SaleDetailPanel } from './sale-detail-panel';
+import { RecordSaleSheet } from './add-sale-modal';
+import { SalesImportModal } from './sales-import-modal';
 
-type SalesTableRowProps = Readonly<{
-  sale: Sale;
-  onSelect: (sale: Sale) => void;
-}>;
-
-function useDismissOnOutside(open: boolean, onClose: () => void) {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const onPointer = (event: MouseEvent) => {
-      if (!ref.current?.contains(event.target as Node)) onClose();
-    };
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
-    };
-    document.addEventListener('mousedown', onPointer);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onPointer);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [open, onClose]);
-  return ref;
-}
-
-function SalesTableRow({ sale, onSelect }: SalesTableRowProps) {
-  const paid = sale.amountPaid ?? (sale.isCredit ? 0 : sale.amount);
-  const mode = resolveSalePaymentMode(sale, paid);
-  const productName = sale.item?.productName || '—';
-  const quantity = sale.item?.quantity ?? '—';
-  const unit = sale.item?.unit || '—';
-  const category = sale.item?.category || '—';
-
+export default function SalesPage() {
   return (
-    <tr
-      onClick={() => onSelect(sale)}
-      className={`hover:bg-muted/50 cursor-pointer group ${sale.status === 'Voided' ? 'opacity-50' : ''}`}
-    >
-      <td className="p-4 text-muted-foreground whitespace-nowrap">{sale.date}</td>
-      <td className="p-4">
-        <span className="font-medium">{sale.customerName}</span>
-        {sale.channel && sale.channel !== SalesChannel.WALK_IN && (
-          <span className={`ml-2 text-[10px] font-semibold px-1.5 py-0.5 rounded ${
-            sale.channel === SalesChannel.DELIVERY
-              ? 'text-blue-600 bg-blue-50'
-              : sale.channel === SalesChannel.POS
-                ? 'text-amber-700 bg-amber-50'
-                : 'text-purple-600 bg-purple-50'
-          }`}>
-            {sale.channel}
-          </span>
-        )}
-      </td>
-      <td className="p-4 text-muted-foreground text-xs max-w-[220px] truncate">{productName}</td>
-      <td className="p-4 text-muted-foreground text-xs text-center whitespace-nowrap">{quantity}</td>
-      <td className="p-4 text-muted-foreground text-xs whitespace-nowrap">{unit}</td>
-      <td className="p-4 text-muted-foreground text-xs whitespace-nowrap">{category}</td>
-      <td className="p-4 text-right">
-        <span className="font-medium">{fmt(sale.amount)}</span>
-        {paid < sale.amount && (
-          <span className="block text-xs text-orange-600">Paid: {fmt(paid)}</span>
-        )}
-      </td>
-      <td className="p-4 text-center">
-        <div className="flex flex-col items-center gap-1">
-          {sale.status === 'Voided' ? (
-            <span className="text-xs font-semibold rounded-full px-2 py-0.5 bg-red-100 text-red-800">Voided</span>
-          ) : (
-            <span className={`text-xs font-semibold rounded-full px-2 py-0.5 ${paymentModeBadgeClass(mode)}`}>
-              {paymentModeLabel(mode)}
-            </span>
-          )}
-          {sale.paymentType && mode !== PaymentMode.FULL_CREDIT && sale.status !== 'Voided' && (
-            <span className="text-[10px] text-muted-foreground">{sale.paymentType}</span>
-          )}
-        </div>
-      </td>
-      <td className="p-4"><ChevronRight size={14} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" /></td>
-    </tr>
+    <Suspense fallback={null}>
+      <Sales />
+    </Suspense>
   );
 }
 
-export default function SalesPage() {
-  const {
-    user, can, isAdmin, hubScope,
-    dateFrom, setDateFrom, dateTo, setDateTo, dateFieldFilter, setDateFieldFilter,
-    quickPreset, setQuickPreset, applyPreset,
-    agents, customers, customersFetching, setCustomerSearch, filteredSales, kpis, hasFilters, clearFilters,
-    salesMeta, page, setPage, salesLoading, salesFetching, summaryFetching, activeHubs,
-    searchTerm, setSearchTerm, filterAgent, setFilterAgent, filterStatus, setFilterStatus,
-    filterChannel, setFilterChannel,
-    filterCategories, setFilterCategories, toggleCategoryFilter, productCategories,
-    filterProductIds, setFilterProductIds, skuOptions,
-    sortBy, sortDir, toggleSort,
-    selectedSale, setSelectedSale, detailTab, setDetailTab, isEditing, setIsEditing,
-    editForm, setEditForm, showVoidConfirm, setShowVoidConfirm,
-    saleStockLogs, customerSalesHistory, closeDetailPanel,
-    handleUpdateDeliveryStatus, startEditing, saveEdit, handleVoidSale, editBatchPriceError,
-    showAddModal, setShowAddModal, newSale, setNewSale, selectedHub, setSelectedHub,
-    selectedProductId, setSelectedProductId, selectedBatchNumber, setSelectedBatchNumber,
-    productBatches, batchesLoading, quantity, saleUnit, saleWeightKg, paymentMode, setPaymentMode,
-    paymentType, setPaymentType, amountPaid, setAmountPaid, dueDate, setDueDate,
-    touched, setTouched, validationErrors, isFormValid, isHistoricalSale, isMealSale,
-    productDetailsText, setProductDetailsText, customerCreditWarning,
-    selectedFormCustomer, availableInventory, selectedInventoryItem, isCartonProduct,
-    isVolumeProduct,
-    handleProductChange, handleBatchChange, handleQuantityChange, handleSaleUnitChange,
-    handleSaleWeightChange, listUnitPriceForSale, selectedBatch, handleSaveSale,
-    savingSale, savingEdit, voidingSale, updatingDelivery,
-    showImportModal, setShowImportModal, importPreview, setImportPreview, importSummary, setImportSummary,
-    validateAuditId, importing, importProgress, importResult, importError, showImportConfirm, setShowImportConfirm,
-    validating, handleDownloadTemplate, handleImportFile, handleImportConfirm, importInputRef,
-    downloadingTemplate, handleExport, exportingSales,
-    btnPrimary, btnSecondary,
-  } = useSalesPage();
-  const [showTemplateMenu, setShowTemplateMenu] = useState(false);
-  const [categoriesOpen, setCategoriesOpen] = useState(false);
-  const closeCategories = () => setCategoriesOpen(false);
-  const categoriesRef = useDismissOnOutside(categoriesOpen, closeCategories);
-  const tableLoading = salesLoading || salesFetching;
-
-  const openSaleDetail = (sale: Sale) => {
-    setSelectedSale(sale);
-    setDetailTab('overview');
-    setIsEditing(false);
-  };
-
-  const SortIcon = ({ field }: { field: 'quantity' | 'amount' }) => {
-    if (sortBy !== field) return <ArrowUpDown size={12} className="text-muted-foreground/50" />;
-    return sortDir === 'asc'
-      ? <ArrowUp size={12} className="text-primary" />
-      : <ArrowDown size={12} className="text-primary" />;
-  };
-
-  const closeImportModal = () => {
-    setShowImportModal(false);
-    setImportPreview([]);
-    setImportSummary(null);
-    setShowImportConfirm(false);
-  };
-
-  const kpiCards = [
-    { label: 'Revenue', value: fmt(kpis.revenue), change: kpis.revenueChange, icon: <Banknote size={14} />, color: 'text-green-600' },
-    ...(isAdmin ? [{ label: 'Profit', value: fmt(kpis.profit ?? 0), change: kpis.profitChange, icon: <TrendingUp size={14} />, color: 'text-blue-600' }] : []),
-    { label: 'Total Sales', value: String(kpis.count), icon: <ShoppingCart size={14} />, color: 'text-primary' },
-    { label: 'Avg. Order', value: fmt(Math.round(kpis.avgOrder)), icon: <BarChart3 size={14} />, color: 'text-purple-600' },
-    { label: 'Credit Sales', value: `${kpis.creditCount} (${fmt(kpis.creditAmount)})`, icon: <CreditCard size={14} />, color: 'text-orange-600' },
-    { label: 'Deliveries', value: String(kpis.deliveryCount), icon: <Truck size={14} />, color: 'text-teal-600' },
+function salesColumns(today: string): Column<Sale>[] {
+  return [
+    { id: 'date', header: 'Date', mobile: 'meta', cell: (s) => <span className="whitespace-nowrap tabular-nums">{formatDate(s.date, { day: 'numeric', month: 'short' })}</span> },
+    { id: 'ref', header: 'Sale #', hideBelow: 'lg', cell: (s) => <span className="font-mono text-xs text-muted-foreground">#{saleRef(s.id)}</span> },
+    {
+      id: 'customer', header: 'Customer', mobile: 'title',
+      cell: (s) => (
+        <span className="inline-flex flex-col">
+          <span>{s.customerName}</span>
+          <span className="text-xs font-normal text-muted-foreground">{s.channel || 'Walk-In'}</span>
+        </span>
+      ),
+    },
+    { id: 'items', header: 'Items', mobile: 'subtitle', className: 'max-w-[240px]', cell: (s) => <span className="block truncate" title={saleItemsLabel(s)}>{saleItemsLabel(s)}</span> },
+    { id: 'hub', header: 'Hub', hideBelow: 'xl', cell: (s) => <span className="text-muted-foreground">{s.hubName || '-'}</span> },
+    {
+      id: 'amount', header: 'Amount', align: 'right', mobile: 'value', sortable: true,
+      cell: (s) => {
+        const { balance } = saleBalance(s);
+        return (
+          <span className="inline-flex flex-col items-end">
+            <span className="font-medium">{formatMoney(s.amount)}</span>
+            {s.status !== 'Voided' && balance > 0 && <span className="text-xs text-warning">{formatMoney(balance)} due</span>}
+          </span>
+        );
+      },
+    },
+    { id: 'status', header: 'Payment', mobile: 'meta', cell: (s) => <StatusBadge domain="payment" status={salePaymentStatus(s, { today })} /> },
   ];
+}
 
-  const mainUnitOrder = ['Kg', 'Cartons', 'Liters', 'ml', 'Plates', 'Units'];
-  const unitsByUnit = kpis.unitsByUnit ?? {};
-  const mainUnitRows = mainUnitOrder
-    .filter((unit) => unitsByUnit[unit])
-    .map((unit) => [unit, unitsByUnit[unit]] as const);
-  const otherUnitRows = Object.entries(unitsByUnit)
-    .filter(([unit, qty]) => qty && !mainUnitOrder.includes(unit))
-    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
-  const selectedSkus = skuOptions.filter((item) => filterProductIds.includes(item.id));
-  const unitsSoldHint = selectedSkus.length
-    ? selectedSkus.map((item) => [item.sku, item.name].filter(Boolean).join(' · ')).join(', ')
-    : filterCategories.length > 0
-      ? filterCategories.join(', ')
-      : 'All categories';
+function Sales() {
+  const { importInputRef, ...p } = useSalesPage();
+  const { can, filters, kpis, salesMeta, recordSale } = p;
+  const canCreate = can('sales.create');
+  const canImport = can('sales.import');
+  const tableLoading = p.salesLoading || p.salesFetching;
+  const columns = salesColumns(lagosDay());
+  const period = periodLabel(filters.period).toLowerCase();
 
-  const datePresets: [QuickDatePreset, string][] = [
-    ['today', 'Today'], ['week', 'This Week'], ['month', 'This Month'], ['30days', 'Last 30 Days'], ['all', 'All Time'],
-  ];
+  const recordButton = canCreate && (
+    <button type="button" onClick={() => p.setShowAddModal(true)} className="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary px-3.5 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90">
+      <Plus size={16} aria-hidden /> Record sale
+    </button>
+  );
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Sales Manager</h1>
-          <p className="text-muted-foreground text-sm">Record, track, and analyze sales across all hubs.</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <input ref={importInputRef} type="file" accept=".xlsx" className="hidden" onChange={handleImportFile} />
-          {can('sales.import') && (
-            <>
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setShowTemplateMenu((open) => !open)}
-                  disabled={downloadingTemplate}
-                  className={`${btnSecondary} disabled:opacity-50`}
-                >
-                  {downloadingTemplate ? (
-                    <Loader2 size={14} className="mr-1.5 animate-spin" />
-                  ) : (
-                    <Download size={14} className="mr-1.5" />
-                  )}
-                  {downloadingTemplate ? 'Preparing template…' : 'Download Template'}
-                </button>
-                {showTemplateMenu && (
-                  <>
-                    <button
-                      type="button"
-                      aria-label="Close template menu"
-                      className="fixed inset-0 z-40 cursor-default"
-                      onClick={() => setShowTemplateMenu(false)}
-                    />
-                    <div className="absolute right-0 top-full mt-1 z-50 w-56 rounded-md border bg-card shadow-lg py-1 animate-in fade-in zoom-in-95 duration-100">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          handleDownloadTemplate('catalog');
-                          setShowTemplateMenu(false);
-                        }}
-                        className="w-full px-4 py-2.5 text-sm hover:bg-muted transition-colors text-left"
-                      >
-                        Catalog Sales Template
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          handleDownloadTemplate('custom');
-                          setShowTemplateMenu(false);
-                        }}
-                        className="w-full px-4 py-2.5 text-sm hover:bg-muted transition-colors text-left"
-                      >
-                        Custom Product Template
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-              <button type="button" onClick={() => importInputRef.current?.click()} className={btnSecondary}>
-                <Upload size={14} className="mr-1.5" /> Import Sales
-              </button>
-            </>
-          )}
-          <button
-            type="button"
-            onClick={handleExport}
-            disabled={exportingSales}
-            className={`${btnSecondary} disabled:opacity-50`}
-          >
-            <Download size={14} className="mr-1.5" /> {exportingSales ? 'Exporting…' : 'Export'}
+    <div className="mx-auto max-w-[1400px] space-y-5 pb-20 md:pb-0">
+      <input ref={importInputRef} type="file" accept=".xlsx" className="hidden" aria-hidden tabIndex={-1} onChange={p.handleImportFile} />
+      <PageHeader
+        title="Sales"
+        description="Record sales and check what was sold, to whom, and what is still owed."
+        actions={<span className="hidden md:contents">{recordButton}</span>}
+        overflow={
+          <OverflowMenu
+            label="More sales actions"
+            items={[
+              { label: 'Import sales', icon: <Upload aria-hidden />, onSelect: () => importInputRef.current?.click(), hidden: !canImport },
+              { label: p.downloadingTemplate ? 'Preparing template…' : 'Catalog sales template', icon: <FileSpreadsheet aria-hidden />, onSelect: () => p.handleDownloadTemplate('catalog'), hidden: !canImport, disabled: p.downloadingTemplate },
+              { label: 'Custom product template', icon: <FileSpreadsheet aria-hidden />, onSelect: () => p.handleDownloadTemplate('custom'), hidden: !canImport, disabled: p.downloadingTemplate },
+              { label: p.exportingSales ? 'Exporting…' : 'Export sales', icon: <Download aria-hidden />, onSelect: p.handleExport, disabled: p.exportingSales },
+            ]}
+          />
+        }
+      />
+
+      <KpiStrip
+        loading={p.summaryFetching}
+        cells={[
+          {
+            label: 'Revenue',
+            value: formatMoneyShort(kpis.revenue),
+            change: p.revenueChangePct != null ? { pct: p.revenueChangePct, label: 'vs previous period' } : null,
+            detail: p.revenueChangePct == null ? period : undefined,
+          },
+          { label: 'Sales', value: formatCount(kpis.count), detail: period },
+          { label: 'Credit sales', value: formatMoneyShort(kpis.creditAmount), detail: `${plural(kpis.creditCount, 'sale')} on credit`, href: '/credits', tone: kpis.creditAmount > 0 ? 'warning' : 'default' },
+          { label: 'Average order', value: formatMoneyShort(kpis.avgOrder), detail: period },
+        ]}
+      />
+
+      <SalesFilterBar
+        filters={filters}
+        hubScope={p.hubScope}
+        agents={p.agents}
+        categories={p.productCategories}
+        skuOptions={p.skuOptions}
+        resultLabel={tableLoading ? 'Loading sales…' : salesMeta.totalPages > 1 ? `${(salesMeta.page - 1) * salesMeta.limit + 1} to ${Math.min(salesMeta.page * salesMeta.limit, salesMeta.total)} of ${plural(salesMeta.total, 'sale')}` : plural(salesMeta.total, 'sale')}
+      />
+
+      <SectionErrorBoundary label="Sales">
+        <DataTable
+          label="Sales"
+          columns={columns}
+          rows={tableLoading ? undefined : p.sales}
+          loading={tableLoading}
+          getRowId={(s) => s.id}
+          onRowClick={p.openSale}
+          pageSize={salesMeta.limit || 25}
+          manualSort
+          sort={filters.sort.startsWith('amount_') ? { id: 'amount', dir: filters.sort === 'amount_asc' ? 'asc' : 'desc' } : null}
+          onSortChange={(s) => filters.setSort(s ? `amount_${s.dir}` : 'newest')}
+          pagination={salesMeta.totalPages > 1 ? { page: salesMeta.page, totalPages: salesMeta.totalPages, onPageChange: p.setPage } : undefined}
+          rowClassName={(s) => (s.status === 'Voided' ? 'opacity-60' : undefined)}
+          empty={
+            <EmptyState
+              size="compact"
+              icon={<Receipt />}
+              title="No sales to show"
+              description={filters.hasFilters ? `No sales match these filters for ${period}.` : `No sales recorded for ${period}.`}
+              action={filters.hasFilters ? (
+                <button type="button" onClick={filters.clearAll} className="text-sm font-medium text-primary hover:underline">Clear filters</button>
+              ) : recordButton}
+            />
+          }
+        />
+      </SectionErrorBoundary>
+
+      {/* Phones: Record sale stays in reach at the bottom of the screen. */}
+      {canCreate && (
+        <div className="fixed inset-x-4 bottom-4 z-30 md:hidden">
+          <button type="button" onClick={() => p.setShowAddModal(true)} className="flex h-11 w-full items-center justify-center gap-1.5 rounded-md bg-primary text-sm font-medium text-primary-foreground shadow-lg">
+            <Plus size={16} aria-hidden /> Record sale
           </button>
-          {can('sales.create') && (
-            <button type="button" onClick={() => setShowAddModal(true)} className={`${btnPrimary} h-10 px-4`}>
-              <Plus size={16} className="mr-1.5" /> Record Sale
-            </button>
-          )}
         </div>
-      </div>
+      )}
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        {summaryFetching ? (
-          Array.from({ length: kpiCards.length + 1 }, (_, i) => <CardSkeleton key={i} />)
-        ) : (
-          <>
-        {kpiCards.map((kpi) => (
-          <div key={kpi.label} className="rounded-md border bg-card p-4">
-            <div className={`flex items-center gap-2 mb-1 ${kpi.color}`}>
-              {kpi.icon}
-              <span className="text-xs font-medium text-muted-foreground">{kpi.label}{hasFilters ? ' (filtered)' : ''}</span>
-            </div>
-            <MetricValue value={kpi.value} className="font-bold" />
-            {'change' in kpi && kpi.change !== undefined && kpi.change !== 0 && (
-              <div className={`flex items-center gap-1 text-xs font-medium mt-0.5 ${kpi.change > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {kpi.change > 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
-                {Math.abs(kpi.change).toFixed(1)}% vs last month
-              </div>
-            )}
-          </div>
-        ))}
-        <div className="rounded-md border bg-card p-4">
-          <div className="flex items-center gap-2 mb-1 text-amber-700">
-            <Package size={14} />
-            <span className="text-xs font-medium text-muted-foreground">Units Sold{hasFilters ? ' (filtered)' : ''}</span>
-          </div>
-          {mainUnitRows.length === 0 && otherUnitRows.length === 0 ? (
-            <p className="text-2xl font-black leading-tight">0</p>
-          ) : (
-            <>
-              {mainUnitRows.length > 0 && (
-                <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2">
-                  {mainUnitRows.map(([unit, qty]) => (
-                    <div key={unit} className="min-w-0">
-                      <p className="text-lg font-black tabular-nums leading-tight">{Number(qty).toLocaleString()}</p>
-                      <p className="text-xs text-muted-foreground">{unit}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {otherUnitRows.length > 0 && (
-                <details className="mt-3 border-t pt-2">
-                  <summary className="cursor-pointer text-xs font-medium text-muted-foreground">Other recorded units</summary>
-                  <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2">
-                    {otherUnitRows.map(([unit, qty]) => (
-                      <div key={unit} className="min-w-0">
-                        <p className="text-lg font-black tabular-nums leading-tight">{Number(qty).toLocaleString()}</p>
-                        <p className="text-xs text-muted-foreground">{unit}</p>
-                      </div>
-                    ))}
-                  </div>
-                </details>
-              )}
-            </>
-          )}
-          <p className="text-[11px] text-muted-foreground mt-2" title={unitsSoldHint}>{unitsSoldHint}</p>
-        </div>
-          </>
-        )}
-      </div>
-
-      <div className="flex items-center gap-2 flex-wrap">
-        <Calendar size={14} className="text-muted-foreground" />
-        {datePresets.map(([key, label]) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => applyPreset(key)}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${quickPreset === key ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:text-foreground'}`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
-      <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 items-stretch sm:items-center bg-card p-3 rounded-md border">
-        <div className="relative w-full sm:max-w-sm lg:max-w-md shrink-0">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-          <input
-            type="text"
-            placeholder="Search customer, product, notes..."
-            className="h-10 w-full rounded-md border border-input bg-background pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        <div className="flex flex-1 flex-wrap items-center gap-2 min-w-0">
-          <FilterSelect
-            ariaLabel="Date field"
-            value={dateFieldFilter}
-            onChange={(value) => setDateFieldFilter(value as SaleDateFieldFilter)}
-            className="w-fit"
-            options={[
-              { value: 'sold', label: 'Date Sold' },
-              { value: 'created', label: 'Date Recorded' },
-            ]}
-          />
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs font-medium text-muted-foreground">From</span>
-            <input type="date" value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); setQuickPreset('all'); }} className="h-10 px-2 rounded-md border text-sm bg-background" />
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs font-medium text-muted-foreground">To</span>
-            <input type="date" value={dateTo} onChange={(e) => { setDateTo(e.target.value); setQuickPreset('all'); }} className="h-10 px-2 rounded-md border text-sm bg-background" />
-          </div>
-          <FilterSelect
-            ariaLabel="Agent"
-            value={filterAgent}
-            onChange={setFilterAgent}
-            className="w-fit"
-            options={[
-              { value: 'All', label: 'All Agents' },
-              ...agents.map((agent) => ({ value: agent.id, label: agent.name })),
-            ]}
-          />
-          <FilterSelect
-            ariaLabel="Sale status"
-            value={filterStatus}
-            onChange={setFilterStatus}
-            className="w-fit"
-            options={[
-              { value: 'All', label: 'All Status' },
-              { value: 'Pending', label: 'Pending' },
-              { value: 'Approved', label: 'Approved' },
-              { value: 'Paid', label: 'Paid' },
-              { value: 'Voided', label: 'Voided' },
-            ]}
-          />
-          <HubScopeSelect scope={hubScope} />
-          <FilterSelect
-            ariaLabel="Channel"
-            value={filterChannel}
-            onChange={setFilterChannel}
-            className="w-fit"
-            options={[
-              { value: 'All', label: 'All Channels' },
-              ...Object.values(SalesChannel).map((channel) => ({ value: channel, label: channel })),
-            ]}
-          />
-          <div className="relative" ref={categoriesRef}>
-            <button
-              type="button"
-              onClick={() => setCategoriesOpen((open) => !open)}
-              className="h-10 cursor-pointer rounded-md border px-3 text-sm bg-background inline-flex items-center gap-2"
-            >
-              Categories
-              {filterCategories.length > 0 && (
-                <span className="rounded-full bg-primary/15 text-primary text-[10px] font-bold px-1.5 py-0.5">
-                  {filterCategories.length}
-                </span>
-              )}
-            </button>
-            {categoriesOpen && (
-              <div className="absolute z-20 mt-1 w-56 max-h-64 overflow-y-auto rounded-md border bg-background shadow-md p-2 space-y-1">
-                {productCategories.map((cat) => {
-                  const checked = filterCategories.includes(cat);
-                  return (
-                    <label key={cat} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted/50 text-sm cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={() => toggleCategoryFilter(cat)}
-                        className="rounded border"
-                      />
-                      {cat}
-                    </label>
-                  );
-                })}
-                {filterCategories.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setFilterCategories([])}
-                    className="w-full text-left text-xs text-muted-foreground px-2 py-1.5 hover:text-foreground"
-                  >
-                    Clear categories
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-          <SkuMultiSelect
-            options={skuOptions.map((item) => ({
-              id: item.id,
-              sku: item.sku,
-              name: item.name,
-              location: item.location,
-            }))}
-            selectedIds={filterProductIds}
-            onChange={setFilterProductIds}
-          />
-          {hasFilters && (
-            <button type="button" onClick={clearFilters} className="h-10 px-3 rounded-md border text-sm font-medium text-muted-foreground hover:bg-accent">
-              Clear
-            </button>
-          )}
-        </div>
-        <span className="text-xs text-muted-foreground whitespace-nowrap sm:ml-auto">
-          {salesMeta.total === 0
-            ? 'No sales to show'
-            : `Showing ${(salesMeta.page - 1) * salesMeta.limit + 1}–${Math.min(salesMeta.page * salesMeta.limit, salesMeta.total)} of ${salesMeta.total}`}
-        </span>
-      </div>
-
-      <div className="rounded-md border bg-card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50 border-b">
-              <tr>
-                <th className="h-12 px-4 text-left font-medium text-muted-foreground">Date Sold</th>
-                <th className="h-12 px-4 text-left font-medium text-muted-foreground">Customer</th>
-                <th className="h-12 px-4 text-left font-medium text-muted-foreground">Product Name</th>
-                <th className="h-12 px-4 text-center font-medium text-muted-foreground">
-                  <button
-                    type="button"
-                    onClick={() => toggleSort('quantity')}
-                    className="inline-flex items-center gap-1 mx-auto hover:text-foreground"
-                  >
-                    Quantity
-                    <SortIcon field="quantity" />
-                  </button>
-                </th>
-                <th className="h-12 px-4 text-left font-medium text-muted-foreground">Unit</th>
-                <th className="h-12 px-4 text-left font-medium text-muted-foreground">Category</th>
-                <th className="h-12 px-4 text-right font-medium text-muted-foreground">
-                  <button
-                    type="button"
-                    onClick={() => toggleSort('amount')}
-                    className="inline-flex items-center gap-1 ml-auto hover:text-foreground"
-                  >
-                    Amount
-                    <SortIcon field="amount" />
-                  </button>
-                </th>
-                <th className="h-12 px-4 text-center font-medium text-muted-foreground">Payment</th>
-                <th className="h-12 px-4 w-8" />
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {tableLoading ? (
-                <tr>
-                  <td colSpan={9} className="p-0">
-                    <TableSkeleton rows={8} cols={9} />
-                  </td>
-                </tr>
-              ) : (
-                <>
-                  {filteredSales.map((sale) => (
-                    <SalesTableRow key={sale.id} sale={sale} onSelect={openSaleDetail} />
-                  ))}
-                  {filteredSales.length === 0 && (
-                    <tr><td colSpan={9} className="p-12 text-center text-muted-foreground italic">No sales match your filters.</td></tr>
-                  )}
-                </>
-              )}
-            </tbody>
-          </table>
-        </div>
-        <div className="flex flex-col gap-3 border-t px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-muted-foreground">
-            {salesMeta.total === 0
-              ? 'No sales to show'
-              : `Page ${salesMeta.page} of ${salesMeta.totalPages}`}
-          </p>
-          <PaginationControls
-            page={salesMeta.page}
-            totalPages={salesMeta.totalPages}
-            onPageChange={setPage}
-            disabled={tableLoading}
-          />
-        </div>
-      </div>
-
-      {selectedSale && (
+      {p.saleId && p.selectedSale && (
         <SaleDetailPanel
-          sale={selectedSale}
-          detailTab={detailTab}
-          setDetailTab={setDetailTab}
-          isEditing={isEditing}
-          setIsEditing={setIsEditing}
-          editForm={editForm}
-          setEditForm={setEditForm}
-          showVoidConfirm={showVoidConfirm}
-          setShowVoidConfirm={setShowVoidConfirm}
-          saleStockLogs={saleStockLogs}
-          customerSalesHistory={customerSalesHistory}
-          onClose={closeDetailPanel}
-          onSelectSale={openSaleDetail}
-          onStartEditing={startEditing}
-          onSaveEdit={saveEdit}
-          batchPriceError={editBatchPriceError}
-          onVoidSale={handleVoidSale}
-          onUpdateDeliveryStatus={handleUpdateDeliveryStatus}
-          savingEdit={savingEdit}
-          voidingSale={voidingSale}
-          updatingDelivery={updatingDelivery}
+          sale={p.selectedSale}
+          detailTab={p.detailTab}
+          setDetailTab={p.setDetailTab}
+          isEditing={p.isEditing}
+          setIsEditing={p.setIsEditing}
+          editForm={p.editForm}
+          setEditForm={p.setEditForm}
+          showVoidConfirm={p.showVoidConfirm}
+          setShowVoidConfirm={p.setShowVoidConfirm}
+          saleStockLogs={p.saleStockLogs}
+          customerSalesHistory={p.customerSalesHistory}
+          onClose={p.closeDetailPanel}
+          onSelectSale={p.openSale}
+          onStartEditing={p.startEditing}
+          onSaveEdit={p.saveEdit}
+          batchPriceError={p.editBatchPriceError}
+          onVoidSale={p.handleVoidSale}
+          onUpdateDeliveryStatus={p.handleUpdateDeliveryStatus}
+          savingEdit={p.savingEdit}
+          voidingSale={p.voidingSale}
+          updatingDelivery={p.updatingDelivery}
           can={can}
-          isCompanyAdmin={isAdmin}
-          hubScope={hubScope}
-          activeHubs={activeHubs}
+          isCompanyAdmin={p.isAdmin}
+          activeHubs={p.activeHubs}
         />
       )}
 
-      <AddSaleModal
-        show={showAddModal}
-        onClose={() => setShowAddModal(false)}
-        hubScope={hubScope}
-        selectedHub={selectedHub}
-        setSelectedHub={setSelectedHub}
-        newSale={newSale}
-        setNewSale={setNewSale}
-        customers={customers}
-        touched={touched}
-        setTouched={setTouched}
-        validationErrors={validationErrors}
-        selectedFormCustomer={selectedFormCustomer}
-        customerCreditWarning={customerCreditWarning}
-        selectedProductId={selectedProductId}
-        setSelectedProductId={setSelectedProductId}
-        selectedBatchNumber={selectedBatchNumber}
-        setSelectedBatchNumber={setSelectedBatchNumber}
-        handleBatchChange={handleBatchChange}
-        productBatches={productBatches}
-        batchesLoading={batchesLoading}
-        handleProductChange={handleProductChange}
-        availableInventory={availableInventory}
-        selectedInventoryItem={selectedInventoryItem}
-        selectedBatch={selectedBatch}
-        listUnitPriceForSale={listUnitPriceForSale}
-        quantity={quantity}
-        handleQuantityChange={handleQuantityChange}
-        saleUnit={saleUnit}
-        handleSaleUnitChange={handleSaleUnitChange}
-        saleWeightKg={saleWeightKg}
-        handleSaleWeightChange={handleSaleWeightChange}
-        isCartonProduct={isCartonProduct}
-        isVolumeProduct={isVolumeProduct}
-        paymentMode={paymentMode}
-        setPaymentMode={setPaymentMode}
-        amountPaid={amountPaid}
-        setAmountPaid={setAmountPaid}
-        dueDate={dueDate}
-        setDueDate={setDueDate}
-        paymentType={paymentType}
-        setPaymentType={setPaymentType}
-        agents={agents}
-        user={user}
-        handleSaveSale={handleSaveSale}
-        savingSale={savingSale}
-        isFormValid={isFormValid}
-        isHistoricalSale={isHistoricalSale}
-        isMealSale={isMealSale}
-        productDetailsText={productDetailsText}
-        setProductDetailsText={setProductDetailsText}
-        canCreateSale={can('sales.create')}
-        onCustomerSearchChange={setCustomerSearch}
-        customersLoading={customersFetching}
-      />
+      {p.showAddModal && (
+        <RecordSaleSheet form={recordSale} onClose={p.closeRecordSale} agents={p.agents} user={p.user} canCreateSale={canCreate} hubName={p.hubScope.hubName} />
+      )}
 
       <SalesImportModal
-        show={showImportModal}
-        onClose={closeImportModal}
-        previewRows={importPreview}
-        summary={importSummary}
-        importing={importing}
-        validating={validating}
-        showImportConfirm={showImportConfirm}
-        importProgress={importProgress}
-        importResult={importResult}
-        importError={importError}
-        onConfirm={handleImportConfirm}
-        onCancelConfirm={() => setShowImportConfirm(false)}
-        onDownloadTemplate={handleDownloadTemplate}
+        show={p.showImportModal}
+        onClose={p.closeImportModal}
+        previewRows={p.importPreview}
+        summary={p.importSummary}
+        importing={p.importing}
+        validating={p.validating}
+        showImportConfirm={p.showImportConfirm}
+        importProgress={p.importProgress}
+        importResult={p.importResult}
+        importError={p.importError}
+        onConfirm={p.handleImportConfirm}
+        onCancelConfirm={() => p.setShowImportConfirm(false)}
+        onDownloadTemplate={p.handleDownloadTemplate}
       />
     </div>
   );

@@ -32,14 +32,14 @@ export default function KitchenQuotePage() {
     <div className="min-h-screen bg-muted/30 py-8 print:bg-white print:py-0">
       <div className="mx-auto mb-4 flex max-w-3xl justify-end px-4 print:hidden">
         <button type="button" onClick={() => window.print()} className="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90">
-          <Printer size={14} /> Print or save as PDF
+          <Printer size={16} aria-hidden /> Print or save as PDF
         </button>
       </div>
-      <main className="mx-auto max-w-3xl bg-white p-8 text-slate-900 shadow-sm print:shadow-none sm:p-12">
+      <main className="mx-auto max-w-3xl rounded-xl bg-white p-8 text-slate-900 shadow-sm print:rounded-none print:shadow-none sm:p-12">
         <header className="flex flex-wrap items-start justify-between gap-6 border-b pb-6">
           <BrandLogo variant="color" width={150} />
           <div className="text-right">
-            <h1 className="text-2xl font-bold">{isQuote ? 'Quote' : 'Order summary'}</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">{isQuote ? 'Quote' : 'Order summary'}</h1>
             <p className="font-mono text-sm">{j.code}</p>
             <p className="text-sm text-slate-600">{issued.toLocaleDateString('en-NG', { timeZone: 'Africa/Lagos', day: 'numeric', month: 'long', year: 'numeric' })}</p>
             {!isQuote && <p className="text-sm text-slate-600">Status: {STAGE_LABELS[j.stage]}</p>}
@@ -48,21 +48,21 @@ export default function KitchenQuotePage() {
 
         <section className="grid gap-4 py-6 text-sm sm:grid-cols-2">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">For</p>
+            <p className="text-xs text-slate-500">For</p>
             <p className="font-semibold">{j.customer_name || 'Customer'}</p>
             {j.phone && <p>{j.phone}</p>}
             {j.fulfilment === 'delivery' && j.address && <p className="text-slate-600">{j.address}</p>}
           </div>
           <div className="sm:text-right">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{j.fulfilment === 'delivery' ? 'Delivery' : 'Pickup'}</p>
+            <p className="text-xs text-slate-500">{j.fulfilment === 'delivery' ? 'Delivery' : 'Pickup'}</p>
             <p>{formatDue(j.due_at)}</p>
             {hubNameOf(j.hub) && <p className="text-slate-600">Fudfarmer Kitchen, {hubNameOf(j.hub)}</p>}
           </div>
         </section>
 
         <table className="w-full text-sm">
-          <thead className="border-y bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
-            <tr><th className="px-3 py-2">Item</th><th className="px-3 py-2 text-right">Qty</th><th className="px-3 py-2 text-right">Price</th><th className="px-3 py-2 text-right">Amount</th></tr>
+          <thead className="border-y bg-slate-50 text-left text-xs text-slate-500">
+            <tr><th className="px-3 py-2 font-medium">Item</th><th className="px-3 py-2 text-right font-medium">Qty</th><th className="px-3 py-2 text-right font-medium">Price</th><th className="px-3 py-2 text-right font-medium">Amount</th></tr>
           </thead>
           <tbody className="divide-y">
             {j.bill_lines.map((b, i) => (
@@ -70,7 +70,7 @@ export default function KitchenQuotePage() {
             ))}
           </tbody>
           <tfoot className="border-t-2 border-slate-900">
-            <tr><td colSpan={3} className="px-3 py-2 text-right font-semibold">Total</td><td className="px-3 py-2 text-right text-lg font-bold tabular-nums">{naira(j.total)}</td></tr>
+            <tr><td colSpan={3} className="px-3 py-2 text-right font-semibold">Total</td><td className="px-3 py-2 text-right text-lg font-semibold tabular-nums">{naira(j.total)}</td></tr>
             {j.paid > 0 && (
               <>
                 <tr><td colSpan={3} className="px-3 py-1 text-right text-slate-600">Paid</td><td className="px-3 py-1 text-right tabular-nums">{naira(j.paid)}</td></tr>

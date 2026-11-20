@@ -1,268 +1,194 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { Award, Crown, Phone, X } from 'lucide-react';
-import { HubScopeSelect } from '@/components/hub-scope-filter';
-import { TableSkeleton } from '@/components/ui/loading-skeletons';
+import { useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { MessageCircle, MessageSquare, Phone, ShoppingCart, X } from 'lucide-react';
+import {
+  DataTable, EmptyState, FilterBar, KpiStrip, LocationSelect, MoreFilterField, OverflowMenu, RowAction,
+  type FilterChip,
+} from '@/components/app';
 import { FilterSelect } from '@/components/filter-select';
-import { useHubScopeFilter } from '@/hooks/use-hub-scope';
-import { useCustomer, useCustomerEngagement } from '@/hooks/use-queries';
-import { usePermissions } from '@/hooks/use-permissions';
-import { Customer } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useHubScopeFilter } from '@/hooks/use-hub-scope';
+import { useUrlState } from '@/hooks/use-url-state';
+import { useCustomer, useCustomerEngagement, type EngagementCustomer } from '@/hooks/use-queries';
+import { usePermissions } from '@/hooks/use-permissions';
+import { formatCount, formatDateTime, formatMoneyShort, plural } from '@/lib/format';
+import type { Customer } from '@/types';
 import { CustomerDetailPanel, CustomerDrawer } from '../customers/customer-detail-panel';
+import { hasPhone, recordSaleHref, telHref, whatsappHref } from '../customers/customer-links';
+import { LOYALTY_OPTIONS, activityLabel, churnColumns, type ChurnActivity } from './churn-columns';
+import { logFeedbackHref } from './interaction-utils';
 
-const LOYALTY_OPTIONS = [
-  'All',
-  'Prospect',
-  'First-Time Buyer',
-  'Repeat Buyer',
-  'Loyal',
-  'Bronze',
-  'Silver',
-  'Gold',
-] as const;
+// RowAction has no target prop yet; WhatsApp must open in a new tab so the app stays open.
+const ROW_LINK = 'inline-flex h-8 items-center gap-1.5 rounded-md border bg-background px-2.5 text-xs font-medium whitespace-nowrap transition-colors hover:bg-muted [&_svg]:size-3.5';
 
-function gradeBadge(grade: string | null) {
-  if (!grade) return null;
-  if (grade === 'Gold') {
-    return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-bold text-yellow-700 border border-yellow-200">
-        <Crown size={12} fill="currentColor" /> Gold
-      </span>
-    );
-  }
-  if (grade === 'Silver') {
-    return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-700 border border-slate-200">
-        <Award size={12} /> Silver
-      </span>
-    );
-  }
-  return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-orange-50 px-2 py-0.5 text-xs font-bold text-orange-700 border border-orange-200">
-      <Award size={12} /> Bronze
-    </span>
-  );
-}
+const parseActivity = (v: string | null): ChurnActivity => (v === 'At Risk' || v === 'Dormant' ? v : 'All');
 
 export default function Churn() {
+  const router = useRouter();
   const { can } = usePermissions();
   const hubScope = useHubScopeFilter();
-  const [activity, setActivity] = useState<'All' | 'At Risk' | 'Dormant'>('All');
+  const { get, set } = useUrlState();
+  // ?activity= is linked from the customer drawer ("At Risk" / "Dormant").
+  const activity = parseActivity(get('activity'));
+  const setActivity = (a: ChurnActivity) => set({ activity: a === 'All' ? null : a });
   const [loyalty, setLoyalty] = useState<string>('All');
+  const [search, setSearch] = useState('');
   const [openCustomerId, setOpenCustomerId] = useState<string | null>(null);
   const [openCustomerOverride, setOpenCustomerOverride] = useState<Customer | null>(null);
 
-  useEffect(() => {
-    const activityParam = new URLSearchParams(window.location.search).get('activity');
-    if (activityParam === 'At Risk' || activityParam === 'Dormant') {
-      setActivity(activityParam);
-    }
-  }, []);
-
-  const { data, isFetching } = useCustomerEngagement(
-    {
-      activity,
-      loyalty: loyalty === 'All' ? undefined : loyalty,
-      hub_id: hubScope.hubIdForApi,
-    },
+  // Fetch every activity and filter here, so the KPI counts stay true while a risk filter is on.
+  const { data, isFetching, isError } = useCustomerEngagement(
+    { activity: 'All', loyalty: loyalty === 'All' ? undefined : loyalty, hub_id: hubScope.hubIdForApi },
     { enabled: can('customers.view') },
   );
 
   const { data: fetchedCustomer, isFetching: openCustomerLoading, isError: openCustomerError } = useCustomer(openCustomerId);
-  const openCustomer = openCustomerOverride?.id === openCustomerId
-    ? openCustomerOverride
-    : (fetchedCustomer ?? null);
-
+  const openCustomer = openCustomerOverride?.id === openCustomerId ? openCustomerOverride : (fetchedCustomer ?? null);
   const closeCustomer = () => {
     setOpenCustomerId(null);
     setOpenCustomerOverride(null);
   };
+  const openRow = (row: EngagementCustomer) => {
+    setOpenCustomerOverride(null);
+    setOpenCustomerId(row.id);
+  };
 
-  const rows = data?.items ?? [];
-  const totals = useMemo(() => {
-    const atRisk = rows.filter((r) => r.activity === 'At Risk').length;
-    const dormant = rows.filter((r) => r.activity === 'Dormant').length;
-    return { atRisk, dormant, total: rows.length };
-  }, [rows]);
+  const all = useMemo(() => data?.items ?? [], [data]);
+  const totals = useMemo(() => ({
+    atRisk: all.filter((r) => r.activity === 'At Risk').length,
+    dormant: all.filter((r) => r.activity === 'Dormant').length,
+    ltv: all.reduce((sum, r) => sum + (r.ltv || 0), 0),
+  }), [all]);
+  const rows = useMemo(
+    () => all.filter((r) => (activity === 'All' || r.activity === activity)
+      && (!search.trim() || [r.name, r.company, r.phone, r.hub].some((f) => f?.toLowerCase().includes(search.trim().toLowerCase())))),
+    [all, activity, search],
+  );
 
   if (!can('customers.view')) {
-    return (
-      <div className="p-8 text-sm text-muted-foreground">
-        You do not have permission to view customer engagement.
-      </div>
-    );
+    return <div className="p-8 text-sm text-muted-foreground">You do not have permission to view customer engagement.</div>;
   }
 
+  const loading = isFetching && !data;
+  const canSell = can('sales.create');
+  const canLog = can('interactions.view') && can('interactions.create');
+
+  const chips: FilterChip[] = [
+    ...(search.trim() ? [{ key: 'q', label: `"${search.trim()}"`, onRemove: () => setSearch('') }] : []),
+    ...(activity !== 'All' ? [{ key: 'activity', label: activityLabel(activity), onRemove: () => setActivity('All') }] : []),
+    ...(loyalty !== 'All' ? [{ key: 'loyalty', label: loyalty, onRemove: () => setLoyalty('All') }] : []),
+    ...(hubScope.canSwitchHubs && hubScope.filterHub !== 'All' ? [{ key: 'hub', label: hubScope.filterHub, onRemove: () => hubScope.setFilterHub('All') }] : []),
+  ];
+  const clearAll = () => {
+    setSearch('');
+    setActivity('All');
+    setLoyalty('All');
+    if (hubScope.canSwitchHubs) hubScope.setFilterHub('All');
+  };
+
+  const resultLabel = loading ? 'Loading customers…' : (
+    <>
+      {plural(rows.length, 'customer')}
+      {data?.summaryUpdatedAt && (
+        <>, summary updated <time dateTime={data.summaryUpdatedAt}>{formatDateTime(data.summaryUpdatedAt)}</time>{data.summaryStale && ', updates pending'}</>
+      )}
+    </>
+  );
+
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h2 className="text-lg font-semibold">Churn</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Off-cadence customers for win-back and follow-up outreach.
-          </p>
-          {data?.summaryUpdatedAt && <p className="mt-1 text-xs text-muted-foreground">
-            Summary updated <time dateTime={data.summaryUpdatedAt}>{new Date(data.summaryUpdatedAt).toLocaleString('en-NG', { timeZone: 'Africa/Lagos' })}</time>
-            {data.summaryStale && ' · Updates pending'}
-          </p>}
-        </div>
-        <HubScopeSelect scope={hubScope} />
-      </div>
+    <div className="space-y-4">
+      <KpiStrip
+        loading={loading}
+        label="Churn figures"
+        cells={[
+          { label: 'Off cadence', value: formatCount(all.length), detail: 'Buying later than usual', onClick: () => setActivity('All'), active: activity === 'All' },
+          { label: 'At risk', value: formatCount(totals.atRisk), tone: totals.atRisk > 0 ? 'warning' : 'default', detail: 'Past their usual gap', onClick: () => setActivity(activity === 'At Risk' ? 'All' : 'At Risk'), active: activity === 'At Risk' },
+          { label: 'Dormant', value: formatCount(totals.dormant), tone: totals.dormant > 0 ? 'danger' : 'default', detail: 'Over 3 times their usual gap', onClick: () => setActivity(activity === 'Dormant' ? 'All' : 'Dormant'), active: activity === 'Dormant' },
+          { label: 'Lifetime value at stake', value: formatMoneyShort(totals.ltv), detail: 'Total spent by these customers' },
+        ]}
+      />
 
-      <div className="grid grid-cols-3 gap-3 max-w-xl">
-        <div className="rounded-xl border p-3 bg-muted/20">
-          <p className="text-[10px] font-bold uppercase text-muted-foreground">Off cadence</p>
-          <p className="text-xl font-black">{totals.total}</p>
-        </div>
-        <div className="rounded-xl border p-3 bg-orange-50/50">
-          <p className="text-[10px] font-bold uppercase text-orange-700/70">At Risk</p>
-          <p className="text-xl font-black text-orange-700">{totals.atRisk}</p>
-        </div>
-        <div className="rounded-xl border p-3 bg-red-50/50">
-          <p className="text-[10px] font-bold uppercase text-red-700/70">Dormant</p>
-          <p className="text-xl font-black text-red-700">{totals.dormant}</p>
-        </div>
-      </div>
+      <FilterBar
+        search={{ value: search, onChange: setSearch, placeholder: 'Search name, phone or location', label: 'Search customers' }}
+        filters={(
+          <>
+            <LocationSelect scope={hubScope} />
+            <FilterSelect
+              ariaLabel="Risk"
+              value={activity}
+              onChange={(v) => setActivity(parseActivity(v))}
+              className="h-9 w-auto min-w-36"
+              options={[{ value: 'All', label: 'All activity' }, { value: 'At Risk', label: 'At risk' }, { value: 'Dormant', label: 'Dormant' }]}
+            />
+          </>
+        )}
+        more={(
+          <MoreFilterField label="Loyalty">
+            <FilterSelect
+              ariaLabel="Loyalty"
+              value={loyalty}
+              onChange={setLoyalty}
+              options={LOYALTY_OPTIONS.map((v) => ({ value: v, label: v === 'All' ? 'All loyalty' : v }))}
+            />
+          </MoreFilterField>
+        )}
+        moreActiveCount={loyalty !== 'All' ? 1 : 0}
+        chips={chips}
+        onClearAll={clearAll}
+        resultLabel={resultLabel}
+      />
 
-      <div className="flex flex-wrap gap-3">
-        <FilterSelect
-          value={activity}
-          onChange={(v) => setActivity(v as 'All' | 'At Risk' | 'Dormant')}
-          options={[
-            { value: 'All', label: 'All activity' },
-            { value: 'At Risk', label: 'At Risk' },
-            { value: 'Dormant', label: 'Dormant' },
-          ]}
-        />
-        <FilterSelect
-          value={loyalty}
-          onChange={setLoyalty}
-          options={LOYALTY_OPTIONS.map((v) => ({
-            value: v,
-            label: v === 'All' ? 'All loyalty' : v,
-          }))}
-        />
-      </div>
-
-      <div className="rounded-md border bg-card">
-        <div className="relative w-full overflow-auto">
-          <table className="w-full text-sm">
-            <thead className="[&_tr]:border-b bg-muted/40 text-left text-[11px] uppercase tracking-wide text-muted-foreground">
-              <tr className="border-b">
-                <th className="h-12 px-4 font-medium">Customer</th>
-                <th className="h-12 px-4 font-medium">Phone</th>
-                <th className="h-12 px-4 font-medium">Hub</th>
-                <th className="h-12 px-4 font-medium">Loyalty</th>
-                <th className="h-12 px-4 font-medium">Activity</th>
-                <th className="h-12 px-4 font-medium">Days late</th>
-                <th className="h-12 px-4 font-medium">Recommended action</th>
-                <th className="h-12 px-4 font-medium" />
-              </tr>
-            </thead>
-            <tbody>
-              {isFetching && rows.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="p-6">
-                    <TableSkeleton rows={6} />
-                  </td>
-                </tr>
-              ) : null}
-              {!isFetching && rows.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="p-8 text-center text-muted-foreground">
-                    No off-cadence customers for these filters.
-                  </td>
-                </tr>
-              ) : null}
-              {rows.map((row) => {
-                const actClr =
-                  row.activity === 'At Risk'
-                    ? 'bg-orange-100 text-orange-700 border-orange-200'
-                    : 'bg-red-100 text-red-700 border-red-200';
-                return (
-                  <tr
-                    key={row.id}
-                    onClick={() => {
-                      setOpenCustomerOverride(null);
-                      setOpenCustomerId(row.id);
-                    }}
-                    className="border-t hover:bg-muted/20 cursor-pointer"
-                  >
-                    <td className="p-3">
-                      <p className="font-semibold">{row.name}</p>
-                      <p className="text-[11px] text-muted-foreground">
-                        Last order {row.lastOrderDate} · {row.daysSinceLast}d ago
-                      </p>
-                    </td>
-                    <td className="p-3">
-                      {row.phone ? (
-                        <a
-                          href={`tel:${row.phone}`}
-                          onClick={(e) => e.stopPropagation()}
-                          className="inline-flex items-center gap-1 text-primary hover:underline"
-                        >
-                          <Phone size={12} /> {row.phone}
-                        </a>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </td>
-                    <td className="p-3 text-muted-foreground">{row.hub || '—'}</td>
-                    <td className="p-3">
-                      <div className="flex flex-col gap-1 items-start">
-                        {gradeBadge(row.loyaltyGrade)}
-                        <span className="inline-flex rounded-sm border px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                          {row.loyalty}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="p-3">
-                      <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-bold ${actClr}`}>
-                        {row.activity}
-                      </span>
-                    </td>
-                    <td className="p-3">
-                      <p className="font-semibold">{row.daysLate}d</p>
-                      {Math.round(row.avgInterval) > 0 ? (
-                        <p className="text-[10px] text-muted-foreground">
-                          vs ~{Math.round(row.avgInterval)}d cadence
-                        </p>
-                      ) : (
-                        <p className="text-[10px] text-muted-foreground">Single purchase</p>
-                      )}
-                    </td>
-                    <td className="p-3 text-muted-foreground leading-snug">
-                      {row.recommendedAction}
-                    </td>
-                    <td className="p-3">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setOpenCustomerOverride(null);
-                          setOpenCustomerId(row.id);
-                        }}
-                        className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
-                      >
-                        Open
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <DataTable
+        label="Off-cadence customers"
+        columns={churnColumns}
+        rows={isError ? [] : rows}
+        getRowId={(r) => r.id}
+        loading={isFetching && !data}
+        onRowClick={openRow}
+        defaultSort={{ id: 'daysSince', dir: 'desc' }}
+        resetPageKey={`${activity}|${loyalty}|${search}|${hubScope.filterHub}`}
+        rowActions={(r) => {
+          const phone = hasPhone(r.phone) ? r.phone : null;
+          return (
+            <>
+              {phone && <a href={telHref(phone)} className={ROW_LINK} aria-label={`Call ${r.name}`}><Phone aria-hidden /> Call</a>}
+              {phone && (
+                <a href={whatsappHref(phone)} target="_blank" rel="noopener noreferrer" className={ROW_LINK} aria-label={`WhatsApp ${r.name}`}>
+                  <MessageCircle aria-hidden /> WhatsApp
+                </a>
+              )}
+              {!phone && <RowAction onClick={() => openRow(r)}>Open</RowAction>}
+              <OverflowMenu
+                size="sm"
+                label={`More actions for ${r.name}`}
+                items={[
+                  { label: 'Record sale', icon: <ShoppingCart aria-hidden />, onSelect: () => router.push(recordSaleHref(r.id)), hidden: !canSell },
+                  { label: 'Log feedback', icon: <MessageSquare aria-hidden />, onSelect: () => router.push(logFeedbackHref(r.id)), hidden: !canLog },
+                ]}
+              />
+            </>
+          );
+        }}
+        empty={isError ? (
+          <EmptyState size="compact" title="Couldn’t load churn" description="Check your connection and try again." />
+        ) : (
+          <EmptyState
+            size="compact"
+            title="No off-cadence customers"
+            description={chips.length > 0 ? 'Nobody matches these filters.' : 'Every customer is buying on their usual cadence.'}
+            action={chips.length > 0 ? <button type="button" onClick={clearAll} className="text-sm font-medium text-primary hover:underline">Clear filters</button> : undefined}
+          />
+        )}
+      />
 
       {openCustomerId && !openCustomer ? (
         <CustomerDrawer onClose={closeCustomer}>
           <div className="flex items-center justify-between border-b p-6">
             <h2 className="text-lg font-semibold">Customer details</h2>
-            <button type="button" onClick={closeCustomer} aria-label="Close customer details" className="p-1 text-muted-foreground hover:text-foreground">
-              <X size={20} />
+            <button type="button" onClick={closeCustomer} aria-label="Close customer details" className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground">
+              <X size={18} aria-hidden />
             </button>
           </div>
           {openCustomerError && !openCustomerLoading ? (
@@ -277,21 +203,16 @@ export default function Churn() {
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                {Array.from({ length: 4 }, (_, index) => <Skeleton key={index} className="h-16 rounded-lg" />)}
+                {Array.from({ length: 4 }, (_, index) => <Skeleton key={index} className="h-16 rounded-xl" />)}
               </div>
-              <Skeleton className="h-28 rounded-lg" />
+              <Skeleton className="h-28 rounded-xl" />
             </div>
           )}
         </CustomerDrawer>
       ) : null}
 
       {openCustomer ? (
-        <CustomerDetailPanel
-          customer={openCustomer}
-          onClose={closeCustomer}
-          animate={false}
-          onUpdated={setOpenCustomerOverride}
-        />
+        <CustomerDetailPanel customer={openCustomer} onClose={closeCustomer} onUpdated={setOpenCustomerOverride} />
       ) : null}
     </div>
   );

@@ -3,6 +3,11 @@ import axios, { AxiosError, isAxiosError } from "axios";
 const base_url = process.env.NEXT_PUBLIC_API_URL;
 const REQUEST_TIMEOUT_MS = 8_000;
 
+// Dev-only: with no backend configured, answer requests from lib/mock-api sample data.
+if (process.env.NODE_ENV === 'development' && !process.env.NEXT_PUBLIC_API_URL) {
+  axios.defaults.adapter = async (config) => (await import('@/lib/mock-api/handler')).mockAdapter(config);
+}
+
 const authConfig = (withAuth?: boolean) => ({
   withCredentials: withAuth,
   timeout: REQUEST_TIMEOUT_MS,

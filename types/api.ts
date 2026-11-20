@@ -58,6 +58,14 @@ export interface ApiCreditCustomerSummary {
   overdue_count: number;
   oldest_due_date: string | null;
   flagged_count?: number;
+  /** Optional row details for the Credits list (backend may omit; the UI degrades). */
+  customer_phone?: string;
+  hub_id?: string;
+  hub_name?: string;
+  overdue_amount?: number;
+  last_payment_date?: string | null;
+  due_this_week_count?: number;
+  due_this_week_amount?: number;
 }
 
 export interface ApiCreditPayment {
@@ -200,6 +208,7 @@ export interface ApiCustomer {
   segments?: Array<string | ApiSegment>;
   total_orders?: number;
   total_spent?: number;
+  last_purchase_date?: string;
   assigned_agent?: string | { _id?: string; full_name?: string };
   added_by?: string | { _id?: string; full_name?: string };
   business_category?: string;
@@ -602,9 +611,11 @@ export interface AnalyticsOverviewData {
     totalRevenue: number;
   };
   products: {
-    productRevenue: { name: string; category: string; revenue: number; count: number }[];
+    /** `id` (product id) lets rows link to /inventory?product=<id>; optional until the API sends it. */
+    productRevenue: { id?: string; name: string; category: string; revenue: number; count: number }[];
     categoryRevenue: { name: string; revenue: number; orders: number; fill: string }[];
     stockTurnover: {
+      id?: string;
       name: string;
       category: string;
       unitsSold: number;
@@ -631,6 +642,7 @@ export interface AnalyticsOverviewData {
     agingReport: { label: string; min: number; max: number; amount: number; count: number }[];
     topDebtors: { id: string; customerId: string; customerName: string; amountOwed: number; dateIssued: string; status: string }[];
     customerRisk: {
+      customerId?: string;
       name: string;
       type: string;
       totalSpent: number;

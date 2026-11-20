@@ -92,12 +92,13 @@ export function SkuMultiSelect({ options, selectedIds, onChange }: SkuMultiSelec
     <div className="relative flex flex-wrap items-center gap-1.5" ref={ref}>
       <button
         type="button"
+        aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
-        className="h-10 rounded-md border px-3 text-sm bg-background inline-flex items-center gap-2"
+        className="h-10 rounded-md border px-3 text-sm bg-background hover:bg-muted inline-flex items-center gap-2"
       >
         All SKUs
         {selected.length > 0 && (
-          <span className="rounded-full bg-primary/15 text-primary text-[10px] font-bold px-1.5 py-0.5">
+          <span className="rounded-full bg-muted text-foreground text-xs font-medium tabular-nums px-1.5">
             {selected.length}
           </span>
         )}
@@ -109,19 +110,21 @@ export function SkuMultiSelect({ options, selectedIds, onChange }: SkuMultiSelec
           onClick={() => toggle(item.id)}
           className="inline-flex max-w-[180px] items-center gap-1 rounded-full border bg-muted px-2 py-1 text-xs"
           title={item.name}
+          aria-label={`Remove ${item.name}`}
         >
           <span className="truncate">{item.name}</span>
-          <X size={12} className="shrink-0 text-muted-foreground" />
+          <X size={14} aria-hidden className="shrink-0 text-muted-foreground" />
         </button>
       ))}
       {open && (
-        <div className="absolute top-full z-20 mt-1 w-96 max-w-[80vw] rounded-md border bg-background shadow-md p-2">
+        <div className="absolute top-full z-20 mt-1 w-96 max-w-[80vw] rounded-md border bg-popover text-popover-foreground shadow-lg p-2">
           <input
             ref={searchRef}
             type="text"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search SKU or product..."
+            aria-label="Search SKUs"
             className="h-9 w-full rounded-md border px-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring"
           />
           <div className="mt-2 max-h-72 overflow-y-auto space-y-1">
@@ -140,14 +143,14 @@ export function SkuMultiSelect({ options, selectedIds, onChange }: SkuMultiSelec
                       className={`shrink-0 text-muted-foreground transition-transform ${expanded ? 'rotate-90' : ''}`}
                     />
                     <span className="min-w-0 flex-1 truncate">{title}</span>
-                    <span className="text-[10px] font-medium text-muted-foreground">{group.items.length}</span>
+                    <span className="text-xs tabular-nums text-muted-foreground">{group.items.length}</span>
                   </button>
                   {expanded && (
                     <div className="border-t px-1 py-1 space-y-0.5">
                       {group.items.map((item) => (
                         <label
                           key={item.id}
-                          className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted/50 text-sm cursor-pointer"
+                          className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-muted/50 text-sm cursor-pointer"
                         >
                           <input
                             type="checkbox"
@@ -156,7 +159,7 @@ export function SkuMultiSelect({ options, selectedIds, onChange }: SkuMultiSelec
                             className="rounded border"
                           />
                           <span className="min-w-0 flex-1 truncate">{item.name}</span>
-                          <span className="shrink-0 text-[10px] text-muted-foreground">{item.productCode}</span>
+                          <span className="shrink-0 text-xs text-muted-foreground">{item.productCode}</span>
                         </label>
                       ))}
                     </div>

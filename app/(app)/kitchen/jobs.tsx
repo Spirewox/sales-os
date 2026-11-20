@@ -2,15 +2,16 @@
 
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { Banknote, Download, FileText, Search, TrendingUp, Wallet } from 'lucide-react';
+import { Download } from 'lucide-react';
 import { FilterSelect } from '@/components/filter-select';
-import { PaginationControls } from '@/components/ui/pagination-controls';
-import { TableSkeleton } from '@/components/ui/loading-skeletons';
+import type { HubScopeFilter } from '@/hooks/use-hub-scope';
+import { useUrlState } from '@/hooks/use-url-state';
+import { DataTable, EmptyState, FilterBar, KpiStrip, LocationSelect, OverflowMenu, type Column, type FilterChip } from '@/components/app';
 import { fetchAllPages } from '@/lib/fetch-all-pages';
 import { axiosGet } from '@/lib/api';
 import { useKitchenJobs, type KitchenJobFilters } from '@/hooks/use-kitchen';
 import { dueState, formatDue, hubNameOf, MODE_LABELS, naira, pct, STAGE_LABELS, type KitchenJob, type KitchenJobList } from '@/lib/kitchen-types';
-import { btnSecondary, EmptyRow, ErrorPanel, inputClass, KpiCard, KpiRow, PaymentBadge, StageBadge, td, th, thRight } from './kitchen-ui';
+import { ErrorPanel, PaymentBadge, StageBadge } from './kitchen-ui';
 
 type Period = 'today' | '7' | '30' | 'month' | 'all';
 const PERIODS: { value: Period; label: string }[] = [
@@ -20,6 +21,8 @@ const PERIODS: { value: Period; label: string }[] = [
   { value: 'month', label: 'This month' },
   { value: 'all', label: 'All time' },
 ];
+const isPeriod = (v: string | null): v is Period => PERIODS.some((p) => p.value === v);
+const filterClass = 'h-9 w-auto min-w-40 data-[size=default]:h-9';
 const STAGE_FILTERS = [
   { value: 'all', label: 'All stages' },
   { value: 'quotes', label: 'Drafts & quotes' },
@@ -46,12 +49,17 @@ const csvCell = (v: unknown) => {
   return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 };
 
-export function KitchenJobs({ hubId, dueSoonMinutes, canCosts, onOpenJob }: { hubId?: string; dueSoonMinutes: number; canCosts: boolean; onOpenJob: (id: string) => void }) {
-  const [period, setPeriod] = useState<Period>('30');
-  const [stage, setStage] = useState('all');
+export function KitchenJobs({ hubId, hubScope, dueSoonMinutes, canCosts, onOpenJob }: { hubId?: string; hubScope?: HubScopeFilter; dueSoonMinutes: number; canCosts: boolean; onOpenJob: (id: string) => void }) {
+  // Period and stage live in the URL so Board > Done today can link straight to them.
+  const { get, set: setUrl } = useUrlState();
+  const rawPeriod = get('period');
+  const period: Period = isPeriod(rawPeriod) ? rawPeriod : '30';
+  const stage = STAGE_FILTERS.some((f) => f.value === get('stage')) ? get('stage')! : 'all';
   const [q, setQ] = useState('');
   const [page, setPage] = useState(1);
   const [exporting, setExporting] = useState(false);
+  const setPeriod = (v: string) => { setUrl({ period: v === '30' ? null : v }); setPage(1); };
+  const setStage = (v: string) => { setUrl({ stage: v === 'all' ? null : v }); setPage(1); };
 
   const filters: KitchenJobFilters = useMemo(
     () => ({ ...periodRange(period), stage: stage === 'all' ? undefined : stage, hub_id: hubId, q: q.trim() || undefined, page, limit: 25 }),
@@ -61,12 +69,11 @@ export function KitchenJobs({ hubId, dueSoonMinutes, canCosts, onOpenJob }: { hu
   const rows = jobs.data?.data ?? [];
   const meta = jobs.data?.pagination;
   const summary = jobs.data?.summary;
-  const cols = canCosts ? 9 : 8;
 
-  const reset = <T,>(fn: (v: T) => void) => (v: T) => {
-    fn(v);
-    setPage(1);
-  };
+  const chips: FilterChip[] = [
+    ...(stage !== 'all' ? [{ key: 'stage', label: STAGE_FILTERS.find((f) => f.value === stage)!.label, onRemove: () => setStage('all') }] : []),
+    ...(q.trim() ? [{ key: 'q', label: `"${q.trim()}"`, onRemove: () => { setQ(''); setPage(1); } }] : []),
+  ];
 
   const exportCsv = async () => {
     setExporting(true);
@@ -114,107 +121,118 @@ export function KitchenJobs({ hubId, dueSoonMinutes, canCosts, onOpenJob }: { hu
     }
   };
 
-  return (
-    <div className="space-y-6">
-      <KpiRow loading={jobs.isPending} count={canCosts ? 5 : 4}>
-        <KpiCard label="Jobs" value={summary?.count ?? 0} icon={<FileText size={14} />} tone="text-primary" hint={summary?.count ? `Average ${naira(summary.average)}` : undefined} />
-        <KpiCard label="Job value" value={naira(summary?.value ?? 0)} icon={<Banknote size={14} />} tone="text-blue-600" />
-        <KpiCard label="Collected" value={naira(summary?.collected ?? 0)} icon={<Wallet size={14} />} tone="text-green-600" />
-        <KpiCard label="Owed" value={naira(summary?.owed ?? 0)} icon={<Wallet size={14} />} tone="text-orange-600" />
-        {canCosts && (
-          <KpiCard
-            label="Profit"
-            value={naira(summary?.profit ?? 0)}
-            icon={<TrendingUp size={14} />}
-            tone="text-emerald-700"
-            hint={summary?.costed_jobs ? `On ${summary.costed_jobs} costed job${summary.costed_jobs === 1 ? '' : 's'}` : undefined}
-          />
-        )}
-      </KpiRow>
+  const columns: Column<KitchenJob>[] = [
+    {
+      id: 'job',
+      header: 'Job',
+      mobile: 'title',
+      cell: (j) => (
+        <span className="flex flex-col">
+          <span className="font-mono text-xs font-medium">{j.code}</span>
+          <span className="text-xs font-normal text-muted-foreground">{new Date(j.createdAt).toLocaleDateString('en-NG', { timeZone: 'Africa/Lagos', day: 'numeric', month: 'short' })}</span>
+        </span>
+      ),
+    },
+    {
+      id: 'customer',
+      header: 'Customer',
+      mobile: 'subtitle',
+      cell: (j) => (
+        <span className="block min-w-0">
+          <span className="block font-medium text-foreground">{j.customer_name || 'Walk-in customer'}</span>
+          {j.phone && <span className="block text-xs text-muted-foreground">{j.phone}</span>}
+        </span>
+      ),
+    },
+    { id: 'stage', header: 'Stage', mobile: 'meta', cell: (j) => <StageBadge stage={j.stage} /> },
+    {
+      id: 'due',
+      header: 'Due',
+      mobile: 'meta',
+      cell: (j) => {
+        const due = dueState(j, dueSoonMinutes);
+        return <span className={`whitespace-nowrap tabular-nums ${due?.tone === 'overdue' ? 'font-semibold text-destructive' : ''}`}>{due?.tone === 'overdue' ? due.label : formatDue(j.due_at)}</span>;
+      },
+    },
+    { id: 'service', header: 'Service', hideBelow: 'xl', cell: (j) => <span className="tabular-nums">{MODE_LABELS[j.mode].label}{j.count ? `, ${j.count}` : ''}</span> },
+    { id: 'channel', header: 'Channel', hideBelow: 'xl', cell: (j) => j.channel },
+    { id: 'total', header: 'Total', align: 'right', mobile: 'value', cell: (j) => <span className="font-semibold">{naira(j.total)}</span> },
+    { id: 'payment', header: 'Payment', mobile: 'meta', cell: (j) => <PaymentBadge job={j} /> },
+    ...(canCosts
+      ? [{
+          id: 'profit',
+          header: 'Profit',
+          align: 'right' as const,
+          hideBelow: 'lg' as const,
+          cell: (j: KitchenJob) =>
+            j.costing?.profit != null ? (
+              <span className="flex flex-col items-end">
+                <span className={j.costing.profit < 0 ? 'text-destructive' : ''}>{naira(j.costing.profit)}</span>
+                <span className="text-xs text-muted-foreground">{pct(j.costing.margin)}</span>
+              </span>
+            ) : '-',
+        }]
+      : []),
+  ];
 
-      <div className="flex flex-col gap-3 rounded-md border bg-card p-4 lg:flex-row lg:items-center">
-        <div className="relative flex-1">
-          <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <input
-            type="search"
-            aria-label="Search jobs"
-            placeholder="Search customer, phone, code or dish…"
-            className={`${inputClass} pl-8`}
-            value={q}
-            onChange={(e) => reset(setQ)(e.target.value)}
+  return (
+    <div className="space-y-4">
+      <KpiStrip
+        label="Jobs in this period"
+        loading={jobs.isPending}
+        cells={[
+          { label: 'Job value', value: naira(summary?.value ?? 0), detail: summary?.count ? `${summary.count} job${summary.count === 1 ? '' : 's'}, average ${naira(summary.average)}` : 'No jobs' },
+          { label: 'Collected', value: naira(summary?.collected ?? 0) },
+          { label: 'Owed', value: naira(summary?.owed ?? 0), tone: (summary?.owed ?? 0) > 0 ? 'warning' : 'default' },
+          {
+            label: 'Profit',
+            hidden: !canCosts,
+            value: naira(summary?.profit ?? 0),
+            tone: (summary?.profit ?? 0) < 0 ? 'danger' : 'default',
+            detail: summary?.costed_jobs ? `On ${summary.costed_jobs} costed job${summary.costed_jobs === 1 ? '' : 's'}` : undefined,
+          },
+        ]}
+      />
+
+      <FilterBar
+        search={{ value: q, onChange: (v) => { setQ(v); setPage(1); }, placeholder: 'Search customer, phone, code or dish', label: 'Search jobs' }}
+        filters={
+          <>
+            {hubScope && <LocationSelect scope={hubScope} />}
+            <FilterSelect ariaLabel="Period" value={period} onChange={setPeriod} options={PERIODS} className={filterClass} />
+            <FilterSelect ariaLabel="Stage" value={stage} onChange={setStage} options={STAGE_FILTERS} className={filterClass} />
+          </>
+        }
+        chips={chips}
+        onClearAll={() => { setQ(''); setStage('all'); }}
+        resultLabel={meta ? `${meta.total} job${meta.total === 1 ? '' : 's'}` : undefined}
+        trailing={
+          <OverflowMenu
+            label="More job actions"
+            items={[{ label: exporting ? 'Exporting…' : 'Export CSV', icon: <Download />, onSelect: () => void exportCsv(), disabled: exporting || !summary?.count }]}
           />
-        </div>
-        <FilterSelect ariaLabel="Period" value={period} onChange={reset((v: string) => setPeriod(v as Period))} options={PERIODS} />
-        <FilterSelect ariaLabel="Stage" value={stage} onChange={reset(setStage)} options={STAGE_FILTERS} />
-        <button type="button" className={btnSecondary} onClick={() => void exportCsv()} disabled={exporting || !summary?.count}>
-          <Download size={14} /> {exporting ? 'Exporting…' : 'Export CSV'}
-        </button>
-      </div>
+        }
+      />
 
       {jobs.isError && <ErrorPanel message={jobs.error.message} onRetry={() => void jobs.refetch()} />}
 
-      <div className="overflow-hidden rounded-md border bg-card">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[56rem] text-sm">
-            <thead className="border-b bg-muted/50">
-              <tr>
-                <th className={th}>Job</th>
-                <th className={th}>Customer</th>
-                <th className={th}>Stage</th>
-                <th className={th}>Due</th>
-                <th className={th}>Service</th>
-                <th className={th}>Channel</th>
-                <th className={thRight}>Total</th>
-                <th className={th}>Payment</th>
-                {canCosts && <th className={thRight}>Profit</th>}
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {jobs.isPending ? (
-                <tr><td colSpan={cols} className="p-0"><TableSkeleton rows={8} cols={cols} /></td></tr>
-              ) : rows.length ? (
-                rows.map((j) => {
-                  const due = dueState(j, dueSoonMinutes);
-                  return (
-                    <tr key={j._id} className="cursor-pointer hover:bg-muted/40" onClick={() => onOpenJob(j._id)}>
-                      <td className={td}>
-                        <button type="button" className="font-mono text-xs font-semibold text-primary hover:underline" onClick={(e) => { e.stopPropagation(); onOpenJob(j._id); }}>{j.code}</button>
-                        <p className="text-xs text-muted-foreground">{new Date(j.createdAt).toLocaleDateString('en-NG', { timeZone: 'Africa/Lagos', day: 'numeric', month: 'short' })}</p>
-                      </td>
-                      <td className={td}>
-                        <p className="font-medium">{j.customer_name || '—'}</p>
-                        <p className="text-xs text-muted-foreground">{j.phone}</p>
-                      </td>
-                      <td className={td}><StageBadge stage={j.stage} /></td>
-                      <td className={`${td} whitespace-nowrap ${due?.tone === 'overdue' ? 'font-semibold text-destructive' : ''}`}>{due?.tone === 'overdue' ? due.label : formatDue(j.due_at)}</td>
-                      <td className={td}>{MODE_LABELS[j.mode].label}{j.count ? ` · ${j.count}` : ''}</td>
-                      <td className={td}>{j.channel}</td>
-                      <td className={`${td} text-right font-semibold tabular-nums`}>{naira(j.total)}</td>
-                      <td className={td}><PaymentBadge job={j} /></td>
-                      {canCosts && (
-                        <td className={`${td} text-right tabular-nums`}>
-                          {j.costing?.profit != null ? (
-                            <>
-                              <span className={j.costing.profit < 0 ? 'text-destructive' : ''}>{naira(j.costing.profit)}</span>
-                              <p className="text-xs text-muted-foreground">{pct(j.costing.margin)}</p>
-                            </>
-                          ) : '—'}
-                        </td>
-                      )}
-                    </tr>
-                  );
-                })
-              ) : (
-                <EmptyRow colSpan={cols}>No jobs match your filters.</EmptyRow>
-              )}
-            </tbody>
-          </table>
-        </div>
-        <div className="flex flex-col gap-3 border-t px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-muted-foreground">{meta && meta.total ? `Page ${meta.page} of ${meta.totalPages} · ${meta.total} jobs` : 'No jobs to show'}</p>
-          {meta && <PaginationControls page={meta.page} totalPages={meta.totalPages} onPageChange={setPage} disabled={jobs.isFetching} />}
-        </div>
-      </div>
+      <DataTable
+        label="Kitchen jobs"
+        columns={columns}
+        rows={jobs.data ? rows : undefined}
+        loading={jobs.isPending}
+        getRowId={(j) => j._id}
+        onRowClick={(j) => onOpenJob(j._id)}
+        manualSort
+        pagination={meta ? { page: meta.page, totalPages: meta.totalPages, onPageChange: setPage } : undefined}
+        empty={
+          <EmptyState
+            size="compact"
+            title={chips.length ? 'No jobs match these filters' : 'No jobs in this period'}
+            description={chips.length ? 'Clear the filters or widen the period.' : 'Jobs taken in the kitchen show here. Pick a longer period to see older ones.'}
+          />
+        }
+      />
     </div>
   );
 }

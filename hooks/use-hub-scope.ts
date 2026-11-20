@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { useDataScope } from '@/hooks/use-data-scope';
 import { useHubs } from '@/hooks/use-queries';
+import { useHubContext } from '@/contexts/hub-context';
 
 import { HAS_API } from '@/lib/require-api';
 
@@ -23,7 +24,11 @@ export function useHubScopeFilter() {
     return activeHubs[0]?.name ?? '';
   }, [hubName, hubId, activeHubs]);
 
-  const [selectedHub, setFilterHub] = useState<string>('All');
+  // Follows the app-wide location when the provider is mounted; local state otherwise.
+  const shared = useHubContext();
+  const [localHub, setLocalHub] = useState<string>('All');
+  const selectedHub = shared?.selectedHub ?? localHub;
+  const setFilterHub = shared?.setSelectedHub ?? setLocalHub;
   const filterHub = activeHubs.some((h) => h.name === selectedHub) ? selectedHub : 'All';
 
   const hubIdForApi = useMemo(() => {

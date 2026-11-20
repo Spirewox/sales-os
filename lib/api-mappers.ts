@@ -146,12 +146,12 @@ const AUDIT_ACTION_LABELS: Record<string, string> = {
 };
 
 export function formatAuditAction(action: string): string {
-  if (!action) return '—';
+  if (!action) return '-';
   return AUDIT_ACTION_LABELS[action] ?? capitalizeWords(action);
 }
 
 export function formatAuditEntity(entity: string): string {
-  if (!entity) return '—';
+  if (!entity) return '-';
   const key = entity.replace(/[\s_]/g, '').toLowerCase();
   if (key === 'bulkupload') return 'Bulk upload';
   if (key === 'inventory') return 'Inventory';
@@ -205,7 +205,7 @@ export function mapCustomer(c: ApiCustomer, hubMap?: Record<string, string>): Cu
   const segments = (c.segments ?? [])
     .map((s) => {
       if (typeof s === 'string') {
-        // Ignore raw ObjectIds (unpopulated segments) — not display names
+        // Ignore raw ObjectIds (unpopulated segments), not display names
         return /^[a-f0-9]{24}$/i.test(s) ? undefined : s;
       }
       return s?.name;
@@ -229,6 +229,7 @@ export function mapCustomer(c: ApiCustomer, hubMap?: Record<string, string>): Cu
     segments,
     totalOrders: c.total_orders ?? 0,
     totalSpent: c.total_spent ?? 0,
+    lastPurchaseDate: toDateStr(c.last_purchase_date) || undefined,
     addedByAgentId: assigned?._id || refId(c.assigned_agent) || undefined,
     addedByAgentName: assigned?.full_name || addedBy?.full_name || undefined,
     businessCategory: c.business_category,
@@ -298,6 +299,7 @@ export function mapSale(s: ApiSale, hubMap?: Record<string, string>): Sale {
     paymentType: s.payment_type,
     paymentMode,
     amountPaid: s.amount_paid,
+    dueDate: s.due_date ? toDateStr(s.due_date) : undefined,
   };
 }
 
@@ -478,6 +480,7 @@ export function mapAgent(u: ApiAgentUser): Agent {
     role: roleLabel as Agent['role'],
     location: hubName || 'All Hubs',
     joinedDate: toDateStr(u.createdAt) || new Date().toISOString().split('T')[0],
+    isActive: u.is_active !== false,
   };
 }
 

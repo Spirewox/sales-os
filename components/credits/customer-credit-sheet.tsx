@@ -1,154 +1,68 @@
 'use client';
 
-import { useState } from 'react';
-import { useAuth } from '@/contexts/auth-context';
-import { usePermissions } from '@/hooks/use-permissions';
-import {
-  useCustomerCredits,
-  useRecordPayment,
-  useGeneralCreditPayment,
-  useExtendDueDate,
-  useFlagCredit,
-} from '@/hooks/use-queries';
-import { CreditCustomerSummary, SaleCreditRecord } from '@/types/credits';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
-import { fmt, daysUntil, formatDate, statusBadgeClass } from './credit-utils';
+import { useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { SubmitButton } from '@/components/submit-button';
+import { MessageCircle, Phone, Receipt, User, Wallet } from 'lucide-react';
+import { usePermissions } from '@/hooks/use-permissions';
+import { useCustomer, useCustomerCredits, useFlagCredit } from '@/hooks/use-queries';
+import type { CreditCustomerSummary, SaleCreditRecord } from '@/types/credits';
+import { EmptyState, EntityDrawer, OverflowMenu, StatusBadge } from '@/components/app';
 import { CreditSheetSkeleton } from '@/components/ui/loading-skeletons';
-import {
-  AlertTriangle,
-  ArrowUpRight,
-  CalendarClock,
-  ChevronDown,
-  ChevronUp,
-  Flag,
-  History,
-  Loader2,
-  Receipt,
-  ShoppingBag,
-  Wallet,
-  X,
-} from 'lucide-react';
+import { CreditItemCard } from './credit-item-card';
+import { ExtendDueDateForm, GeneralRepaymentForm, RecordPaymentForm } from './credit-forms';
+import { fmt, formatDate, telHref, whatsAppHref } from './credit-utils';
 
 interface CustomerCreditSheetProps {
-  customer: CreditCustomerSummary | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  /** Open when set. */
+  customerId: string | null;
+  /** The list row, when the customer is on the Credits list (gives name and totals before items load). */
+  summary?: CreditCustomerSummary | null;
+  onClose: () => void;
 }
 
-export function CustomerCreditSheet({ customer, open, onOpenChange }: CustomerCreditSheetProps) {
-  const { user } = useAuth();
+const isOpenCredit = (c: SaleCreditRecord) => c.status !== 'Clear' && c.status !== 'Voided';
+
+export function CustomerCreditSheet({ customerId, summary, onClose }: Readonly<CustomerCreditSheetProps>) {
+  if (!customerId) return null;
+  return <CreditSheetBody key={customerId} customerId={customerId} summary={summary ?? null} onClose={onClose} />;
+}
+
+function CreditSheetBody({ customerId, summary, onClose }: Readonly<{ customerId: string; summary: CreditCustomerSummary | null; onClose: () => void }>) {
+  const router = useRouter();
   const { can } = usePermissions();
-  const { data: credits = [], isLoading } = useCustomerCredits(customer?.customerId ?? null);
-  const recordPayment = useRecordPayment();
-  const generalPayment = useGeneralCreditPayment();
-  const extendDueDate = useExtendDueDate();
+  const { data: credits = [], isLoading } = useCustomerCredits(customerId);
+  const { data: customer } = useCustomer(customerId);
   const flagCredit = useFlagCredit();
 
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [paymentCredit, setPaymentCredit] = useState<SaleCreditRecord | null>(null);
-  const [showGeneralPayment, setShowGeneralPayment] = useState(false);
   const [extendCredit, setExtendCredit] = useState<SaleCreditRecord | null>(null);
-  const [paymentAmount, setPaymentAmount] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'Transfer' | 'POS'>('Transfer');
-  const [paymentNote, setPaymentNote] = useState('');
-  const [newDueDate, setNewDueDate] = useState('');
-  const [extendReason, setExtendReason] = useState('');
+  const [showGeneralPayment, setShowGeneralPayment] = useState(false);
 
-  const openItems = credits.filter((c) => c.status !== 'Clear' && c.status !== 'Voided');
-  const clearedItems = credits.filter((c) => c.status === 'Clear' || c.status === 'Voided');
-  const totalOutstanding =
-    customer?.totalOutstanding ??
-    openItems.reduce((sum, c) => sum + c.amountOwed, 0);
+  const openItems = useMemo(
+    () => credits.filter(isOpenCredit).sort((a, b) => a.dueDate.localeCompare(b.dueDate)),
+    [credits],
+  );
+  const clearedItems = credits.filter((c) => !isOpenCredit(c));
 
-  const creditProductLabel = (credit: SaleCreditRecord) =>
-    credit.sale.productName ||
-    credit.sale.productDetails ||
-    'Credit sale';
+  const loaded = !isLoading;
+  const totalOutstanding = loaded ? openItems.reduce((s, c) => s + c.amountOwed, 0) : summary?.totalOutstanding ?? 0;
+  const overdueItems = openItems.filter((c) => c.status === 'Overdue');
+  const overdueAmount = loaded ? overdueItems.reduce((s, c) => s + c.amountOwed, 0) : summary?.overdueAmount;
+  const overdueCount = loaded ? overdueItems.length : summary?.overdueCount ?? 0;
+  const flaggedCount = loaded ? openItems.filter((c) => c.flagged).length : summary?.flaggedCount ?? 0;
+  const itemCount = loaded ? openItems.length : summary?.openCreditCount ?? 0;
+  const lastPayment = useMemo(() => {
+    const dates = credits.flatMap((c) => [c.lastPaymentDate, ...c.payments.map((p) => p.date)]).filter(Boolean) as string[];
+    return dates.sort().at(-1) ?? summary?.lastPaymentDate ?? null;
+  }, [credits, summary?.lastPaymentDate]);
 
-  const handleRecordPayment = async () => {
-    if (!paymentCredit || !user) return;
-    const amount = parseFloat(paymentAmount) || 0;
-    if (amount <= 0 || amount > paymentCredit.amountOwed) {
-      toast.error('Enter a valid payment amount.');
-      return;
-    }
-    try {
-      await recordPayment.mutateAsync({
-        creditId: paymentCredit.id,
-        amount,
-        method: paymentMethod,
-        note: paymentNote || undefined,
-        recordedBy: user.id,
-        recordedByName: user.name,
-      });
-      toast.success(`${fmt(amount)} payment recorded.`);
-      setPaymentCredit(null);
-      setPaymentAmount('');
-      setPaymentNote('');
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Payment failed.');
-    }
-  };
-
-  const handleGeneralPayment = async () => {
-    if (!customer || !user) return;
-    const amount = parseFloat(paymentAmount) || 0;
-    if (amount <= 0 || amount > totalOutstanding) {
-      toast.error(
-        totalOutstanding > 0
-          ? `Enter an amount between 0 and ${fmt(totalOutstanding)}.`
-          : 'No outstanding credit to repay.',
-      );
-      return;
-    }
-    try {
-      const result = await generalPayment.mutateAsync({
-        customerId: customer.customerId,
-        amount,
-        method: paymentMethod,
-        note: paymentNote || undefined,
-      });
-      const cleared = result.allocations.filter((a) => a.balance_after === 0).length;
-      toast.success(
-        `${fmt(amount)} applied across ${result.allocations.length} credit${result.allocations.length !== 1 ? 's' : ''}` +
-          (cleared ? ` (${cleared} cleared).` : '.'),
-      );
-      setShowGeneralPayment(false);
-      setPaymentAmount('');
-      setPaymentNote('');
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'General payment failed.');
-    }
-  };
-
-  const handleExtendDueDate = async () => {
-    if (!extendCredit || !user) return;
-    if (!newDueDate) {
-      toast.error('Select a new due date.');
-      return;
-    }
-    try {
-      await extendDueDate.mutateAsync({
-        creditId: extendCredit.id,
-        newDueDate,
-        reason: extendReason || undefined,
-        extendedByName: user.name,
-      });
-      toast.success('Due date extended.');
-      setExtendCredit(null);
-      setNewDueDate('');
-      setExtendReason('');
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Extension failed.');
-    }
-  };
+  const name = customer?.companyName || customer?.name || summary?.customerName || credits[0]?.customerName || 'Customer';
+  const phone = customer?.phone || summary?.phone;
+  const tel = telHref(phone);
+  const whatsapp = whatsAppHref(phone);
+  const location = customer?.location || summary?.hubName;
 
   const handleFlag = async (credit: SaleCreditRecord) => {
     try {
@@ -159,533 +73,135 @@ export function CustomerCreditSheet({ customer, open, onOpenChange }: CustomerCr
     }
   };
 
+  const status =
+    overdueCount > 0 ? <StatusBadge tone="danger">Overdue</StatusBadge>
+    : totalOutstanding > 0 ? <StatusBadge tone="warning">Pending</StatusBadge>
+    : loaded ? <StatusBadge tone="good">Clear</StatusBadge>
+    : null;
+
+  const contactBtn = 'inline-flex h-9 items-center gap-1.5 rounded-md border bg-background px-3 text-sm font-medium transition-colors hover:bg-muted [&_svg]:size-4';
+
   return (
     <>
-      <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="right" className="w-full sm:max-w-3xl lg:max-w-4xl overflow-y-auto p-0">
-          {customer && (
-            <>
-              <SheetHeader className="border-b p-5 pr-12">
-                <SheetTitle className="text-lg">{customer.customerName}</SheetTitle>
-                <div className="space-y-2 pt-1">
-                  <p className="text-2xl font-black text-red-600">{fmt(totalOutstanding)}</p>
-                  <div className="flex flex-wrap gap-2 text-xs">
-                    <span className="rounded-full bg-muted px-2.5 py-0.5 font-medium">
-                      {customer.openCreditCount} open credit{customer.openCreditCount !== 1 ? 's' : ''}
-                    </span>
-                    {customer.overdueCount > 0 && (
-                      <span className="rounded-full bg-red-100 px-2.5 py-0.5 font-medium text-red-700">
-                        {customer.overdueCount} overdue
-                      </span>
-                    )}
-                    {customer.flaggedCount > 0 && (
-                      <span className="rounded-full bg-orange-100 px-2.5 py-0.5 font-medium text-orange-700">
-                        {customer.flaggedCount} flagged
-                      </span>
-                    )}
-                  </div>
-                  {can('credits.record_payment') && totalOutstanding > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowGeneralPayment(true);
-                        setPaymentAmount('');
-                        setPaymentNote('');
-                        setPaymentMethod('Transfer');
-                      }}
-                      className="inline-flex items-center gap-1.5 rounded-md text-xs font-medium bg-primary text-primary-foreground h-8 px-3 mt-1"
-                    >
-                      <Wallet size={12} /> General repayment
-                    </button>
-                  )}
-                </div>
-              </SheetHeader>
-
-              <div className="p-5 space-y-6">
-                {isLoading && (
-                  <CreditSheetSkeleton />
-                )}
-
-                {!isLoading && openItems.length === 0 && clearedItems.length === 0 && (
-                  <p className="text-sm text-muted-foreground text-center py-8">No credit records for this customer.</p>
-                )}
-
-                {openItems.length > 0 && (
-                  <section className="space-y-3">
-                    <h3 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                      Open credits ({openItems.length})
-                    </h3>
-                    {openItems.map((credit) => (
-                      <CreditItemCard
-                        key={credit.id}
-                        credit={credit}
-                        expanded={expandedId === credit.id}
-                        onToggle={() => setExpandedId(expandedId === credit.id ? null : credit.id)}
-                        canRecordPayment={can('credits.record_payment')}
-                        canExtend={can('credits.set_due_date')}
-                        onRecordPayment={() => {
-                          setPaymentCredit(credit);
-                          setPaymentAmount('');
-                          setPaymentNote('');
-                        }}
-                        onExtend={() => {
-                          setExtendCredit(credit);
-                          setNewDueDate('');
-                          setExtendReason('');
-                        }}
-                        onFlag={() => handleFlag(credit)}
-                        flagging={flagCredit.isPending}
-                      />
-                    ))}
-                  </section>
-                )}
-
-                {clearedItems.length > 0 && (
-                  <section className="space-y-3">
-                    <h3 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                      Cleared / closed ({clearedItems.length})
-                    </h3>
-                    {clearedItems.map((credit) => (
-                      <CreditItemCard
-                        key={credit.id}
-                        credit={credit}
-                        expanded={expandedId === credit.id}
-                        onToggle={() => setExpandedId(expandedId === credit.id ? null : credit.id)}
-                        canRecordPayment={false}
-                        canExtend={false}
-                        onRecordPayment={() => {}}
-                        onExtend={() => {}}
-                        onFlag={() => {}}
-                      />
-                    ))}
-                  </section>
-                )}
-              </div>
-            </>
-          )}
-        </SheetContent>
-      </Sheet>
-
-      {/* Record payment modal */}
-      {paymentCredit && (
-        <div className="fixed inset-0 z-[60] bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-md rounded-xl border bg-card shadow-xl">
-            <div className="flex items-center justify-between border-b px-5 py-4">
-              <div>
-                <h3 className="font-bold">Record Payment</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {creditProductLabel(paymentCredit)} · {fmt(paymentCredit.amountOwed)} outstanding
-                </p>
-              </div>
-              <button onClick={() => setPaymentCredit(null)} className="text-muted-foreground hover:text-foreground">
-                <X size={18} />
+      <EntityDrawer
+        onClose={onClose}
+        width="lg"
+        title={name}
+        subtitle={[phone, location].filter(Boolean).join(' · ') || undefined}
+        status={
+          <>
+            {status}
+            {flaggedCount > 0 && <StatusBadge tone="warning">{flaggedCount} flagged</StatusBadge>}
+          </>
+        }
+        actions={
+          <>
+            {can('credits.record_payment') && totalOutstanding > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowGeneralPayment(true)}
+                className="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 [&_svg]:size-4"
+              >
+                <Wallet aria-hidden /> Record repayment
               </button>
-            </div>
-            <div className="p-5 space-y-4">
-              <div>
-                <label className="text-sm font-medium">Amount</label>
-                <div className="relative mt-1.5">
-                  <span className="absolute left-3 top-2.5 text-sm text-muted-foreground">{fmt(0).charAt(0)}</span>
-                  <input
-                    type="number"
-                    value={paymentAmount}
-                    onChange={(e) => setPaymentAmount(e.target.value)}
-                    className="flex h-10 w-full rounded-md border border-input bg-background pl-7 pr-3 text-sm font-bold"
-                    placeholder="0"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="text-sm font-medium">Method</label>
-                <div className="flex gap-2 mt-1.5">
-                  {(['Cash', 'Transfer', 'POS'] as const).map((m) => (
-                    <button
-                      key={m}
-                      type="button"
-                      onClick={() => setPaymentMethod(m)}
-                      className={`flex-1 py-2 rounded-md text-xs font-medium border transition-colors ${
-                        paymentMethod === m ? 'bg-primary text-primary-foreground border-primary' : 'hover:bg-accent'
-                      }`}
-                    >
-                      {m}
-                    </button>
+            )}
+            {tel && <a href={tel} className={contactBtn}><Phone aria-hidden /> Call</a>}
+            {whatsapp && (
+              <a href={whatsapp} target="_blank" rel="noopener noreferrer" className={contactBtn}>
+                <MessageCircle aria-hidden /> WhatsApp
+              </a>
+            )}
+          </>
+        }
+        overflow={
+          <OverflowMenu
+            items={[
+              { label: 'View customer', icon: <User />, onSelect: () => router.push(`/customers?customer=${encodeURIComponent(customerId)}`) },
+              { label: 'Record sale', icon: <Receipt />, onSelect: () => router.push(`/sales?new=1&customer=${encodeURIComponent(customerId)}`) },
+            ]}
+          />
+        }
+        stats={
+          !loaded && !summary
+            ? ['Outstanding', 'Overdue', 'Items', 'Last payment'].map((label) => ({ label, value: '-' }))
+            : [
+                { label: 'Outstanding', value: fmt(totalOutstanding) },
+                {
+                  label: 'Overdue',
+                  value: overdueAmount != null ? fmt(overdueAmount) : `${overdueCount} item${overdueCount === 1 ? '' : 's'}`,
+                  tone: overdueCount > 0 ? 'danger' : 'default',
+                },
+                { label: 'Items', value: itemCount },
+                { label: 'Last payment', value: lastPayment ? formatDate(lastPayment) : 'None' },
+              ]
+        }
+      >
+        {isLoading ? (
+          <CreditSheetSkeleton />
+        ) : credits.length === 0 ? (
+          <EmptyState size="compact" title="No credit records" description="This customer has no credit sales." />
+        ) : (
+          <div className="space-y-6">
+            {openItems.length > 0 && (
+              <section className="space-y-3" aria-labelledby="open-credits-heading">
+                <h3 id="open-credits-heading" className="text-sm font-semibold">
+                  Open items <span className="font-normal text-muted-foreground">({openItems.length}, oldest due first)</span>
+                </h3>
+                <ul className="space-y-3">
+                  {openItems.map((credit) => (
+                    <CreditItemCard
+                      key={credit.id}
+                      credit={credit}
+                      expanded={expandedId === credit.id}
+                      onToggle={() => setExpandedId(expandedId === credit.id ? null : credit.id)}
+                      canRecordPayment={can('credits.record_payment')}
+                      canExtend={can('credits.set_due_date')}
+                      onRecordPayment={() => setPaymentCredit(credit)}
+                      onExtend={() => setExtendCredit(credit)}
+                      onFlag={() => handleFlag(credit)}
+                      flagging={flagCredit.isPending}
+                    />
                   ))}
-                </div>
-              </div>
-              <div>
-                <label className="text-sm font-medium">Note <span className="text-muted-foreground font-normal">(optional)</span></label>
-                <input
-                  type="text"
-                  value={paymentNote}
-                  onChange={(e) => setPaymentNote(e.target.value)}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 mt-1.5 text-sm"
-                  placeholder="e.g. Bank transfer ref"
-                />
-              </div>
-            </div>
-            <div className="border-t px-5 py-3 flex gap-2">
-              <SubmitButton
-                onClick={handleRecordPayment}
-                loading={recordPayment.isPending}
-                className="gap-2"
-              >
-                <Wallet size={14} /> Record Payment
-              </SubmitButton>
-              <button
-                onClick={() => setPaymentCredit(null)}
-                className="inline-flex items-center rounded-md text-sm font-medium border h-9 px-4 ml-auto hover:bg-accent"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* General repayment modal */}
-      {showGeneralPayment && customer && (
-        <div className="fixed inset-0 z-[60] bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-md rounded-xl border bg-card shadow-xl">
-            <div className="flex items-center justify-between border-b px-5 py-4">
-              <div>
-                <h3 className="font-bold">General repayment</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {customer.customerName} · {fmt(totalOutstanding)} total outstanding
-                </p>
-                <p className="text-[11px] text-muted-foreground mt-1">
-                  Applied oldest due first across open credits until the amount is used.
-                </p>
-              </div>
-              <button
-                onClick={() => setShowGeneralPayment(false)}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <X size={18} />
-              </button>
-            </div>
-            <div className="p-5 space-y-4">
-              <div>
-                <label className="text-sm font-medium">Amount</label>
-                <div className="relative mt-1.5">
-                  <span className="absolute left-3 top-2.5 text-sm text-muted-foreground">{fmt(0).charAt(0)}</span>
-                  <input
-                    type="number"
-                    value={paymentAmount}
-                    max={totalOutstanding}
-                    onChange={(e) => setPaymentAmount(e.target.value)}
-                    className="flex h-10 w-full rounded-md border border-input bg-background pl-7 pr-3 text-sm font-bold"
-                    placeholder="0"
-                  />
-                </div>
-                <button
-                  type="button"
-                  className="text-[11px] text-primary font-medium mt-1.5 hover:underline"
-                  onClick={() => setPaymentAmount(String(totalOutstanding))}
-                >
-                  Pay full outstanding ({fmt(totalOutstanding)})
-                </button>
-              </div>
-              <div>
-                <label className="text-sm font-medium">Method</label>
-                <div className="flex gap-2 mt-1.5">
-                  {(['Cash', 'Transfer', 'POS'] as const).map((m) => (
-                    <button
-                      key={m}
-                      type="button"
-                      onClick={() => setPaymentMethod(m)}
-                      className={`flex-1 py-2 rounded-md text-xs font-medium border transition-colors ${
-                        paymentMethod === m ? 'bg-primary text-primary-foreground border-primary' : 'hover:bg-accent'
-                      }`}
-                    >
-                      {m}
-                    </button>
+                </ul>
+              </section>
+            )}
+            {clearedItems.length > 0 && (
+              <section className="space-y-3" aria-labelledby="closed-credits-heading">
+                <h3 id="closed-credits-heading" className="text-sm font-semibold">
+                  Cleared or closed <span className="font-normal text-muted-foreground">({clearedItems.length})</span>
+                </h3>
+                <ul className="space-y-3">
+                  {clearedItems.map((credit) => (
+                    <CreditItemCard
+                      key={credit.id}
+                      credit={credit}
+                      expanded={expandedId === credit.id}
+                      onToggle={() => setExpandedId(expandedId === credit.id ? null : credit.id)}
+                      canRecordPayment={false}
+                      canExtend={false}
+                      onRecordPayment={() => {}}
+                      onExtend={() => {}}
+                      onFlag={() => {}}
+                    />
                   ))}
-                </div>
-              </div>
-              <div>
-                <label className="text-sm font-medium">Note <span className="text-muted-foreground font-normal">(optional)</span></label>
-                <input
-                  type="text"
-                  value={paymentNote}
-                  onChange={(e) => setPaymentNote(e.target.value)}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 mt-1.5 text-sm"
-                  placeholder="e.g. Bank transfer ref"
-                />
-              </div>
-            </div>
-            <div className="border-t px-5 py-3 flex gap-2">
-              <SubmitButton
-                onClick={handleGeneralPayment}
-                loading={generalPayment.isPending}
-                className="gap-2"
-              >
-                <Wallet size={14} /> Apply repayment
-              </SubmitButton>
-              <button
-                onClick={() => setShowGeneralPayment(false)}
-                className="inline-flex items-center rounded-md text-sm font-medium border h-9 px-4 ml-auto hover:bg-accent"
-              >
-                Cancel
-              </button>
-            </div>
+                </ul>
+              </section>
+            )}
           </div>
-        </div>
-      )}
+        )}
+      </EntityDrawer>
 
-      {/* Extend due date modal */}
-      {extendCredit && (
-        <div className="fixed inset-0 z-[60] bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-md rounded-xl border bg-card shadow-xl">
-            <div className="flex items-center justify-between border-b px-5 py-4">
-              <div>
-                <h3 className="font-bold">Extend Due Date</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Current due: {formatDate(extendCredit.dueDate)}
-                  {extendCredit.extensionCount > 0 && ` · ${extendCredit.extensionCount} prior extension${extendCredit.extensionCount !== 1 ? 's' : ''}`}
-                </p>
-              </div>
-              <button onClick={() => setExtendCredit(null)} className="text-muted-foreground hover:text-foreground">
-                <X size={18} />
-              </button>
-            </div>
-            <div className="p-5 space-y-4">
-              <div>
-                <label className="text-sm font-medium">New due date</label>
-                <input
-                  type="date"
-                  value={newDueDate}
-                  min={extendCredit.dueDate}
-                  onChange={(e) => setNewDueDate(e.target.value)}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 mt-1.5 text-sm"
-                />
-                {newDueDate && (() => {
-                  const d = daysUntil(newDueDate);
-                  if (d === null) return null;
-                  return (
-                    <p className={`text-xs mt-1 ${d < 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
-                      {d < 0 ? `${Math.abs(d)} days overdue from today` : d === 0 ? 'Due today' : `${d} days from today`}
-                    </p>
-                  );
-                })()}
-              </div>
-              <div>
-                <label className="text-sm font-medium">Reason <span className="text-muted-foreground font-normal">(recommended)</span></label>
-                <textarea
-                  value={extendReason}
-                  onChange={(e) => setExtendReason(e.target.value)}
-                  rows={3}
-                  className="flex w-full rounded-md border border-input bg-background px-3 py-2 mt-1.5 text-sm resize-none"
-                  placeholder="Why is the due date being extended?"
-                />
-              </div>
-            </div>
-            <div className="border-t px-5 py-3 flex gap-2">
-              <SubmitButton
-                onClick={handleExtendDueDate}
-                disabled={!newDueDate}
-                loading={extendDueDate.isPending}
-                className="gap-2"
-              >
-                <CalendarClock size={14} /> Save Extension
-              </SubmitButton>
-              <button
-                onClick={() => setExtendCredit(null)}
-                className="inline-flex items-center rounded-md text-sm font-medium border h-9 px-4 ml-auto hover:bg-accent"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* Forms sit above the drawer and are non-dismissible (Escape and backdrop do nothing). */}
+      {paymentCredit && <RecordPaymentForm credit={paymentCredit} onClose={() => setPaymentCredit(null)} />}
+      {extendCredit && <ExtendDueDateForm credit={extendCredit} onClose={() => setExtendCredit(null)} />}
+      {showGeneralPayment && (
+        <GeneralRepaymentForm
+          customerId={customerId}
+          customerName={name}
+          totalOutstanding={totalOutstanding}
+          onClose={() => setShowGeneralPayment(false)}
+        />
       )}
     </>
-  );
-}
-
-function CreditItemCard({
-  credit,
-  expanded,
-  onToggle,
-  canRecordPayment,
-  canExtend,
-  onRecordPayment,
-  onExtend,
-  onFlag,
-  flagging = false,
-}: {
-  credit: SaleCreditRecord;
-  expanded: boolean;
-  onToggle: () => void;
-  canRecordPayment: boolean;
-  canExtend: boolean;
-  onRecordPayment: () => void;
-  onExtend: () => void;
-  onFlag: () => void;
-  flagging?: boolean;
-}) {
-  const dueDays = daysUntil(credit.dueDate);
-  const paidSoFar = credit.originalAmount - credit.amountOwed;
-  const paidPct = credit.originalAmount > 0 ? Math.round((paidSoFar / credit.originalAmount) * 100) : 0;
-  const isOpen = credit.status !== 'Clear' && credit.status !== 'Voided';
-
-  return (
-    <div
-      className={`rounded-xl border overflow-hidden transition-all ${
-        credit.status === 'Overdue' ? 'border-red-200 dark:border-red-900' : ''
-      } ${credit.flagged ? 'ring-1 ring-orange-300' : ''}`}
-    >
-      {credit.status === 'Overdue' && (
-        <div className="px-3 py-1 bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 text-[10px] font-bold flex items-center gap-1.5">
-          <AlertTriangle size={11} />
-          OVERDUE
-          {dueDays !== null && dueDays < 0 && ` · ${Math.abs(dueDays)} day${Math.abs(dueDays) !== 1 ? 's' : ''} past due`}
-        </div>
-      )}
-
-      <button
-        type="button"
-        onClick={onToggle}
-        className="w-full text-left p-4 hover:bg-accent/30 transition-colors"
-      >
-        <div className="flex items-start gap-3">
-          <div className="h-9 w-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
-            <ShoppingBag size={16} className="text-muted-foreground" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm font-bold truncate">
-                {credit.sale.productName || credit.sale.productDetails || 'Credit sale'}
-              </span>
-              <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold ${statusBadgeClass(credit.status)}`}>
-                {credit.status}
-              </span>
-              {credit.extensionCount > 0 && (
-                <span className="inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700">
-                  {credit.extensionCount} extension{credit.extensionCount !== 1 ? 's' : ''}
-                </span>
-              )}
-              {credit.flagged && <Flag size={12} className="text-orange-500" />}
-            </div>
-            {(credit.sale.quantity != null || credit.sale.unit) && (
-              <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
-                {[credit.sale.quantity, credit.sale.unit].filter(Boolean).join(' ')}
-              </p>
-            )}
-            <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-2 text-[11px] text-muted-foreground">
-              <span>Sale {formatDate(credit.sale.date)} · {fmt(credit.sale.amount)}</span>
-              <span>{credit.sale.paymentMode}</span>
-              <span>Due {formatDate(credit.dueDate)}</span>
-            </div>
-          </div>
-          <div className="text-right shrink-0">
-            <p className={`text-lg font-black ${isOpen ? 'text-foreground' : 'text-emerald-600'}`}>
-              {isOpen ? fmt(credit.amountOwed) : 'Cleared'}
-            </p>
-            {isOpen && credit.originalAmount > 0 && (
-              <p className="text-[10px] text-muted-foreground">{paidPct}% collected</p>
-            )}
-          </div>
-          {expanded ? <ChevronUp size={16} className="shrink-0 text-muted-foreground mt-1" /> : <ChevronDown size={16} className="shrink-0 text-muted-foreground mt-1" />}
-        </div>
-      </button>
-
-      {expanded && (
-        <div className="border-t px-4 pb-4 pt-3 space-y-4 bg-accent/10 animate-in slide-in-from-top-1 duration-200">
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className="p-2 rounded-lg bg-background border">
-              <p className="text-muted-foreground">Original credit</p>
-              <p className="font-bold">{fmt(credit.originalAmount)}</p>
-            </div>
-            <div className="p-2 rounded-lg bg-background border">
-              <p className="text-muted-foreground">Collected</p>
-              <p className="font-bold text-emerald-600">{fmt(paidSoFar)} ({paidPct}%)</p>
-            </div>
-          </div>
-
-          {credit.payments.length > 0 && (
-            <div>
-              <p className="text-xs font-bold uppercase text-muted-foreground flex items-center gap-1 mb-2">
-                <Receipt size={12} /> Repayment history
-              </p>
-              <div className="space-y-1.5">
-                {[...credit.payments].reverse().map((p) => (
-                  <div key={p.id} className="flex items-center gap-2 text-xs p-2 rounded bg-background border">
-                    <div className="h-6 w-6 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
-                      <ArrowUpRight size={11} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium">
-                        {fmt(p.amount)}{p.method && ` via ${p.method}`}
-                      </p>
-                      <p className="text-muted-foreground truncate">
-                        {formatDate(p.date)} · {p.recordedByName} · Bal {fmt(p.balanceAfter)}
-                      </p>
-                      {p.note && <p className="text-muted-foreground italic truncate">{p.note}</p>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {credit.dueDateExtensions.length > 0 && (
-            <div>
-              <p className="text-xs font-bold uppercase text-muted-foreground flex items-center gap-1 mb-2">
-                <History size={12} /> Extension trail
-              </p>
-              <div className="space-y-2">
-                {[...credit.dueDateExtensions].reverse().map((ext, i) => (
-                  <div key={i} className="p-2.5 rounded-lg bg-background border text-xs">
-                    <p className="font-medium">
-                      {formatDate(ext.previousDueDate)} → {formatDate(ext.newDueDate)}
-                    </p>
-                    <p className="text-muted-foreground mt-0.5">
-                      {formatDate(ext.extendedAt.split('T')[0])} · {ext.extendedByName}
-                    </p>
-                    {ext.reason && <p className="text-muted-foreground italic mt-1">{ext.reason}</p>}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {isOpen && (canRecordPayment || canExtend) && (
-            <div className="flex flex-wrap gap-2 pt-1">
-              {canRecordPayment && (
-                <button
-                  type="button"
-                  onClick={onRecordPayment}
-                  className="inline-flex items-center gap-1.5 rounded-md text-xs font-medium bg-primary text-primary-foreground h-8 px-3"
-                >
-                  <Wallet size={12} /> Record payment
-                </button>
-              )}
-              {canExtend && (
-                <button
-                  type="button"
-                  onClick={onExtend}
-                  className="inline-flex items-center gap-1.5 rounded-md text-xs font-medium border h-8 px-3 hover:bg-accent"
-                >
-                  <CalendarClock size={12} /> Extend due date
-                </button>
-              )}
-              {canRecordPayment && (
-                <button
-                  type="button"
-                  onClick={onFlag}
-                  disabled={flagging}
-                  className={`inline-flex items-center gap-1.5 rounded-md text-xs font-medium border h-8 px-3 ml-auto hover:bg-accent disabled:opacity-50 disabled:pointer-events-none ${
-                    credit.flagged ? 'border-orange-300 text-orange-700' : ''
-                  }`}
-                >
-                  {flagging ? <Loader2 size={12} className="animate-spin" /> : <Flag size={12} />}
-                  {credit.flagged ? 'Remove flag' : 'Flag'}
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
   );
 }

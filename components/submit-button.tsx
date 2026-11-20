@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 
 const variantClasses = {
   primary: 'bg-primary text-primary-foreground hover:bg-primary/90',
-  destructive: 'bg-red-600 text-white hover:bg-red-700',
+  destructive: 'bg-destructive text-white hover:bg-destructive/90',
 } as const;
 
 type SubmitButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
