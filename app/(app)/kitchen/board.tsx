@@ -88,9 +88,15 @@ export function KitchenBoard({
   const [now, setNow] = useState(() => Date.now());
   const [phoneStage, setPhoneStage] = useState<KitchenStage>('new');
   const [sound, setSound] = useState(readSoundPref);
-  // Drag a card one column to the right to move it on (same as its button).
-  const [dragging, setDragging] = useState<KitchenJob | null>(null);
-  const [dropStage, setDropStage] = useState<KitchenStage | null>(null);
+  // Moves shown before the server confirms (id -> from/to). An entry only applies while the server
+  // still reports `from`, so a refetch that lands early can't snap the card back, and stale entries are harmless.
+  const [pending, setPending] = useState<Map<string, { from: KitchenStage; to: KitchenStage }>>(() => new Map());
+  const [landed, setLanded] = useState<string | null>(null);
+  // Pointer drag: the card lifts into a floating copy that follows the pointer.
+  const [drag, setDrag] = useState<{ job: KitchenJob; to: KitchenStage; rect: DOMRect } | null>(null);
+  const [over, setOver] = useState<KitchenStage | null>(null);
+  const ghost = useRef<HTMLDivElement>(null);
+  const suppressClick = useRef(false);
   const nextStage = (s: KitchenStage) => BOARD_STAGES[BOARD_STAGES.indexOf(s) + 1] as KitchenStage | undefined;
 
   useEffect(() => {
@@ -108,26 +114,138 @@ export function KitchenBoard({
     seen.current = ids;
   }, [jobs.data, displayMode, sound]);
 
-  const byStage = useMemo(() => {
+  // Server jobs with any not-yet-confirmed moves applied.
+  const { all, byStage, counts } = useMemo(() => {
+    const c: Record<string, number> = { ...(jobs.data?.counts ?? {}) };
+    const list: KitchenJob[] = [];
+    for (const j of jobs.data?.data ?? []) {
+      const p = pending.get(j._id);
+      if (p && p.from === j.stage) {
+        c[p.from] = Math.max(0, (c[p.from] ?? 1) - 1);
+        const k = p.to === 'completed' ? 'completed_today' : p.to;
+        c[k] = (c[k] ?? 0) + 1;
+        if (BOARD_STAGES.includes(p.to)) list.push({ ...j, stage: p.to });
+      } else list.push(j);
+    }
     const m = new Map<KitchenStage, KitchenJob[]>(BOARD_STAGES.map((s) => [s, []]));
-    for (const j of jobs.data?.data ?? []) m.get(j.stage)?.push(j);
-    return m;
-  }, [jobs.data]);
+    for (const j of list) m.get(j.stage)?.push(j);
+    return { all: list, byStage: m, counts: c as Partial<Record<string, number>> };
+  }, [jobs.data, pending]);
 
-  const all = jobs.data?.data ?? [];
   const dueSoon = all.filter((j) => dueState(j, dueSoonMinutes, now)?.tone === 'soon').length;
   const overdue = all.filter((j) => dueState(j, dueSoonMinutes, now)?.tone === 'overdue').length;
-  const counts = jobs.data?.counts ?? {};
 
+  /** Moves the card at once, then tells the server; puts it back if the server refuses. */
   const move = (job: KitchenJob) => {
+    const from = job.stage;
+    const to = nextStage(from) ?? 'completed';
+    setPending((m) => new Map(m).set(job._id, { from, to }));
+    setLanded(job._id);
     advance.mutate(
       { id: job._id, action: 'advance' },
       {
-        onSuccess: (j) => toast.success(`${j.code} moved to ${STAGE_LABELS[j.stage]}`),
-        onError: (e) => toast.error(e.message),
+        onSuccess: (j) => to === 'completed' && toast.success(`${j.code} completed`),
+        onError: (e) => {
+          setPending((m) => {
+            const n = new Map(m);
+            n.delete(job._id);
+            return n;
+          });
+          toast.error(e.message);
+        },
       },
     );
   };
+
+  const startDrag = (job: KitchenJob, e: React.PointerEvent<HTMLElement>) => {
+    const to = nextStage(job.stage);
+    if (!to || e.button !== 0 || e.pointerType === 'touch' || (e.target as HTMLElement).closest('[data-no-drag]')) return;
+    const el = e.currentTarget;
+    const sx = e.clientX;
+    const sy = e.clientY;
+    let rect: DOMRect | null = null;
+    let target: KitchenStage | null = null;
+    let frame = 0;
+
+    const onMove = (ev: PointerEvent) => {
+      if (!rect) {
+        if (Math.hypot(ev.clientX - sx, ev.clientY - sy) < 5) return;
+        rect = el.getBoundingClientRect();
+        setDrag({ job, to, rect });
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'grabbing';
+      }
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const r = rect!;
+        if (ghost.current) ghost.current.style.transform = `translate3d(${ev.clientX - sx + r.left}px, ${ev.clientY - sy + r.top}px, 0) rotate(2deg) scale(1.03)`;
+        const hit = document.elementFromPoint(ev.clientX, ev.clientY)?.closest<HTMLElement>('[data-stage]')?.dataset.stage;
+        const next = hit === to ? to : null;
+        if (next !== target) setOver((target = next));
+      });
+    };
+    const end = (ev: Event) => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', end);
+      window.removeEventListener('pointercancel', end);
+      window.removeEventListener('keydown', onKey);
+      cancelAnimationFrame(frame);
+      if (!rect) return;
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+      // The click that follows a drag must not open the job.
+      suppressClick.current = true;
+      setTimeout(() => (suppressClick.current = false), 0);
+      setOver(null);
+      if (ev.type === 'pointerup' && target === to) {
+        setDrag(null);
+        move(job);
+        return;
+      }
+      // Not dropped on the next column: glide back to where it came from.
+      const g = ghost.current;
+      if (g) {
+        g.style.transition = 'transform 180ms cubic-bezier(0.2, 0, 0, 1)';
+        g.style.transform = `translate3d(${rect.left}px, ${rect.top}px, 0)`;
+      }
+      setTimeout(() => setDrag(null), 180);
+    };
+    const onKey = (ev: KeyboardEvent) => ev.key === 'Escape' && end(ev);
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', end);
+    window.addEventListener('pointercancel', end);
+    window.addEventListener('keydown', onKey);
+  };
+
+  const card = (job: KitchenJob, opts: { lifted?: boolean } = {}) => (
+    <JobCard
+      key={job._id}
+      job={job}
+      summary={dishSummary(job, recipeMap)}
+      due={dueState(job, dueSoonMinutes, now)}
+      waiting={waitingMinutes(job, now)}
+      ackMinutes={ackMinutes}
+      large={displayMode}
+      onOpen={() => !suppressClick.current && onOpenJob(job._id)}
+      onAdvance={canManage && !opts.lifted ? () => move(job) : undefined}
+      advancing={pending.has(job._id) && advance.isPending && advance.variables?.id === job._id}
+      onPointerDown={canManage && !opts.lifted && nextStage(job.stage) ? (e) => startDrag(job, e) : undefined}
+      placeholder={!opts.lifted && drag?.job._id === job._id}
+      lifted={opts.lifted}
+      landed={!opts.lifted && landed === job._id}
+    />
+  );
+
+  const floating = drag && (
+    <div
+      ref={ghost}
+      aria-hidden
+      className="pointer-events-none fixed left-0 top-0 z-[60] will-change-transform"
+      style={{ width: drag.rect.width, transform: `translate3d(${drag.rect.left}px, ${drag.rect.top}px, 0) rotate(2deg) scale(1.03)` }}
+    >
+      {card(drag.job, { lifted: true })}
+    </div>
+  );
 
   const toggleSound = () => {
     const next = !sound;
@@ -142,32 +260,19 @@ export function KitchenBoard({
 
   const column = (stage: KitchenStage) => {
     const list = byStage.get(stage) ?? [];
-    const canDrop = !!dragging && nextStage(dragging.stage) === stage;
+    const canDrop = drag?.to === stage;
+    const isOver = canDrop && over === stage;
     return (
       <section
         key={stage}
+        data-stage={stage}
         aria-labelledby={`col-${stage}`}
-        onDragOver={(e) => {
-          if (!canDrop) return;
-          e.preventDefault();
-          e.dataTransfer.dropEffect = 'move';
-          if (dropStage !== stage) setDropStage(stage);
-        }}
-        onDragLeave={(e) => {
-          if (!e.currentTarget.contains(e.relatedTarget as Node)) setDropStage((s) => (s === stage ? null : s));
-        }}
-        onDrop={(e) => {
-          e.preventDefault();
-          if (canDrop && dragging) move(dragging);
-          setDragging(null);
-          setDropStage(null);
-        }}
         className={cn(
-          'flex min-w-0 flex-col rounded-md border bg-muted/20 transition-colors',
+          'flex min-w-0 flex-col rounded-md border bg-muted/20 transition-[background-color,border-color,box-shadow,opacity] duration-150',
           displayMode && 'bg-card',
           canDrop && 'border-dashed border-primary/60',
-          dropStage === stage && canDrop && 'bg-primary/10 ring-2 ring-primary/40',
-          dragging && !canDrop && dragging.stage !== stage && 'opacity-50',
+          isOver && 'bg-primary/10 ring-2 ring-primary/40',
+          drag && !canDrop && drag.job.stage !== stage && 'opacity-50',
         )}
       >
         <h2 id={`col-${stage}`} className={cn('flex items-center justify-between border-b px-3 py-2 font-semibold', displayMode ? 'text-lg' : 'text-sm')}>
@@ -175,26 +280,12 @@ export function KitchenBoard({
           <span className="rounded-full bg-muted px-2 text-xs tabular-nums">{list.length}</span>
         </h2>
         <div className="flex-1 space-y-2 overflow-y-auto p-2">
-          {list.map((job) => (
-            <JobCard
-              key={job._id}
-              job={job}
-              summary={dishSummary(job, recipeMap)}
-              due={dueState(job, dueSoonMinutes, now)}
-              waiting={waitingMinutes(job, now)}
-              ackMinutes={ackMinutes}
-              large={displayMode}
-              onOpen={() => onOpenJob(job._id)}
-              onAdvance={canManage ? () => move(job) : undefined}
-              advancing={advance.isPending && advance.variables?.id === job._id}
-              dragging={dragging?._id === job._id}
-              onDragChange={canManage && nextStage(job.stage) ? (on) => {
-                setDragging(on ? job : null);
-                if (!on) setDropStage(null);
-              } : undefined}
-            />
-          ))}
-          {canDrop && <p className="rounded-md border border-dashed border-primary/50 px-2 py-4 text-center text-xs font-medium text-primary">Drop to {ADVANCE_LABELS[dragging!.stage]?.toLowerCase()}</p>}
+          {list.map((job) => card(job))}
+          {canDrop && (
+            <p className={cn('rounded-md border border-dashed border-primary/50 px-2 text-center text-xs font-medium text-primary transition-all duration-150', isOver ? 'py-8' : 'py-4')}>
+              Drop to {ADVANCE_LABELS[drag.job.stage]?.toLowerCase()}
+            </p>
+          )}
           {!list.length && !canDrop && <p className="px-2 py-6 text-center text-sm italic text-muted-foreground">Nothing here</p>}
         </div>
       </section>
@@ -221,6 +312,7 @@ export function KitchenBoard({
         </div>
         {jobs.isError && <ErrorPanel message={jobs.error.message} onRetry={() => void jobs.refetch()} />}
         <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">{BOARD_STAGES.map(column)}</div>
+        {floating}
       </div>
     );
   }
@@ -257,6 +349,7 @@ export function KitchenBoard({
       </div>
 
       <div className="hidden gap-3 md:grid md:grid-cols-2 xl:grid-cols-4">{BOARD_STAGES.map(column)}</div>
+      {floating}
 
       <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
         <RefreshCw size={11} className={jobs.isFetching ? 'animate-spin' : ''} /> The board refreshes every 15 seconds and when a job changes. Completed and cancelled jobs move to Jobs.
@@ -275,8 +368,10 @@ function JobCard({
   onOpen,
   onAdvance,
   advancing,
-  dragging,
-  onDragChange,
+  onPointerDown,
+  placeholder,
+  lifted,
+  landed,
 }: {
   job: KitchenJob;
   summary: string;
@@ -287,27 +382,27 @@ function JobCard({
   onOpen: () => void;
   onAdvance?: () => void;
   advancing: boolean;
-  dragging?: boolean;
   /** Set when the card can be dragged to the next column. */
-  onDragChange?: (dragging: boolean) => void;
+  onPointerDown?: (e: React.PointerEvent<HTMLElement>) => void;
+  /** The slot a dragged card leaves behind. */
+  placeholder?: boolean;
+  /** The floating copy that follows the pointer. */
+  lifted?: boolean;
+  /** Just moved: animate in. */
+  landed?: boolean;
 }) {
   const late = job.stage === 'new' && waiting >= ackMinutes;
   return (
     <article
-      draggable={!!onDragChange && !advancing}
-      onDragStart={(e) => {
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', job._id);
-        onDragChange?.(true);
-      }}
-      onDragEnd={() => onDragChange?.(false)}
-      title={onDragChange ? 'Drag to the next column, or use the button' : undefined}
+      onPointerDown={onPointerDown}
       className={cn(
-        'rounded-md border bg-card p-3 shadow-sm transition-colors',
-        onDragChange && 'cursor-grab active:cursor-grabbing',
-        dragging && 'opacity-40',
+        'rounded-md border bg-card p-3 shadow-sm transition-[opacity,box-shadow,border-color] duration-150',
+        onPointerDown && 'cursor-grab',
         due?.tone === 'overdue' && 'border-destructive/60',
         late && 'ring-2 ring-destructive/40',
+        placeholder && 'border-dashed opacity-30 shadow-none',
+        lifted && 'cursor-grabbing shadow-2xl ring-2 ring-primary/40',
+        landed && 'animate-in fade-in-0 zoom-in-95 duration-200',
       )}
     >
       <button type="button" onClick={onOpen} className="block w-full text-left" aria-label={`Open ${job.code}, ${job.customer_name || 'walk-in'}`}>
@@ -344,6 +439,7 @@ function JobCard({
       {onAdvance && ADVANCE_LABELS[job.stage] && (
         <button
           type="button"
+          data-no-drag
           onClick={onAdvance}
           disabled={advancing}
           className={cn(job.stage === 'new' ? btnPrimary : btnGhost, 'mt-2 w-full', job.stage !== 'new' && 'border', large && 'h-11 text-base')}
