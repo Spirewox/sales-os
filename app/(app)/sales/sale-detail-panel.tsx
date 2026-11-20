@@ -4,7 +4,7 @@ import { X, Edit3, Save } from 'lucide-react';
 import { Sale, DeliveryStatus, Hub } from '@/types';
 import type { HubScopeFilter } from '@/hooks/use-hub-scope';
 import type { DetailTab } from './sales-utils';
-import { isTillSale } from './sales-utils';
+import { isKitchenSale, isLockedSale } from './sales-utils';
 import type { Permission } from '@/lib/permissions';
 import { ModalDialog } from './modal-dialog';
 import { SaleDetailTabContent } from './sale-detail-tabs';
@@ -64,11 +64,12 @@ function DetailPanelHeader({
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-bold truncate">{sale.customerName}</h2>
           {sale.isCredit && <span className="text-xs font-semibold px-2 py-0.5 rounded bg-orange-50 text-orange-700">Credit</span>}
+          {isKitchenSale(sale) && <span className="text-xs font-semibold px-2 py-0.5 rounded bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400">Kitchen</span>}
         </div>
         <p className="text-sm text-muted-foreground mt-0.5">{sale.date} &middot; {sale.agentName} &middot; {sale.channel || 'Walk-In'}</p>
       </div>
       <div className="flex items-center gap-2 ml-4 shrink-0">
-        {sale.status !== 'Voided' && !isEditing && !isTillSale(sale) && can('sales.edit') && (
+        {sale.status !== 'Voided' && !isEditing && !isLockedSale(sale) && can('sales.edit') && (
           <button type="button" onClick={onStartEditing} className="h-8 px-3 rounded-md flex items-center gap-1.5 border hover:bg-accent text-sm font-medium"><Edit3 size={14} /> Edit</button>
         )}
         {isEditing && (

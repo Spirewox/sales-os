@@ -290,7 +290,7 @@ export function mapSale(s: ApiSale, hubMap?: Record<string, string>): Sale {
     isCredit: paymentMode !== 'Full Payment',
     paymentTerms: s.payment_terms as PaymentTerms | undefined,
     notes: s.notes,
-    source: s.source === 'pos' ? 'pos' : 'crm',
+    source: s.source === 'pos' || s.source === 'kitchen' ? s.source : 'crm',
     clientSaleId: s.client_sale_id,
     channel: s.channel as SalesChannel | undefined,
     deliveryStatus: s.delivery_status as DeliveryStatus | undefined,

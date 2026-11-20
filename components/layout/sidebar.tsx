@@ -5,11 +5,12 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import { usePermissions } from '@/hooks/use-permissions';
 import { useInventory, useFeedback, useEnquiries, useCreditSummary } from '@/hooks/use-queries';
+import { useKitchenJobs } from '@/hooks/use-kitchen';
 import { Permission } from '@/lib/permissions';
 import {
   LayoutDashboard, Package, Users, Banknote,
   CreditCard, History,
-  Settings, LogOut, Menu, X, BarChart3, Truck, Monitor, Megaphone,
+  Settings, LogOut, Menu, X, BarChart3, Truck, Monitor, Megaphone, ChefHat,
   // Sparkles — temporarily unused while Insights nav is hidden
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
@@ -19,6 +20,7 @@ const navItems: { href: string; label: string; icon: typeof LayoutDashboard; per
   { href: '/', label: 'Dashboard', icon: LayoutDashboard, permission: 'dashboard.view' },
   { href: '/analytics', label: 'Analytics', icon: BarChart3, permission: 'analytics.view' },
   { href: '/pos', label: 'POS', icon: Monitor, permission: 'pos.view' },
+  { href: '/kitchen', label: 'Kitchen', icon: ChefHat, permission: 'kitchen.view' },
   // Temporarily hidden — re-enable with Sparkles import when Insights returns
   // { href: '/insights', label: 'Insights', icon: Sparkles, permission: 'analytics.view' },
   { href: '/inventory', label: 'Inventory', icon: Package, permission: 'inventory.view' },
@@ -39,6 +41,9 @@ export function Sidebar() {
   const { data: feedback } = useFeedback(undefined, { enabled: canViewInteractions });
   const { data: enquiries } = useEnquiries(undefined, { enabled: canViewInteractions });
   const { data: creditSummary = [] } = useCreditSummary();
+  // New jobs waiting to be accepted (limit 1: only the stage counts are needed).
+  const { data: kitchenJobs } = useKitchenJobs({ stage: 'new', limit: 1 }, { enabled: can('kitchen.view'), live: true });
+  const newKitchenJobs = kitchenJobs?.counts.new ?? 0;
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const lowStockCount = useMemo(() => {
@@ -93,6 +98,11 @@ export function Sidebar() {
               {item.href === '/engagement' && canViewInteractions && (openFeedbackCount + openEnquiriesCount) > 0 && (
                 <span className="ml-auto inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-white">
                   {openFeedbackCount + openEnquiriesCount}
+                </span>
+              )}
+              {item.href === '/kitchen' && newKitchenJobs > 0 && (
+                <span className="ml-auto inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-white" aria-label={`${newKitchenJobs} new kitchen jobs`}>
+                  {newKitchenJobs}
                 </span>
               )}
               {item.label === 'Credits' && overdueCreditsCount > 0 && (

@@ -12,6 +12,7 @@ export const BACKEND_MODULE_SUBMODULES: Record<string, string[]> = {
   dashboard: ['view_dashboard'],
   analytics: ['view_analytics'],
   pos: ['view_pos', 'manage_pos_tills'],
+  kitchen: ['view_kitchen', 'manage_kitchen_jobs', 'view_kitchen_costs', 'manage_kitchen_pricing', 'archive_kitchen_jobs'],
   inventory: [
     'view_inventory',
     'create_sku',

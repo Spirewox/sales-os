@@ -8,6 +8,7 @@ export const ROLE_COLOR_MAP: Record<RoleName, string> = {
   Finance: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
   'Customer Success': 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
   Cashier: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
+  'Kitchen Manager': 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
 };
 
 export function isPosRoleSelection(roleLabelName?: string): boolean {

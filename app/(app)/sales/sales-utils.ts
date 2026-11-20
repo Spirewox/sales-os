@@ -25,6 +25,20 @@ export function isTillSale(sale: Pick<Sale, 'source' | 'channel'>) {
   return sale.source === 'pos' || sale.channel === SalesChannel.POS;
 }
 
+/** Posted from a completed kitchen job; changed from that job, not here. */
+export function isKitchenSale(sale: Pick<Sale, 'source'>) {
+  return sale.source === 'kitchen';
+}
+
+/** Till and kitchen sales are read-only on the Sales page. */
+export function isLockedSale(sale: Pick<Sale, 'source' | 'channel'>) {
+  return isTillSale(sale) || isKitchenSale(sale);
+}
+
+export function lockedSaleMessage(sale: Pick<Sale, 'source' | 'channel'>) {
+  return isKitchenSale(sale) ? 'Kitchen sales are managed from their kitchen job.' : 'Till sales are read-only in Sales-OS.';
+}
+
 export const DELIVERY_STEPS: DeliveryStatus[] = [
   DeliveryStatus.PENDING,
   DeliveryStatus.IN_TRANSIT,

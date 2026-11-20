@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { usePermissions } from '@/hooks/use-permissions';
 import { useDashboardMetrics, useDashboardSalesSummary, useDashboardRevenueByCategory, useSales } from '@/hooks/use-queries';
@@ -101,6 +101,18 @@ function formatTrendLabel(
 }
 
 export default function DashboardPage() {
+  const router = useRouter();
+  const { can } = usePermissions();
+  // Kitchen-only roles (e.g. Kitchen Manager) have no dashboard data; send them to their workspace.
+  const kitchenOnly = !can('dashboard.view') && can('kitchen.view');
+  useEffect(() => {
+    if (kitchenOnly) router.replace('/kitchen');
+  }, [kitchenOnly, router]);
+  if (kitchenOnly) return null;
+  return <DashboardContent />;
+}
+
+function DashboardContent() {
   const router = useRouter();
   const [salesGranularity, setSalesGranularity] = useState<DashboardTrendGranularity>('all');
   const [catPeriod, setCatPeriod] = useState<DashboardPeriod>('all');
