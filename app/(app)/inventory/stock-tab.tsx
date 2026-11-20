@@ -157,7 +157,7 @@ export function StockTab({ hubScope, view, loading, pendingRequests, needsAction
         }
         more={
           <MoreFilterField label="SKU">
-            <SkuMultiSelect options={view.skuOptions} selectedIds={view.skuIds} onChange={view.setSkuIds} />
+            <SkuMultiSelect inline options={view.skuOptions} selectedIds={view.skuIds} onChange={view.setSkuIds} />
           </MoreFilterField>
         }
         moreActiveCount={view.skuIds.length ? 1 : 0}

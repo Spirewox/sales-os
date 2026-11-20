@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { AlertTriangle, Check, ChefHat, Plus, Trash2, UserPlus } from 'lucide-react';
 import type { HubScopeFilter } from '@/hooks/use-hub-scope';
 import { useCreateKitchenCustomer, useKitchenCustomerSearch, useKitchenRecipes } from '@/hooks/use-kitchen';
-import { EmptyState } from '@/components/app';
+import { DateTimeField, EmptyState } from '@/components/app';
 import type { KitchenMode, PricingMethod } from '@/lib/kitchen-costing';
 import { cn } from '@/lib/utils';
 import { KITCHEN_CHANNELS, MODE_LABELS, naira, pct, type KitchenBillLine, type KitchenJobInput } from '@/lib/kitchen-types';
@@ -149,7 +149,7 @@ export function CustomerFields({ input, set, hubScope, lockedHub }: { input: Kit
           <Field label="Delivery address" htmlFor="addr" className="sm:col-span-2"><input id="addr" className={inputClass} value={input.address ?? ''} onChange={(e) => set({ address: e.target.value })} maxLength={400} /></Field>
         )}
         <Field label="Due" htmlFor="due">
-          <input id="due" type="datetime-local" className={inputClass} value={toLocalInput(input.due_at)} onChange={(e) => set({ due_at: e.target.value ? new Date(e.target.value).toISOString() : null })} />
+          <DateTimeField id="due" value={toLocalInput(input.due_at)} onChange={(v) => set({ due_at: v ? new Date(v).toISOString() : null })} />
           <div className="mt-1.5 flex flex-wrap gap-1">
             {([['In 1h', 1], ['In 3h', 3], ['Tomorrow 12:00', 'tomorrow']] as const).map(([label, h]) => (
               <button key={label} type="button" className="rounded-md border bg-card px-2 py-0.5 text-xs hover:bg-muted" onClick={() => quickDue(h)}>{label}</button>

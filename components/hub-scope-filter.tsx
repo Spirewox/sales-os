@@ -81,8 +81,8 @@ export function HubScopeFilterBar({ scope, className = '' }: HubScopeFilterProps
         onClick={() => setFilterHub('All')}
         className={`flex items-center gap-1.5 px-2.5 py-1 rounded-[calc(var(--radius)-2px)] text-xs font-medium transition-colors ${
           filterHub === 'All'
-            ? 'bg-background shadow-sm text-foreground'
-            : 'text-muted-foreground hover:text-foreground'
+            ? 'bg-accent text-accent-foreground shadow-sm ring-1 ring-inset ring-primary/45'
+            : 'text-muted-foreground hover:bg-background/70 hover:text-foreground'
         }`}
       >
         <Layers size={14} aria-hidden />
@@ -96,8 +96,8 @@ export function HubScopeFilterBar({ scope, className = '' }: HubScopeFilterProps
           onClick={() => setFilterHub(hub.name)}
           className={`flex items-center gap-1.5 px-2.5 py-1 rounded-[calc(var(--radius)-2px)] text-xs font-medium transition-colors ${
             filterHub === hub.name
-              ? 'bg-background shadow-sm text-foreground'
-              : 'text-muted-foreground hover:text-foreground'
+              ? 'bg-accent text-accent-foreground shadow-sm ring-1 ring-inset ring-primary/45'
+              : 'text-muted-foreground hover:bg-background/70 hover:text-foreground'
           }`}
         >
           <MapPin size={14} aria-hidden />

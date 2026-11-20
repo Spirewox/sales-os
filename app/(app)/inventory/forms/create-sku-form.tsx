@@ -12,7 +12,7 @@ import { isLitersUom } from '@/lib/volume-units';
 import { ProductImageEditor, productImagePayload, type ImageDraft } from '@/components/product-image-editor';
 import type { ConfirmPreviewRow } from '@/components/confirm-preview-modal';
 import { FilterSelect } from '@/components/filter-select';
-import { FormField, FormSection, FormSheet, fieldClass } from '@/components/app';
+import { DateField, FormField, FormSection, FormSheet, fieldClass } from '@/components/app';
 import {
   ALL_UOMS, acceptDecimal2, fmtMoney, kgQtyDraftToNumber, parseMoneyInput, roundMoney2, sanitizeKgQtyDraft,
   sellingPriceForMargin, type ProductCategory, type RequestConfirm,
@@ -347,10 +347,10 @@ export function CreateSkuForm({ hubScope, onClose, requestConfirm }: Readonly<{
             <input id="sku-cost" type="number" min={0} step="0.01" value={newProduct.avgUnitCost || ''} onChange={(e) => setNewProduct({ ...newProduct, avgUnitCost: parseMoneyInput(e.target.value) })} className={fieldClass} />
           </FormField>
           <FormField label="Purchased date" htmlFor="sku-purchased">
-            <input id="sku-purchased" type="date" value={newProduct.purchasedDate || ''} onChange={(e) => setNewProduct({ ...newProduct, purchasedDate: e.target.value })} className={fieldClass} />
+            <DateField id="sku-purchased" value={newProduct.purchasedDate || ''} clearable onChange={(v) => setNewProduct({ ...newProduct, purchasedDate: v })} />
           </FormField>
           <FormField label="Expiry date" htmlFor="sku-expiry">
-            <input id="sku-expiry" type="date" value={newProduct.expiryDate || ''} onChange={(e) => setNewProduct({ ...newProduct, expiryDate: e.target.value })} className={fieldClass} />
+            <DateField id="sku-expiry" value={newProduct.expiryDate || ''} clearable min={newProduct.purchasedDate || undefined} onChange={(v) => setNewProduct({ ...newProduct, expiryDate: v })} />
           </FormField>
         </div>
         {negativeMargin && (

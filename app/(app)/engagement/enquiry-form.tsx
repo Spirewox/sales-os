@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { FormField, FormSection, FormSheet, fieldClass } from '@/components/app';
+import { DateField, FormField, FormSection, FormSheet, fieldClass } from '@/components/app';
 import { FilterSelect } from '@/components/filter-select';
 import { useCreateEnquiry } from '@/hooks/use-queries';
 import type { Customer, Enquiry, EnquiryCategory } from '@/types';
@@ -56,7 +56,7 @@ export function EnquiryForm({ customers, onClose }: Readonly<{ customers: Custom
             <FilterSelect id="enquiry-category" value={draft.category ?? 'Other'} onChange={(v) => patch({ category: v as EnquiryCategory })} options={ENQUIRY_CATEGORIES.map((c) => ({ value: c, label: c }))} />
           </FormField>
           <FormField label="Date" htmlFor="enquiry-date">
-            <input id="enquiry-date" type="date" value={draft.date ?? ''} onChange={(e) => patch({ date: e.target.value })} className={fieldClass} />
+            <DateField id="enquiry-date" value={draft.date ?? ''} clearable onChange={(v) => patch({ date: v })} />
           </FormField>
         </div>
         <FormField label="Email" htmlFor="enquiry-email">

@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { useAuth } from '@/contexts/auth-context';
 import { useExtendDueDate, useGeneralCreditPayment, useRecordPayment } from '@/hooks/use-queries';
 import type { SaleCreditRecord } from '@/types/credits';
-import { FormField, FormSheet, fieldClass } from '@/components/app';
+import { DateField, FormField, FormSheet, fieldClass } from '@/components/app';
 import { cn } from '@/lib/utils';
 import { creditProductLabel, daysUntil, fmt, formatDate, NAIRA } from './credit-utils';
 
@@ -231,7 +231,7 @@ export function ExtendDueDateForm({ credit, onClose }: Readonly<{ credit: SaleCr
       disabledReason={newDueDate ? null : 'Choose a new due date'}
     >
       <FormField label="New due date" htmlFor={`${id}-date`} required hint={hint}>
-        <input id={`${id}-date`} type="date" value={newDueDate} min={credit.dueDate} onChange={(e) => setNewDueDate(e.target.value)} className={fieldClass} />
+        <DateField id={`${id}-date`} value={newDueDate} min={credit.dueDate?.slice(0, 10)} onChange={setNewDueDate} />
       </FormField>
       <FormField label="Reason (recommended)" htmlFor={`${id}-reason`}>
         <textarea

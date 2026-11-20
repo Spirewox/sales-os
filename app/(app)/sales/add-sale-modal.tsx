@@ -7,7 +7,8 @@ import type { AppUser } from '@/types/api';
 import { hubOptionLabel } from '@/lib/api-mappers';
 import { formatMoney } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import { FormField, FormSection, FormSheet, StatusBadge, fieldClass } from '@/components/app';
+import { DateField, FormField, FormSection, FormSheet, StatusBadge, fieldClass } from '@/components/app';
+import { lagosDay } from '@/lib/period';
 import { SearchableCustomerSelect } from '@/components/searchable-customer-select';
 import { type SaleFormUnit, volumeUnitOptions } from '@/lib/volume-units';
 import { NAIRA, PAYMENT_MODE_LABEL } from './sales-utils';
@@ -152,7 +153,7 @@ export function RecordSaleSheet({ form, onClose, agents, user, canCreateSale, hu
               </FormField>
             )}
             <FormField label="Due date" htmlFor="sale-due-date" required error={err('dueDate')}>
-              <input id="sale-due-date" type="date" value={f.dueDate} onChange={(e) => { f.setDueDate(e.target.value); f.setTouched((t) => ({ ...t, dueDate: true })); }} className={fieldClass} aria-invalid={Boolean(err('dueDate')) || undefined} />
+              <DateField id="sale-due-date" value={f.dueDate} onChange={(v) => { f.setDueDate(v); f.setTouched((t) => ({ ...t, dueDate: true })); }} invalid={Boolean(err('dueDate'))} />
             </FormField>
           </div>
         )}
@@ -190,7 +191,7 @@ export function RecordSaleSheet({ form, onClose, agents, user, canCreateSale, hu
             </>
           )}
           <FormField label="Date sold" htmlFor="sale-date" hint={f.isHistoricalSale ? 'Past-dated: enter the amount charged.' : undefined}>
-            <input id="sale-date" type="date" value={f.newSale.date || ''} onChange={(e) => f.setNewSale({ ...f.newSale, date: e.target.value })} className={fieldClass} />
+            <DateField id="sale-date" value={f.newSale.date || ''} max={lagosDay()} onChange={(v) => f.setNewSale({ ...f.newSale, date: v })} />
           </FormField>
           <FormField label="Agent" htmlFor="sale-agent">
             <select id="sale-agent" value={f.newSale.agentId || user?.id || ''} onChange={(e) => f.setNewSale({ ...f.newSale, agentId: e.target.value })} className={fieldClass}>

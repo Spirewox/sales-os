@@ -164,8 +164,8 @@ export function AnalyticsCompareTab({
             onClick={() => setCmpScope(key)}
             className={`rounded-[calc(var(--radius)-2px)] px-2.5 py-1 text-xs font-medium transition-colors ${
               cmpScope === key
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
+                ? 'bg-accent text-accent-foreground shadow-sm ring-1 ring-inset ring-primary/45'
+                : 'text-muted-foreground hover:bg-background/70 hover:text-foreground'
             }`}
           >
             {label}
@@ -182,7 +182,7 @@ export function AnalyticsCompareTab({
               aria-pressed={kind === k.key}
               onClick={() => setKind(k.key)}
               className={`rounded-[calc(var(--radius)-2px)] px-2.5 py-1 text-xs font-medium transition-colors ${
-                kind === k.key ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                kind === k.key ? 'bg-accent text-accent-foreground shadow-sm ring-1 ring-inset ring-primary/45' : 'text-muted-foreground hover:bg-background/70 hover:text-foreground'
               }`}
             >
               {k.label}
@@ -202,7 +202,7 @@ export function AnalyticsCompareTab({
                 aria-pressed={kind === k}
                 onClick={() => setKind(k)}
                 className={`rounded-[calc(var(--radius)-2px)] px-2.5 py-1 text-xs font-medium transition-colors ${
-                  kind === k ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                  kind === k ? 'bg-accent text-accent-foreground shadow-sm ring-1 ring-inset ring-primary/45' : 'text-muted-foreground hover:bg-background/70 hover:text-foreground'
                 }`}
               >
                 {meta?.label ?? k}
@@ -289,7 +289,7 @@ export function AnalyticsCompareTab({
                 type="button"
                 aria-pressed={view === 'chart'}
                 onClick={() => setView('chart')}
-                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[calc(var(--radius)-2px)] text-xs font-medium transition-colors ${view === 'chart' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[calc(var(--radius)-2px)] text-xs font-medium transition-colors ${view === 'chart' ? 'bg-accent text-accent-foreground shadow-sm ring-1 ring-inset ring-primary/45' : 'text-muted-foreground hover:bg-background/70 hover:text-foreground'}`}
               >
                 <BarChart3 size={14} aria-hidden /> Chart
               </button>
@@ -297,7 +297,7 @@ export function AnalyticsCompareTab({
                 type="button"
                 aria-pressed={view === 'table'}
                 onClick={() => setView('table')}
-                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[calc(var(--radius)-2px)] text-xs font-medium transition-colors ${view === 'table' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[calc(var(--radius)-2px)] text-xs font-medium transition-colors ${view === 'table' ? 'bg-accent text-accent-foreground shadow-sm ring-1 ring-inset ring-primary/45' : 'text-muted-foreground hover:bg-background/70 hover:text-foreground'}`}
               >
                 <TableIcon size={14} aria-hidden /> Table
               </button>

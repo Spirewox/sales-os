@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { InventoryItem, StockMovementType } from '@/types';
 import { useRecordStockMove, useSuppliers } from '@/hooks/use-queries';
 import { FilterSelect } from '@/components/filter-select';
-import { FormField, FormSection, FormSheet, fieldClass } from '@/components/app';
+import { DateField, FormField, FormSection, FormSheet, fieldClass } from '@/components/app';
 import { isVolumeUom, volumeConversionPreview } from '@/lib/volume-units';
 import {
   acceptDecimal2, defaultPurchaseUom, fmtMoney, isCartonsUom, kgQtyDraftToNumber, needsPurchaseCartonWeight,
@@ -338,10 +338,10 @@ export function PurchaseForm({ items, initial, onClose, requestConfirm, supplier
           <FormSection title="Batch details">
             <div className="grid grid-cols-2 gap-3">
               <FormField label="Purchased date" htmlFor="purchase-date">
-                <input id="purchase-date" type="date" value={moveData.purchasedDate} onChange={(e) => setMoveData({ ...moveData, purchasedDate: e.target.value })} className={fieldClass} />
+                <DateField id="purchase-date" value={moveData.purchasedDate} onChange={(v) => setMoveData({ ...moveData, purchasedDate: v })} />
               </FormField>
               <FormField label="Expiry date" htmlFor="purchase-expiry">
-                <input id="purchase-expiry" type="date" value={moveData.expiryDate} onChange={(e) => setMoveData({ ...moveData, expiryDate: e.target.value })} className={fieldClass} />
+                <DateField id="purchase-expiry" value={moveData.expiryDate} clearable min={moveData.purchasedDate || undefined} onChange={(v) => setMoveData({ ...moveData, expiryDate: v })} />
               </FormField>
             </div>
             <FormField label="Supplier (optional)" htmlFor="purchase-supplier">

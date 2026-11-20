@@ -14,3 +14,6 @@ export { OverflowMenu, type OverflowItem } from './overflow-menu';
 export { Segmented } from './segmented';
 export { UnsavedBar } from './unsaved-bar';
 export { ConfirmDialog } from './confirm-dialog';
+export { SEGMENT_ACTIVE, SEGMENT_IDLE } from './segmented';
+export { Calendar, formatDay, type DayString } from './calendar';
+export { DateField, DateTimeField } from './date-field';

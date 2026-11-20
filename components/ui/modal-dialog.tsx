@@ -55,6 +55,8 @@ export function ModalDialog({ onClose, children, align = 'center', label, labell
       // Let an open dropdown or combobox inside the dialog close itself first.
       const active = document.activeElement;
       if (active?.closest('[aria-expanded="true"]') && ref.current?.contains(active)) return;
+      // Focus is in a floating popup portaled outside this dialog (calendar, select list): let it close first.
+      if (active && active !== document.body && !ref.current?.contains(active)) return;
       e.preventDefault();
       e.stopImmediatePropagation();
       if (dismissibleRef.current) onCloseRef.current();

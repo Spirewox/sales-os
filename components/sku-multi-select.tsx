@@ -14,6 +14,11 @@ type SkuMultiSelectProps = Readonly<{
   options: SkuOption[];
   selectedIds: string[];
   onChange: (ids: string[]) => void;
+  /**
+   * Show the search and list in place instead of in a floating dropdown. Use inside popovers and
+   * sheets (e.g. FilterBar's "More filters"), where a floating panel would be clipped.
+   */
+  inline?: boolean;
 }>;
 
 type SkuGroup = {
@@ -47,7 +52,7 @@ function groupSkus(options: SkuOption[], query: string): SkuGroup[] {
     .sort((a, b) => (a.location || a.path).localeCompare(b.location || b.path));
 }
 
-export function SkuMultiSelect({ options, selectedIds, onChange }: SkuMultiSelectProps) {
+export function SkuMultiSelect({ options, selectedIds, onChange, inline = false }: SkuMultiSelectProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [openPaths, setOpenPaths] = useState<string[]>([]);
@@ -55,7 +60,7 @@ export function SkuMultiSelect({ options, selectedIds, onChange }: SkuMultiSelec
   const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || inline) return;
     const onPointer = (event: MouseEvent) => {
       if (!ref.current?.contains(event.target as Node)) setOpen(false);
     };
@@ -69,7 +74,7 @@ export function SkuMultiSelect({ options, selectedIds, onChange }: SkuMultiSelec
       document.removeEventListener('mousedown', onPointer);
       document.removeEventListener('keydown', onKey);
     };
-  }, [open]);
+  }, [open, inline]);
 
   const groups = useMemo(() => groupSkus(options, query), [options, query]);
   const selected = options.filter((item) => selectedIds.includes(item.id));
@@ -89,7 +94,8 @@ export function SkuMultiSelect({ options, selectedIds, onChange }: SkuMultiSelec
   };
 
   return (
-    <div className="relative flex flex-wrap items-center gap-1.5" ref={ref}>
+    <div className={inline ? 'space-y-2' : 'relative flex flex-wrap items-center gap-1.5'} ref={ref}>
+      {!inline && (
       <button
         type="button"
         aria-expanded={open}
@@ -103,6 +109,10 @@ export function SkuMultiSelect({ options, selectedIds, onChange }: SkuMultiSelec
           </span>
         )}
       </button>
+      )}
+      {inline && selected.length > 0 && <p className="text-xs text-muted-foreground">{selected.length} selected</p>}
+      {selected.length > 0 && (
+      <div className="flex flex-wrap gap-1.5">
       {selected.map((item) => (
         <button
           key={item.id}
@@ -116,8 +126,10 @@ export function SkuMultiSelect({ options, selectedIds, onChange }: SkuMultiSelec
           <X size={14} aria-hidden className="shrink-0 text-muted-foreground" />
         </button>
       ))}
-      {open && (
-        <div className="absolute top-full z-20 mt-1 w-96 max-w-[80vw] rounded-md border bg-popover text-popover-foreground shadow-lg p-2">
+      </div>
+      )}
+      {(open || inline) && (
+        <div className={inline ? '' : 'absolute top-full z-20 mt-1 w-96 max-w-[80vw] rounded-md border bg-popover text-popover-foreground shadow-lg p-2'}>
           <input
             ref={searchRef}
             type="text"
@@ -127,7 +139,7 @@ export function SkuMultiSelect({ options, selectedIds, onChange }: SkuMultiSelec
             aria-label="Search SKUs"
             className="h-9 w-full rounded-md border px-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring"
           />
-          <div className="mt-2 max-h-72 overflow-y-auto space-y-1">
+          <div className={`mt-2 overflow-y-auto space-y-1 ${inline ? 'max-h-56' : 'max-h-72'}`}>
             {groups.map((group) => {
               const expanded = query.trim().length > 0 || openPaths.includes(group.path);
               const title = group.location ? `${group.location} · ${group.path}` : group.path;

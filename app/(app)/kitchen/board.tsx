@@ -244,7 +244,7 @@ export function KitchenBoard({
               role="tab"
               aria-selected={phoneStage === s}
               onClick={() => setPhoneStage(s)}
-              className={cn('rounded-[calc(var(--radius)-2px)] px-1 py-1.5 text-xs font-medium', phoneStage === s ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground')}
+              className={cn('rounded-[calc(var(--radius)-2px)] px-1 py-1.5 text-xs font-medium', phoneStage === s ? 'bg-accent text-accent-foreground shadow-sm ring-1 ring-inset ring-primary/45' : 'text-muted-foreground')}
             >
               {STAGE_LABELS[s]} <span className="tabular-nums">({byStage.get(s)?.length ?? 0})</span>
             </button>
