@@ -2157,9 +2157,10 @@ export function useSaleCredits() {
   });
 }
 
-export function useCreditSummary(filters?: { search?: string; flagged?: boolean }) {
+export function useCreditSummary(filters?: { search?: string; flagged?: boolean }, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['creditSummary', filters],
+    enabled: options?.enabled ?? true,
     queryFn: async () => {
       if (!HAS_API) return [];
       const params = new URLSearchParams();

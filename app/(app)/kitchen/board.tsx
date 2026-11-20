@@ -88,6 +88,10 @@ export function KitchenBoard({
   const [now, setNow] = useState(() => Date.now());
   const [phoneStage, setPhoneStage] = useState<KitchenStage>('new');
   const [sound, setSound] = useState(readSoundPref);
+  // Drag a card one column to the right to move it on (same as its button).
+  const [dragging, setDragging] = useState<KitchenJob | null>(null);
+  const [dropStage, setDropStage] = useState<KitchenStage | null>(null);
+  const nextStage = (s: KitchenStage) => BOARD_STAGES[BOARD_STAGES.indexOf(s) + 1] as KitchenStage | undefined;
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 30_000);
@@ -138,8 +142,34 @@ export function KitchenBoard({
 
   const column = (stage: KitchenStage) => {
     const list = byStage.get(stage) ?? [];
+    const canDrop = !!dragging && nextStage(dragging.stage) === stage;
     return (
-      <section key={stage} aria-labelledby={`col-${stage}`} className={cn('flex min-w-0 flex-col rounded-md border bg-muted/20', displayMode && 'bg-card')}>
+      <section
+        key={stage}
+        aria-labelledby={`col-${stage}`}
+        onDragOver={(e) => {
+          if (!canDrop) return;
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          if (dropStage !== stage) setDropStage(stage);
+        }}
+        onDragLeave={(e) => {
+          if (!e.currentTarget.contains(e.relatedTarget as Node)) setDropStage((s) => (s === stage ? null : s));
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          if (canDrop && dragging) move(dragging);
+          setDragging(null);
+          setDropStage(null);
+        }}
+        className={cn(
+          'flex min-w-0 flex-col rounded-md border bg-muted/20 transition-colors',
+          displayMode && 'bg-card',
+          canDrop && 'border-dashed border-primary/60',
+          dropStage === stage && canDrop && 'bg-primary/10 ring-2 ring-primary/40',
+          dragging && !canDrop && dragging.stage !== stage && 'opacity-50',
+        )}
+      >
         <h2 id={`col-${stage}`} className={cn('flex items-center justify-between border-b px-3 py-2 font-semibold', displayMode ? 'text-lg' : 'text-sm')}>
           {STAGE_LABELS[stage]}
           <span className="rounded-full bg-muted px-2 text-xs tabular-nums">{list.length}</span>
@@ -157,9 +187,15 @@ export function KitchenBoard({
               onOpen={() => onOpenJob(job._id)}
               onAdvance={canManage ? () => move(job) : undefined}
               advancing={advance.isPending && advance.variables?.id === job._id}
+              dragging={dragging?._id === job._id}
+              onDragChange={canManage && nextStage(job.stage) ? (on) => {
+                setDragging(on ? job : null);
+                if (!on) setDropStage(null);
+              } : undefined}
             />
           ))}
-          {!list.length && <p className="px-2 py-6 text-center text-sm italic text-muted-foreground">Nothing here</p>}
+          {canDrop && <p className="rounded-md border border-dashed border-primary/50 px-2 py-4 text-center text-xs font-medium text-primary">Drop to {ADVANCE_LABELS[dragging!.stage]?.toLowerCase()}</p>}
+          {!list.length && !canDrop && <p className="px-2 py-6 text-center text-sm italic text-muted-foreground">Nothing here</p>}
         </div>
       </section>
     );
@@ -239,6 +275,8 @@ function JobCard({
   onOpen,
   onAdvance,
   advancing,
+  dragging,
+  onDragChange,
 }: {
   job: KitchenJob;
   summary: string;
@@ -249,12 +287,25 @@ function JobCard({
   onOpen: () => void;
   onAdvance?: () => void;
   advancing: boolean;
+  dragging?: boolean;
+  /** Set when the card can be dragged to the next column. */
+  onDragChange?: (dragging: boolean) => void;
 }) {
   const late = job.stage === 'new' && waiting >= ackMinutes;
   return (
     <article
+      draggable={!!onDragChange && !advancing}
+      onDragStart={(e) => {
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', job._id);
+        onDragChange?.(true);
+      }}
+      onDragEnd={() => onDragChange?.(false)}
+      title={onDragChange ? 'Drag to the next column, or use the button' : undefined}
       className={cn(
         'rounded-md border bg-card p-3 shadow-sm transition-colors',
+        onDragChange && 'cursor-grab active:cursor-grabbing',
+        dragging && 'opacity-40',
         due?.tone === 'overdue' && 'border-destructive/60',
         late && 'ring-2 ring-destructive/40',
       )}
