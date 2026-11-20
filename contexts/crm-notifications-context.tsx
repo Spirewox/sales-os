@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Bell, BellOff, BellRing, CheckCheck, Settings2 } from 'lucide-react';
-import { axiosGet, axiosPatch, axiosPost } from '@/lib/api';
+import { axiosGet, axiosPost } from '@/lib/api';
 import { HAS_API } from '@/lib/require-api';
 import { cn } from '@/lib/utils';
 import type { CrmNotification } from '@/lib/kitchen-types';
@@ -113,7 +113,7 @@ const when = (iso: string) => {
   return new Date(iso).toLocaleDateString('en-NG', { timeZone: 'Africa/Lagos', day: 'numeric', month: 'short' });
 };
 
-const PUSH_TEXT: Record<PushStatus, string> = {
+export const PUSH_TEXT: Record<PushStatus, string> = {
   on: 'Notifications are on for this device.',
   off: 'Get alerts on this device even when Sales OS is closed.',
   denied: 'Notifications are blocked for this site. Allow them in the browser’s site settings.',
@@ -128,7 +128,6 @@ export function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [push, setPush] = useState<PushStatus | null>(null);
   const [pushBusy, setPushBusy] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
   const panel = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -221,9 +220,8 @@ export function NotificationBell() {
           <div className="border-t bg-muted/30 px-4 py-3 text-xs">
             <div className="mb-2 flex items-center justify-between">
               <span className="font-semibold">This device</span>
-              <button type="button" onClick={() => setShowSettings((v) => !v)} aria-expanded={showSettings} className="inline-flex items-center gap-1 font-medium text-primary hover:underline"><Settings2 size={12} /> Alert settings</button>
+              <Link href="/settings?tab=alerts" onClick={() => setOpen(false)} className="inline-flex items-center gap-1 font-medium text-primary hover:underline"><Settings2 size={12} /> Alert settings</Link>
             </div>
-            {showSettings && <AlertSettings />}
             <p className="text-muted-foreground">{push ? PUSH_TEXT[push] : 'Checking device notifications…'}</p>
             {(push === 'on' || push === 'off') && (
               <button type="button" disabled={pushBusy} onClick={() => void togglePush()} className="mt-2 inline-flex h-8 items-center gap-1.5 rounded-md border bg-background px-3 font-medium hover:bg-accent disabled:opacity-50">
@@ -233,64 +231,6 @@ export function NotificationBell() {
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-type Prefs = { email: 'off' | 'critical' | 'all'; push: boolean; muted: string[]; mutable_types: string[] };
-const TYPE_LABELS: Record<string, string> = {
-  job_confirmed: 'New kitchen jobs',
-  not_accepted: 'Jobs not accepted yet',
-  due_soon: 'Jobs due soon',
-  quote_confirmed: 'My quotes confirmed',
-  completed_with_balance: 'Completed with money owed',
-  bulk_job: 'Imports and exports finished',
-};
-
-/** Per-person alert settings: email level, device push and muted alert types (critical alerts always come through). */
-function AlertSettings() {
-  const qc = useQueryClient();
-  const prefs = useQuery({ queryKey: ['crm-notification-prefs'], queryFn: async () => ((await axiosGet('notifications/preferences', true)) as { data: Prefs }).data });
-  const save = async (patch: Partial<Prefs>) => {
-    const prev = prefs.data;
-    if (prev) qc.setQueryData(['crm-notification-prefs'], { ...prev, ...patch });
-    try {
-      const res = (await axiosPatch('notifications/preferences', patch, true)) as { data: Prefs };
-      qc.setQueryData(['crm-notification-prefs'], res.data);
-    } catch (e) {
-      if (prev) qc.setQueryData(['crm-notification-prefs'], prev);
-      toast.error(e instanceof Error ? e.message : 'Could not save alert settings');
-    }
-  };
-  if (prefs.isPending) return <p className="mb-2 text-muted-foreground">Loading settings…</p>;
-  if (prefs.isError || !prefs.data) return <p className="mb-2 text-destructive">Could not load alert settings.</p>;
-  const p = prefs.data;
-  return (
-    <div className="mb-3 space-y-3 rounded-md border bg-background p-3">
-      <fieldset>
-        <legend className="mb-1 font-medium">Email me</legend>
-        <div className="flex gap-1" role="radiogroup">
-          {([['off', 'Never'], ['critical', 'Urgent only'], ['all', 'All alerts']] as const).map(([v, label]) => (
-            <button key={v} type="button" role="radio" aria-checked={p.email === v} onClick={() => void save({ email: v })}
-              className={cn('h-7 flex-1 rounded border px-2 font-medium', p.email === v ? 'border-primary bg-primary/10 text-primary' : 'hover:bg-accent')}>{label}</button>
-          ))}
-        </div>
-      </fieldset>
-      <label className="flex items-center gap-2">
-        <input type="checkbox" checked={p.push} onChange={(e) => void save({ push: e.target.checked })} /> Device notifications on my browsers
-      </label>
-      <fieldset>
-        <legend className="mb-1 font-medium">Show these alerts</legend>
-        <div className="space-y-1">
-          {p.mutable_types.map((t) => (
-            <label key={t} className="flex items-center gap-2">
-              <input type="checkbox" checked={!p.muted.includes(t)} onChange={(e) => void save({ muted: e.target.checked ? p.muted.filter((m) => m !== t) : [...p.muted, t] })} />
-              {TYPE_LABELS[t] ?? t}
-            </label>
-          ))}
-        </div>
-        <p className="mt-1 text-muted-foreground">Turned-off alerts still appear here, without a pop-up. Urgent alerts (overdue, escalations) always come through.</p>
-      </fieldset>
     </div>
   );
 }

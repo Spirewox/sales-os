@@ -29,7 +29,7 @@ export function getRoleDotClass(label: string): string {
   return getRoleBadgeClasses(label).split(' ')[0];
 }
 
-export type ConfirmActionType = 'deleteUser' | 'deleteHub' | 'deleteRole' | 'resetData' | 'resetRoles';
+export type ConfirmActionType = 'deleteUser' | 'deleteHub' | 'deleteRole' | 'resetRoles';
 
 export function getPasswordStrength(password: string): { label: string; color: string; width: string } {
   if (!password) return { label: '', color: '', width: 'w-0' };
@@ -65,10 +65,7 @@ export function getConfirmActionMessage(type: ConfirmActionType): string {
   if (type === 'deleteRole') {
     return 'This will permanently delete this custom role. Users assigned to it may lose access until reassigned.';
   }
-  if (type === 'resetRoles') {
-    return 'This will reset system role permissions to their factory defaults. Custom roles are not affected.';
-  }
-  return 'This will erase all CRM data and restore factory defaults. This action cannot be undone.';
+  return 'This will reset system role permissions to their factory defaults. Custom roles are not affected.';
 }
 
 export function getPermissionGroupCheckboxClass(
@@ -176,9 +173,6 @@ export async function runConfirmAction(action: ConfirmAction, deps: ConfirmActio
     if (!deps.onDeleteRole) throw new Error('Role deletion is not available.');
     await deps.onDeleteRole(action.payload);
     return;
-  }
-  if (action.type === 'resetData') {
-    throw new Error('Local demo data reset is no longer available. Use the API-backed environment.');
   }
   if (action.type === 'resetRoles') {
     await resetAllRolePermissions(deps);

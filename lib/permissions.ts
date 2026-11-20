@@ -47,7 +47,6 @@ export const ALL_PERMISSIONS = [
   'settings.manage_hubs',
   'settings.view_all_hubs',
   'settings.manage_roles',
-  'settings.reset_data',
 ] as const;
 
 export type Permission = (typeof ALL_PERMISSIONS)[number];
@@ -174,7 +173,6 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
       { key: 'settings.manage_hubs', label: 'Manage hub locations' },
       { key: 'settings.view_all_hubs', label: 'View all hubs (company-wide data)' },
       { key: 'settings.manage_roles', label: 'Configure roles & permissions' },
-      { key: 'settings.reset_data', label: 'Reset all data' },
     ],
   },
 ];
@@ -225,7 +223,6 @@ export const PERMISSION_MAP: Record<Permission, string> = {
   'settings.manage_hubs': 'manage_hubs',
   'settings.view_all_hubs': 'view_all_hubs',
   'settings.manage_roles': 'manage_roles',
-  'settings.reset_data': 'manage_users',
 };
 
 // ── Settings → Roles tab defaults (API reset only; not persisted in localStorage) ──

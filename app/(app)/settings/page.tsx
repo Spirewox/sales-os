@@ -2,7 +2,8 @@
 
 import { useTheme } from 'next-themes';
 
-import { useState, useEffect, useMemo, useCallback, type SubmitEvent } from 'react';
+import { Suspense, useState, useEffect, useMemo, useCallback, type SubmitEvent } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import {
   useAgents, useCreateAgent, useUpdateAgent, useDeleteAgent, useRegeneratePin,
@@ -45,6 +46,7 @@ import { Agent, Hub, OwnershipType } from '@/types';
 import { hubOptionLabel } from '@/lib/api-mappers';
 import { toast } from 'sonner';
 import { SubmitButton } from '@/components/submit-button';
+import { AlertSettings } from '@/components/alert-settings';
 import {
   Save, User, Lock, Moon, Trash2, AlertTriangle,
   Users, Plus, X, Pencil, MapPin, Building2, Shield, KeyRound,
@@ -57,6 +59,14 @@ const btnPrimary = 'inline-flex items-center rounded-md text-sm font-medium bg-p
 const btnSecondary = 'inline-flex items-center rounded-md text-sm font-medium border border-input bg-background hover:bg-accent h-9 px-4 py-2';
 
 export default function SettingsPage() {
+  return (
+    <Suspense>
+      <SettingsContent />
+    </Suspense>
+  );
+}
+
+function SettingsContent() {
   const { user, refetch: refetchUser } = useAuth();
   const { canSwitchHubs, hubId: scopeHubId } = useDataScope();
   const agentsQuery = useMemo(
@@ -100,12 +110,18 @@ export default function SettingsPage() {
   const canManageUsers = can('settings.manage_users');
   const canManageHubs = can('settings.manage_hubs');
   const canManageRoles = can('settings.manage_roles');
-  const canResetData = can('settings.reset_data');
 
   const activeHubs = hubs.filter((h) => h.isActive);
   const hubOnlyLocations = activeHubs.filter((h) => h.locationType === 'hub');
 
-  const [activeTab, setActiveTab] = useState<'Profile' | 'Users' | 'Hubs' | 'Roles & Permissions' | 'Preferences' | 'Data'>('Profile');
+  // Deep link from the Notifications bell: /settings?tab=alerts (also when already on this page).
+  const tabParam = useSearchParams().get('tab');
+  const [activeTab, setActiveTab] = useState<'Profile' | 'Users' | 'Hubs' | 'Roles & Permissions' | 'Preferences' | 'Alerts'>(tabParam === 'alerts' ? 'Alerts' : 'Profile');
+  const [seenTabParam, setSeenTabParam] = useState(tabParam);
+  if (tabParam !== seenTabParam) {
+    setSeenTabParam(tabParam);
+    if (tabParam === 'alerts') setActiveTab('Alerts');
+  }
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
   const [phone, setPhone] = useState(user?.phone || '');
@@ -510,7 +526,7 @@ export default function SettingsPage() {
 
   const passwordStrength = getPasswordStrength(newPassword);
 
-  const tabs = ['Profile', 'Users', 'Hubs', 'Roles & Permissions', 'Preferences', 'Data'] as const;
+  const tabs = ['Profile', 'Users', 'Hubs', 'Roles & Permissions', 'Preferences', 'Alerts'] as const;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 max-w-5xl mx-auto">
@@ -897,23 +913,8 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* ══════ DATA TAB ══════ */}
-      {activeTab === 'Data' && (
-        <div className="rounded-xl border bg-card p-6 space-y-6">
-          <h3 className="font-bold flex items-center gap-2 text-destructive"><AlertTriangle size={18} /> Danger Zone</h3>
-          {canResetData ? (
-            <div className="p-4 rounded-lg border border-destructive/20 bg-destructive/5">
-              <p className="font-medium text-destructive">Reset All Data</p>
-              <p className="text-sm text-muted-foreground mt-1">This will permanently delete all CRM data and restore factory defaults.</p>
-              <button onClick={() => setConfirmAction({ type: 'resetData' })} className="mt-4 inline-flex items-center rounded-md text-sm font-medium bg-destructive text-white hover:bg-destructive/90 h-9 px-4 py-2"><Trash2 size={14} className="mr-2" /> Reset Everything</button>
-            </div>
-          ) : (
-            <div className="p-4 rounded-lg border bg-muted/50">
-              <p className="text-sm text-muted-foreground">You don&apos;t have permission to reset application data. Contact your Company Admin.</p>
-            </div>
-          )}
-        </div>
-      )}
+      {/* ══════ ALERTS TAB ══════ */}
+      {activeTab === 'Alerts' && <AlertSettings />}
 
       {/* ══════ USER MODAL ══════ */}
       {showUserModal && (
