@@ -126,12 +126,19 @@ function DefaultsCard({ defaults, canEdit }: { defaults: KitchenDefaults; canEdi
               <option value="retail">Fudfarmer retail price</option>
             </select>
           </Field>
+          <label className="flex items-center gap-2 text-sm font-medium sm:col-span-2">
+            <input type="checkbox" checked={d.post_sales_on_complete} onChange={(e) => setD({ ...d, post_sales_on_complete: e.target.checked })} />
+            Post a Sale when a job is completed (unpaid balances go to Credits)
+          </label>
+          <Field label="Unpaid balance due after" htmlFor="d-credit-days"><NumberInput id="d-credit-days" value={d.credit_days} onChange={(v) => setD({ ...d, credit_days: v })} suffix="days" /></Field>
         </div>
       ) : (
         <dl className="divide-y">
           {fields.map(([k, label, suffix]) => <ReadValue key={k} label={label} value={suffix === '₦' ? naira(defaults[k] as number) : `${defaults[k]}%`} />)}
           <ReadValue label="Minimum profit per job" value={defaults.min_profit_job ? naira(defaults.min_profit_job) : 'Off'} />
           <ReadValue label="Proteins from our stock" value={defaults.protein_basis === 'retail' ? 'Retail price' : 'Purchase cost'} />
+          <ReadValue label="Completed jobs post a Sale" value={defaults.post_sales_on_complete ? 'Yes' : 'No'} />
+          <ReadValue label="Unpaid balance due after" value={`${defaults.credit_days} days`} />
         </dl>
       )}
     </Card>

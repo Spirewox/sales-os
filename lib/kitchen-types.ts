@@ -97,6 +97,8 @@ export interface KitchenJob {
   created_by: string;
   created_by_name: string;
   archived: boolean;
+  /** Sale posted when the job was completed (Phase 2). */
+  sale?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -197,6 +199,8 @@ export interface KitchenDefaults {
   due_soon_minutes: number;
   quote_expiry_days: number;
   escalate_after_reminders: number;
+  post_sales_on_complete: boolean;
+  credit_days: number;
 }
 
 export type KitchenAlertType = 'job_confirmed' | 'not_accepted' | 'due_soon' | 'overdue' | 'quote_confirmed' | 'completed_with_balance';

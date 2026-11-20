@@ -21,6 +21,7 @@ import type { KitchenMode, PricingMethod } from '@/lib/kitchen-costing';
 import { cn } from '@/lib/utils';
 import {
   KITCHEN_CHANNELS,
+  isEditableStage,
   MODE_LABELS,
   naira,
   pct,
@@ -140,9 +141,13 @@ function JobFormInner({ mode, job, hubScope, onClose, onSaved }: { mode: JobForm
   const { can } = usePermissions();
   const canCosts = can('kitchen.view_costs');
   const quick = mode === 'quick' || (mode === 'edit' && !!job?.custom_bill && !job.menu.length);
+  // In the kitchen or ready: the menu and prices are locked, but customer and delivery details can still change.
+  const detailsOnly = mode === 'edit' && !!job && !isEditableStage(job.stage);
   const [input, setInput] = useState<KitchenJobInput>(() => (job ? fromJob(job) : blankInput(mode, hubScope.defaultHubId)));
   const [touchedCosts, setTouchedCosts] = useState(!!job);
-  const steps: { id: Step; label: string }[] = quick
+  const steps: { id: Step; label: string }[] = detailsOnly
+    ? [{ id: 'customer', label: 'Customer & delivery' }]
+    : quick
     ? [{ id: 'customer', label: 'Customer' }, { id: 'menu', label: 'Dishes' }, { id: 'review', label: 'Review' }]
     : [
         { id: 'customer', label: 'Customer & service' },
@@ -173,6 +178,10 @@ function JobFormInner({ mode, job, hubScope, onClose, onSaved }: { mode: JobForm
   const saving = create.isPending || update.isPending || action.isPending;
 
   const payload = (): KitchenJobInput => {
+    if (detailsOnly) {
+      const { customer_id, customer_name, phone, channel, fulfilment, address, notes } = input;
+      return { customer_id, customer_name, phone, channel, fulfilment, address, notes, due_at: input.due_at || null };
+    }
     const rest: KitchenJobInput = { ...input };
     delete rest.hub_id;
     const out: KitchenJobInput = { ...rest, due_at: input.due_at || null };
@@ -209,7 +218,7 @@ function JobFormInner({ mode, job, hubScope, onClose, onSaved }: { mode: JobForm
 
   const isDraftish = !job || job.stage === 'draft' || job.stage === 'quoted';
   const last = stepIdx >= steps.length - 1;
-  const title = mode === 'edit' ? `Edit ${job?.code}` : quick ? 'Quick order' : 'New job';
+  const title = detailsOnly ? `Edit details: ${job?.code}` : mode === 'edit' ? `Edit ${job?.code}` : quick ? 'Quick order' : 'New job';
 
   return (
     <ModalDialog onClose={onClose}>
@@ -237,13 +246,13 @@ function JobFormInner({ mode, job, hubScope, onClose, onSaved }: { mode: JobForm
 
         <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
           <div className="min-h-0 flex-1 overflow-y-auto p-6">
-            {step === 'customer' && <CustomerStep input={input} set={set} setMode={setMode} quick={quick} hubScope={hubScope} lockedHub={!!job} />}
+            {step === 'customer' && <CustomerStep input={input} set={set} setMode={setMode} quick={quick || detailsOnly} hubScope={hubScope} lockedHub={!!job} />}
             {step === 'menu' && (quick ? <DishesStep input={input} set={set} canCosts={canCosts} /> : <MenuStep input={input} set={set} />)}
             {step === 'costs' && <CostsStep input={input} set={(p) => { setTouchedCosts(true); set(p); }} />}
             {step === 'price' && <PriceStep input={input} set={set} ticket={ticket} canCosts={canCosts} />}
             {step === 'review' && <ReviewStep input={input} set={set} ticket={ticket} quick={quick} />}
           </div>
-          <PriceTicket ticket={ticket} input={input} canCosts={canCosts} />
+          {!detailsOnly && <PriceTicket ticket={ticket} input={input} canCosts={canCosts} />}
         </div>
 
         <div className="flex flex-col gap-2 border-t px-6 py-4 sm:flex-row sm:items-center sm:justify-between">

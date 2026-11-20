@@ -439,7 +439,7 @@ export interface Sale {
   isCredit?: boolean;
   paymentTerms?: PaymentTerms;
   notes?: string;
-  source?: 'crm' | 'pos';
+  source?: 'crm' | 'pos' | 'kitchen';
   clientSaleId?: string;
   channel?: SalesChannel;
   deliveryStatus?: DeliveryStatus;

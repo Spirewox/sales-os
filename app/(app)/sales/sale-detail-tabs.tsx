@@ -9,7 +9,7 @@ import type { StockLog } from '@/types';
 import type { Permission } from '@/lib/permissions';
 import {
   fmt, statusColor, paymentModeBadgeClass, DELIVERY_STEPS,
-  INPUT_CLS, BTN_PRIMARY, BTN_SECONDARY, isTillSale,
+  INPUT_CLS, BTN_PRIMARY, BTN_SECONDARY, isLockedSale,
 } from './sales-utils';
 import type { DetailTab } from './sales-utils';
 import { SubmitButton } from '@/components/submit-button';
@@ -383,7 +383,7 @@ function OverviewTab({
         </div>
       )}
 
-      {sale.status !== 'Voided' && !isEditing && !isTillSale(sale) && can('sales.void') && (
+      {sale.status !== 'Voided' && !isEditing && !isLockedSale(sale) && can('sales.void') && (
         <div className="pt-4 border-t">
           {showVoidConfirm ? (
             <div className="p-4 rounded-md border border-red-200 bg-red-50">

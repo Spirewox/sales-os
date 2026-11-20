@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { toast } from 'sonner';
 import { AlertTriangle, ArrowRight, Archive, Copy, Edit3, ExternalLink, FileText, Phone, Send, X } from 'lucide-react';
 import { ModalDialog } from '../sales/modal-dialog';
@@ -163,8 +164,8 @@ function PanelHeader({ job, canManage, canArchive, dueSoonMinutes, onClose, onEd
             <Send size={14} /> Send quote
           </button>
         )}
-        {canManage && isEditableStage(job.stage) && (
-          <button type="button" className={btnSecondary} onClick={onEdit}><Edit3 size={14} /> Edit</button>
+        {canManage && !FINAL_STAGES.includes(job.stage) && (
+          <button type="button" className={btnSecondary} onClick={onEdit}><Edit3 size={14} /> {isEditableStage(job.stage) ? 'Edit' : 'Edit details'}</button>
         )}
         <a className={btnSecondary} href={`/kitchen-quote/${job._id}`} target="_blank" rel="noopener noreferrer">
           <FileText size={14} /> Client quote <ExternalLink size={12} />
@@ -247,6 +248,7 @@ function Overview({ job, onOpenJob }: { job: KitchenJob; onOpenJob: (id: string)
           <Row label="Taken by">{job.created_by_name || '—'}</Row>
           {job.expires_at && job.stage === 'quoted' && <Row label="Quote expires">{formatDue(job.expires_at)}</Row>}
           {job.cancel_reason && <Row label={job.stage === 'cancelled' ? 'Cancel reason' : 'Reason'}>{job.cancel_reason}</Row>}
+          {job.sale && <Row label="Sales"><Link href="/sales" className="text-primary hover:underline">Posted on completion</Link>{balance > 0 && <> · <Link href="/credits" className="text-primary hover:underline">{naira(balance)} in Credits</Link></>}</Row>}
         </dl>
         {job.notes && <p className="mt-3 whitespace-pre-wrap rounded bg-muted/50 p-3 text-sm"><span className="font-semibold">Kitchen notes: </span>{job.notes}</p>}
       </section>

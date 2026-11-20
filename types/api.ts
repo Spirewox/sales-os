@@ -271,7 +271,7 @@ export interface ApiSale {
   product_details?: string;
   payment_terms?: string;
   notes?: string;
-  source?: 'crm' | 'pos';
+  source?: 'crm' | 'pos' | 'kitchen';
   client_sale_id?: string;
   channel?: string;
   delivery_status?: string;
