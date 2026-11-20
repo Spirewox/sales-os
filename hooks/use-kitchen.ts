@@ -242,3 +242,26 @@ export function useCreateKitchenCustomer() {
       (await axiosPost('kitchen/customers', body, true)) as { data: KitchenCustomerOption; existing: boolean },
   });
 }
+
+// ---- analytics ----------------------------------------------------------------
+
+export interface KitchenAnalytics {
+  completed: { jobs: number; revenue: number; collected: number; owed: number; average: number; costed_jobs: number; cost?: number; profit?: number; margin?: number; food_cost_pct?: number };
+  by_outlet: { hub: string; name: string; jobs: number; revenue: number; profit?: number }[];
+  by_channel: { channel: string; jobs: number; revenue: number }[];
+  by_month: { month: string; revenue: number; profit?: number; jobs: number }[];
+  time_to_accept: { jobs: number; median_minutes: number | null; average_minutes: number | null };
+  quotes: { sent: number; converted: number; declined: number; expired: number; open: number; conversion_rate: number | null };
+  cancelled: { jobs: number; top_reasons: { reason: string; jobs: number }[] };
+}
+
+/** Kitchen figures for the Analytics page; `scope` = the page's hub + period params. */
+export function useKitchenAnalytics(scope: { hub_id?: string; period?: string; date_from?: string; date_to?: string }, opts: { enabled?: boolean } = {}) {
+  return useQuery({
+    queryKey: ['kitchen', 'analytics', scope],
+    queryFn: async () => ((await axiosGet(`kitchen/analytics${qs({ ...scope })}`, true)) as { data: KitchenAnalytics }).data,
+    enabled: opts.enabled ?? true,
+    placeholderData: keepPreviousData,
+    staleTime: 60_000,
+  });
+}

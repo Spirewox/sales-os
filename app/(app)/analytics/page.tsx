@@ -26,6 +26,9 @@ import { PaymentMode } from '@/types';
 import { PRODUCT_CATEGORY_COLORS } from '@/lib/product-categories';
 import { AnalyticsPageSkeleton } from '@/components/ui/loading-skeletons';
 import { AnalyticsCompareTab } from '@/components/analytics-compare-tab';
+import { KitchenAnalyticsTab } from '@/components/kitchen-analytics-tab';
+import { usePermissions } from '@/hooks/use-permissions';
+import { ChefHat } from 'lucide-react';
 
 const NAIRA = '\u20A6';
 const fmt = (n: number) => `${NAIRA}${n.toLocaleString()}`;
@@ -42,7 +45,7 @@ const TT = {
 const CHART_COLORS = ['#0891b2', '#ea580c', '#7c3aed', '#dc2626', '#ca8a04', '#16a34a', '#2563eb', '#f59e0b', '#ec4899', '#6b7280'];
 const CAT_COLORS = PRODUCT_CATEGORY_COLORS;
 
-type AnalyticsTab = 'sales' | 'products' | 'customers' | 'credit' | 'compare';
+type AnalyticsTab = 'sales' | 'products' | 'customers' | 'credit' | 'kitchen' | 'compare';
 
 type PrimaryScope = {
   preset: MetricsPeriodPreset;
@@ -142,12 +145,14 @@ export default function AnalyticsPage() {
     [hubScope.hubIdForApi, metricsPeriod.apiParams],
   );
   const { data: overview, isLoading } = useAnalyticsOverview(insightScope);
+  const { can } = usePermissions();
 
   const tabs: { key: AnalyticsTab; label: string; icon: React.ElementType }[] = [
     { key: 'sales', label: 'Sales Analysis', icon: TrendingUp },
     { key: 'products', label: 'Product Performance', icon: Package },
     { key: 'customers', label: 'Customer Insights', icon: Users },
     { key: 'credit', label: 'Credit & Risk', icon: CreditCard },
+    ...(can('kitchen.view') ? [{ key: 'kitchen' as const, label: 'Kitchen', icon: ChefHat }] : []),
     { key: 'compare', label: 'Compare', icon: ArrowLeftRight },
   ];
 
@@ -203,7 +208,9 @@ export default function AnalyticsPage() {
             ))}
           </div>
 
-          {tab === 'compare' ? (
+          {tab === 'kitchen' ? (
+            <KitchenAnalyticsTab scope={insightScope} />
+          ) : tab === 'compare' ? (
             <AnalyticsCompareTab
               scope={insightScope}
               periodLabel={
