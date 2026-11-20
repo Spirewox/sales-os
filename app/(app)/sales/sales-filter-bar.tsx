@@ -36,7 +36,7 @@ export function SalesFilterBar({ filters: f, hubScope, agents, categories, skuOp
         </>
       }
       more={
-        <div className="-mx-1 max-h-[60vh] space-y-3 overflow-y-auto px-1">
+        <>
           <MoreFilterField label="Agent">
             <FilterSelect ariaLabel="Agent" value={f.agent || 'All'} onChange={(v) => f.setAgent(v === 'All' ? '' : v)} options={[{ value: 'All', label: 'All agents' }, ...agents.map((a) => ({ value: a.id, label: a.name }))]} />
           </MoreFilterField>
@@ -51,7 +51,7 @@ export function SalesFilterBar({ filters: f, hubScope, agents, categories, skuOp
           <MoreFilterField label="Sort">
             <FilterSelect ariaLabel="Sort sales" value={f.sort} onChange={f.setSort} options={SALES_SORTS.map((s) => ({ value: s.value, label: s.label }))} />
           </MoreFilterField>
-        </div>
+        </>
       }
       moreActiveCount={f.moreActiveCount}
       chips={f.chips}

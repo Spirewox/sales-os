@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { Children, Fragment, isValidElement, type ReactNode } from 'react';
 import { Popover } from '@base-ui/react/popover';
 import { Search, SlidersHorizontal, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -13,6 +13,8 @@ type FilterBarProps = {
   filters?: ReactNode;
   /** Rarely used filters, shown in a "More filters" popover. */
   more?: ReactNode;
+  /** Two-column "More filters" panel. Defaults to on when `more` holds 3 or more fields. */
+  moreColumns?: boolean;
   /** How many filters inside `more` are active (shown on the button). */
   moreActiveCount?: number;
   /** Active filters as removable chips. */
@@ -26,7 +28,16 @@ type FilterBarProps = {
 };
 
 /** One row: search that grows, a few filters, "More filters", then chips and a result count. */
-export function FilterBar({ search, filters, more, moreActiveCount = 0, chips = [], onClearAll, resultLabel, trailing, className }: Readonly<FilterBarProps>) {
+/** Counts the fields passed to `more`, looking through fragments. */
+function countFields(node: ReactNode): number {
+  return Children.toArray(node).reduce<number>((n, child) => {
+    if (isValidElement<{ children?: ReactNode }>(child) && child.type === Fragment) return n + countFields(child.props.children);
+    return n + 1;
+  }, 0);
+}
+
+export function FilterBar({ search, filters, more, moreColumns, moreActiveCount = 0, chips = [], onClearAll, resultLabel, trailing, className }: Readonly<FilterBarProps>) {
+  const wide = more ? (moreColumns ?? countFields(more) >= 3) : false;
   return (
     <div className={cn('space-y-2', className)}>
       <div className="flex flex-wrap items-center gap-2">
@@ -54,10 +65,17 @@ export function FilterBar({ search, filters, more, moreActiveCount = 0, chips = 
               )}
             </Popover.Trigger>
             <Popover.Portal>
-              <Popover.Positioner align="end" sideOffset={4} className="z-50">
-                <Popover.Popup className="max-h-[min(70vh,var(--available-height))] w-[min(20rem,calc(100vw-2rem))] space-y-3 overflow-y-auto rounded-lg bg-popover p-3 text-popover-foreground shadow-md ring-1 ring-foreground/10 outline-none">
+              <Popover.Positioner align="end" sideOffset={6} collisionPadding={16} className="z-50">
+                <Popover.Popup
+                  className={cn(
+                    'max-h-[min(75vh,var(--available-height))] overflow-y-auto rounded-xl bg-popover p-4 text-popover-foreground shadow-lg ring-1 ring-foreground/10 outline-none',
+                    wide ? 'w-[min(42rem,calc(100vw-2rem))]' : 'w-[min(20rem,calc(100vw-2rem))]',
+                  )}
+                >
                   <Popover.Title className="text-sm font-semibold">More filters</Popover.Title>
-                  {more}
+                  {/* Wide panels lay fields out in two columns from sm up, so long lists sit side by side
+                      instead of stacking past the bottom of the screen. */}
+                  <div className={cn('mt-3', wide ? 'grid gap-x-5 gap-y-4 sm:grid-cols-2 [&>*]:min-w-0' : 'space-y-3')}>{more}</div>
                 </Popover.Popup>
               </Popover.Positioner>
             </Popover.Portal>
