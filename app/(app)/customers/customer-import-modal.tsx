@@ -2,11 +2,11 @@
 
 import { Upload, X, Check, AlertCircle, AlertTriangle, Download, Loader2 } from 'lucide-react';
 import type { CustomerImportPreviewRow } from '@/types/api';
-import { ModalDialog } from '../sales/modal-dialog';
+import { ModalDialog } from '@/components/ui/modal-dialog';
 import { PanelSkeleton } from '@/components/ui/loading-skeletons';
 
 const BTN_PRIMARY = 'inline-flex items-center rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2';
-const BTN_SECONDARY = 'inline-flex items-center rounded-md text-sm font-medium border border-input bg-background hover:bg-accent h-9 px-4 py-2';
+const BTN_SECONDARY = 'inline-flex items-center rounded-md text-sm font-medium border bg-card hover:bg-muted h-9 px-4 py-2';
 
 export interface CustomerImportModalProps {
   show: boolean;
@@ -46,33 +46,33 @@ export function CustomerImportModal({
   let subtitle = `${previewRows.length} rows`;
   if (validating) subtitle = 'Validating workbook…';
   else if (summary) {
-    subtitle = `${summary.total} rows — ${summary.valid} valid, ${summary.invalid} with errors`;
+    subtitle = `${summary.total} rows: ${summary.valid} valid, ${summary.invalid} with errors`;
     if (summary.warnings > 0) subtitle += `, ${summary.warnings} with warnings`;
   }
 
-  const customerLabel = validRows.length === 1 ? 'Customer' : 'Customers';
+  const customerLabel = validRows.length === 1 ? 'customer' : 'customers';
   const importButtonLabel = importing
     ? 'Importing…'
     : `Import ${validRows.length} ${customerLabel}`;
 
   return (
-    <ModalDialog onClose={importing ? () => {} : onClose}>
-      <div className="relative z-10 w-full max-w-3xl rounded-md border bg-card p-6 shadow-xl animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+    <ModalDialog onClose={importing ? () => {} : onClose} labelledBy="customer-import-title">
+      <div className="relative z-10 w-full max-w-3xl rounded-xl border bg-card p-6 shadow-lg animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
           <div>
-            <h2 className="text-lg font-bold flex items-center gap-2">
-              <Upload size={18} className="text-primary" /> Import Customers
+            <h2 id="customer-import-title" className="text-lg font-semibold flex items-center gap-2">
+              <Upload size={16} aria-hidden className="text-muted-foreground" /> Import customers
             </h2>
             <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>
           </div>
-          <button type="button" onClick={onClose} disabled={importing} className="text-muted-foreground hover:text-foreground disabled:opacity-50">
-            <X size={20} />
+          <button type="button" onClick={onClose} disabled={importing} aria-label="Close" className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50">
+            <X size={18} aria-hidden />
           </button>
         </div>
 
         {hasWarnings && (
-          <div className="mb-4 p-3 rounded-md border border-amber-300 bg-amber-50 text-sm dark:bg-amber-900/20 dark:border-amber-800">
-            <p className="font-medium text-amber-800 dark:text-amber-300">
+          <div className="mb-4 p-3 rounded-md border border-warning/30 bg-warning/10 text-sm">
+            <p className="font-medium text-warning">
               {summary?.warnings} row(s) match an existing customer at the same hub or repeat in this file.
               You can still import if intended.
             </p>
@@ -80,27 +80,27 @@ export function CustomerImportModal({
         )}
 
         {hasInvalid && (
-          <div className="mb-4 p-3 rounded-md border border-orange-300 bg-orange-50 text-sm">
-            <p className="font-medium text-orange-800 mb-1">
+          <div className="mb-4 p-3 rounded-md border border-destructive/30 bg-destructive/10 text-sm">
+            <p className="font-medium text-destructive mb-1">
               {summary?.invalid} row(s) have validation errors and will not be imported.
             </p>
             <button
               type="button"
               onClick={onDownloadTemplate}
-              className="text-orange-800 underline text-xs flex items-center gap-1 mt-1 hover:text-orange-900"
+              className="text-destructive underline text-xs flex items-center gap-1 mt-1 hover:text-destructive/80"
             >
-              <Download size={12} /> Download a fresh template
+              <Download size={14} aria-hidden /> Download a fresh template
             </button>
           </div>
         )}
 
         {importError && (
-          <div className="mb-4 p-3 rounded-md border border-red-300 bg-red-50 text-sm">
-            <p className="font-medium text-red-800 mb-1 flex items-center gap-1.5">
-              <AlertCircle size={14} /> Import rolled back
+          <div className="mb-4 p-3 rounded-md border border-destructive/30 bg-destructive/10 text-sm">
+            <p className="font-medium text-destructive mb-1 flex items-center gap-1.5">
+              <AlertCircle size={14} aria-hidden /> Import rolled back
             </p>
-            <p className="text-red-700">{importError}</p>
-            <p className="text-xs text-red-600/80 mt-2">
+            <p className="text-destructive">{importError}</p>
+            <p className="text-xs text-muted-foreground mt-2">
               No customers from this file were saved. Fix the issue and try again.
             </p>
           </div>
@@ -108,13 +108,13 @@ export function CustomerImportModal({
 
         <div className="mb-4 p-3 rounded-md border bg-muted/20 text-xs text-muted-foreground">
           <p className="font-medium text-foreground mb-1">Template columns:</p>
-          <p><strong>customer_name</strong> — display name (same name allowed at different hubs).</p>
-          <p><strong>hub_name</strong> — choose from the dropdown in the template.</p>
+          <p><strong>customer_name</strong>: display name (same name allowed at different hubs).</p>
+          <p><strong>hub_name</strong>: choose from the dropdown in the template.</p>
           <p className="mt-1">Import is all-or-nothing: if any row fails, nothing from this file is saved.</p>
         </div>
 
         {validating && previewRows.length === 0 && (
-          <div className="mb-4 rounded-md border bg-primary/5">
+          <div className="mb-4 rounded-md border bg-muted/20">
             <PanelSkeleton label="Uploading and validating workbook..." />
           </div>
         )}
@@ -140,22 +140,22 @@ export function CustomerImportModal({
                         key={`import-row-${row.lineNo}`}
                         className={
                           status === 'error'
-                            ? 'bg-orange-50/50'
+                            ? 'bg-destructive/5'
                             : status === 'warning'
-                              ? 'bg-amber-50/50'
+                              ? 'bg-warning/5'
                               : 'hover:bg-muted/30'
                         }
                       >
-                        <td className="px-3 py-2 text-muted-foreground">{row.lineNo}</td>
+                        <td className="px-3 py-2 text-muted-foreground tabular-nums">{row.lineNo}</td>
                         <td className="px-3 py-2 font-medium">{row.customer_name}</td>
-                        <td className="px-3 py-2">{row.hub_name || '—'}</td>
+                        <td className="px-3 py-2">{row.hub_name || '-'}</td>
                         <td className="px-3 py-2 text-center">
-                          {status === 'valid' && <Check size={14} className="text-green-600 mx-auto" />}
+                          {status === 'valid' && <Check size={14} aria-label="Valid" className="text-primary mx-auto" />}
                           {status === 'warning' && (
-                            <AlertTriangle size={14} className="text-amber-600 mx-auto" />
+                            <AlertTriangle size={14} aria-label="Warning" className="text-warning mx-auto" />
                           )}
                           {status === 'error' && (
-                            <AlertCircle size={14} className="text-orange-600 mx-auto" />
+                            <AlertCircle size={14} aria-label="Error" className="text-destructive mx-auto" />
                           )}
                         </td>
                         <td className="px-3 py-2 text-muted-foreground">
@@ -163,7 +163,7 @@ export function CustomerImportModal({
                             ? row.errors.join('; ')
                             : row.warnings.length > 0
                               ? row.warnings.join('; ')
-                              : '—'}
+                              : '-'}
                         </td>
                       </tr>
                     );

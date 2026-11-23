@@ -1,9 +1,13 @@
 import type { Metadata } from 'next';
+import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/contexts/auth-context';
 import { QueryProvider } from '@/providers/query-provider';
 import { Toaster } from 'sonner';
 import { ThemeProvider } from 'next-themes';
+
+const geist = Geist({ subsets: ['latin'], variable: '--font-geist' });
+const geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-geist-mono' });
 
 const APP_NAME = 'Sales OS';
 const APP_DESCRIPTION = 'Sales, inventory, and customer management for Fudfarmer';
@@ -48,10 +52,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="h-full antialiased" suppressHydrationWarning>
-      <head>
-        <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
-      </head>
+    <html lang="en" className={`h-full antialiased ${geist.variable} ${geistMono.variable}`} suppressHydrationWarning>
       <body className="min-h-full font-sans">
         <ThemeProvider attribute="class" storageKey="fudfarmer_theme" defaultTheme="system">
           <QueryProvider>

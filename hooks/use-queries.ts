@@ -8,6 +8,7 @@ import { axiosGet, axiosPost, axiosPatch, axiosDelete, axiosGetBlob, axiosPostFo
 import { customerTypeToApi, customerCompanyNameForApi, customerPhoneForApi } from '@/lib/customer-helpers';
 import { mapApiUser } from '@/lib/utils';
 import { readWhoAmICache, writeWhoAmICache } from '@/lib/whoami-cache';
+import { MOCK_AUTH, MOCK_USER, hasMockSession } from '@/lib/mock-auth';
 import {
   ApiUser,
   ApiResponse,
@@ -373,6 +374,10 @@ export function useWhoAmI() {
     queryKey: ['whoami'],
     refetchInterval: 60_000,
     queryFn: async () => {
+      if (MOCK_AUTH) {
+        if (!hasMockSession()) throw new Error('Not signed in (mock)');
+        return MOCK_USER;
+      }
       const res = await axiosGet('auth/whoami', true) as ApiResponse<ApiUser>;
       const user = mapApiUser(res.data);
       writeWhoAmICache(user);
@@ -388,9 +393,10 @@ export function useAnalyticsOverview(filters?: {
   period?: string;
   date_from?: string;
   date_to?: string;
-}) {
+}, opts?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['analyticsOverview', filters],
+    enabled: opts?.enabled ?? true,
     queryFn: async () => {
       if (!HAS_API) return EMPTY_ANALYTICS_OVERVIEW;
       const params = new URLSearchParams();
@@ -885,6 +891,8 @@ export type CustomerExportFilters = {
 export type EngagementCustomer = {
   id: string;
   name: string;
+  /** Company or contact name when the API sends it (shown under the customer). */
+  company?: string;
   phone?: string;
   hub: string;
   loyalty: string;
@@ -1933,6 +1941,13 @@ export function useSupplierPurchases(supplierId: string | null) {
   });
 }
 
+/** The issues endpoint may return a bare array or a `{ data: [...] }` envelope. */
+export function supplierIssueRows(raw: unknown): ApiSupplierIssue[] {
+  if (Array.isArray(raw)) return raw as ApiSupplierIssue[];
+  const data = (raw as { data?: unknown } | null)?.data;
+  return Array.isArray(data) ? (data as ApiSupplierIssue[]) : [];
+}
+
 export function useSupplierIssues(supplierId: string | null) {
   return useQuery({
     queryKey: ['supplierIssues', supplierId],
@@ -1940,8 +1955,40 @@ export function useSupplierIssues(supplierId: string | null) {
     queryFn: async (): Promise<SupplierIssue[]> => {
       if (!supplierId || !HAS_API) return [];
       const raw = await axiosGet(`suppliers/${supplierId}/issues`, true);
-      const list: ApiSupplierIssue[] = Array.isArray(raw) ? raw : [];
+      const list = supplierIssueRows(raw);
       return list.map(mapSupplierIssue);
+    },
+  });
+}
+
+/**
+ * Issues for many suppliers at once (the API only exposes a per-supplier
+ * endpoint). Fetched in batches of 8 so the list page can show an accurate
+ * open-issue count on every row.
+ */
+export function useAllSupplierIssues(supplierIds: string[]) {
+  const ids = [...supplierIds].sort();
+  return useQuery({
+    queryKey: ['supplierIssues', 'all', ids],
+    enabled: HAS_API && ids.length > 0,
+    staleTime: 60_000,
+    queryFn: async (): Promise<SupplierIssue[]> => {
+      const all: SupplierIssue[] = [];
+      for (let i = 0; i < ids.length; i += 8) {
+        const rows = await Promise.all(
+          ids.slice(i, i + 8).map(async (id) => {
+            try {
+              const raw = await axiosGet(`suppliers/${id}/issues`, true);
+              const list = supplierIssueRows(raw);
+              return list.map(mapSupplierIssue);
+            } catch {
+              return [];
+            }
+          }),
+        );
+        rows.forEach((r) => all.push(...r));
+      }
+      return all;
     },
   });
 }
@@ -1965,6 +2012,7 @@ export function useCreateSupplierIssue() {
     onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: ['supplierIssues', vars.supplierId] });
       qc.invalidateQueries({ queryKey: ['suppliers'] });
+      qc.invalidateQueries({ queryKey: ['supplierIssues', 'all'] });
     },
   });
 }
@@ -1992,6 +2040,7 @@ export function useUpdateSupplierIssue() {
     onSuccess: (_d, vars) => {
       qc.invalidateQueries({ queryKey: ['supplierIssues', vars.supplierId] });
       qc.invalidateQueries({ queryKey: ['suppliers'] });
+      qc.invalidateQueries({ queryKey: ['supplierIssues', 'all'] });
     },
   });
 }
@@ -2157,14 +2206,16 @@ export function useSaleCredits() {
   });
 }
 
-export function useCreditSummary(filters?: { search?: string; flagged?: boolean }) {
+export function useCreditSummary(filters?: { search?: string; flagged?: boolean; hub_id?: string }, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['creditSummary', filters],
+    enabled: options?.enabled ?? true,
     queryFn: async () => {
       if (!HAS_API) return [];
       const params = new URLSearchParams();
       if (filters?.search) params.set('search', filters.search);
       if (filters?.flagged) params.set('flagged', 'true');
+      if (filters?.hub_id) params.set('hub_id', filters.hub_id);
       const qs = params.toString();
       const path = qs ? `credits/summary?${qs}` : 'credits/summary';
       const res = await axiosGet(path, true) as ApiListResponse<ApiCreditCustomerSummary[]>;
@@ -2593,15 +2644,22 @@ export function useDeleteTask() {
 }
 
 // --- Dashboard ---
+/** Optional exact window and location for the dashboard endpoints (sent alongside the preset). */
+export type DashboardScopeFilters = { date_from?: string; date_to?: string; hub_id?: string };
+
 export function useDashboardSalesSummary(
   granularity: DashboardTrendGranularity = 'all',
+  scope?: DashboardScopeFilters,
+  options?: { enabled?: boolean },
 ) {
   return useQuery({
-    queryKey: ['dashboardSalesSummary', granularity],
+    queryKey: ['dashboardSalesSummary', granularity, scope],
+    enabled: options?.enabled ?? true,
+    placeholderData: keepPreviousData,
     queryFn: async (): Promise<DashboardSalesSummary> => {
       if (!HAS_API) return EMPTY_DASHBOARD_SALES_SUMMARY;
       const res = await axiosGet(
-        `dashboard/sales-summary${buildQuery({ granularity })}`,
+        `dashboard/sales-summary${buildQuery({ granularity, ...scope })}`,
         true,
       ) as ApiResponse<DashboardSalesSummary>;
       return res.data;
@@ -2609,13 +2667,14 @@ export function useDashboardSalesSummary(
   });
 }
 
-export function useDashboardRevenueByCategory(period: DashboardPeriod = 'all') {
+export function useDashboardRevenueByCategory(period: DashboardPeriod = 'all', scope?: DashboardScopeFilters) {
   return useQuery({
-    queryKey: ['dashboardRevenueByCategory', period],
+    queryKey: ['dashboardRevenueByCategory', period, scope],
+    placeholderData: keepPreviousData,
     queryFn: async (): Promise<DashboardCategoryRevenue> => {
       if (!HAS_API) return EMPTY_DASHBOARD_CATEGORY_REVENUE;
       const res = await axiosGet(
-        `dashboard/revenue-by-category${buildQuery({ period })}`,
+        `dashboard/revenue-by-category${buildQuery({ period, ...scope })}`,
         true,
       ) as ApiResponse<DashboardCategoryRevenue>;
       return res.data;
@@ -2694,6 +2753,21 @@ export function useNarrateInsight() {
         (res as { data?: { summary?: string } }).data?.summary;
       if (!summary) throw new Error('No summary returned');
       return { summary };
+    },
+  });
+}
+
+/** One sale by id, for deep links (/sales?sale=<id>) when it is not on the loaded page. */
+export function useSale(id: string | null) {
+  return useQuery({
+    queryKey: ['sales', 'detail', id],
+    enabled: !!id,
+    queryFn: async (): Promise<ReturnType<typeof mapSale> | null> => {
+      if (!id || !HAS_API) return null;
+      const hubMap = await fetchHubMap();
+      const raw = await axiosGet(`sales/${id}`, true);
+      const entity = unwrapApiEntity<ApiSale>(raw);
+      return entity ? mapSale(entity, hubMap) : null;
     },
   });
 }

@@ -41,7 +41,7 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary/5 via-background to-primary/10 p-4">
       <div className="w-full max-w-sm">
-        <div className="rounded-2xl border bg-card p-8 shadow-xl shadow-primary/5">
+        <div className="rounded-xl border bg-card p-8 shadow-lg">
           <div className="flex flex-col items-center mb-8">
             <BrandLogo variant="color" width={168} priority className="mb-4" />
             <p className="text-sm text-muted-foreground mt-1">Sign in to your account</p>
@@ -49,20 +49,21 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
-              <label className="text-[13px] font-medium text-foreground/80">Email or username</label>
+              <label htmlFor="login-email" className="text-sm font-medium">Email or username</label>
               <input
+                id="login-email"
                 type="text"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@fudfarmer.com or username"
                 required
-                className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-ring/40 focus:border-primary placeholder:text-muted-foreground/50"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm transition-colors placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/40"
               />
             </div>
 
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <label className="text-[13px] font-medium text-foreground/80">Password</label>
+                <label htmlFor="login-password" className="text-sm font-medium">Password</label>
                 <Link
                   href="/forgot-password"
                   className="text-xs font-medium text-primary hover:underline"
@@ -71,17 +72,18 @@ export default function LoginPage() {
                 </Link>
               </div>
               <input
+                id="login-password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
                 required
-                className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-ring/40 focus:border-primary placeholder:text-muted-foreground/50"
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm transition-colors placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring/40"
               />
             </div>
 
             {error && (
-              <p className="text-[13px] text-destructive font-medium bg-destructive/8 px-3 py-2 rounded-lg">
+              <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">
                 {error}
               </p>
             )}
@@ -89,9 +91,9 @@ export default function LoginPage() {
             <SubmitButton
               type="submit"
               loading={submitting}
-              className="w-full h-10 rounded-lg shadow-md shadow-primary/20 active:scale-[0.98]"
+              className="h-10 w-full rounded-md"
             >
-              Sign In
+              Sign in
             </SubmitButton>
           </form>
         </div>

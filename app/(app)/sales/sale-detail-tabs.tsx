@@ -1,21 +1,21 @@
 'use client';
 
 import {
-  Package, CreditCard, MapPin, Truck, Edit3, Trash2,
+  Package, CreditCard, MapPin, Truck, Edit3,
   Calendar, Clock, Users, ShoppingCart, ArrowRightLeft, Check, ArrowUpRight, Loader2,
 } from 'lucide-react';
+import Link from 'next/link';
 import { Sale, PaymentTerms, SalesChannel, DeliveryStatus, PaymentMode } from '@/types';
 import type { StockLog } from '@/types';
 import type { Permission } from '@/lib/permissions';
 import {
   fmt, statusColor, paymentModeBadgeClass, DELIVERY_STEPS,
-  INPUT_CLS, BTN_PRIMARY, BTN_SECONDARY, isTillSale,
+  INPUT_CLS, BTN_PRIMARY,
 } from './sales-utils';
 import type { DetailTab } from './sales-utils';
 import { SubmitButton } from '@/components/submit-button';
 import { PRODUCT_CATEGORIES } from '@/lib/product-categories';
 
-import type { HubScopeFilter } from '@/hooks/use-hub-scope';
 import type { Hub } from '@/types';
 import { hubOptionLabel } from '@/lib/api-mappers';
 
@@ -24,18 +24,13 @@ export type SaleDetailTabProps = Readonly<{
   isEditing: boolean;
   editForm: Partial<Sale>;
   setEditForm: React.Dispatch<React.SetStateAction<Partial<Sale>>>;
-  showVoidConfirm: boolean;
-  setShowVoidConfirm: (v: boolean) => void;
   saleStockLogs: StockLog[];
   customerSalesHistory: Sale[];
   onSelectSale: (sale: Sale) => void;
-  onVoidSale: () => void;
   onUpdateDeliveryStatus: (id: string, status: DeliveryStatus) => void;
-  voidingSale?: boolean;
   updatingDelivery?: boolean;
   can: (permission: Permission) => boolean;
   isCompanyAdmin: boolean;
-  hubScope: HubScopeFilter;
   activeHubs: Hub[];
   batchPriceError?: string | null;
 }>;
@@ -56,8 +51,8 @@ function DeliveryAdvanceButton({
   const nextStep = currentIdx < DELIVERY_STEPS.length - 1 ? DELIVERY_STEPS[currentIdx + 1] : null;
   if (!nextStep) {
     return (
-      <p className="text-sm text-green-600 font-medium flex items-center gap-2">
-        <Check size={14} /> Delivery confirmed by customer.
+      <p className="flex items-center gap-2 text-sm font-medium text-primary">
+        <Check size={14} aria-hidden /> Delivery confirmed by customer.
       </p>
     );
   }
@@ -69,14 +64,14 @@ function DeliveryAdvanceButton({
       disabled={!canUpdate}
       className={`${BTN_PRIMARY} w-full justify-center h-10`}
     >
-      <ArrowUpRight size={14} className="mr-1.5" /> Advance to: {nextStep}
+      <ArrowUpRight size={14} aria-hidden className="mr-1.5" /> Advance to: {nextStep}
     </SubmitButton>
   );
 }
 
 function OverviewTab({
-  sale, isEditing, editForm, setEditForm, showVoidConfirm, setShowVoidConfirm,
-  saleStockLogs, onVoidSale, voidingSale = false, can, isCompanyAdmin, hubScope, activeHubs,
+  sale, isEditing, editForm, setEditForm,
+  saleStockLogs, can, isCompanyAdmin, activeHubs,
   batchPriceError,
 }: SaleDetailTabProps) {
   const currentItem = editForm.item ?? sale.item;
@@ -85,61 +80,54 @@ function OverviewTab({
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-4">
-        <div className="p-4 rounded-md border bg-muted/20">
-          <p className="text-xs font-medium text-muted-foreground mb-1">Total Amount</p>
-          {isEditing ? (
-            <input type="number" step="0.01" value={editForm.amount || ''} onChange={(e) => setEditForm({ ...editForm, amount: Number(e.target.value) })} className={`${INPUT_CLS} h-8 text-lg font-bold`} />
-          ) : (
-            <p className="text-xl font-bold">{fmt(sale.amount)}</p>
-          )}
-          {isEditing ? (
-            <div className="mt-3">
-              <p className="text-xs font-medium text-muted-foreground mb-1">Discount</p>
-              <input type="number" step="0.01" min={0} value={editForm.discount ?? 0} onChange={(e) => setEditForm({ ...editForm, discount: Number(e.target.value) || 0 })} className={`${INPUT_CLS} h-8`} />
-            </div>
-          ) : (sale.discount ?? 0) > 0 ? (
-            <p className="text-xs text-muted-foreground mt-1">Discount: {fmt(sale.discount)}</p>
-          ) : null}
-          {isEditing && batchPriceError && (
-            <p className="text-xs text-red-500 mt-2">{batchPriceError}</p>
-          )}
+      {isEditing && (
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label htmlFor="sale-edit-amount" className="text-sm font-medium">Total amount</label>
+            <input id="sale-edit-amount" type="number" step="0.01" value={editForm.amount || ''} onChange={(e) => setEditForm({ ...editForm, amount: Number(e.target.value) })} className={INPUT_CLS} />
+            <label htmlFor="sale-edit-discount" className="block pt-2 text-sm font-medium">Discount</label>
+            <input id="sale-edit-discount" type="number" step="0.01" min={0} value={editForm.discount ?? 0} onChange={(e) => setEditForm({ ...editForm, discount: Number(e.target.value) || 0 })} className={INPUT_CLS} />
+            {batchPriceError && <p className="text-xs text-destructive">{batchPriceError}</p>}
+          </div>
+          <div className="rounded-xl border bg-muted/20 p-4">
+            <p className="mb-1 text-xs text-muted-foreground">Amount paid</p>
+            {/* Read-only even while editing: payments go through the credit
+                repayment flow so the ledger stays correct. */}
+            <p className="text-xl font-semibold tracking-tight tabular-nums">{fmt(sale.amountPaid ?? sale.amount)}</p>
+            <p className="mt-2 text-xs text-muted-foreground">
+              To record a payment, open this customer in{' '}
+              <Link href={`/credits?customer=${sale.customerId}`} className="font-medium text-foreground underline underline-offset-2 hover:text-primary">Credits</Link>
+              {' '}and use Record payment.
+            </p>
+          </div>
         </div>
-        <div className="p-4 rounded-md border bg-muted/20">
-          <p className="text-xs font-medium text-muted-foreground mb-1">Amount Paid</p>
-          {isEditing ? (
-            <input type="number" step="0.01" value={editForm.amountPaid ?? sale.amountPaid ?? sale.amount} onChange={(e) => setEditForm({ ...editForm, amountPaid: Number(e.target.value) })} className={`${INPUT_CLS} h-8 text-lg font-bold`} />
-          ) : (
-            <p className={`text-xl font-bold ${(sale.amountPaid ?? sale.amount) < sale.amount ? 'text-orange-600' : 'text-green-600'}`}>{fmt(sale.amountPaid ?? sale.amount)}</p>
-          )}
-          {(sale.amountPaid !== undefined && sale.amountPaid < sale.amount) && !isEditing && (
-            <p className="text-xs text-orange-600 mt-1">Balance: {fmt(sale.amount - sale.amountPaid)}</p>
-          )}
-        </div>
-      </div>
+      )}
 
-      <div className="flex items-center gap-3 flex-wrap text-sm">
+      <div className="flex flex-wrap items-center gap-3 text-sm">
         {sale.paymentMode && (
-          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${paymentModeBadgeClass(sale.paymentMode as PaymentMode)}`}>{sale.paymentMode}</span>
+          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${paymentModeBadgeClass(sale.paymentMode as PaymentMode)}`}>{sale.paymentMode}</span>
         )}
         {sale.paymentType && (
-          <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{sale.paymentType}</span>
+          <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">{sale.paymentType}</span>
         )}
         {sale.isCredit && !sale.paymentMode && (
-          <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-orange-100 text-orange-800">Credit Sale</span>
+          <span className="rounded-full bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning">Credit sale</span>
+        )}
+        {!isEditing && (sale.discount ?? 0) > 0 && (
+          <span className="text-xs text-muted-foreground tabular-nums">Discount: {fmt(sale.discount ?? 0)}</span>
         )}
       </div>
 
-      <div className="p-4 rounded-md border bg-muted/10">
-        <div className="flex items-center gap-2 mb-2">
-          <Package size={14} className="text-primary" />
-          <span className="text-sm font-medium">Product Details</span>
+      <div className="rounded-xl border p-4">
+        <div className="mb-2 flex items-center gap-2">
+          <Package size={14} aria-hidden className="text-muted-foreground" />
+          <span className="text-sm font-medium">Product details</span>
         </div>
         {isEditing && isCompanyAdmin ? (
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-muted-foreground">Product Name</label>
-              <input
+              <label htmlFor="sale-edit-product" className="text-xs text-muted-foreground">Product name</label>
+              <input id="sale-edit-product"
                 type="text"
                 value={currentItem?.productName || ''}
                 onChange={(e) =>
@@ -158,8 +146,8 @@ function OverviewTab({
               />
             </div>
             <div>
-              <label className="text-xs text-muted-foreground">Quantity</label>
-              <input
+              <label htmlFor="sale-edit-qty" className="text-xs text-muted-foreground">Quantity</label>
+              <input id="sale-edit-qty"
                 type="number"
                 min={0.01}
                 step="0.01"
@@ -180,8 +168,8 @@ function OverviewTab({
               />
             </div>
             <div>
-              <label className="text-xs text-muted-foreground">Unit</label>
-              <input
+              <label htmlFor="sale-edit-unit" className="text-xs text-muted-foreground">Unit</label>
+              <input id="sale-edit-unit"
                 type="text"
                 value={currentItem?.unit || ''}
                 onChange={(e) =>
@@ -200,8 +188,8 @@ function OverviewTab({
               />
             </div>
             <div>
-              <label className="text-xs text-muted-foreground">Category</label>
-              <select
+              <label htmlFor="sale-edit-category" className="text-xs text-muted-foreground">Category</label>
+              <select id="sale-edit-category"
                 value={currentCategory}
                 onChange={(e) =>
                   setEditForm({
@@ -229,14 +217,14 @@ function OverviewTab({
           </div>
         ) : (
           <div className="text-sm space-y-1">
-            <p><span className="text-muted-foreground">Name:</span> {sale.item?.productName || '—'}</p>
-            <p><span className="text-muted-foreground">Batch:</span> {sale.item?.batchAllocations?.map(allocation => `${allocation.batchNumber}: ${allocation.quantity}`).join(', ') || sale.item?.batchNumber || '—'}</p>
-            <p><span className="text-muted-foreground">Quantity:</span> {sale.item?.quantity ?? '—'}</p>
-            <p><span className="text-muted-foreground">Unit:</span> {sale.item?.unit || '—'}</p>
+            <p><span className="text-muted-foreground">Name:</span> {sale.item?.productName || '-'}</p>
+            <p><span className="text-muted-foreground">Batch:</span> {sale.item?.batchAllocations?.map(allocation => `${allocation.batchNumber}: ${allocation.quantity}`).join(', ') || sale.item?.batchNumber || '-'}</p>
+            <p><span className="text-muted-foreground">Quantity:</span> {sale.item?.quantity ?? '-'}</p>
+            <p><span className="text-muted-foreground">Unit:</span> {sale.item?.unit || '-'}</p>
             {sale.item?.saleUnit === 'Carton' && sale.item?.saleWeightKg != null && (
               <p><span className="text-muted-foreground">Weighed kg:</span> {sale.item.saleWeightKg}</p>
             )}
-            <p><span className="text-muted-foreground">Category:</span> {sale.item?.category || '—'}</p>
+            <p><span className="text-muted-foreground">Category:</span> {sale.item?.category || '-'}</p>
             {(sale.item?.unitCost != null || sale.item?.unitPrice != null) && (
               <>
                 {sale.item?.unitCost != null && (
@@ -256,8 +244,8 @@ function OverviewTab({
                           const listTotal = sale.item!.unitPrice! * sale.item!.quantity;
                           if (sale.amount < listTotal - 0.005) {
                             return (
-                              <span className="text-amber-700 ml-1 font-medium">
-                                (under list · charged {fmt(sale.amount)})
+                              <span className="ml-1 font-medium text-warning">
+                                (under list, charged {fmt(sale.amount)})
                               </span>
                             );
                           }
@@ -272,49 +260,50 @@ function OverviewTab({
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-4 text-sm">
+      <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2 sm:gap-4">
         <div className="flex items-center gap-2">
-          <Calendar size={14} className="text-muted-foreground" />
-          <span className="text-muted-foreground">Date Sold:</span>
+          <Calendar size={14} aria-hidden className="text-muted-foreground" />
+          <span className="text-muted-foreground">Date sold:</span>
           <span className="font-medium">{sale.date}</span>
         </div>
         <div className="flex items-center gap-2">
-          <Clock size={14} className="text-muted-foreground" />
-          <span className="text-muted-foreground">Date Recorded:</span>
-          <span className="font-medium">{sale.createdAt || '—'}</span>
+          <Clock size={14} aria-hidden className="text-muted-foreground" />
+          <span className="text-muted-foreground">Date recorded:</span>
+          <span className="font-medium">{sale.createdAt || '-'}</span>
         </div>
         <div className="flex items-center gap-2">
-          <Edit3 size={14} className="text-muted-foreground" />
-          <span className="text-muted-foreground">Last Updated:</span>
-          <span className="font-medium">{sale.updatedAt || '—'}</span>
+          <Edit3 size={14} aria-hidden className="text-muted-foreground" />
+          <span className="text-muted-foreground">Last updated:</span>
+          <span className="font-medium">{sale.updatedAt || '-'}</span>
         </div>
         <div className="flex items-center gap-2">
-          <Users size={14} className="text-muted-foreground" />
+          <Users size={14} aria-hidden className="text-muted-foreground" />
           <span className="text-muted-foreground">Agent:</span>
           <span className="font-medium">{sale.agentName}</span>
         </div>
         <div className="flex items-center gap-2">
-          <MapPin size={14} className="text-muted-foreground" />
+          <MapPin size={14} aria-hidden className="text-muted-foreground" />
           <span className="text-muted-foreground">Hub:</span>
           {isEditing && can('sales.edit') ? (
             <select
+              aria-label="Hub"
               value={editForm.hubName || sale.hubName || ''}
               onChange={(e) => setEditForm({ ...editForm, hubName: e.target.value })}
-              className="h-8 rounded-md border px-2 text-sm bg-background"
+              className="h-8 rounded-md border bg-background px-2 text-sm"
             >
               {activeHubs.map((h) => (
                 <option key={h.id} value={h.name}>{hubOptionLabel(h)}</option>
               ))}
             </select>
           ) : (
-            <span className="font-medium">{sale.hubName || '—'}</span>
+            <span className="font-medium">{sale.hubName || '-'}</span>
           )}
         </div>
         <div className="flex items-center gap-2">
-          <ShoppingCart size={14} className="text-muted-foreground" />
+          <ShoppingCart size={14} aria-hidden className="text-muted-foreground" />
           <span className="text-muted-foreground">Channel:</span>
           {isEditing ? (
-            <select value={editForm.channel || sale.channel} onChange={(e) => setEditForm({ ...editForm, channel: e.target.value as SalesChannel })} className="h-8 rounded-md border px-2 text-sm bg-background">
+            <select aria-label="Channel" value={editForm.channel || sale.channel} onChange={(e) => setEditForm({ ...editForm, channel: e.target.value as SalesChannel })} className="h-8 rounded-md border bg-background px-2 text-sm">
               {Object.values(SalesChannel).filter((c) => c !== SalesChannel.POS).map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           ) : (
@@ -322,10 +311,10 @@ function OverviewTab({
           )}
         </div>
         <div className="flex items-center gap-2">
-          <CreditCard size={14} className="text-muted-foreground" />
+          <CreditCard size={14} aria-hidden className="text-muted-foreground" />
           <span className="text-muted-foreground">Payment:</span>
           {isEditing ? (
-            <select value={editForm.paymentTerms || sale.paymentTerms} onChange={(e) => setEditForm({ ...editForm, paymentTerms: e.target.value as PaymentTerms })} className="h-8 rounded-md border px-2 text-sm bg-background">
+            <select aria-label="Payment terms" value={editForm.paymentTerms || sale.paymentTerms} onChange={(e) => setEditForm({ ...editForm, paymentTerms: e.target.value as PaymentTerms })} className="h-8 rounded-md border bg-background px-2 text-sm">
               {Object.values(PaymentTerms).map((p) => <option key={p} value={p}>{p}</option>)}
             </select>
           ) : (
@@ -335,21 +324,21 @@ function OverviewTab({
       </div>
 
       {(sale.deliveryAddress || sale.customerPhone) && (
-        <div className="p-4 rounded-md border bg-muted/10">
-          <div className="flex items-center gap-2 mb-2">
-            <Truck size={14} className="text-primary" />
-            <span className="text-sm font-medium">Delivery Info</span>
+        <div className="rounded-xl border p-4">
+          <div className="mb-2 flex items-center gap-2">
+            <Truck size={14} aria-hidden className="text-muted-foreground" />
+            <span className="text-sm font-medium">Delivery info</span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
             {sale.deliveryAddress && (
               <div>
-                <span className="text-muted-foreground text-xs">Address</span>
+                <span className="text-xs text-muted-foreground">Address</span>
                 <p className="font-medium">{sale.deliveryAddress}</p>
               </div>
             )}
             {sale.customerPhone && (
               <div>
-                <span className="text-muted-foreground text-xs">Phone</span>
+                <span className="text-xs text-muted-foreground">Phone</span>
                 <p className="font-medium">{sale.customerPhone}</p>
               </div>
             )}
@@ -358,7 +347,7 @@ function OverviewTab({
       )}
 
       <div>
-        <label htmlFor="sale-edit-notes" className="text-sm font-medium text-muted-foreground mb-1 block">Notes</label>
+        <label htmlFor="sale-edit-notes" className="mb-1 block text-sm font-medium text-muted-foreground">Notes</label>
         {isEditing ? (
           <textarea id="sale-edit-notes" value={editForm.notes || ''} onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })} rows={3} className={`${INPUT_CLS} h-auto resize-none`} />
         ) : (
@@ -368,36 +357,21 @@ function OverviewTab({
 
       {saleStockLogs.length > 0 && (
         <div>
-          <h4 className="text-sm font-medium mb-2 flex items-center gap-2"><ArrowRightLeft size={14} className="text-primary" /> Linked Stock Movements</h4>
+          <h4 className="mb-2 flex items-center gap-2 text-sm font-medium"><ArrowRightLeft size={14} aria-hidden className="text-muted-foreground" /> Linked stock movements</h4>
           <div className="space-y-2">
             {saleStockLogs.map((log) => (
-              <div key={log.id} className="p-3 rounded-md border bg-muted/10 text-sm flex items-center justify-between">
+              <div key={log.id} className="flex items-center justify-between rounded-md border p-3 text-sm">
                 <div>
                   <span className="font-medium">{log.itemName}</span>
                   <span className="text-muted-foreground ml-2">{log.type}</span>
                 </div>
-                <span className={`font-medium ${log.quantity < 0 ? 'text-red-600' : 'text-green-600'}`}>{log.quantity > 0 ? '+' : ''}{log.quantity} {log.uom}</span>
+                <span className={`font-medium tabular-nums ${log.quantity < 0 ? 'text-destructive' : 'text-primary'}`}>{log.quantity > 0 ? '+' : ''}{log.quantity} {log.uom}</span>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {sale.status !== 'Voided' && !isEditing && !isTillSale(sale) && can('sales.void') && (
-        <div className="pt-4 border-t">
-          {showVoidConfirm ? (
-            <div className="p-4 rounded-md border border-red-200 bg-red-50">
-              <p className="text-sm text-red-800 font-medium mb-3">Are you sure? This will reverse customer stats and mark the sale as voided.</p>
-              <div className="flex gap-2">
-                <SubmitButton type="button" onClick={onVoidSale} loading={voidingSale} variant="destructive" className="h-8 px-3">Yes, Void Sale</SubmitButton>
-                <button type="button" onClick={() => setShowVoidConfirm(false)} className={BTN_SECONDARY}>Cancel</button>
-              </div>
-            </div>
-          ) : (
-            <button type="button" onClick={() => setShowVoidConfirm(true)} className="inline-flex items-center gap-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-md px-3 py-2"><Trash2 size={14} /> Void this sale</button>
-          )}
-        </div>
-      )}
     </>
   );
 }
@@ -410,8 +384,7 @@ function DeliveryTab({
 
   if (!isDeliverySale) {
     return (
-      <div className="text-center py-12 text-muted-foreground">
-        <Truck size={32} className="mx-auto mb-3 opacity-30" />
+      <div className="py-12 text-center text-muted-foreground">
         <p className="text-sm">This sale is not a delivery order.</p>
       </div>
     );
@@ -422,23 +395,25 @@ function DeliveryTab({
   return (
     <>
       <div className="space-y-4">
-        <h4 className="text-sm font-medium flex items-center gap-2"><Truck size={14} className="text-primary" /> Delivery Progress</h4>
+        <h4 className="flex items-center gap-2 text-sm font-medium"><Truck size={14} aria-hidden className="text-muted-foreground" /> Delivery progress</h4>
         <div className="flex items-center gap-1">
           {DELIVERY_STEPS.map((step, idx) => {
             const currentIdx = DELIVERY_STEPS.indexOf(sale.deliveryStatus as DeliveryStatus);
             const isCompleted = idx <= currentIdx;
             const isCurrent = idx === currentIdx;
             return (
-              <div key={step} className="flex-1 flex flex-col items-center">
+              <div key={step} className="flex flex-1 flex-col items-center">
                 <button
                   type="button"
                   onClick={() => canUpdate && !updatingDelivery && onUpdateDeliveryStatus(sale.id, step)}
                   disabled={!canUpdate || updatingDelivery}
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${isCompleted ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'} ${isCurrent ? 'ring-2 ring-primary/30' : ''} ${canUpdate && !updatingDelivery ? 'cursor-pointer hover:opacity-80' : 'cursor-not-allowed opacity-60'}`}
+                  aria-label={`Set delivery status: ${step}`}
+                  aria-current={isCurrent ? 'step' : undefined}
+                  className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-medium tabular-nums transition-colors ${isCompleted ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'} ${isCurrent ? 'ring-2 ring-primary/30' : ''} ${canUpdate && !updatingDelivery ? 'cursor-pointer hover:opacity-80' : 'cursor-not-allowed opacity-60'}`}
                 >
-                  {updatingDelivery && isCurrent ? <Loader2 size={14} className="animate-spin" /> : isCompleted ? <Check size={14} /> : idx + 1}
+                  {updatingDelivery && isCurrent ? <Loader2 size={14} aria-hidden className="animate-spin" /> : isCompleted ? <Check size={14} aria-hidden /> : idx + 1}
                 </button>
-                <span className={`text-[10px] mt-1.5 text-center font-medium ${isCurrent ? 'text-primary' : 'text-muted-foreground'}`}>{step}</span>
+                <span className={`mt-1.5 text-center text-xs font-medium ${isCurrent ? 'text-foreground' : 'text-muted-foreground'}`}>{step}</span>
               </div>
             );
           })}
@@ -446,22 +421,22 @@ function DeliveryTab({
       </div>
 
       <div className="space-y-4">
-        <div className="p-4 rounded-md border bg-muted/10">
+        <div className="rounded-xl border p-4">
           <div className="grid grid-cols-1 gap-3 text-sm">
             <div>
               <span className="text-muted-foreground">Address:</span>
               {isEditing ? (
-                <input type="text" value={editForm.deliveryAddress || ''} onChange={(e) => setEditForm({ ...editForm, deliveryAddress: e.target.value })} className={`${INPUT_CLS} mt-1`} />
+                <input aria-label="Delivery address" type="text" value={editForm.deliveryAddress || ''} onChange={(e) => setEditForm({ ...editForm, deliveryAddress: e.target.value })} className={`${INPUT_CLS} mt-1`} />
               ) : (
-                <p className="font-medium mt-0.5">{sale.deliveryAddress || 'Not provided'}</p>
+                <p className="mt-0.5 font-medium">{sale.deliveryAddress || 'Not provided'}</p>
               )}
             </div>
             <div>
-              <span className="text-muted-foreground">Customer Phone:</span>
+              <span className="text-muted-foreground">Customer phone:</span>
               {isEditing ? (
-                <input type="text" value={editForm.customerPhone || ''} onChange={(e) => setEditForm({ ...editForm, customerPhone: e.target.value })} className={`${INPUT_CLS} mt-1`} />
+                <input aria-label="Customer phone" type="text" value={editForm.customerPhone || ''} onChange={(e) => setEditForm({ ...editForm, customerPhone: e.target.value })} className={`${INPUT_CLS} mt-1`} />
               ) : (
-                <p className="font-medium mt-0.5">{sale.customerPhone || 'Not provided'}</p>
+                <p className="mt-0.5 font-medium">{sale.customerPhone || 'Not provided'}</p>
               )}
             </div>
           </div>
@@ -481,9 +456,9 @@ function DeliveryTab({
 function HistoryTab({ sale, customerSalesHistory, onSelectSale }: SaleDetailTabProps) {
   return (
     <>
-      <h4 className="text-sm font-medium mb-3 flex items-center gap-2"><Clock size={14} className="text-primary" /> Other Sales to {sale.customerName}</h4>
+      <h4 className="mb-3 flex items-center gap-2 text-sm font-medium"><Clock size={14} aria-hidden className="text-muted-foreground" /> Other sales to {sale.customerName}</h4>
       {customerSalesHistory.length === 0 ? (
-        <p className="text-sm text-muted-foreground italic">No other sales to this customer.</p>
+        <p className="text-sm text-muted-foreground">No other sales to this customer.</p>
       ) : (
         <div className="space-y-2">
           {customerSalesHistory.map((s) => (
@@ -491,17 +466,17 @@ function HistoryTab({ sale, customerSalesHistory, onSelectSale }: SaleDetailTabP
               key={s.id}
               type="button"
               onClick={() => onSelectSale(s)}
-              className="w-full p-3 rounded-md border bg-muted/10 text-sm flex items-center justify-between hover:bg-muted/30 transition-colors text-left"
+              className="flex w-full items-center justify-between rounded-md border p-3 text-left text-sm transition-colors hover:bg-muted/40"
             >
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-muted-foreground">{s.date}</span>
-                  <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${statusColor(s.status)}`}>{s.status}</span>
-                  {s.isCredit && <span className="text-[10px] font-semibold text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded">CREDIT</span>}
+                  <span className="tabular-nums text-muted-foreground">{s.date}</span>
+                  <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusColor(s.status)}`}>{s.status}</span>
+                  {s.isCredit && <span className="rounded-full bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning">Credit</span>}
                 </div>
-                <p className="text-xs text-muted-foreground mt-0.5 truncate max-w-[350px]">{s.productDetails}</p>
+                <p className="mt-0.5 max-w-[350px] truncate text-xs text-muted-foreground">{s.productDetails}</p>
               </div>
-              <span className="font-medium shrink-0 ml-3">{fmt(s.amount)}</span>
+              <span className="ml-3 shrink-0 font-medium tabular-nums">{fmt(s.amount)}</span>
             </button>
           ))}
         </div>

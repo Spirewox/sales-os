@@ -12,6 +12,7 @@ export const BACKEND_MODULE_SUBMODULES: Record<string, string[]> = {
   dashboard: ['view_dashboard'],
   analytics: ['view_analytics'],
   pos: ['view_pos', 'manage_pos_tills'],
+  kitchen: ['view_kitchen', 'manage_kitchen_jobs', 'view_kitchen_costs', 'manage_kitchen_pricing', 'archive_kitchen_jobs'],
   inventory: [
     'view_inventory',
     'create_sku',
@@ -81,4 +82,29 @@ export function roleLabel(role: ApiRole): string {
 
 export function isCompanyAdminRole(role: ApiRole): boolean {
   return role.name === 'company_admin' || role.label === 'Company Admin';
+}
+
+/** Plain-language group names and one-line descriptions for the roles matrix. Keys are PERMISSION_GROUPS labels. */
+const GROUP_DISPLAY: Record<string, { label: string; description: string }> = {
+  Dashboard: { label: 'Dashboard', description: 'The home page with today’s numbers.' },
+  Analytics: { label: 'Analytics', description: 'Reports and trends.' },
+  POS: { label: 'Point of sale', description: 'Tills, cashiers and POS takings.' },
+  Kitchen: { label: 'Kitchen', description: 'Kitchen jobs, quotes, recipes and pricing.' },
+  Inventory: { label: 'Inventory', description: 'Stock levels, transfers and requests.' },
+  Suppliers: { label: 'Suppliers', description: 'Supplier records and issues.' },
+  Customers: { label: 'Customers', description: 'Customer records.' },
+  Sales: { label: 'Sales', description: 'Recording, editing and voiding sales.' },
+  Credits: { label: 'Credits', description: 'Money owed and repayments.' },
+  Interactions: { label: 'Engagement', description: 'Feedback, enquiries and compensations.' },
+  'Audit Trail': { label: 'Audit trail', description: 'The history of changes.' },
+  Settings: { label: 'Settings', description: 'Users, locations, and roles and access.' },
+};
+
+export function permissionGroupDisplay(groupLabel: string): { label: string; description: string } {
+  return GROUP_DISPLAY[groupLabel] ?? { label: groupLabel, description: '' };
+}
+
+/** Sentence-style permission label: "&" becomes "and", "/" becomes "or". */
+export function permissionDisplayLabel(label: string): string {
+  return label.replace(/\s*&\s*/g, ' and ').replace(/\s*\/\s*/g, ' or ');
 }

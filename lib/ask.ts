@@ -6,7 +6,7 @@ import { DATASETS, Dataset, Filter, fieldValues, runQuery, FieldDef, NumFilter, 
  *
  * Interprets a plain-English question against the semantic model (datasets,
  * dimensions, measures and their real values) and resolves it to a concrete
- * query — dataset + measure + breakdown + filters — then narrates the answer.
+ * query, dataset + measure + breakdown + filters, then narrates the answer.
  * No external LLM: the structured semantic layer *is* the understanding.
  */
 
@@ -179,7 +179,7 @@ function detectFilters(q: string, ds: Dataset, rows: any[]): Filter[] {
   const byField: Record<string, { field: FieldDef; values: string[] }> = {};
   const add = (field: FieldDef, value: string, vn: string) => { claimed.add(vn); (byField[field.key] = byField[field.key] || { field, values: [] }).values.push(value); };
 
-  // pass 1 — exact / substring match
+  // pass 1, exact / substring match
   for (const field of ds.fields) {
     for (const value of fieldValues(rows, field)) {
       const vn = norm(value);
@@ -189,7 +189,7 @@ function detectFilters(q: string, ds: Dataset, rows: any[]): Filter[] {
       if (hit) add(field, value, vn);
     }
   }
-  // pass 2 — fuzzy token match on name-like fields ("mama kudi" → "Mama Kudi's Kitchen")
+  // pass 2, fuzzy token match on name-like fields ("mama kudi" → "Mama Kudi's Kitchen")
   for (const field of ds.fields) {
     if (!NAME_FIELDS.has(field.key) || byField[field.key]) continue;
     let best: { value: string; vn: string; score: number } | null = null;
@@ -255,7 +255,7 @@ export function ask(question: string, bundle: DataBundle): AskResult {
   const numChips = numFilters.map((n) => `${n.op === 'gte' ? '≥' : '≤'} ${money(n.value)}`);
   const allChips = [...filterChips, ...numChips, ...(dateChip ? [`📅 ${dateChip}`] : [])];
 
-  // ─── FIND MODE — return the actual matching records ───
+  // ─── FIND MODE, return the actual matching records ───
   if (!compare && isFindIntent(q, numFilters.length > 0)) {
     const { sort, dir } = findSort(q);
     const fr = findRecords(ds, allRows, { filters, numFilters, dateRange, sort, dir });
@@ -266,7 +266,7 @@ export function ask(question: string, bundle: DataBundle): AskResult {
     if (fr.matched === 0) {
       parts.push(`No ${fr.entityLabel} match${cond ? ` ${cond}` : ' that'}. Try loosening the amount or date.`);
     } else {
-      parts.push(`Found ${fr.matched} ${fr.entityLabel}${cond}${fr.amountKind === 'money' && fr.totalAmount > 0 ? ` — worth ${money(fr.totalAmount)} in total` : ''}.`);
+      parts.push(`Found ${fr.matched} ${fr.entityLabel}${cond}${fr.amountKind === 'money' && fr.totalAmount > 0 ? `, worth ${money(fr.totalAmount)} in total` : ''}.`);
       if (top) parts.push(`${dir === 'desc' ? 'Largest' : 'Smallest'}: ${top.title}${top.amount != null && top.amountKind === 'money' ? ` (${money(top.amount)})` : ''}${top.date ? ` on ${fmtDate(top.date)}` : ''}.`);
       if (fr.matched > fr.shown) parts.push(`Showing the top ${fr.shown}.`);
     }
@@ -309,7 +309,7 @@ export function ask(question: string, bundle: DataBundle): AskResult {
     parts.push(`No ${ds.label.toLowerCase()} data matches${fp || ' that'}.`);
   } else {
     parts.push(`${measureLabel}${fp}, broken down by ${groupLabel}: total ${fmtV(res.total, res.measureKind)} across ${res.rows.length} ${groupLabel.toLowerCase()}${res.rows.length !== 1 ? 's' : ''}.`);
-    if (top) parts.push(`Top ${groupLabel.toLowerCase()}: ${top.label} — ${fmtV(top.value, res.measureKind)}${res.total > 0 ? ` (${Math.round((top.value / res.total) * 100)}% of total)` : ''}.`);
+    if (top) parts.push(`Top ${groupLabel.toLowerCase()}: ${top.label}, ${fmtV(top.value, res.measureKind)}${res.total > 0 ? ` (${Math.round((top.value / res.total) * 100)}% of total)` : ''}.`);
     const rest = res.rows.slice(1, 3);
     if (rest.length) parts.push(`Followed by ${rest.map((r) => `${r.label} (${fmtV(r.value, res.measureKind)})`).join(', ')}.`);
   }

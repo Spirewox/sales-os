@@ -3,14 +3,14 @@ import { DataBundle } from './insights';
 import { deriveSegments } from './segmentation';
 
 /**
- * Scenario simulator — the "what-if" engine for decision-making.
+ * Scenario simulator, the "what-if" engine for decision-making.
  *
  * Every scenario is computed deterministically from the real data: a monthly
  * baseline (units, revenue, cost, profit, margin, stock cover) is derived from
  * actual transactions, then a set of adjustable levers projects the outcome.
  * A plain-English interpreter (interpretScenario) picks the scenario and
  * pre-fills the levers, so users can describe a situation and then fine-tune.
- * No external LLM — the model of the business *is* the intelligence.
+ * No external LLM, the model of the business *is* the intelligence.
  */
 
 const SALE = StockMovementType.SALE;
@@ -52,7 +52,7 @@ export const SIM_SCENARIOS: ScenarioDef[] = [
     { key: 'target', label: 'Applies to', kind: 'target' },
     { key: 'volumeChangePct', label: 'Volume change', kind: 'pct', min: -50, max: 150, step: 5 },
   ] },
-  { key: 'cost', label: 'Cost / supplier shock', blurb: 'A supplier or category cost move — and how much to pass on', levers: [
+  { key: 'cost', label: 'Cost / supplier shock', blurb: 'A supplier or category cost move, and how much to pass on', levers: [
     { key: 'target', label: 'Applies to', kind: 'target', includeSuppliers: true },
     { key: 'costChangePct', label: 'Cost change', kind: 'pct', min: -30, max: 80, step: 1 },
     { key: 'passThroughPct', label: 'Passed to price', kind: 'pct', min: 0, max: 100, step: 5, hint: 'Share of the cost move you add to your selling price.' },
@@ -61,11 +61,11 @@ export const SIM_SCENARIOS: ScenarioDef[] = [
   { key: 'collect', label: 'Credit recovery', blurb: 'Collect a slice of overdue credit and free up cash', levers: [
     { key: 'collectPct', label: 'Overdue collected', kind: 'pct', min: 0, max: 100, step: 5 },
   ] },
-  { key: 'churn', label: 'Customer churn', blurb: 'Lose top customers or a whole segment — revenue at risk', levers: [
+  { key: 'churn', label: 'Customer churn', blurb: 'Lose top customers or a whole segment, revenue at risk', levers: [
     { key: 'churnCount', label: 'Top customers lost', kind: 'int', min: 0, max: 20, step: 1 },
     { key: 'churnSegment', label: 'Or a segment', kind: 'target' },
   ] },
-  { key: 'promo', label: 'Discount & promo', blurb: 'Trade margin for volume — is it accretive?', levers: [
+  { key: 'promo', label: 'Discount & promo', blurb: 'Trade margin for volume, is it accretive?', levers: [
     { key: 'target', label: 'Applies to', kind: 'target' },
     { key: 'discountPct', label: 'Discount', kind: 'pct', min: 0, max: 50, step: 1 },
     { key: 'upliftPct', label: 'Expected volume uplift', kind: 'pct', min: 0, max: 200, step: 5 },
@@ -156,10 +156,10 @@ function simPrice(lv: Levers, bundle: DataBundle): SimOutput {
   const newMargin = newRevenue > 0 ? (newProfit / newRevenue) * 100 : 0;
   const profitDelta = newProfit - b.profit;
   const verdict = Math.abs(profitDelta) < b.profit * 0.02
-    ? { tone: 'neutral' as const, text: `Roughly profit-neutral — the volume pull-back cancels the price gain.` }
+    ? { tone: 'neutral' as const, text: `Roughly profit-neutral, the volume pull-back cancels the price gain.` }
     : profitDelta > 0
       ? { tone: 'positive' as const, text: `Accretive: monthly profit rises ${money(profitDelta)} even after losing ~${Math.round(b.units - newUnits)} units/mo. Worth testing.` }
-      : { tone: 'negative' as const, text: `Dilutive: you lose more from softer demand than you gain on price — profit drops ${money(-profitDelta)}/mo. Ease the increase or protect volume.` };
+      : { tone: 'negative' as const, text: `Dilutive: you lose more from softer demand than you gain on price, profit drops ${money(-profitDelta)}/mo. Ease the increase or protect volume.` };
   return {
     scenario: 'price', title: `${pct(lv.priceChangePct)} price on ${b.label}`, subtitle: `Assuming demand sensitivity of ${lv.elasticity}`,
     headline: m('Monthly Gross Profit', b.profit, newProfit, 'money'),
@@ -186,9 +186,9 @@ function simDemand(lv: Levers, bundle: DataBundle): SimOutput {
   const stockTight = dv > 0 && newCover < 14 && Number.isFinite(newCover);
   const verdict = dv >= 0
     ? stockTight
-      ? { tone: 'caution' as const, text: `Upside is real (+${money(newProfit - b.profit)}/mo) but stock only covers ${Math.round(newCover)} days at the higher run-rate — line up reorders or you'll stock out.` }
+      ? { tone: 'caution' as const, text: `Upside is real (+${money(newProfit - b.profit)}/mo) but stock only covers ${Math.round(newCover)} days at the higher run-rate, line up reorders or you'll stock out.` }
       : { tone: 'positive' as const, text: `Clean upside: +${money(newProfit - b.profit)}/mo in profit and current stock can absorb the demand.` }
-    : { tone: 'negative' as const, text: `Softer demand costs ${money(b.profit - newProfit)}/mo — a signal to defend volume or trim purchasing.` };
+    : { tone: 'negative' as const, text: `Softer demand costs ${money(b.profit - newProfit)}/mo, a signal to defend volume or trim purchasing.` };
   return {
     scenario: 'demand', title: `${pct(lv.volumeChangePct)} demand on ${b.label}`, subtitle: `Prices and costs held constant`,
     headline: m('Monthly Gross Profit', b.profit, newProfit, 'money'),
@@ -218,8 +218,8 @@ function simCost(lv: Levers, bundle: DataBundle): SimOutput {
   const profitDelta = newProfit - b.profit;
   const fullOffset = clampPct((dc) * 100); // price rise needed to fully offset
   const verdict = profitDelta >= -b.profit * 0.02
-    ? { tone: 'positive' as const, text: `Manageable — passing ${lv.passThroughPct}% of the cost through keeps profit within ${money(Math.abs(profitDelta))}/mo of today.` }
-    : { tone: 'negative' as const, text: `Margin squeeze: profit falls ${money(-profitDelta)}/mo. To fully protect it you'd need to lift price ~${fullOffset}% — or renegotiate the cost / switch supplier.` };
+    ? { tone: 'positive' as const, text: `Manageable, passing ${lv.passThroughPct}% of the cost through keeps profit within ${money(Math.abs(profitDelta))}/mo of today.` }
+    : { tone: 'negative' as const, text: `Margin squeeze: profit falls ${money(-profitDelta)}/mo. To fully protect it you'd need to lift price ~${fullOffset}%, or renegotiate the cost / switch supplier.` };
   return {
     scenario: 'cost', title: `${pct(lv.costChangePct)} cost on ${b.label}`, subtitle: `Passing ${lv.passThroughPct}% through to price`,
     headline: m('Monthly Gross Profit', b.profit, newProfit, 'money'),
@@ -242,7 +242,7 @@ function simCollect(lv: Levers, bundle: DataBundle): SimOutput {
   const collected = overdue * (lv.collectPct / 100);
   const remaining = outstanding - collected;
   const verdict = collected > 0
-    ? { tone: 'positive' as const, text: `Collecting ${lv.collectPct}% of overdue frees ${money(collected)} in cash — enough to fund restocking or cut borrowing. One-off, so pair it with tighter terms to stop it rebuilding.` }
+    ? { tone: 'positive' as const, text: `Collecting ${lv.collectPct}% of overdue frees ${money(collected)} in cash, enough to fund restocking or cut borrowing. One-off, so pair it with tighter terms to stop it rebuilding.` }
     : { tone: 'neutral' as const, text: `Set a collection target above 0% to see the cash impact.` };
   return {
     scenario: 'collect', title: `Collect ${lv.collectPct}% of overdue credit`, subtitle: `${money(overdue)} currently overdue`,
@@ -282,7 +282,7 @@ function simChurn(lv: Levers, bundle: DataBundle): SimOutput {
     ? { tone: 'negative' as const, text: `Severe concentration risk: losing ${scopeLabel} wipes ${Math.round(share)}% of monthly revenue (${money(lostMonthly)}). Diversify the base and lock in these accounts now.` }
     : share >= 10
       ? { tone: 'caution' as const, text: `Meaningful exposure: ${Math.round(share)}% of revenue (${money(lostMonthly)}) rides on ${scopeLabel}. Build retention and a wider pipeline.` }
-      : { tone: 'positive' as const, text: `Resilient: only ${Math.round(share)}% of revenue depends on ${scopeLabel} — the base is well spread.` };
+      : { tone: 'positive' as const, text: `Resilient: only ${Math.round(share)}% of revenue depends on ${scopeLabel}, the base is well spread.` };
   const names = lostIds.map((id) => bundle.customers.find((c) => c.id === id)?.name).filter(Boolean).slice(0, 4).join(', ');
   return {
     scenario: 'churn', title: `If ${scopeLabel} churn`, subtitle: names ? `${names}${lostIds.length > 4 ? '…' : ''}` : 'Revenue concentration test',
@@ -294,7 +294,7 @@ function simChurn(lv: Levers, bundle: DataBundle): SimOutput {
       m('Credit exposure removed', creditExposure, 0, 'money'),
     ],
     chart: [{ name: 'Retained', Baseline: Math.round(totalMonthly), Projected: Math.round(totalMonthly - lostMonthly) }],
-    narrative: `${scopeLabel.charAt(0).toUpperCase() + scopeLabel.slice(1)} generate about ${money(lostMonthly)}/mo — ${Math.round(share)}% of your ${money(totalMonthly)} monthly revenue. Losing them would also clear ${money(creditExposure)} of credit exposure but leave a serious hole to backfill.`,
+    narrative: `${scopeLabel.charAt(0).toUpperCase() + scopeLabel.slice(1)} generate about ${money(lostMonthly)}/mo, ${Math.round(share)}% of your ${money(totalMonthly)} monthly revenue. Losing them would also clear ${money(creditExposure)} of credit exposure but leave a serious hole to backfill.`,
     verdict,
     assumptions: [`Monthly revenue from actual sales history`, `Scope: ${scopeLabel}`],
   };
@@ -313,7 +313,7 @@ function simPromo(lv: Levers, bundle: DataBundle): SimOutput {
   const breakevenUplift = unitMargin > 0 ? (b.profit / (unitMargin * b.units) - 1) * 100 : Infinity;
   const profitDelta = newProfit - b.profit;
   const verdict = unitMargin <= 0
-    ? { tone: 'negative' as const, text: `A ${lv.discountPct}% discount sells ${b.label} below cost — every extra unit loses money. Don't run it.` }
+    ? { tone: 'negative' as const, text: `A ${lv.discountPct}% discount sells ${b.label} below cost, every extra unit loses money. Don't run it.` }
     : profitDelta >= 0
       ? { tone: 'positive' as const, text: `Accretive: the +${lv.upliftPct}% volume clears the break-even of ~+${Math.round(breakevenUplift)}%, adding ${money(profitDelta)}/mo in profit.` }
       : { tone: 'caution' as const, text: `Below break-even: you'd need ~+${Math.round(breakevenUplift)}% volume to hold profit but assumed +${lv.upliftPct}%. Profit falls ${money(-profitDelta)}/mo unless the lift is bigger.` };

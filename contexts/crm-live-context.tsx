@@ -1,9 +1,8 @@
 'use client';
-import Link from 'next/link';
-import { bulkJobReference } from '@/lib/bulk-jobs';
+// POS till activity over the POS WebSocket. Mounted only on /pos pages (app/(app)/pos/pos-live.tsx).
+// CRM notifications (the bell) live in contexts/crm-notifications-context.tsx.
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { Bell } from 'lucide-react';
 import { toast } from 'sonner';
 import { axiosPost } from '@/lib/api';
 
@@ -114,23 +113,3 @@ export function CrmLiveProvider({ children }: { children: React.ReactNode }) {
 }
 
 export const useCrmLive = () => useContext(LiveContext);
-
-export function CrmNotifications() {
-  const { enabled, notices } = useCrmLive();
-  if (!enabled) return null;
-  return <div className="mb-3 flex justify-end">
-    <details className="relative">
-      <summary className="flex h-10 cursor-pointer list-none items-center gap-2 rounded-md border bg-card px-3 text-sm font-medium">
-        <Bell size={16} /> Notifications
-      </summary>
-      <ul className="absolute right-0 z-30 mt-2 max-h-72 w-64 space-y-3 overflow-auto rounded-xl border bg-card p-4 text-sm shadow-lg">
-        {notices.map(item => <li key={item.id}>
-          <p className="font-medium">{item.title}</p>
-          {bulkJobReference(item.reference) && <Link className="block text-primary underline" href={`/jobs/${bulkJobReference(item.reference)}`}>View job</Link>}
-          <time dateTime={item.createdAt} className="text-xs text-muted-foreground">{new Date(item.createdAt).toLocaleString('en-NG', { timeZone: 'Africa/Lagos' })}</time>
-        </li>)}
-        {!notices.length && <li className="text-muted-foreground">No notifications yet</li>}
-      </ul>
-    </details>
-  </div>;
-}

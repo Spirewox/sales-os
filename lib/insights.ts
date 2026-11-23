@@ -8,9 +8,9 @@ import { deriveSegments } from './segmentation';
  * Semantic insight layer.
  *
  * Defines comparable "entities" (customers, suppliers, products, categories,
- * segments, hubs, agents) and a set of derived metrics for each — a context
+ * segments, hubs, agents) and a set of derived metrics for each, a context
  * layer over the raw data. `compare()` resolves metrics for two entities and
- * produces a scored, narrated comparison — enabling business questions that
+ * produces a scored, narrated comparison, enabling business questions that
  * aren't measured anywhere else (e.g. "which of these two vendors is better?").
  */
 
@@ -132,7 +132,7 @@ export function resolveMetrics(kind: EntityKind, id: string, d: DataBundle): Met
         m('aov', 'Avg Order Value', aov, money(aov), true, 'Revenue'),
         m('profit', 'Gross Profit', profit, money(profit), true, 'Profitability'),
         m('margin', 'Profit Margin', margin, pct(margin), true, 'Profitability'),
-        m('recency', 'Days Since Last Order', recency === Infinity ? 9999 : recency, recency === Infinity ? '—' : days(recency), false, 'Engagement'),
+        m('recency', 'Days Since Last Order', recency === Infinity ? 9999 : recency, recency === Infinity ? '-' : days(recency), false, 'Engagement'),
         m('cashRatio', 'Cash Payment Share', cashRatio, pct(cashRatio), true, 'Risk'),
         m('owed', 'Outstanding Credit', owed, money(owed), false, 'Risk'),
         m('overdue', 'Overdue Account', overdue, overdue ? 'Yes' : 'No', false, 'Risk'),
@@ -191,7 +191,7 @@ export function resolveMetrics(kind: EntityKind, id: string, d: DataBundle): Met
         m('margin', 'Margin', margin, pct(margin), true, 'Profitability'),
         m('perMonth', 'Sell Velocity / mo', perMonth, num(Math.round(perMonth)), true, 'Sales'),
         m('stock', 'Current Stock', it.currentStock, num(it.currentStock), null, 'Inventory'),
-        m('cover', 'Days of Cover', cover === Infinity ? 0 : cover, cover === Infinity ? '—' : days(cover), null, 'Inventory'),
+        m('cover', 'Days of Cover', cover === Infinity ? 0 : cover, cover === Infinity ? '-' : days(cover), null, 'Inventory'),
         m('price', 'Selling Price', it.baseSellingPrice, money(it.baseSellingPrice), null, 'Pricing'),
         m('cost', 'Avg Unit Cost', it.avgUnitCost, money(it.avgUnitCost), false, 'Cost'),
         m('suppliers', 'Supplier Sources', suppliersCount, num(suppliersCount), true, 'Sourcing'),
@@ -319,15 +319,15 @@ export function compare(kind: EntityKind, aId: string, bId: string, d: DataBundl
   const insights: Insight[] = [];
   if (aWins !== bWins) {
     const leader = aWins > bWins ? aLabel : bLabel;
-    insights.push({ text: `${leader} leads overall — ahead on ${Math.max(aWins, bWins)} of ${aWins + bWins} comparable metrics.`, winner: aWins > bWins ? 'a' : 'b' });
+    insights.push({ text: `${leader} leads overall, ahead on ${Math.max(aWins, bWins)} of ${aWins + bWins} comparable metrics.`, winner: aWins > bWins ? 'a' : 'b' });
   } else {
-    insights.push({ text: `${aLabel} and ${bLabel} are evenly matched (${aWins}–${bWins} on comparable metrics).`, winner: null });
+    insights.push({ text: `${aLabel} and ${bLabel} are evenly matched (${aWins}-${bWins} on comparable metrics).`, winner: null });
   }
   rows.filter((r) => r.winner && r.deltaPct > 0).sort((x, y) => y.deltaPct - x.deltaPct).slice(0, 5).forEach((r) => {
     const w = r.winner === 'a' ? aLabel : bLabel;
     const wv = r.winner === 'a' ? r.a.display : r.b!.display;
     const lv = r.winner === 'a' ? r.b!.display : r.a.display;
-    insights.push({ text: `${w} wins on ${r.label}: ${wv} vs ${lv} — a ${r.deltaPct}% gap.`, winner: r.winner });
+    insights.push({ text: `${w} wins on ${r.label}: ${wv} vs ${lv}, a ${r.deltaPct}% gap.`, winner: r.winner });
   });
 
   return { aLabel, bLabel, groups, aWins, bWins, insights };

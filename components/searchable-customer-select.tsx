@@ -112,7 +112,7 @@ export function SearchableCustomerSelect({
           onKeyDown={handleKeyDown}
           className={cn(
             'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 pr-9 text-sm focus:outline-none focus:ring-2 focus:ring-ring',
-            error && 'border-red-500',
+            error && 'border-destructive',
             inputClassName,
           )}
         />
@@ -123,7 +123,7 @@ export function SearchableCustomerSelect({
             className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
             aria-label="Clear customer selection"
           >
-            <X size={16} />
+            <X size={16} aria-hidden />
           </button>
         )}
       </div>
@@ -144,14 +144,14 @@ export function SearchableCustomerSelect({
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => selectCustomer(customer)}
                   className={cn(
-                    'flex w-full flex-col items-start px-3 py-2 text-left hover:bg-accent',
-                    customer.id === value && 'bg-accent',
+                    'flex w-full flex-col items-start px-3 py-2 text-left hover:bg-muted',
+                    customer.id === value && 'bg-muted',
                   )}
                 >
                   <span className="font-medium">{customerOptionLabel(customer)}</span>
                   {(customer.email || customer.companyName || customer.location) && (
                     <span className="text-xs text-muted-foreground">
-                      {[customer.email, customer.companyName, customer.location].filter(Boolean).join(' · ')}
+                      {[customer.email, customer.companyName, customer.location].filter(Boolean).join(', ')}
                     </span>
                   )}
                 </button>

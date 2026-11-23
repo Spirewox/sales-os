@@ -8,6 +8,7 @@ export const ROLE_COLOR_MAP: Record<RoleName, string> = {
   Finance: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
   'Customer Success': 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
   Cashier: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
+  'Kitchen Manager': 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
 };
 
 export function isPosRoleSelection(roleLabelName?: string): boolean {
@@ -28,7 +29,7 @@ export function getRoleDotClass(label: string): string {
   return getRoleBadgeClasses(label).split(' ')[0];
 }
 
-export type ConfirmActionType = 'deleteUser' | 'deleteHub' | 'deleteRole' | 'resetData' | 'resetRoles';
+export type ConfirmActionType = 'deleteUser' | 'deactivateUser' | 'deleteHub' | 'deactivateHub' | 'deleteRole' | 'resetRoles';
 
 export function getPasswordStrength(password: string): { label: string; color: string; width: string } {
   if (!password) return { label: '', color: '', width: 'w-0' };
@@ -51,23 +52,41 @@ export function getPasswordStrengthTextClass(color: string): string {
 
 export function formatHubCountLabel(activeCount: number, totalCount: number): string {
   const plural = activeCount === 1 ? '' : 's';
-  return `${activeCount} active hub${plural} · ${totalCount} total`;
+  return `${activeCount} active location${plural}, ${totalCount} total`;
+}
+
+export function getConfirmActionTitle(type: ConfirmActionType): string {
+  if (type === 'deleteUser') return 'Delete this user?';
+  if (type === 'deactivateUser') return 'Deactivate this user?';
+  if (type === 'deleteHub') return 'Delete this location?';
+  if (type === 'deactivateHub') return 'Deactivate this location?';
+  if (type === 'deleteRole') return 'Delete this role?';
+  return 'Reset role permissions?';
+}
+
+export function getConfirmActionLabel(type: ConfirmActionType): string {
+  if (type === 'deactivateUser' || type === 'deactivateHub') return 'Deactivate';
+  if (type === 'resetRoles') return 'Reset to defaults';
+  return 'Delete';
 }
 
 export function getConfirmActionMessage(type: ConfirmActionType): string {
   if (type === 'deleteUser') {
     return 'This will permanently delete this user. This action cannot be undone.';
   }
+  if (type === 'deactivateUser') {
+    return 'This person will no longer be able to sign in or use a till. You can activate them again later.';
+  }
   if (type === 'deleteHub') {
-    return 'This will permanently delete this hub. Ensure no team members, inventory, or customers are assigned to it.';
+    return 'This will permanently delete this location. Ensure no team members, inventory, or customers are assigned to it.';
+  }
+  if (type === 'deactivateHub') {
+    return 'This location will be hidden from location pickers and new activity. You can activate it again later.';
   }
   if (type === 'deleteRole') {
     return 'This will permanently delete this custom role. Users assigned to it may lose access until reassigned.';
   }
-  if (type === 'resetRoles') {
-    return 'This will reset system role permissions to their factory defaults. Custom roles are not affected.';
-  }
-  return 'This will erase all CRM data and restore factory defaults. This action cannot be undone.';
+  return 'This will reset system role permissions to their factory defaults. Custom roles are not affected.';
 }
 
 export function getPermissionGroupCheckboxClass(
@@ -134,6 +153,8 @@ type ConfirmActionDeps = {
   systemRoles: ApiRole[];
   onDeleteUser: (id: string) => Promise<unknown>;
   onDeleteHub: (id: string) => Promise<unknown>;
+  onDeactivateUser?: (id: string) => Promise<unknown>;
+  onDeactivateHub?: (id: string) => Promise<unknown>;
   onDeleteRole?: (id: string) => Promise<unknown>;
   onUpdateRole: (id: string, permissions: { module: string; submodules: string[] }[]) => Promise<unknown>;
   syncRolesFromApi: () => void;
@@ -171,13 +192,20 @@ export async function runConfirmAction(action: ConfirmAction, deps: ConfirmActio
     await deps.onDeleteHub(action.payload);
     return;
   }
+  if (action.type === 'deactivateUser' && action.payload) {
+    if (!deps.onDeactivateUser) throw new Error('Deactivating users is not available.');
+    await deps.onDeactivateUser(action.payload);
+    return;
+  }
+  if (action.type === 'deactivateHub' && action.payload) {
+    if (!deps.onDeactivateHub) throw new Error('Deactivating locations is not available.');
+    await deps.onDeactivateHub(action.payload);
+    return;
+  }
   if (action.type === 'deleteRole' && action.payload) {
     if (!deps.onDeleteRole) throw new Error('Role deletion is not available.');
     await deps.onDeleteRole(action.payload);
     return;
-  }
-  if (action.type === 'resetData') {
-    throw new Error('Local demo data reset is no longer available. Use the API-backed environment.');
   }
   if (action.type === 'resetRoles') {
     await resetAllRolePermissions(deps);
