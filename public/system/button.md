@@ -343,7 +343,7 @@ gen-docs writes the table from `ButtonPrimitive.Props` and `VariantProps<typeof 
 Not applicable: Button has no call sites on a screen, so no label length or count was measured on a real route this session. `whitespace-nowrap` keeps one line, and the wrap break at 390px is NOT SUPPLIED until a probe runs.
 
 ## Accessibility
-Rests on Base UI's `Button`, which renders a native `button` with `type="button"` by default (`node_modules/@base-ui/react/use-button/useButton.js:82`), so a Button inside a form does not submit unless `type="submit"` is passed (`trap/button-type`).
+Rests on Base UI's `Button`, which renders a native `button` with `type="button"` by default (Base UI useButton, in the installed @base-ui/react package), so a Button inside a form does not submit unless `type="submit"` is passed (`trap/button-type`).
 
 ### Keyboard
 | Key | Where focus is | Effect | Focus after | Checked by |

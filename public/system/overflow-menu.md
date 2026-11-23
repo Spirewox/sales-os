@@ -132,7 +132,7 @@ export default function OverflowMenuSizeSm() {
 | Focus visible | Keyboard focus on the trigger | Enter, Space or Down Arrow to open | 2px outline in `--ring` | by hand |
 | Open | Trigger pressed or opened by key | Move through items, select one, close with Escape or an outside press | Popup under the trigger, right edges aligned; trigger keeps the `bg-muted` fill; `aria-expanded="true"` | by hand |
 | Item highlighted | Pointer over an item, or arrow keys | Select it with Enter or a press | `data-highlighted` fill behind the row | by hand |
-| Item disabled | `disabled: true`, such as Export on an empty page at `app/(app)/audit/page.tsx:179` | Nothing: the item takes no selection | 50% opacity, `aria-disabled="true"`, `data-disabled` | by hand |
+| Item disabled | `disabled: true`, such as Export on an empty pilot page at `app/(app)/audit/page.tsx:179` | Nothing: the item takes no selection | 50% opacity, `aria-disabled="true"`, `data-disabled` | by hand |
 | Destructive | `destructive: true` on 14 items across 10 menus | Select it, which opens a confirm at 13 of 14 | Listed last, after a separator line | screenshot |
 | Item link | `href` set, `app/(app)/kitchen/job-panel.tsx:107` | Open it, or open it in a new tab from the browser | Renders `a`; `external` adds `target="_blank"` | by hand |
 | All hidden | Every item has `hidden: true`, such as the request row at `app/(app)/inventory/requests-tab.tsx:120` for someone else's request | Nothing | No trigger renders at all | by hand |
