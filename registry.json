@@ -210,10 +210,7 @@
       "markdown": "/system/button.md",
       "layer": "primitive",
       "status": "ready-with-gaps",
-      "replaces": [
-        "components/submit-button.tsx"
-      ],
-      "replacesNote": "Held: SubmitButton has loading, h-9 rounded-md and a solid destructive that Button lacks (G-03). Do not migrate until Button has them."
+      "replacesNote": "Not yet a replacement for components/submit-button.tsx: SubmitButton has loading, h-9 rounded-md and a solid destructive that Button lacks (G-03, migration held). Add replaces once Button has them."
     },
     {
       "id": "select",
