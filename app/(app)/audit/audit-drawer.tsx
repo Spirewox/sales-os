@@ -87,8 +87,8 @@ export function AuditDrawer({ log, onClose }: Readonly<{ log: AuditLog; onClose:
           )}
         </div>
       )}
-      {tab === 'rows' && bulk && <pre className="max-h-[60vh] overflow-auto rounded-md bg-muted p-3 text-xs">{JSON.stringify(bulk.rows ?? [], null, 2)}</pre>}
-      {tab === 'results' && bulk && <pre className="max-h-[60vh] overflow-auto rounded-md bg-muted p-3 text-xs">{JSON.stringify(bulk.results ?? bulk.summary ?? {}, null, 2)}</pre>}
+      {tab === 'rows' && bulk && <pre role="region" aria-label="Uploaded rows" tabIndex={0} className="max-h-[60dvh] overflow-auto overscroll-contain rounded-md bg-muted p-3 text-xs">{JSON.stringify(bulk.rows ?? [], null, 2)}</pre>}
+      {tab === 'results' && bulk && <pre role="region" aria-label="Upload results" tabIndex={0} className="max-h-[60dvh] overflow-auto overscroll-contain rounded-md bg-muted p-3 text-xs">{JSON.stringify(bulk.results ?? bulk.summary ?? {}, null, 2)}</pre>}
     </EntityDrawer>
   );
 }

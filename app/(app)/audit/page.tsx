@@ -118,10 +118,16 @@ function AuditTrail() {
     limit: pageSize,
   };
 
-  const { data: auditList, isFetching } = useAuditLogs(apiFilters);
+  const { data: fetchedList, isFetching } = useAuditLogs(apiFilters);
+  // Hold the last result on screen while the next page or filter loads, so the rows, tab counts,
+  // entry count and pagination keep their place instead of collapsing to a skeleton
+  // (trap/loading-layout-shift). Rows are held only within one tab, since tabs change the columns.
+  const [held, setHeld] = useState<{ tab: AuditTab; list: typeof fetchedList }>({ tab, list: fetchedList });
+  if (fetchedList && (fetchedList !== held.list || held.tab !== tab)) setHeld({ tab, list: fetchedList });
+  const auditList = fetchedList ?? (held.tab === tab ? held.list : undefined);
   const logs = auditList?.items;
   const meta = auditList?.meta ?? { page: 1, limit: pageSize, total: 0, totalPages: 1 };
-  const summary = auditList?.summary;
+  const summary = auditList?.summary ?? held.list?.summary;
   const tabCount: Record<AuditTab, number | undefined> = { all: summary?.total, bulk: summary?.bulk, sales: summary?.sales, inventory: summary?.inventory, customers: summary?.customers };
   const tabs = tabDefs.map((t) => ({ ...t, count: tabCount[t.id] }));
 
@@ -203,25 +209,27 @@ function AuditTrail() {
       />
 
       <SectionErrorBoundary label="Audit log" resetKey={tab}>
-        <DataTable
-          label={tab === 'bulk' ? 'Bulk uploads' : 'Audit log'}
-          columns={tab === 'bulk' ? bulkColumns : activityColumns}
-          rows={isFetching ? undefined : logs}
-          loading={isFetching}
-          getRowId={(l) => l.id}
-          onRowClick={setSelectedLog}
-          pageSize={pageSize}
-          pagination={{ page: meta.page, totalPages: meta.totalPages, onPageChange: setPage, pageSize, onPageSizeChange: (n) => { setPageSize(n); setPage(1); }, total: meta.total }}
-          empty={
-            <EmptyState
-              size="compact"
-              icon={<ScrollText />}
-              title={tab === 'bulk' ? 'No bulk uploads' : 'No activity found'}
-              description={chips.length ? 'Nothing matches these filters.' : 'Changes to sales, stock and customers will appear here.'}
-              action={chips.length ? <button type="button" onClick={clearAll} className="text-sm font-medium text-primary hover:underline">Clear filters</button> : undefined}
-            />
-          }
-        />
+        <div aria-busy={isFetching || undefined}>
+          <DataTable
+            label={tab === 'bulk' ? 'Bulk uploads' : 'Audit log'}
+            columns={tab === 'bulk' ? bulkColumns : activityColumns}
+            rows={logs}
+            loading={isFetching}
+            getRowId={(l) => l.id}
+            onRowClick={setSelectedLog}
+            pageSize={pageSize}
+            pagination={{ page: meta.page, totalPages: meta.totalPages, onPageChange: setPage, pageSize, onPageSizeChange: (n) => { setPageSize(n); setPage(1); }, total: meta.total }}
+            empty={
+              <EmptyState
+                size="compact"
+                icon={<ScrollText />}
+                title={tab === 'bulk' ? 'No bulk uploads' : 'No activity found'}
+                description={chips.length ? 'Nothing matches these filters.' : 'Changes to sales, stock and customers will appear here.'}
+                action={chips.length ? <button type="button" onClick={clearAll} className="text-sm font-medium text-primary hover:underline">Clear filters</button> : undefined}
+              />
+            }
+          />
+        </div>
       </SectionErrorBoundary>
 
 
