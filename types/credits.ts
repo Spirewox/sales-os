@@ -62,6 +62,14 @@ export interface CreditCustomerSummary {
   overdueCount: number;
   oldestDueDate: string | null;
   flaggedCount: number;
+  /** Optional: only present when the summary endpoint returns them. */
+  phone?: string;
+  hubId?: string;
+  hubName?: string;
+  overdueAmount?: number;
+  lastPaymentDate?: string | null;
+  dueThisWeekCount?: number;
+  dueThisWeekAmount?: number;
 }
 
 export interface CreditSummaryMetrics {

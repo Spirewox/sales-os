@@ -311,6 +311,8 @@ export interface Agent {
   joinedDate: string;
   avatar?: string;
   password?: string;
+  /** False when the account is deactivated (API `is_active`). */
+  isActive?: boolean;
 }
 
 export interface Task {
@@ -337,6 +339,8 @@ export interface Customer {
   segments?: string[];
   totalOrders: number;
   totalSpent: number;
+  /** YYYY-MM-DD of the latest non-voided sale, when the API sends it. */
+  lastPurchaseDate?: string;
   addedByAgentId?: string;
   addedByAgentName?: string;
   businessCategory?: string;
@@ -449,6 +453,8 @@ export interface Sale {
   paymentType?: string;
   paymentMode?: string;
   amountPaid?: number;
+  /** Credit due date (YYYY-MM-DD) when the API returns one on the sale. */
+  dueDate?: string;
 }
 
 export interface Feedback {

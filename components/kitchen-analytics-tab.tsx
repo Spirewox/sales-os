@@ -2,134 +2,139 @@
 
 import Link from 'next/link';
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { Banknote, ChefHat, Clock, FileCheck2, Percent, TrendingUp } from 'lucide-react';
-import { MetricValue } from '@/components/ui/metric-value';
-import { CardSkeleton } from '@/components/ui/loading-skeletons';
-import { useKitchenAnalytics } from '@/hooks/use-kitchen';
-import { naira, pct } from '@/lib/kitchen-types';
+import { useKitchenAnalytics, type KitchenAnalytics } from '@/hooks/use-kitchen';
+import { pct } from '@/lib/kitchen-types';
+import { CHART_TOOLTIP, formatAxisMoney, formatMoney, formatMoneyShort, plural } from '@/lib/format';
+import { AnalyticsPageSkeleton } from '@/components/ui/loading-skeletons';
+import { DataTable, EmptyState, KpiStrip, type Column, type KpiCell } from '@/components/app';
+import {
+  AXIS_TICK, BAR_CURSOR, LEGEND_STYLE, Panel, RankedBars, SourceNote, TabLayout, TwoCol, pctChange,
+} from '@/app/(app)/analytics/analytics-ui';
 
-// Same first two hues as the rest of Analytics (validated as a pair for light and dark).
-const REVENUE = '#0891b2';
-const PROFIT = '#ea580c';
+type Scope = { hub_id?: string; period?: string; date_from?: string; date_to?: string };
+type Outlet = KitchenAnalytics['by_outlet'][number];
+
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const monthLabel = (ym: string) => `${MONTHS.at(Number(ym.slice(5, 7)) - 1)} ${ym.slice(2, 4)}`;
-const compact = (v: number) => (Math.abs(v) >= 1e6 ? `₦${(v / 1e6).toFixed(1)}m` : Math.abs(v) >= 1e3 ? `₦${Math.round(v / 1e3)}k` : `₦${v}`);
-const minutes = (m: number | null) => (m == null ? '—' : m < 60 ? `${m} min` : `${Math.floor(m / 60)}h ${m % 60}m`);
+const minutes = (m: number | null) => (m == null ? '-' : m < 60 ? `${m} min` : `${Math.floor(m / 60)}h ${m % 60}m`);
 
-function Tile({ label, value, hint, icon }: { label: string; value: string | number; hint?: string; icon: React.ReactNode }) {
-  return (
-    <div className="rounded-xl border bg-card p-4">
-      <div className="mb-1 flex items-center gap-2 text-muted-foreground">
-        {icon}
-        <span className="text-xs font-medium">{label}</span>
-      </div>
-      <MetricValue value={value} className="font-bold" />
-      {hint && <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>}
-    </div>
-  );
-}
-
-export function KitchenAnalyticsTab({ scope }: { scope: { hub_id?: string; period?: string; date_from?: string; date_to?: string } }) {
+export function KitchenAnalyticsTab({ scope, prevScope }: Readonly<{ scope: Scope; prevScope?: Scope | null }>) {
   const q = useKitchenAnalytics(scope);
-  if (q.isPending) {
-    return <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">{Array.from({ length: 6 }, (_, i) => <CardSkeleton key={i} />)}</div>;
-  }
+  const prev = useKitchenAnalytics(prevScope ?? {}, { enabled: !!prevScope });
+  if (q.isPending) return <AnalyticsPageSkeleton />;
   if (q.isError) return <p role="alert" className="rounded-xl border p-5 text-sm text-destructive">{q.error.message}</p>;
   const a = q.data;
   const showCosts = a.completed.profit !== undefined;
+  const costed = a.completed.costed_jobs > 0;
   const months = a.by_month.map((m) => ({ ...m, label: monthLabel(m.month) }));
 
   if (!a.completed.jobs && !a.quotes.sent && !a.cancelled.jobs) {
     return (
-      <div className="rounded-xl border bg-card p-8 text-center">
-        <ChefHat size={28} className="mx-auto mb-2 text-muted-foreground" />
-        <p className="text-sm text-muted-foreground">No kitchen jobs completed, quoted or cancelled in this period.</p>
+      <div className="rounded-xl border bg-card">
+        <EmptyState title="No kitchen activity in this period" description="No kitchen jobs were completed, quoted or cancelled. Try a longer period." action={<Link href="/kitchen?tab=jobs" className="text-sm font-medium text-primary hover:underline">Open kitchen jobs</Link>} />
       </div>
     );
   }
 
+  const revChange = prevScope ? pctChange(a.completed.revenue, prev.data?.completed.revenue) : null;
+  const cells: KpiCell[] = [
+    { label: 'Kitchen revenue', value: formatMoneyShort(a.completed.revenue), change: revChange == null ? null : { pct: revChange }, detail: `${plural(a.completed.jobs, 'completed job')}, average ${formatMoneyShort(a.completed.average)}` },
+    showCosts
+      ? { label: 'Profit', value: costed ? formatMoneyShort(a.completed.profit) : '-', detail: costed ? `${pct(a.completed.margin)} margin on ${plural(a.completed.costed_jobs, 'costed job')}` : 'No costed jobs yet' }
+      : { label: 'Time to accept', value: minutes(a.time_to_accept.median_minutes), detail: a.time_to_accept.jobs ? `Median of ${a.time_to_accept.jobs} jobs` : 'No accepted jobs yet' },
+    { label: 'Still owed', value: formatMoneyShort(a.completed.owed), tone: a.completed.owed > 0 ? 'warning' : 'default', detail: `${formatMoneyShort(a.completed.collected)} collected` },
+    { label: 'Quotes turned into orders', value: pct(a.quotes.conversion_rate), detail: `${a.quotes.converted} of ${a.quotes.sent} sent` },
+  ];
+
+  // Second strip (cost views only): the old Food cost tile, and how much of the work is costed.
+  const costCells: KpiCell[] = showCosts
+    ? [
+        { label: 'Food cost', value: costed ? pct(a.completed.food_cost_pct) : '-', tone: costed && (a.completed.food_cost_pct ?? 0) > 0.3 ? 'warning' : 'default', detail: costed ? 'Of the price, costed jobs (target 30%)' : 'Needs jobs priced from recipes' },
+        { label: 'Costed jobs', value: `${a.completed.costed_jobs} of ${a.completed.jobs}`, detail: 'Completed jobs with a recipe cost' },
+      ]
+    : [];
+
+  const channels = [...a.by_channel].sort((x, y) => y.revenue - x.revenue).map((c) => ({ key: c.channel, label: c.channel, value: c.revenue, detail: plural(c.jobs, 'job') }));
+  const outletColumns: Column<Outlet>[] = [
+    { id: 'name', header: 'Outlet', mobile: 'title', cell: (o) => o.name, sortValue: (o) => o.name.toLowerCase() },
+    { id: 'jobs', header: 'Jobs', align: 'right', mobile: 'subtitle', cell: (o) => plural(o.jobs, 'job'), sortValue: (o) => o.jobs },
+    ...(showCosts ? [{ id: 'profit', header: 'Profit', align: 'right' as const, mobile: 'meta' as const, cell: (o: Outlet) => (costed ? formatMoney(o.profit) : '-'), sortValue: (o: Outlet) => o.profit ?? 0 }] : []),
+    { id: 'revenue', header: 'Revenue', align: 'right', mobile: 'value', cell: (o) => formatMoney(o.revenue), sortValue: (o) => o.revenue },
+  ];
+
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
-        <Tile label="Kitchen revenue" value={naira(a.completed.revenue)} hint={`${a.completed.jobs} completed job${a.completed.jobs === 1 ? '' : 's'} · average ${naira(a.completed.average)}`} icon={<Banknote size={14} />} />
-        {showCosts && (
-          <Tile label="Profit" value={a.completed.costed_jobs ? naira(a.completed.profit) : '—'} hint={a.completed.costed_jobs ? `${pct(a.completed.margin)} margin on ${a.completed.costed_jobs} costed job${a.completed.costed_jobs === 1 ? '' : 's'}` : 'No costed jobs yet'} icon={<TrendingUp size={14} />} />
+    <TabLayout>
+      <KpiStrip cells={cells} label="Kitchen figures" />
+      {costCells.length > 0 && <KpiStrip cells={costCells} label="Kitchen costs" />}
+
+      <Panel
+        title={showCosts ? 'Revenue and profit by month' : 'Revenue by month'}
+        subtitle={`Completed kitchen jobs by completion month${showCosts ? '; profit counts costed jobs only' : ''}`}
+        bodyClassName="h-[280px]"
+      >
+        {months.length > 0 ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={months} margin={{ top: 4, right: 8, left: 0, bottom: 0 }} barGap={2}>
+              <CartesianGrid vertical={false} stroke="var(--border)" />
+              <XAxis dataKey="label" axisLine={false} tickLine={false} tick={AXIS_TICK} />
+              <YAxis axisLine={false} tickLine={false} tick={AXIS_TICK} tickFormatter={(v) => formatAxisMoney(Number(v))} width={56} />
+              <Tooltip {...CHART_TOOLTIP} cursor={BAR_CURSOR} formatter={(value, name) => [formatMoney(Number(value)), name]} />
+              {showCosts && <Legend iconType="circle" iconSize={8} wrapperStyle={{ ...LEGEND_STYLE, paddingTop: 8 }} />}
+              <Bar dataKey="revenue" name="Revenue" fill="var(--series-1)" radius={[4, 4, 0, 0]} maxBarSize={32} />
+              {showCosts && <Bar dataKey="profit" name="Profit" fill="var(--series-2)" radius={[4, 4, 0, 0]} maxBarSize={32} />}
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <p className="flex h-full items-center justify-center text-sm text-muted-foreground">No completed jobs in this period</p>
         )}
-        {showCosts && <Tile label="Food cost" value={a.completed.costed_jobs ? pct(a.completed.food_cost_pct) : '—'} hint={a.completed.costed_jobs ? 'Of the price, costed jobs (target 30%)' : 'Needs jobs priced from recipes'} icon={<Percent size={14} />} />}
-        <Tile label="Still owed" value={naira(a.completed.owed)} hint={`${naira(a.completed.collected)} collected`} icon={<Banknote size={14} />} />
-        <Tile label="Time to accept" value={minutes(a.time_to_accept.median_minutes)} hint={a.time_to_accept.jobs ? `Median of ${a.time_to_accept.jobs}; average ${minutes(a.time_to_accept.average_minutes)}` : 'No accepted jobs yet'} icon={<Clock size={14} />} />
-        <Tile label="Quotes turned into orders" value={pct(a.quotes.conversion_rate)} hint={`${a.quotes.converted} of ${a.quotes.sent} sent · ${a.quotes.declined} declined · ${a.quotes.expired} expired`} icon={<FileCheck2 size={14} />} />
+      </Panel>
+
+      <TwoCol>
+        <Panel title="By channel" subtitle="Revenue from completed jobs">
+          <RankedBars rows={channels} format={formatMoneyShort} emptyText="No completed jobs" />
+        </Panel>
+        <Panel title="Quotes and response" subtitle="How quickly jobs are accepted and how quotes end">
+          <dl className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <dt className="text-xs text-muted-foreground">Time to accept (median)</dt>
+              <dd className="mt-0.5 font-semibold tabular-nums">{minutes(a.time_to_accept.median_minutes)}</dd>
+              <dd className="text-xs text-muted-foreground">{a.time_to_accept.jobs ? `Average ${minutes(a.time_to_accept.average_minutes)}` : 'No accepted jobs yet'}</dd>
+            </div>
+            <div>
+              <dt className="text-xs text-muted-foreground">Quotes sent</dt>
+              <dd className="mt-0.5 font-semibold tabular-nums">{a.quotes.sent}</dd>
+              <dd className="text-xs text-muted-foreground">{a.quotes.converted} ordered, {a.quotes.declined} declined, {a.quotes.expired} expired</dd>
+            </div>
+          </dl>
+          {a.cancelled.jobs > 0 && (
+            <div className="mt-5 border-t pt-4">
+              <p className="text-xs font-medium text-muted-foreground">{plural(a.cancelled.jobs, 'cancelled job')}</p>
+              <ul className="mt-2 space-y-1 text-sm">
+                {a.cancelled.top_reasons.map((r) => (
+                  <li key={r.reason} className="flex justify-between gap-4"><span>{r.reason}</span><span className="tabular-nums text-muted-foreground">{r.jobs}</span></li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </Panel>
+      </TwoCol>
+
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold">By outlet</h3>
+        <DataTable
+          label="Kitchen jobs by outlet"
+          columns={outletColumns}
+          rows={a.by_outlet}
+          getRowId={(o) => o.hub}
+          defaultSort={{ id: 'revenue', dir: 'desc' }}
+          empty={<p className="px-4 py-8 text-center text-sm text-muted-foreground">No completed jobs</p>}
+        />
       </div>
 
-      {months.length > 0 && (
-        <section className="rounded-xl border bg-card">
-          <div className="border-b p-5">
-            <h3 className="text-sm font-bold">{showCosts ? 'Revenue and profit by month' : 'Revenue by month'}</h3>
-            <p className="text-[11px] text-muted-foreground">Completed kitchen jobs, by completion month (Lagos time){showCosts ? '; profit counts costed jobs only' : ''}</p>
-          </div>
-          <div className="h-64 p-4">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={months} margin={{ top: 4, right: 8, left: 0, bottom: 0 }} barGap={2}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
-                <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }} />
-                <YAxis axisLine={false} tickLine={false} tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }} tickFormatter={(v) => compact(Number(v))} width={52} />
-                <Tooltip
-                  cursor={{ fill: 'var(--muted)', opacity: 0.4 }}
-                  contentStyle={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12, color: 'var(--foreground)' }}
-                  formatter={(value, name) => [naira(Number(value)), name]}
-                />
-                {showCosts && <Legend iconType="square" iconSize={8} wrapperStyle={{ fontSize: 11 }} />}
-                <Bar dataKey="revenue" name="Revenue" fill={REVENUE} radius={[4, 4, 0, 0]} maxBarSize={32} />
-                {showCosts && <Bar dataKey="profit" name="Profit" fill={PROFIT} radius={[4, 4, 0, 0]} maxBarSize={32} />}
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </section>
-      )}
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <section className="overflow-hidden rounded-xl border bg-card">
-          <h3 className="border-b p-5 text-sm font-bold">By outlet</h3>
-          <table className="w-full text-sm">
-            <thead className="bg-muted/40 text-xs text-muted-foreground">
-              <tr><th className="px-4 py-2 text-left">Outlet</th><th className="px-4 py-2 text-right">Jobs</th><th className="px-4 py-2 text-right">Revenue</th>{showCosts && <th className="px-4 py-2 text-right">Profit</th>}</tr>
-            </thead>
-            <tbody className="divide-y">
-              {a.by_outlet.map((o) => (
-                <tr key={o.hub}><td className="px-4 py-2">{o.name}</td><td className="px-4 py-2 text-right tabular-nums">{o.jobs}</td><td className="px-4 py-2 text-right tabular-nums">{naira(o.revenue)}</td>{showCosts && <td className="px-4 py-2 text-right tabular-nums">{a.completed.costed_jobs ? naira(o.profit) : '—'}</td>}</tr>
-              ))}
-              {!a.by_outlet.length && <tr><td colSpan={4} className="px-4 py-6 text-center italic text-muted-foreground">No completed jobs</td></tr>}
-            </tbody>
-          </table>
-        </section>
-        <section className="overflow-hidden rounded-xl border bg-card">
-          <h3 className="border-b p-5 text-sm font-bold">By channel</h3>
-          <table className="w-full text-sm">
-            <thead className="bg-muted/40 text-xs text-muted-foreground">
-              <tr><th className="px-4 py-2 text-left">Channel</th><th className="px-4 py-2 text-right">Jobs</th><th className="px-4 py-2 text-right">Revenue</th><th className="px-4 py-2 text-right">Share</th></tr>
-            </thead>
-            <tbody className="divide-y">
-              {a.by_channel.map((c) => (
-                <tr key={c.channel}><td className="px-4 py-2">{c.channel}</td><td className="px-4 py-2 text-right tabular-nums">{c.jobs}</td><td className="px-4 py-2 text-right tabular-nums">{naira(c.revenue)}</td><td className="px-4 py-2 text-right tabular-nums">{pct(a.completed.revenue ? c.revenue / a.completed.revenue : null)}</td></tr>
-              ))}
-              {!a.by_channel.length && <tr><td colSpan={4} className="px-4 py-6 text-center italic text-muted-foreground">No completed jobs</td></tr>}
-            </tbody>
-          </table>
-        </section>
-      </div>
-
-      {a.cancelled.jobs > 0 && (
-        <section className="rounded-xl border bg-card p-5">
-          <h3 className="text-sm font-bold">{a.cancelled.jobs} cancelled job{a.cancelled.jobs === 1 ? '' : 's'}</h3>
-          <ul className="mt-2 space-y-1 text-sm">
-            {a.cancelled.top_reasons.map((r) => <li key={r.reason} className="flex justify-between gap-4"><span>{r.reason}</span><span className="tabular-nums text-muted-foreground">{r.jobs}</span></li>)}
-          </ul>
-        </section>
-      )}
-
-      <p className="text-xs text-muted-foreground">
-        Kitchen jobs also post to Sales when completed, so these figures are included in Sales Analysis too. <Link href="/kitchen?tab=jobs" className="text-primary hover:underline">Open kitchen jobs</Link>
-      </p>
-    </div>
+      <SourceNote>
+        Kitchen jobs also post to Sales when completed, so they are included in the Sales tab too.{' '}
+        <Link href="/kitchen?tab=jobs" className="text-primary hover:underline">Open kitchen jobs</Link>
+      </SourceNote>
+    </TabLayout>
   );
 }

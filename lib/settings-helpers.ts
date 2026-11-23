@@ -29,7 +29,7 @@ export function getRoleDotClass(label: string): string {
   return getRoleBadgeClasses(label).split(' ')[0];
 }
 
-export type ConfirmActionType = 'deleteUser' | 'deleteHub' | 'deleteRole' | 'resetRoles';
+export type ConfirmActionType = 'deleteUser' | 'deactivateUser' | 'deleteHub' | 'deactivateHub' | 'deleteRole' | 'resetRoles';
 
 export function getPasswordStrength(password: string): { label: string; color: string; width: string } {
   if (!password) return { label: '', color: '', width: 'w-0' };
@@ -52,15 +52,36 @@ export function getPasswordStrengthTextClass(color: string): string {
 
 export function formatHubCountLabel(activeCount: number, totalCount: number): string {
   const plural = activeCount === 1 ? '' : 's';
-  return `${activeCount} active hub${plural} · ${totalCount} total`;
+  return `${activeCount} active location${plural}, ${totalCount} total`;
+}
+
+export function getConfirmActionTitle(type: ConfirmActionType): string {
+  if (type === 'deleteUser') return 'Delete this user?';
+  if (type === 'deactivateUser') return 'Deactivate this user?';
+  if (type === 'deleteHub') return 'Delete this location?';
+  if (type === 'deactivateHub') return 'Deactivate this location?';
+  if (type === 'deleteRole') return 'Delete this role?';
+  return 'Reset role permissions?';
+}
+
+export function getConfirmActionLabel(type: ConfirmActionType): string {
+  if (type === 'deactivateUser' || type === 'deactivateHub') return 'Deactivate';
+  if (type === 'resetRoles') return 'Reset to defaults';
+  return 'Delete';
 }
 
 export function getConfirmActionMessage(type: ConfirmActionType): string {
   if (type === 'deleteUser') {
     return 'This will permanently delete this user. This action cannot be undone.';
   }
+  if (type === 'deactivateUser') {
+    return 'This person will no longer be able to sign in or use a till. You can activate them again later.';
+  }
   if (type === 'deleteHub') {
-    return 'This will permanently delete this hub. Ensure no team members, inventory, or customers are assigned to it.';
+    return 'This will permanently delete this location. Ensure no team members, inventory, or customers are assigned to it.';
+  }
+  if (type === 'deactivateHub') {
+    return 'This location will be hidden from location pickers and new activity. You can activate it again later.';
   }
   if (type === 'deleteRole') {
     return 'This will permanently delete this custom role. Users assigned to it may lose access until reassigned.';
@@ -132,6 +153,8 @@ type ConfirmActionDeps = {
   systemRoles: ApiRole[];
   onDeleteUser: (id: string) => Promise<unknown>;
   onDeleteHub: (id: string) => Promise<unknown>;
+  onDeactivateUser?: (id: string) => Promise<unknown>;
+  onDeactivateHub?: (id: string) => Promise<unknown>;
   onDeleteRole?: (id: string) => Promise<unknown>;
   onUpdateRole: (id: string, permissions: { module: string; submodules: string[] }[]) => Promise<unknown>;
   syncRolesFromApi: () => void;
@@ -167,6 +190,16 @@ export async function runConfirmAction(action: ConfirmAction, deps: ConfirmActio
   }
   if (action.type === 'deleteHub' && action.payload) {
     await deps.onDeleteHub(action.payload);
+    return;
+  }
+  if (action.type === 'deactivateUser' && action.payload) {
+    if (!deps.onDeactivateUser) throw new Error('Deactivating users is not available.');
+    await deps.onDeactivateUser(action.payload);
+    return;
+  }
+  if (action.type === 'deactivateHub' && action.payload) {
+    if (!deps.onDeactivateHub) throw new Error('Deactivating locations is not available.');
+    await deps.onDeactivateHub(action.payload);
     return;
   }
   if (action.type === 'deleteRole' && action.payload) {

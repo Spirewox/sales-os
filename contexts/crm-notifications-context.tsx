@@ -10,7 +10,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { AlarmClock, Bell, BellRing, CheckCheck, ChefHat, FileCheck2, FileDown, Hourglass, Settings2, TriangleAlert, Wallet, type LucideIcon } from 'lucide-react';
 import { axiosGet, axiosPost } from '@/lib/api';
-import { HAS_API } from '@/lib/require-api';
+import { HAS_API, REAL_API } from '@/lib/require-api';
 import { cn } from '@/lib/utils';
 import type { CrmNotification } from '@/lib/kitchen-types';
 import { enablePush, pushStatus, type PushStatus } from '@/lib/push';
@@ -40,7 +40,7 @@ export function CrmNotificationsProvider({ children }: { children: React.ReactNo
   }, [router]);
 
   useEffect(() => {
-    if (!HAS_API || typeof EventSource === 'undefined') return;
+    if (!REAL_API || typeof EventSource === 'undefined') return;
     let stopped = false;
     let source: EventSource | undefined;
     let retry: ReturnType<typeof setTimeout> | undefined;
@@ -156,7 +156,7 @@ function splitTitle(title: string): { label: string; subject: string } {
   return i > 0 ? { label: title.slice(0, i), subject: title.slice(i + 2) } : { label: '', subject: title };
 }
 
-export function NotificationBell() {
+export function NotificationBell({ placement = 'page' }: Readonly<{ placement?: 'page' | 'sidebar' }> = {}) {
   const qc = useQueryClient();
   const { connected, inbox: data, loading } = useCrmNotifications();
   const [open, setOpen] = useState(false);
@@ -213,22 +213,26 @@ export function NotificationBell() {
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-label={unread ? `Notifications, ${unread} unread` : 'Notifications'}
-        className="relative inline-flex h-10 items-center gap-2 rounded-md border bg-card px-3 text-sm font-medium hover:bg-accent"
+        className={cn(
+          'relative inline-flex items-center justify-center rounded-md transition-colors',
+          placement === 'sidebar'
+            ? 'h-9 w-9 text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+            : 'h-9 w-9 border bg-card hover:bg-muted',
+        )}
       >
-        <Bell size={16} />
-        <span className="hidden sm:inline">Notifications</span>
+        <Bell size={18} aria-hidden />
         {unread > 0 && (
-          <span className="absolute -right-1.5 -top-1.5 inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-white">{unread > 99 ? '99+' : unread}</span>
+          <span className="absolute -right-1 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-xs font-semibold tabular-nums text-destructive-foreground">{unread > 99 ? '99+' : unread}</span>
         )}
       </button>
       {open && (
-        <div className="absolute right-0 z-40 mt-2 flex w-[min(24rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-xl border bg-card shadow-xl" role="dialog" aria-label="Notifications">
+        <div className={cn('absolute z-50 mt-2 flex w-[min(24rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-xl border bg-card shadow-xl', placement === 'sidebar' ? 'left-0' : 'right-0')} role="dialog" aria-label="Notifications">
           <div className="space-y-3 border-b px-4 pb-3 pt-3.5">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <p className="text-base font-semibold">Notifications</p>
                 <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground" title={connected ? 'Updates arrive instantly' : 'Checking every minute'}>
-                  <span className={cn('h-1.5 w-1.5 rounded-full', connected ? 'bg-green-500' : 'bg-muted-foreground/40')} aria-hidden />
+                  <span className={cn('h-1.5 w-1.5 rounded-full', connected ? 'bg-primary' : 'bg-muted-foreground/40')} aria-hidden />
                   {connected ? 'Live' : 'Offline'}
                 </span>
               </div>

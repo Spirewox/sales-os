@@ -6,6 +6,7 @@ import { AuthContextType } from '@/types';
 import { useWhoAmI } from '@/hooks/use-queries';
 import { axiosPost } from '@/lib/api';
 import { clearWhoAmICache } from '@/lib/whoami-cache';
+import { MOCK_AUTH, setMockSession } from '@/lib/mock-auth';
 import { useQueryClient } from '@tanstack/react-query';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -42,14 +43,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [isError, queryClient]);
 
   const login = async (email: string, password: string) => {
-    await axiosPost('auth/login', { identifier: email, password }, true);
+    if (MOCK_AUTH) setMockSession(true);
+    else await axiosPost('auth/login', { identifier: email, password }, true);
     await refetch();
     router.replace('/');
   };
 
   const logout = async () => {
     try {
-      await axiosPost('auth/logout', {}, true);
+      if (MOCK_AUTH) setMockSession(false);
+      else await axiosPost('auth/logout', {}, true);
     } finally {
       clearWhoAmICache();
       queryClient.clear();

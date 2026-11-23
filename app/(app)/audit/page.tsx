@@ -1,444 +1,231 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { Suspense, useEffect, useState } from 'react';
+import Link from 'next/link';
+import { Box, Banknote, User, Shield, Upload, ScrollText, Download } from 'lucide-react';
 import { useAuditLogs, useAgents } from '@/hooks/use-queries';
-import { History, Search, Filter, Box, Banknote, User, Shield, Clock, CalendarDays, Upload, X } from 'lucide-react';
+import { useUrlState } from '@/hooks/use-url-state';
 import type { AuditLog } from '@/types';
-import { TableSkeleton } from '@/components/ui/loading-skeletons';
 import { formatAuditAction, formatAuditEntity } from '@/lib/api-mappers';
+import { formatDate } from '@/lib/format';
+import { parsePeriod, periodLabel, periodRange, periodToParams } from '@/lib/period';
+import { FilterSelect } from '@/components/filter-select';
+import { usePageSize } from '@/hooks/use-page-size';
+import {
+  DataTable, EmptyState, FilterBar, MoreFilterField, OverflowMenu, PageHeader, PeriodSelect, SectionErrorBoundary,
+  SectionTabs, StatusBadge, useSectionTab, type Column, type FilterChip, type SectionTab,
+} from '@/components/app';
+import { auditDetailsSummary, auditRecordHref, downloadAuditCsv } from './audit-details';
+import { AuditDrawer, timeOf } from './audit-drawer';
 
-type DatePreset = 'today' | '7days' | '30days' | 'all';
 type AuditTab = 'all' | 'bulk' | 'sales' | 'inventory' | 'customers';
+const ENTITIES = ['Inventory', 'Sale', 'Customer', 'System'] as const;
+const MODULES = [{ value: 'sales', label: 'Sales' }, { value: 'inventory', label: 'Inventory' }, { value: 'customers', label: 'Customers' }, { value: 'system', label: 'System' }] as const;
+const PAGE_SIZE = 25;
 
-function getPresetRange(preset: DatePreset): { from: string; to: string } {
-  const now = new Date();
-  const to = now.toISOString().split('T')[0];
-  if (preset === 'all') return { from: '', to: '' };
-  if (preset === 'today') return { from: to, to };
-  const d = new Date(now);
-  d.setDate(d.getDate() - (preset === '7days' ? 7 : 30));
-  return { from: d.toISOString().split('T')[0], to };
-}
 
-const ENTITY_MAP: Record<string, string | undefined> = {
-  All: undefined,
-  Inventory: 'Inventory',
-  Sale: 'Sale',
-  Customer: 'Customer',
-  System: 'System',
+const ENTITY_ICON: Record<string, React.ReactNode> = {
+  Inventory: <Box size={16} aria-hidden className="text-muted-foreground" />,
+  Sale: <Banknote size={16} aria-hidden className="text-muted-foreground" />,
+  Customer: <User size={16} aria-hidden className="text-muted-foreground" />,
+  BulkUpload: <Upload size={16} aria-hidden className="text-muted-foreground" />,
 };
+const entityIcon = (type: string) => ENTITY_ICON[type] ?? <Shield size={16} aria-hidden className="text-muted-foreground" />;
 
-function formatNaira(n: number): string {
-  return `₦${n.toLocaleString('en-NG', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
+/** Record type, linked to the record's page where one exists. */
+function RecordCell({ log }: Readonly<{ log: AuditLog }>) {
+  const href = auditRecordHref(log);
+  const body = <>{entityIcon(log.entityType)}{formatAuditEntity(log.entityType)}</>;
+  if (!href) return <span className="inline-flex items-center gap-1.5 whitespace-nowrap">{body}</span>;
+  return (
+    <Link
+      href={href}
+      onClick={(e) => e.stopPropagation()}
+      title={`Open this ${formatAuditEntity(log.entityType).toLowerCase()}`}
+      className="inline-flex items-center gap-1.5 whitespace-nowrap font-medium text-primary hover:underline [&_svg]:text-primary"
+    >
+      {body}
+    </Link>
+  );
 }
 
-function parseMoneyToken(text: string): number | null {
-  const n = Number(text.replace(/[₦,\s]/g, ''));
-  return Number.isFinite(n) ? n : null;
-}
-
-function formatMoneyArrows(text: string): string {
-  const sep = text.indexOf('→');
-  if (sep < 0) return text;
-  const left = text.slice(0, sep).trim();
-  const right = text.slice(sep + 1).trim();
-  const na = parseMoneyToken(left);
-  const nb = parseMoneyToken(right);
-  if (na == null || nb == null) return text;
-  return `${formatNaira(na)} → ${formatNaira(nb)}`;
-}
-
-type DetailRow = { label?: string; text: string };
-
-function parseAuditDetailRows(details: string): DetailRow[] | null {
-  if (!details?.trim()) return null;
-  const lower = details.toLowerCase();
-  const looksStructured =
-    details.includes('\n') ||
-    details.includes('→') ||
-    lower.includes('unit cost') ||
-    lower.includes('list price');
-  if (!looksStructured) return null;
-
-  const rows: DetailRow[] = [];
-  const chunks = details
-    .replace(/,\s*(?=cost\s)/gi, '\n')
-    .replace(/,\s*(?=price\s)/gi, '\n')
-    .split('\n')
-    .map((s) => s.trim())
-    .filter(Boolean);
-
-  for (const chunk of chunks) {
-    const colon = chunk.indexOf(':');
-    if (colon > 0 && chunk.includes('→')) {
-      rows.push({
-        label: chunk.slice(0, colon).trim(),
-        text: formatMoneyArrows(chunk.slice(colon + 1).trim()),
-      });
-      continue;
-    }
-    const chunkLower = chunk.toLowerCase();
-    if (chunkLower.startsWith('cost ')) {
-      rows.push({ label: 'Unit cost', text: formatMoneyArrows(chunk.slice(5).trim()) });
-      continue;
-    }
-    if (chunkLower.startsWith('price ')) {
-      rows.push({ label: 'List price', text: formatMoneyArrows(chunk.slice(6).trim()) });
-      continue;
-    }
-    rows.push({ text: formatMoneyArrows(chunk) });
-  }
-
-  return rows.length ? rows : null;
-}
-
-function auditDetailsSummary(details: string): string {
-  const rows = parseAuditDetailRows(details);
-  if (!rows?.length) return details || '—';
-  const change = rows.find((r) => r.label && /cost|price/i.test(r.label));
-  if (change) return `${change.label} ${change.text}`;
-  return rows[0].text;
+function When({ ts }: Readonly<{ ts: string }>) {
+  return (
+    <span className="whitespace-nowrap">
+      <span className="font-medium">{formatDate(ts, { day: 'numeric', month: 'short' })}</span>
+      <span className="ml-1.5 text-xs text-muted-foreground tabular-nums">{timeOf(ts)}</span>
+    </span>
+  );
 }
 
 export default function AuditTrailPage() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterEntity, setFilterEntity] = useState('All');
-  const [filterModule, setFilterModule] = useState<'All' | 'sales' | 'inventory' | 'customers' | 'system'>('All');
-  const [filterAgent, setFilterAgent] = useState('All');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
-  const [activePreset, setActivePreset] = useState<DatePreset | null>('all');
-  const [activeTab, setActiveTab] = useState<AuditTab>('all');
-  const [page, setPage] = useState(1);
-  const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
+  return (
+    <Suspense fallback={null}>
+      <AuditTrail />
+    </Suspense>
+  );
+}
 
+function AuditTrail() {
+  const { get, set, params } = useUrlState();
+  const period = parsePeriod(params, 'all');
+  const entity = get('entity') ?? 'All';
+  const agent = get('agent') ?? 'All';
+  const moduleParam = get('module');
+  const moduleFilter = MODULES.some((m) => m.value === moduleParam) ? moduleParam! : 'All';
+  const urlSearch = get('q') ?? '';
+  const [search, setSearch] = useState(urlSearch);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = usePageSize('audit', PAGE_SIZE);
+  const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
   const { data: agents = [] } = useAgents();
 
-  const apiFilters = useMemo(() => {
-    const entityType = ENTITY_MAP[filterEntity];
-    const tabFilters =
-      activeTab === 'bulk'
-        ? { category: 'bulk_upload' as const }
-        : activeTab === 'all'
-          ? {}
-          : { module: activeTab as 'sales' | 'inventory' | 'customers' };
-
-    return {
-      ...(searchTerm.trim() ? { search: searchTerm.trim() } : {}),
-      ...(entityType ? { entity_type: entityType } : {}),
-      ...(filterModule !== 'All' ? { module: filterModule } : {}),
-      ...(filterAgent !== 'All' ? { user_id: filterAgent } : {}),
-      ...(dateFrom ? { date_from: dateFrom } : {}),
-      ...(dateTo ? { date_to: dateTo } : {}),
-      ...tabFilters,
-      page,
-      limit: 25,
-    };
-  }, [searchTerm, filterEntity, filterModule, filterAgent, dateFrom, dateTo, activeTab, page]);
-
-  const { data: auditList, isLoading, isFetching } = useAuditLogs(apiFilters);
-  const logs = auditList?.items ?? [];
-  const meta = auditList?.meta ?? { page: 1, limit: 25, total: 0, totalPages: 1 };
-  const summary = auditList?.summary ?? { total: 0, bulk: 0, sales: 0, inventory: 0, customers: 0 };
-
+  // Search updates the URL after typing pauses.
   useEffect(() => {
-    setPage(1);
-  }, [searchTerm, filterEntity, filterModule, filterAgent, dateFrom, dateTo, activeTab]);
+    if (search === urlSearch) return;
+    const t = setTimeout(() => set({ q: search.trim() || null }), 300);
+    return () => clearTimeout(t);
+  }, [search, urlSearch, set]);
 
-  const applyPreset = (preset: DatePreset) => {
-    setActivePreset(preset);
-    const range = getPresetRange(preset);
-    setDateFrom(range.from);
-    setDateTo(range.to);
-  };
-
-  const handleDateChange = (field: 'from' | 'to', value: string) => {
-    setActivePreset(null);
-    if (field === 'from') setDateFrom(value);
-    else setDateTo(value);
-  };
-
-  const getEntityIcon = (type: string) => {
-    const map: Record<string, React.ReactNode> = {
-      Inventory: <Box size={16} className="text-blue-500" />,
-      Sale: <Banknote size={16} className="text-green-500" />,
-      Customer: <User size={16} className="text-purple-500" />,
-      BulkUpload: <Upload size={16} className="text-indigo-500" />,
-    };
-    return map[type] || <Shield size={16} className="text-slate-500" />;
-  };
-
-  const presetLabels: Record<DatePreset, string> = {
-    today: 'Today',
-    '7days': 'Last 7 Days',
-    '30days': 'Last 30 Days',
-    all: 'All',
-  };
-
-  const tabs: { key: AuditTab; label: string; count: number }[] = [
-    { key: 'all', label: 'All Logs', count: summary.total },
-    { key: 'bulk', label: 'Bulk Uploads', count: summary.bulk },
-    { key: 'sales', label: 'Sales', count: summary.sales },
-    { key: 'inventory', label: 'Inventory', count: summary.inventory },
-    { key: 'customers', label: 'Customers', count: summary.customers },
+  const tabDefs: SectionTab<AuditTab>[] = [
+    { id: 'all', label: 'All activity' },
+    { id: 'sales', label: 'Sales' },
+    { id: 'inventory', label: 'Inventory' },
+    { id: 'customers', label: 'Customers' },
+    { id: 'bulk', label: 'Bulk uploads' },
   ];
+  const tab = useSectionTab(tabDefs, 'all');
+  const range = periodRange(period);
+
+  const filterKey = [tab, entity, moduleFilter, agent, urlSearch, range.from, range.to].join('|');
+  const [seenKey, setSeenKey] = useState(filterKey);
+  if (seenKey !== filterKey) {
+    setSeenKey(filterKey);
+    setPage(1);
+  }
+
+  // The query key is serialised, so a plain object is fine here.
+  const apiFilters = {
+    ...(urlSearch.trim() ? { search: urlSearch.trim() } : {}),
+    ...(entity !== 'All' ? { entity_type: entity } : {}),
+    ...(agent !== 'All' ? { user_id: agent } : {}),
+    // A section tab picks its own module, as before; the Module filter applies on All activity.
+    ...(moduleFilter !== 'All' && tab === 'all' ? { module: moduleFilter as 'sales' | 'inventory' | 'customers' | 'system' } : {}),
+    ...(range.from ? { date_from: range.from } : {}),
+    ...(range.to ? { date_to: range.to } : {}),
+    ...(tab === 'bulk' ? { category: 'bulk_upload' } : tab === 'all' ? {} : { module: tab as 'sales' | 'inventory' | 'customers' }),
+    page,
+    limit: pageSize,
+  };
+
+  const { data: auditList, isFetching } = useAuditLogs(apiFilters);
+  const logs = auditList?.items;
+  const meta = auditList?.meta ?? { page: 1, limit: pageSize, total: 0, totalPages: 1 };
+  const summary = auditList?.summary;
+  const tabCount: Record<AuditTab, number | undefined> = { all: summary?.total, bulk: summary?.bulk, sales: summary?.sales, inventory: summary?.inventory, customers: summary?.customers };
+  const tabs = tabDefs.map((t) => ({ ...t, count: tabCount[t.id] }));
+
+  const agentName = agents.find((a) => a.id === agent)?.name;
+  const chips: FilterChip[] = [
+    ...(period.preset !== 'all' ? [{ key: 'period', label: periodLabel(period), onRemove: () => set(periodToParams({ preset: 'all' }, 'all')) }] : []),
+    ...(entity !== 'All' ? [{ key: 'entity', label: `Record: ${entity}`, onRemove: () => set({ entity: null }) }] : []),
+    ...(moduleFilter !== 'All' && tab === 'all' ? [{ key: 'module', label: `Module: ${MODULES.find((m) => m.value === moduleFilter)!.label}`, onRemove: () => set({ module: null }) }] : []),
+    ...(agent !== 'All' ? [{ key: 'agent', label: `By ${agentName ?? 'user'}`, onRemove: () => set({ agent: null }) }] : []),
+    ...(urlSearch ? [{ key: 'q', label: `"${urlSearch}"`, onRemove: () => { setSearch(''); set({ q: null }); } }] : []),
+  ];
+  const clearAll = () => { setSearch(''); set({ q: null, entity: null, module: null, agent: null, period: null, from: null, to: null }); };
 
   const summaryNumber = (log: AuditLog, key: string) => {
     const value = log.bulkUpload?.summary?.[key];
-    return typeof value === 'number' || typeof value === 'string' ? value : '—';
+    return typeof value === 'number' || typeof value === 'string' ? value : '-';
   };
 
-  const renderBulkTable = () => (
-    <div className="rounded-xl border bg-card overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/50 border-b text-[10px] uppercase font-bold text-muted-foreground tracking-wider">
-            <tr>
-              <th className="h-12 px-4 text-left">Time</th>
-              <th className="h-12 px-4 text-left">User</th>
-              <th className="h-12 px-4 text-left">Domain</th>
-              <th className="h-12 px-4 text-left">Type</th>
-              <th className="h-12 px-4 text-left">File</th>
-              <th className="h-12 px-4 text-left">Rows</th>
-              <th className="h-12 px-4 text-left">Processed</th>
-              <th className="h-12 px-4 text-left">Status</th>
-              <th className="h-12 px-4 text-left">Details</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {!isFetching && logs.map((log) => (
-              <tr key={log.id} className="hover:bg-muted/30 cursor-pointer" onClick={() => setSelectedLog(log)}>
-                <td className="p-4 whitespace-nowrap">
-                  <span className="font-semibold">{new Date(log.timestamp).toLocaleDateString()}</span>
-                  <span className="block text-[10px] text-muted-foreground">{new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                </td>
-                <td className="p-4">{log.userName}</td>
-                <td className="p-4 capitalize">{log.bulkUpload?.domain ?? '—'}</td>
-                <td className="p-4">{log.bulkUpload?.importType ?? '—'}</td>
-                <td className="p-4 max-w-[180px] truncate" title={log.bulkUpload?.fileName}>{log.bulkUpload?.fileName ?? '—'}</td>
-                <td className="p-4">
-                  {summaryNumber(log, 'total')} total
-                  <span className="block text-[10px] text-muted-foreground">
-                    {summaryNumber(log, 'valid')} valid / {summaryNumber(log, 'invalid')} invalid
-                  </span>
-                </td>
-                <td className="p-4">
-                  {summaryNumber(log, 'processed')} processed
-                  <span className="block text-[10px] text-muted-foreground">
-                    {summaryNumber(log, 'imported')} imported / {summaryNumber(log, 'failed')} failed
-                  </span>
-                </td>
-                <td className="p-4"><span className="px-2.5 py-1 rounded-md bg-secondary text-secondary-foreground text-xs font-bold uppercase border">{log.bulkUpload?.stage ?? log.action}</span></td>
-                <td className="p-4"><button type="button" onClick={(e) => { e.stopPropagation(); setSelectedLog(log); }} className="text-primary text-xs font-semibold hover:underline">View rows</button></td>
-              </tr>
-            ))}
-            {!isFetching && logs.length === 0 && <tr><td colSpan={9} className="p-12 text-center text-muted-foreground italic">No bulk upload logs found.</td></tr>}
-            {isFetching && (
-              <tr>
-                <td colSpan={9} className="p-0">
-                  <TableSkeleton rows={6} cols={9} />
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
+  const activityColumns: Column<AuditLog>[] = [
+    { id: 'time', header: 'Time', mobile: 'value', cell: (l) => <When ts={l.timestamp} /> },
+    { id: 'user', header: 'User', mobile: 'subtitle', cell: (l) => <span className="whitespace-nowrap">{l.userName}</span> },
+    { id: 'location', header: 'Location', hideBelow: 'lg', cell: (l) => <span className="whitespace-nowrap text-muted-foreground">{l.location || '-'}</span> },
+    { id: 'entity', header: 'Record', mobile: 'meta', cell: (l) => <RecordCell log={l} /> },
+    { id: 'action', header: 'Action', mobile: 'meta', cell: (l) => <StatusBadge tone="neutral">{formatAuditAction(l.action)}</StatusBadge> },
+    { id: 'summary', header: 'What happened', mobile: 'title', cell: (l) => <span className="line-clamp-2">{auditDetailsSummary(l.details)}</span>, className: 'max-w-md' },
+  ];
+
+  const bulkColumns: Column<AuditLog>[] = [
+    { id: 'file', header: 'File', mobile: 'title', cell: (l) => <span className="block max-w-[220px] truncate" title={l.bulkUpload?.fileName}>{l.bulkUpload?.fileName ?? 'Upload'}</span> },
+    { id: 'type', header: 'Type', mobile: 'subtitle', cell: (l) => <span className="capitalize">{[l.bulkUpload?.domain, l.bulkUpload?.importType].filter(Boolean).join(', ') || '-'}</span> },
+    { id: 'rows', header: 'Rows', align: 'right', mobile: 'meta', cell: (l) => <span className="flex flex-col items-end"><span>{summaryNumber(l, 'total')} total</span><span className="text-xs text-muted-foreground">{summaryNumber(l, 'valid')} valid, {summaryNumber(l, 'invalid')} invalid</span></span> },
+    { id: 'imported', header: 'Processed', align: 'right', hideBelow: 'lg', cell: (l) => <span className="flex flex-col items-end"><span>{summaryNumber(l, 'processed')} processed</span><span className="text-xs text-muted-foreground">{summaryNumber(l, 'imported')} imported, {summaryNumber(l, 'failed')} failed</span></span> },
+    { id: 'stage', header: 'Status', mobile: 'meta', cell: (l) => <StatusBadge tone="neutral">{l.bulkUpload?.stage ?? formatAuditAction(l.action)}</StatusBadge> },
+    { id: 'user', header: 'User', hideBelow: 'lg', cell: (l) => l.userName },
+    { id: 'time', header: 'Time', mobile: 'value', cell: (l) => <When ts={l.timestamp} /> },
+  ];
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <div><h1 className="text-2xl font-semibold tracking-tight flex items-center gap-3"><History className="text-primary" /> System Audit Trail</h1><p className="text-muted-foreground">Traceability of all major operations and stock movements.</p></div>
+    <div className="space-y-5">
+      <PageHeader
+        title="Audit trail"
+        description="Who changed what, and when, across sales, stock and customers."
+        overflow={
+          <OverflowMenu
+            label="Audit trail actions"
+            items={[{
+              label: 'Export this page (CSV)',
+              icon: <Download />,
+              disabled: !logs?.length,
+              onSelect: () => logs && downloadAuditCsv(logs, `audit-trail-${tab}-page-${meta.page}.csv`),
+            }]}
+          />
+        }
+        tabs={<SectionTabs label="Audit sections" tabs={tabs} defaultTab="all" />}
+      />
 
-      <div className="flex flex-col gap-4 bg-card p-4 rounded-lg border">
-        <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-          <div className="relative w-full sm:w-80"><Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" /><input type="text" placeholder="Search by agent or action..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 pl-10 text-sm focus:outline-none focus:ring-1 focus:ring-ring" /></div>
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="flex items-center gap-2 border rounded-md px-3 py-1.5 bg-background"><Filter size={14} className="text-muted-foreground" /><select value={filterEntity} onChange={(e) => setFilterEntity(e.target.value)} className="bg-transparent border-none text-sm font-medium focus:outline-none"><option value="All">All Entities</option><option>Inventory</option><option>Sale</option><option>Customer</option><option>System</option></select></div>
-            <div className="flex items-center gap-2 border rounded-md px-3 py-1.5 bg-background"><Box size={14} className="text-muted-foreground" /><select value={filterModule} onChange={(e) => setFilterModule(e.target.value as 'All' | 'sales' | 'inventory' | 'customers' | 'system')} className="bg-transparent border-none text-sm font-medium focus:outline-none"><option value="All">All Modules</option><option value="sales">Sales</option><option value="inventory">Inventory</option><option value="customers">Customers</option><option value="system">System</option></select></div>
-            <div className="flex items-center gap-2 border rounded-md px-3 py-1.5 bg-background"><User size={14} className="text-muted-foreground" /><select value={filterAgent} onChange={(e) => setFilterAgent(e.target.value)} className="bg-transparent border-none text-sm font-medium focus:outline-none"><option value="All">All Agents</option>{agents.map((agent) => <option key={agent.id} value={agent.id}>{agent.name}</option>)}</select></div>
-          </div>
-        </div>
-
-        <div className="flex flex-col sm:flex-row items-center gap-3">
-          <div className="flex items-center gap-2">
-            <CalendarDays size={14} className="text-muted-foreground" />
-            <input type="date" value={dateFrom} onChange={(e) => handleDateChange('from', e.target.value)} className="h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-ring" />
-            <span className="text-muted-foreground text-sm">to</span>
-            <input type="date" value={dateTo} onChange={(e) => handleDateChange('to', e.target.value)} className="h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-ring" />
-          </div>
-          <div className="flex items-center gap-1.5">
-            {(['today', '7days', '30days', 'all'] as DatePreset[]).map((preset) => (
-              <button
-                key={preset}
-                onClick={() => applyPreset(preset)}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                  activePreset === preset
-                    ? 'bg-primary text-primary-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/50 border'
-                }`}
-              >
-                {presetLabels[preset]}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-2 flex-wrap">
-        {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            type="button"
-            onClick={() => setActiveTab(tab.key)}
-            className={`px-3 py-1.5 rounded-md text-xs font-medium border transition-colors ${activeTab === tab.key ? 'bg-primary text-primary-foreground' : 'bg-background text-muted-foreground hover:text-foreground'}`}
-          >
-            {tab.label} ({tab.count})
-          </button>
-        ))}
-      </div>
-
-      <p className="text-sm text-muted-foreground">
-        Showing{' '}
-        <span className="font-semibold text-foreground">
-          {meta.total === 0 ? 0 : (meta.page - 1) * meta.limit + 1}–{Math.min(meta.page * meta.limit, meta.total)}
-        </span>{' '}
-        of <span className="font-semibold text-foreground">{meta.total}</span> entries
-      </p>
-
-      {activeTab === 'bulk' ? (
-        renderBulkTable()
-      ) : (
-        <div className="rounded-xl border bg-card overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/50 border-b text-[10px] uppercase font-bold text-muted-foreground tracking-wider"><tr><th className="h-12 px-6 text-left">Timestamp</th><th className="h-12 px-6 text-left">Agent</th><th className="h-12 px-6 text-left">Entity</th><th className="h-12 px-6 text-left">Action</th><th className="h-12 px-6 text-left">Details</th></tr></thead>
-              <tbody className="divide-y">
-                {!isFetching && logs.map((log) => (
-                  <tr
-                    key={log.id}
-                    className="hover:bg-muted/30 cursor-pointer"
-                    onClick={() => setSelectedLog(log)}
-                  >
-                    <td className="p-6 whitespace-nowrap"><div className="flex flex-col"><span className="font-bold">{new Date(log.timestamp).toLocaleDateString()}</span><span className="text-[10px] text-muted-foreground flex items-center gap-1"><Clock size={10} /> {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span></div></td>
-                    <td className="p-6"><div className="flex items-center gap-2"><div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary border">{log.userName.charAt(0)}</div><div className="flex flex-col"><span className="font-medium">{log.userName}</span><span className="text-[10px] text-muted-foreground uppercase">{log.location}</span></div></div></td>
-                    <td className="p-6"><div className="flex items-center gap-2 font-semibold">{getEntityIcon(log.entityType)}{formatAuditEntity(log.entityType)}</div></td>
-                    <td className="p-6"><span className="px-2.5 py-1 rounded-md bg-secondary text-secondary-foreground text-xs font-semibold border border-border/50">{formatAuditAction(log.action)}</span></td>
-                    <td className="p-6 text-muted-foreground text-xs max-w-xs truncate" title={log.details}>{auditDetailsSummary(log.details)}</td>
-                  </tr>
-                ))}
-                {!isFetching && logs.length === 0 && <tr><td colSpan={5} className="p-12 text-center text-muted-foreground italic">No activity logs found.</td></tr>}
-                {isFetching && (
-                  <tr>
-                    <td colSpan={5} className="p-0">
-                      <TableSkeleton rows={6} cols={5} />
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-sm text-muted-foreground">Page {meta.page} of {meta.totalPages}</p>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            disabled={meta.page <= 1 || isLoading || isFetching}
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            className="inline-flex h-9 items-center rounded-md border border-input bg-background px-3 text-sm font-medium hover:bg-accent disabled:pointer-events-none disabled:opacity-50"
-          >
-            Previous
-          </button>
-          <span className="text-sm text-muted-foreground px-2">
-            Page {meta.page} of {meta.totalPages}
-          </span>
-          <button
-            type="button"
-            disabled={meta.page >= meta.totalPages || isLoading || isFetching}
-            onClick={() => setPage((p) => p + 1)}
-            className="inline-flex h-9 items-center rounded-md border border-input bg-background px-3 text-sm font-medium hover:bg-accent disabled:pointer-events-none disabled:opacity-50"
-          >
-            Next
-          </button>
-        </div>
-      </div>
-
-      {selectedLog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-5xl max-h-[85vh] overflow-y-auto rounded-lg border bg-card p-6 shadow-xl">
-            <div className="flex items-start justify-between gap-4 mb-4">
-              <div>
-                <h2 className="text-lg font-bold">
-                  {selectedLog.bulkUpload ? 'Bulk Upload Details' : 'Audit log'}
-                </h2>
-                <p className="text-sm text-muted-foreground">{formatAuditAction(selectedLog.action)}</p>
-              </div>
-              <button type="button" onClick={() => setSelectedLog(null)} className="text-muted-foreground hover:text-foreground"><X size={20} /></button>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4 text-sm">
-              <div className="rounded-md border p-3"><span className="text-xs text-muted-foreground">Time</span><p className="font-semibold">{new Date(selectedLog.timestamp).toLocaleString()}</p></div>
-              <div className="rounded-md border p-3"><span className="text-xs text-muted-foreground">Agent</span><p className="font-semibold">{selectedLog.userName}</p></div>
-              <div className="rounded-md border p-3"><span className="text-xs text-muted-foreground">Location</span><p className="font-semibold">{selectedLog.location || '—'}</p></div>
-              <div className="rounded-md border p-3"><span className="text-xs text-muted-foreground">Entity</span><p className="font-semibold">{formatAuditEntity(selectedLog.entityType)}</p></div>
-              <div className="rounded-md border p-3"><span className="text-xs text-muted-foreground">Entity ID</span><p className="font-semibold break-all">{selectedLog.entityId || '—'}</p></div>
-              <div className="rounded-md border p-3"><span className="text-xs text-muted-foreground">Action</span><p className="font-semibold">{formatAuditAction(selectedLog.action)}</p></div>
-            </div>
-            <div className="rounded-md border p-3 mb-4">
-              <span className="text-xs text-muted-foreground">Details</span>
-              {(() => {
-                const rows = parseAuditDetailRows(selectedLog.details || '');
-                if (!rows) {
-                  return (
-                    <p className="text-sm font-medium whitespace-pre-wrap break-words mt-1">
-                      {selectedLog.details || '—'}
-                    </p>
-                  );
-                }
-                return (
-                  <div className="mt-2 space-y-2">
-                    {rows.map((row, i) => (
-                      <div key={`${row.label ?? 'row'}-${i}`} className="flex flex-col gap-0.5">
-                        {row.label && (
-                          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                            {row.label}
-                          </span>
-                        )}
-                        <p className="text-sm font-medium break-words">{row.text}</p>
-                      </div>
-                    ))}
-                  </div>
-                );
-              })()}
-            </div>
-            {selectedLog.bulkUpload && (
-              <>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4 text-sm">
-                  <div className="rounded-md border p-3"><span className="text-xs text-muted-foreground">Domain</span><p className="font-semibold capitalize">{selectedLog.bulkUpload.domain ?? '—'}</p></div>
-                  <div className="rounded-md border p-3"><span className="text-xs text-muted-foreground">Type</span><p className="font-semibold">{selectedLog.bulkUpload.importType ?? '—'}</p></div>
-                  <div className="rounded-md border p-3"><span className="text-xs text-muted-foreground">File</span><p className="font-semibold truncate">{selectedLog.bulkUpload.fileName ?? '—'}</p></div>
-                  <div className="rounded-md border p-3"><span className="text-xs text-muted-foreground">Stage</span><p className="font-semibold">{selectedLog.bulkUpload.stage ?? selectedLog.action}</p></div>
-                </div>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <h3 className="font-semibold mb-2">Uploaded / validated rows</h3>
-                    <pre className="max-h-80 overflow-auto rounded-md bg-muted p-3 text-xs">{JSON.stringify(selectedLog.bulkUpload.rows ?? [], null, 2)}</pre>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold mb-2">Results</h3>
-                    <pre className="max-h-80 overflow-auto rounded-md bg-muted p-3 text-xs">{JSON.stringify(selectedLog.bulkUpload.results ?? selectedLog.bulkUpload.summary ?? {}, null, 2)}</pre>
-                  </div>
-                </div>
-              </>
+      <FilterBar
+        search={{ value: search, onChange: setSearch, placeholder: 'Search by user or action', label: 'Search audit log' }}
+        filters={<PeriodSelect value={period} onChange={(p) => set(periodToParams(p, 'all'))} />}
+        more={
+          <>
+            <MoreFilterField label="Record type">
+              <FilterSelect ariaLabel="Record type" value={entity} onChange={(v) => set({ entity: v === 'All' ? null : v })} options={[{ value: 'All', label: 'All records' }, ...ENTITIES.map((e) => ({ value: e, label: e }))]} />
+            </MoreFilterField>
+            {tab === 'all' && (
+              <MoreFilterField label="Module">
+                <FilterSelect ariaLabel="Module" value={moduleFilter} onChange={(v) => set({ module: v === 'All' ? null : v })} options={[{ value: 'All', label: 'All modules' }, ...MODULES]} />
+              </MoreFilterField>
             )}
-          </div>
-        </div>
-      )}
+            <MoreFilterField label="User">
+              <FilterSelect ariaLabel="User" value={agent} onChange={(v) => set({ agent: v === 'All' ? null : v })} options={[{ value: 'All', label: 'All users' }, ...agents.map((a) => ({ value: a.id, label: a.name }))]} />
+            </MoreFilterField>
+          </>
+        }
+        moreActiveCount={(entity !== 'All' ? 1 : 0) + (agent !== 'All' ? 1 : 0) + (moduleFilter !== 'All' && tab === 'all' ? 1 : 0)}
+        chips={chips}
+        onClearAll={clearAll}
+        resultLabel={logs ? `${meta.total.toLocaleString()} ${meta.total === 1 ? 'entry' : 'entries'}` : undefined}
+      />
+
+      <SectionErrorBoundary label="Audit log" resetKey={tab}>
+        <DataTable
+          label={tab === 'bulk' ? 'Bulk uploads' : 'Audit log'}
+          columns={tab === 'bulk' ? bulkColumns : activityColumns}
+          rows={isFetching ? undefined : logs}
+          loading={isFetching}
+          getRowId={(l) => l.id}
+          onRowClick={setSelectedLog}
+          pageSize={pageSize}
+          pagination={{ page: meta.page, totalPages: meta.totalPages, onPageChange: setPage, pageSize, onPageSizeChange: (n) => { setPageSize(n); setPage(1); }, total: meta.total }}
+          empty={
+            <EmptyState
+              size="compact"
+              icon={<ScrollText />}
+              title={tab === 'bulk' ? 'No bulk uploads' : 'No activity found'}
+              description={chips.length ? 'Nothing matches these filters.' : 'Changes to sales, stock and customers will appear here.'}
+              action={chips.length ? <button type="button" onClick={clearAll} className="text-sm font-medium text-primary hover:underline">Clear filters</button> : undefined}
+            />
+          }
+        />
+      </SectionErrorBoundary>
+
+
+      {selectedLog && <AuditDrawer log={selectedLog} onClose={() => setSelectedLog(null)} />}
     </div>
   );
 }

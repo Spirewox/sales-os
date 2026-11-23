@@ -1,22 +1,23 @@
 'use client';
 
-import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
+import { usePageSize } from '@/hooks/use-page-size';
+import { useState, useMemo, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { useAuth } from '@/contexts/auth-context';
 import { usePermissions } from '@/hooks/use-permissions';
 import { useHubScopeFilter } from '@/hooks/use-hub-scope';
+import { useUrlState } from '@/hooks/use-url-state';
 import {
   useSales,
+  useSale,
   useSalesSummary,
-  useCreateSale,
   useUpdateSale,
   useUpdateDeliveryStatus,
   useVoidSale,
-  useCustomers,
   useAgents,
   useInventory,
   useStockLogs,
-  useProductBatches,
   useCreditSummary,
   useHubs,
   useDownloadSalesImportTemplate,
@@ -25,719 +26,122 @@ import {
   runChunkedSalesImport,
   SALES_PAGE_SIZE,
 } from '@/hooks/use-queries';
-import {
-  Sale,
-  PaymentTerms,
-  SalesChannel,
-  DeliveryStatus,
-  PaymentType,
-  PaymentMode,
-  Customer,
-} from '@/types';
-import { toast } from 'sonner';
-import {
-  fmt,
-  getDateRange,
-  creditWarningText,
-  getAmountPaidForMode,
-  catalogBatchPriceError,
-  BTN_PRIMARY,
-  BTN_SECONDARY,
-  INPUT_CLS,
-  LABEL_CLS,
-  type DetailTab,
-  type QuickDatePreset,
-  type SaleDateFieldFilter,
-  isLockedSale,
-  lockedSaleMessage,
-} from './sales-utils';
+import type { Sale, DeliveryStatus } from '@/types';
 import type { SalesImportChunkResult, SalesImportPreviewRow } from '@/types/api';
-import { isHistoricalDate } from '@/lib/historical-date';
 import { PRODUCT_CATEGORIES } from '@/lib/product-categories';
-import {
-  defaultVolumeUnit,
-  isVolumeUom,
-  type SaleFormUnit,
-  volumeUnitOptions,
-  volumeUnitPrice,
-} from '@/lib/volume-units';
+import { isLockedSale, lockedSaleMessage, type DetailTab } from './sales-utils';
+import { useSalesFilters } from './use-sales-filters';
+import { useRecordSale } from './use-record-sale';
+
+const EMPTY_KPIS = { revenue: 0, profit: 0, count: 0, avgOrder: 0, creditCount: 0, creditAmount: 0, deliveryCount: 0, revenueChange: 0, profitChange: 0, unitsByUnit: {} };
 
 export function useSalesPage() {
   const { user } = useAuth();
   const { can, isAdmin } = usePermissions();
   const hubScope = useHubScopeFilter();
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
-  const [dateFieldFilter, setDateFieldFilter] = useState<SaleDateFieldFilter>('sold');
-  const [quickPreset, setQuickPreset] = useState<QuickDatePreset>('all');
+  const { get, set } = useUrlState();
+  const queryClient = useQueryClient();
 
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterAgent, setFilterAgent] = useState('All');
-  const [filterStatus, setFilterStatus] = useState('All');
-  const [filterChannel, setFilterChannel] = useState<string>('All');
-  const [filterCategories, setFilterCategories] = useState<string[]>([]);
-  const [filterProductIds, setFilterProductIds] = useState<string[]>([]);
-  const [page, setPage] = useState(1);
-  const [sortBy, setSortBy] = useState<'quantity' | 'amount' | null>(null);
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
-
-  const summaryFilters = useMemo(
-    () => ({
-      hub_id: hubScope.hubIdForApi,
-      ...(dateFrom ? { date_from: dateFrom } : {}),
-      ...(dateTo ? { date_to: dateTo } : {}),
-      ...(dateFrom || dateTo ? { date_field: dateFieldFilter } : {}),
-      ...(searchTerm.trim() ? { search: searchTerm.trim() } : {}),
-      ...(filterAgent !== 'All' ? { agent_id: filterAgent } : {}),
-      ...(filterStatus === 'All'
-        ? { exclude_voided: true }
-        : { status: filterStatus }),
-      ...(filterChannel !== 'All' ? { channel: filterChannel } : {}),
-      ...(filterCategories.length
-        ? { categories: filterCategories.join(',') }
-        : {}),
-      ...(filterProductIds.length
-        ? { product_ids: filterProductIds.join(',') }
-        : {}),
-    }),
-    [
-      hubScope.hubIdForApi,
-      dateFrom,
-      dateTo,
-      dateFieldFilter,
-      searchTerm,
-      filterAgent,
-      filterStatus,
-      filterChannel,
-      filterCategories,
-      filterProductIds,
-    ],
-  );
-
-  const listFilters = useMemo(
-    () => ({
-      ...summaryFilters,
-      page,
-      limit: SALES_PAGE_SIZE,
-      ...(sortBy ? { sort_by: sortBy, sort_dir: sortDir } : {}),
-    }),
-    [summaryFilters, page, sortBy, sortDir],
-  );
-
-  const { data: salesList, isLoading: salesLoading, isFetching: salesFetching } = useSales(listFilters);
-  const { data: salesSummary, isFetching: summaryFetching } = useSalesSummary(summaryFilters);
-  const sales = salesList?.items ?? [];
-  const salesMeta = salesList?.meta ?? { page: 1, limit: SALES_PAGE_SIZE, total: 0, totalPages: 1 };
-  const kpis = salesSummary ?? {
-    revenue: 0,
-    profit: 0,
-    count: 0,
-    avgOrder: 0,
-    creditCount: 0,
-    creditAmount: 0,
-    deliveryCount: 0,
-    revenueChange: 0,
-    profitChange: 0,
-    unitsByUnit: {},
-  };
-
-  const { data: skuInventory = [], isFetched: skuInventoryFetched } = useInventory(
-    hubScope.hubIdForApi ? { hub_id: hubScope.hubIdForApi } : undefined,
-  );
+  // SKU options for the "More filters" SKU picker (scoped to location and chosen categories).
+  const { data: skuInventory = [], isFetched: skuInventoryFetched } = useInventory(hubScope.hubIdForApi ? { hub_id: hubScope.hubIdForApi } : undefined);
+  const { data: agents = [] } = useAgents();
+  const catParam = get('cat') ?? '';
   const skuOptions = useMemo(() => {
-    const cats = new Set(filterCategories.map((c) => c.toLowerCase()));
+    const cats = new Set(catParam.split(',').filter(Boolean).map((c) => c.toLowerCase()));
     return skuInventory
-      .filter(
-        (item) =>
-          !!item.sku &&
-          hubScope.matchesHub(item.location) &&
-          (cats.size === 0 || cats.has((item.category || '').toLowerCase())),
-      )
-      .slice()
-      .sort((a, b) => a.sku.localeCompare(b.sku) || a.name.localeCompare(b.name));
-  }, [skuInventory, filterCategories, hubScope]);
+      .filter((item) => !!item.sku && hubScope.matchesHub(item.location) && (cats.size === 0 || cats.has((item.category || '').toLowerCase())))
+      .toSorted((a, b) => a.sku.localeCompare(b.sku) || a.name.localeCompare(b.name));
+  }, [skuInventory, catParam, hubScope]);
 
-  useEffect(() => {
-    if (!skuInventoryFetched) return;
-    setFilterProductIds((prev) => {
-      const next = prev.filter((id) => skuOptions.some((item) => item.id === id));
-      return next.length === prev.length ? prev : next;
-    });
-  }, [skuInventoryFetched, skuOptions]);
+  const filters = useSalesFilters(hubScope, skuInventoryFetched ? skuOptions.map((s) => s.id) : null, {
+    agentName: (id) => agents.find((a) => a.id === id)?.name,
+    skuName: (id) => skuOptions.find((s) => s.id === id)?.name,
+  });
 
-  useEffect(() => {
+  // Reset to page 1 whenever the filters change (no effect: compare during render).
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSizeRaw] = usePageSize('sales', SALES_PAGE_SIZE);
+  const setPageSize = (n: number) => { setPageSizeRaw(n); setPage(1); };
+  const [seenKey, setSeenKey] = useState(filters.filterKey);
+  if (seenKey !== filters.filterKey) {
+    setSeenKey(filters.filterKey);
     setPage(1);
-  }, [
-    hubScope.hubIdForApi,
-    dateFrom,
-    dateTo,
-    dateFieldFilter,
-    searchTerm,
-    filterAgent,
-    filterStatus,
-    filterChannel,
-    filterCategories,
-    filterProductIds,
-    sortBy,
-    sortDir,
-  ]);
+  }
 
-  const toggleSort = (field: 'quantity' | 'amount') => {
-    if (sortBy === field) {
-      setSortDir((d) => (d === 'desc' ? 'asc' : 'desc'));
-    } else {
-      setSortBy(field);
-      setSortDir('desc');
-    }
-  };
+  const { data: salesList, isLoading: salesLoading, isFetching: salesFetching } = useSales({ ...filters.summaryFilters, ...filters.sortParams, page, limit: pageSize });
+  const { data: salesSummary, isFetching: summaryFetching } = useSalesSummary(filters.summaryFilters);
+  const { data: previousSummary } = useSalesSummary(filters.previousFilters ?? undefined, { enabled: !!filters.previousFilters });
+  const sales = useMemo(() => salesList?.items ?? [], [salesList]);
+  const salesMeta = salesList?.meta ?? { page: 1, limit: pageSize, total: 0, totalPages: 1 };
+  const kpis = salesSummary ?? EMPTY_KPIS;
+  const revenueChangePct = filters.previousFilters && previousSummary && previousSummary.revenue > 0
+    ? ((kpis.revenue - previousSummary.revenue) / previousSummary.revenue) * 100
+    : null;
+  // Same comparison for profit (the old page showed it "vs last month" from the server).
+  const previousProfit = previousSummary?.profit ?? 0;
+  const profitChangePct = filters.previousFilters && previousProfit > 0
+    ? (((kpis.profit ?? 0) - previousProfit) / previousProfit) * 100
+    : null;
 
   const { data: stockLogsResult } = useStockLogs();
-  const stockLogs = stockLogsResult?.data ?? [];
   const { data: creditSummary = [] } = useCreditSummary();
   const { data: hubs = [] } = useHubs();
   const activeHubs = hubs.filter((h) => h.isActive);
-  const createSale = useCreateSale();
-  const updateSale = useUpdateSale();
-  const updateDeliveryStatusMutation = useUpdateDeliveryStatus();
-  const voidSale = useVoidSale();
-  const downloadTemplate = useDownloadSalesImportTemplate();
-  const validateImport = useValidateSalesImport();
-  const importInputRef = useRef<HTMLInputElement>(null);
-  const queryClient = useQueryClient();
 
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [customerSearch, setCustomerSearch] = useState('');
-  const [debouncedCustomerSearch, setDebouncedCustomerSearch] = useState('');
-  const [pinnedSaleCustomer, setPinnedSaleCustomer] = useState<Customer | null>(null);
-  const [selectedProductId, setSelectedProductId] = useState('');
-  const [selectedBatchNumber, setSelectedBatchNumber] = useState('');
-  const [selectedHub, setSelectedHub] = useState<string>(hubScope.defaultHubName || 'Lagos');
-  useEffect(() => {
-    if (hubScope.defaultHubName) setSelectedHub(hubScope.defaultHubName);
-  }, [hubScope.defaultHubName]);
-  const [quantity, setQuantity] = useState(1);
-  const [saleUnit, setSaleUnit] = useState<SaleFormUnit>('');
-  const [saleWeightKg, setSaleWeightKg] = useState<number>(0);
-  const [paymentMode, setPaymentMode] = useState<PaymentMode>(PaymentMode.FULL_PAYMENT);
-  const [paymentType, setPaymentType] = useState<PaymentType>(PaymentType.CASH);
-  const [amountPaid, setAmountPaid] = useState(0);
-  const [dueDate, setDueDate] = useState(() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 30);
-    return d.toISOString().split('T')[0];
+  // ── Record sale: /sales?new=1 opens it, &customer=<id> preselects the customer.
+  const showAddModal = get('new') === '1';
+  const setShowAddModal = (open: boolean) => set(open ? { new: '1' } : { new: null, customer: null });
+  const recordSale = useRecordSale({
+    open: showAddModal,
+    presetCustomerId: showAddModal ? get('customer') : null,
+    hubScope,
+    hubs,
+    creditSummary,
+    sales,
+    onSaved: () => setShowAddModal(false),
   });
-  const [newSale, setNewSale] = useState<Partial<Sale>>({
-    amount: 0,
-    status: 'Pending',
-    date: new Date().toISOString().split('T')[0],
-    paymentTerms: PaymentTerms.COD,
-    notes: '',
-    channel: SalesChannel.WALK_IN,
-    deliveryStatus: DeliveryStatus.NOT_APPLICABLE,
-  });
-  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const closeRecordSale = () => {
+    recordSale.resetForm();
+    setShowAddModal(false);
+  };
 
-  const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
+  // ── Sale drawer: /sales?sale=<id>. Uses the loaded row, or fetches it for deep links.
+  const saleId = get('sale');
+  const [patchedSale, setPatchedSale] = useState<Sale | null>(null);
+  const listedSale = saleId ? sales.find((s) => s.id === saleId) : undefined;
+  const { data: fetchedSale, isFetching: saleFetching } = useSale(saleId && !listedSale ? saleId : null);
+  const selectedSale = saleId ? (patchedSale?.id === saleId ? patchedSale : listedSale ?? fetchedSale ?? null) : null;
   const [detailTab, setDetailTab] = useState<DetailTab>('overview');
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState<Partial<Sale>>({});
   const [showVoidConfirm, setShowVoidConfirm] = useState(false);
 
-  const [showImportModal, setShowImportModal] = useState(false);
-  const [importPreview, setImportPreview] = useState<SalesImportPreviewRow[]>([]);
-  const [importSummary, setImportSummary] = useState<{ total: number; valid: number; invalid: number } | null>(null);
-  const [validateAuditId, setValidateAuditId] = useState<string | null>(null);
-  const [importing, setImporting] = useState(false);
-  const [importProgress, setImportProgress] = useState<{ processed: number; total: number; imported: number; failed: number } | null>(null);
-  const [importResult, setImportResult] = useState<SalesImportChunkResult | null>(null);
-  const [importError, setImportError] = useState<string | null>(null);
-  const [showImportConfirm, setShowImportConfirm] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedCustomerSearch(customerSearch.trim()), 300);
-    return () => clearTimeout(timer);
-  }, [customerSearch]);
-
-  const resolveHubId = useCallback(
-    (hubName: string) => {
-      const hub = activeHubs.find((h) => h.name === hubName) ?? hubs.find((h) => h.name === hubName);
-      return hub?.id;
-    },
-    [activeHubs, hubs],
-  );
-
-  const selectedHubId = useMemo(() => resolveHubId(selectedHub), [resolveHubId, selectedHub]);
-
-  const { data: customerList, isFetching: customersFetching } = useCustomers(
-    { search: debouncedCustomerSearch || undefined, limit: 50 },
-    { enabled: showAddModal },
-  );
-
-  const saleModalCustomers = useMemo(() => {
-    const items = customerList?.items ?? [];
-    if (pinnedSaleCustomer && !items.some((c) => c.id === pinnedSaleCustomer.id)) {
-      return [pinnedSaleCustomer, ...items];
-    }
-    return items;
-  }, [customerList, pinnedSaleCustomer]);
-
-  useEffect(() => {
-    if (!newSale.customerId) {
-      setPinnedSaleCustomer(null);
-      return;
-    }
-    const found = saleModalCustomers.find((c) => c.id === newSale.customerId);
-    if (found) setPinnedSaleCustomer(found);
-  }, [newSale.customerId, saleModalCustomers]);
-
-  const { data: agents = [] } = useAgents();
-  const { data: inventory = [] } = useInventory(
-    selectedHubId ? { hub_id: selectedHubId } : undefined,
-    { enabled: showAddModal && !!selectedHubId },
-  );
-
-  const availableInventory = inventory;
-  const selectedInventoryItem = useMemo(
-    () => inventory.find((i) => i.id === selectedProductId),
-    [inventory, selectedProductId],
-  );
-  const catalogProductId =
-    selectedProductId && selectedProductId !== '__meal__' ? selectedProductId : null;
-  const { data: productBatches = [], isFetching: batchesLoading } = useProductBatches(
-    null,
-  );
-  const editCatalogProductId =
-    isEditing && selectedSale?.item?.productId ? selectedSale.item.productId : null;
-  const { data: editBatches = [] } = useProductBatches(null, {
-    includeDepleted: true,
-  });
-
-  useEffect(() => {
-    if (!catalogProductId || batchesLoading) return;
-    if (productBatches.length === 1 && !selectedBatchNumber) {
-      setSelectedBatchNumber(productBatches[0].batchNumber);
-    }
-  }, [catalogProductId, batchesLoading, productBatches, selectedBatchNumber]);
-
-  const isCartonProduct = selectedInventoryItem?.unitOfMeasure === 'Cartons';
-  const isVolumeProduct = isVolumeUom(selectedInventoryItem?.unitOfMeasure);
-
-  const selectedBatch = useMemo(
-    () => productBatches.find((b) => b.batchNumber === selectedBatchNumber),
-    [productBatches, selectedBatchNumber],
-  );
-
-  /** List selling price in the sale unit, preferring the selected batch snapshot. */
-  const listUnitPriceForSale = (
-    item: typeof selectedInventoryItem,
-    unit: SaleFormUnit,
-    batch?: { unitPrice: number; cartonPrice?: number } | null,
-  ) => {
-    if (!item) return 0;
-    if (item.unitOfMeasure === 'Cartons') return unit === 'Kg' ? item.baseSellingPrice : item.cartonPrice || 0;
-    return isVolumeUom(item.unitOfMeasure) && unit ? volumeUnitPrice(item.unitOfMeasure, item.baseSellingPrice, unit) : item.baseSellingPrice;
+  const openSale = (sale: Sale) => {
+    setPatchedSale(null);
+    setDetailTab('overview');
+    setIsEditing(false);
+    setShowVoidConfirm(false);
+    set({ sale: sale.id });
+  };
+  const closeDetailPanel = () => {
+    setIsEditing(false);
+    setShowVoidConfirm(false);
+    setPatchedSale(null);
+    set({ sale: null });
   };
 
-  const computeSaleAmount = (
-    item: typeof selectedInventoryItem,
-    qty: number,
-    unit: SaleFormUnit,
-    batch?: { unitPrice: number; cartonPrice?: number } | null,
-  ) => {
-    if (!item || qty <= 0) return 0;
-    return listUnitPriceForSale(item, unit, batch) * qty;
-  };
+  const updateSale = useUpdateSale();
+  const updateDeliveryStatusMutation = useUpdateDeliveryStatus();
+  const voidSale = useVoidSale();
 
-  const [productDetailsText, setProductDetailsText] = useState('');
-  const MEAL_PRODUCT_ID = '__meal__';
-  const isMealSale = selectedProductId === MEAL_PRODUCT_ID;
-
-  // Reprice an unrecorded sale when the SKU price changes.
-  useEffect(() => {
-    if (!selectedInventoryItem || isMealSale) return;
-    setNewSale(previous => ({ ...previous,
-      amount: computeSaleAmount(selectedInventoryItem, quantity, saleUnit || (selectedInventoryItem.unitOfMeasure === 'Cartons' ? 'Carton' : defaultVolumeUnit(selectedInventoryItem.unitOfMeasure) || ''), null),
-      discount: 0,
-    }));
-  // Quantity/unit changes are handled by their own controls, preserving manual edits.
-  }, [selectedInventoryItem?.id, selectedInventoryItem?.baseSellingPrice, selectedInventoryItem?.cartonPrice]);
-
-  const saleDateStr = newSale.date || new Date().toISOString().split('T')[0];
-  const isHistoricalSale = isHistoricalDate(saleDateStr);
-
-  const validationErrors = useMemo(() => {
-    const errors: Record<string, string> = {};
-    if (!newSale.customerId) errors.customerId = 'Customer is required.';
-    if (isMealSale) {
-      if (!productDetailsText.trim()) errors.productDetails = 'Meal name is required.';
-      if (quantity <= 0) errors.quantity = 'Quantity must be greater than 0.';
-      if (!newSale.amount || newSale.amount <= 0) errors.amount = 'Amount is required for meal sales.';
-    } else {
-      if (!selectedProductId) errors.productId = 'Product is required.';
-      if (quantity <= 0) errors.quantity = 'Quantity must be greater than 0.';
-      if (isHistoricalSale && (!newSale.amount || newSale.amount <= 0)) {
-        errors.amount = 'Amount is required for historical sales.';
-      }
-      if (selectedInventoryItem && quantity > 0) {
-        const amount = Number(newSale.amount) || 0;
-        const batchError = catalogBatchPriceError({
-          batchUnitPrice: selectedInventoryItem.baseSellingPrice,
-          cartonPrice: selectedInventoryItem.cartonPrice,
-          unitOfMeasure: selectedInventoryItem.unitOfMeasure,
-          saleUnit: saleUnit || selectedInventoryItem.unitOfMeasure,
-          cartonWeight: selectedInventoryItem.cartonWeight,
-          quantity,
-          batchNumber: 'SKU',
-          amount,
-          discount: Number(newSale.discount) || 0,
-          amountPaid: getAmountPaidForMode(paymentMode, amount, amountPaid),
-          paymentMode,
-        });
-        if (batchError) errors.amount = batchError;
-      }
-      if (isCartonProduct) {
-        if (!saleUnit) errors.saleUnit = 'Select Carton or Kg.';
-        const batchWeight = selectedInventoryItem?.cartonWeight || 0;
-        if (!(batchWeight > 0)) {
-          errors.saleUnit = 'Set the SKU carton weight before recording a sale.';
-        } else if (saleUnit === 'Carton') {
-          if (!(Number(selectedInventoryItem?.cartonPrice) > 0)) {
-            errors.saleUnit = 'Set a carton selling price on the SKU before selling by Carton.';
-          }
-          const doubled = quantity * 2;
-          if (!(quantity > 0) || Math.abs(doubled - Math.round(doubled)) > 1e-6) {
-            errors.quantity = 'Carton quantity must be a multiple of 0.5.';
-          }
-          if (!(saleWeightKg > 0)) {
-            errors.saleWeightKg = 'Weighed kg is required for Carton sales.';
-          }
-        } else if (saleUnit === 'Kg') {
-          if (!(Number(selectedInventoryItem?.baseSellingPrice) > 0)) {
-            errors.saleUnit = 'Set a selling price on the SKU before selling by Kg.';
-          }
-        }
-      }
-      if (isVolumeProduct && !saleUnit) {
-        errors.saleUnit = `Select ${volumeUnitOptions(selectedInventoryItem?.unitOfMeasure).join(' or ')}.`;
-      }
-    }
-    if (paymentMode !== PaymentMode.FULL_PAYMENT && !dueDate) {
-      errors.dueDate = 'Due date is required for credit sales.';
-    }
-    return errors;
-  }, [
-    newSale.customerId,
-    newSale.amount,
-    selectedProductId,
-    selectedBatchNumber,
-    quantity,
-    saleUnit,
-    saleWeightKg,
-    selectedInventoryItem,
-    selectedBatch,
-    isCartonProduct,
-    isVolumeProduct,
-    paymentMode,
-    dueDate,
-    isHistoricalSale,
-    isMealSale,
-    productDetailsText,
-    newSale.discount,
-    amountPaid,
-  ]);
-  const isFormValid = Object.keys(validationErrors).length === 0;
-
-  const customerCreditWarning = useMemo(() => {
-    if (!newSale.customerId) return null;
-    const row = creditSummary.find((cr) => cr.customerId === newSale.customerId);
-    if (!row || row.totalOutstanding <= 0) return null;
-    return creditWarningText(row);
-  }, [newSale.customerId, creditSummary]);
-
-  const selectedFormCustomer = useMemo(() => {
-    if (!newSale.customerId) return null;
-    const c = saleModalCustomers.find((cu) => cu.id === newSale.customerId);
-    if (!c) return null;
-    const custSales = sales.filter((s) => s.customerId === c.id && s.status !== 'Voided');
-    const avgOrder =
-      custSales.length > 0 ? custSales.reduce((a, s) => a + s.amount, 0) / custSales.length : 0;
-    const sorted = custSales.toSorted((a, b) => b.date.localeCompare(a.date));
-    const lastSale = sorted.length > 0 ? sorted[0]?.date : null;
-    const credit = creditSummary.find((cr) => cr.customerId === c.id);
-    return { ...c, avgOrder, lastSale, credit };
-  }, [newSale.customerId, saleModalCustomers, sales, creditSummary]);
-
-  const applyPreset = (preset: QuickDatePreset) => {
-    setQuickPreset(preset);
-    const { from, to } = getDateRange(preset);
-    setDateFrom(from);
-    setDateTo(to);
-  };
-
-  const filteredSales = sales;
-
-  const hasFilters =
-    searchTerm ||
-    filterAgent !== 'All' ||
-    filterStatus !== 'All' ||
-    hubScope.filterHub !== 'All' ||
-    filterChannel !== 'All' ||
-    filterCategories.length > 0 ||
-    filterProductIds.length > 0 ||
-    dateFrom ||
-    dateTo ||
-    dateFieldFilter !== 'sold';
-
-  const clearFilters = () => {
-    setSearchTerm('');
-    setFilterAgent('All');
-    setFilterStatus('All');
-    hubScope.setFilterHub(hubScope.canSwitchHubs ? 'All' : hubScope.hubName);
-    setFilterChannel('All');
-    setFilterCategories([]);
-    setFilterProductIds([]);
-    setDateFrom('');
-    setDateTo('');
-    setDateFieldFilter('sold');
-    setQuickPreset('all');
-    setPage(1);
-  };
-
-  const toggleCategoryFilter = (category: string) => {
-    setFilterCategories((prev) =>
-      prev.includes(category) ? prev.filter((c) => c !== category) : [...prev, category],
-    );
-  };
-
-  const handleProductChange = (productId: string) => {
-    setSelectedProductId(productId);
-    setSelectedBatchNumber('');
-    setTouched((t) => ({ ...t, productId: true, batchNumber: false }));
-    if (productId === MEAL_PRODUCT_ID) {
-      setSaleUnit('');
-      setProductDetailsText('');
-      setNewSale((prev) => ({ ...prev, amount: 0, discount: 0 }));
-      return;
-    }
-    const item = inventory.find((i) => i.id === productId);
-    const nextUnit: SaleFormUnit =
-      item?.unitOfMeasure === 'Cartons'
-        ? 'Carton'
-        : defaultVolumeUnit(item?.unitOfMeasure) || '';
-    setSaleUnit(nextUnit);
-    if (item) {
-      setNewSale((prev) => ({
-        ...prev,
-        amount: computeSaleAmount(item, quantity, nextUnit, null),
-        discount: 0,
-        productDetails: `${quantity} ${nextUnit || item.unitOfMeasure} of ${item.name}`,
-      }));
-    }
-  };
-
-  const handleBatchChange = (batchNumber: string) => {
-    setSelectedBatchNumber(batchNumber);
-    setTouched((t) => ({ ...t, batchNumber: true }));
-    const item = inventory.find((i) => i.id === selectedProductId);
-    const batch = productBatches.find((b) => b.batchNumber === batchNumber);
-    if (item) {
-      setNewSale((prev) => ({
-        ...prev,
-        amount: computeSaleAmount(item, quantity, saleUnit, batch),
-        discount: 0,
-      }));
-    }
-  };
-
-  const suggestedCartonWeightKg = (qty: number, item?: typeof selectedInventoryItem) => {
-    const weight = Number(item?.cartonWeight) || 0;
-    if (!(qty > 0) || !(weight > 0)) return 0;
-    return Math.round(qty * weight * 100) / 100;
-  };
-
-  const handleQuantityChange = (qty: number) => {
-    setQuantity(qty);
-    setTouched((t) => ({ ...t, quantity: true }));
-    const item = inventory.find((i) => i.id === selectedProductId);
-    if (saleUnit === 'Carton' && item) {
-      setSaleWeightKg(suggestedCartonWeightKg(qty, item));
-    }
-    if (item) {
-      setNewSale((prev) => ({
-        ...prev,
-        amount: computeSaleAmount(item, qty, saleUnit, selectedBatch),
-        discount: 0,
-        productDetails: `${qty} ${saleUnit || item.unitOfMeasure} of ${item.name}`,
-      }));
-    }
-  };
-
-  const handleSaleUnitChange = (unit: SaleFormUnit) => {
-    setSaleUnit(unit);
-    setTouched((t) => ({ ...t, saleUnit: true }));
-    const item = inventory.find((i) => i.id === selectedProductId);
-    if (unit === 'Carton' && item) {
-      setSaleWeightKg(suggestedCartonWeightKg(quantity, item));
-    } else {
-      setSaleWeightKg(0);
-    }
-    if (item) {
-      setNewSale((prev) => ({
-        ...prev,
-        amount: computeSaleAmount(item, quantity, unit, selectedBatch),
-        discount: 0,
-        productDetails: `${quantity} ${unit || item.unitOfMeasure} of ${item.name}`,
-      }));
-    }
-  };
-
-  const handleSaleWeightChange = (kg: number) => {
-    setSaleWeightKg(kg);
-    setTouched((t) => ({ ...t, saleWeightKg: true }));
-  };
-
-  const resetForm = () => {
-    setNewSale({
-      amount: 0,
-      status: 'Pending',
-      date: new Date().toISOString().split('T')[0],
-      paymentTerms: PaymentTerms.COD,
-      notes: '',
-      channel: SalesChannel.WALK_IN,
-      deliveryStatus: DeliveryStatus.NOT_APPLICABLE,
-    });
-    setSelectedProductId('');
-    setSelectedBatchNumber('');
-    setQuantity(1);
-    setSaleUnit('');
-    setSaleWeightKg(0);
-    setPaymentMode(PaymentMode.FULL_PAYMENT);
-    setPaymentType(PaymentType.CASH);
-    setAmountPaid(0);
-    const d = new Date();
-    d.setDate(d.getDate() + 30);
-    setDueDate(d.toISOString().split('T')[0]);
-    setTouched({});
-    setProductDetailsText('');
-    setCustomerSearch('');
-    setDebouncedCustomerSearch('');
-    setPinnedSaleCustomer(null);
-  };
-
-  const handleSaveSale = () => {
-    const touchFields: Record<string, boolean> = {
-      customerId: true,
-      dueDate: true,
-      ...(isMealSale
-        ? { productId: true, productDetails: true, quantity: true, amount: true }
-        : {
-            productId: true,
-            batchNumber: true,
-            quantity: true,
-            saleUnit: true,
-            ...(saleUnit === 'Carton' ? { saleWeightKg: true } : {}),
-            ...(isHistoricalSale ? { amount: true } : {}),
-          }),
-    };
-    setTouched(touchFields);
-    if (!isFormValid) {
-      toast.error('Please fix validation errors.');
-      return;
-    }
-
-    const inventoryItem = inventory.find((i) => i.id === selectedProductId);
-    if (!isHistoricalSale && !isMealSale && !inventoryItem && selectedProductId) {
-      toast.error('Product not found.');
-      return;
-    }
-
-    const amount = Number(newSale.amount);
-    const saleDate = newSale.date || new Date().toISOString().split('T')[0];
-    const finalAmountPaid = getAmountPaidForMode(paymentMode, amount, amountPaid);
-    const isCreditMode = paymentMode !== PaymentMode.FULL_PAYMENT;
-    const hubId = resolveHubId(selectedHub);
-    if (!hubId) {
-      toast.error('Invalid fulfillment hub.');
-      return;
-    }
-
-    const saleItemPayload = isMealSale
-      ? {
-          item: {
-            product_name: productDetailsText.trim(),
-            quantity: quantity > 0 ? quantity : 1,
-            unit: 'Food plate',
-            category: 'Kitchen',
-          },
-        }
-      : selectedProductId && quantity > 0
-        ? {
-            item: {
-              product_id: selectedProductId,
-              quantity,
-
-              ...(saleUnit
-                ? { sale_unit: saleUnit, unit: saleUnit }
-                : inventoryItem
-                  ? { unit: inventoryItem.unitOfMeasure }
-                  : {}),
-              ...(saleUnit === 'Carton' && saleWeightKg > 0
-                ? { sale_weight_kg: saleWeightKg }
-                : {}),
-            },
-          }
-        : null;
-
-    if (!saleItemPayload) {
-      toast.error(
-        isMealSale
-          ? 'Enter a meal name.'
-          : 'Select a catalog product (or Record a meal).',
-      );
-      return;
-    }
-
-    createSale.mutate(
-      {
-        customer_id: newSale.customerId!,
-        hub_id: hubId,
-        amount,
-        discount: Number(newSale.discount) || 0,
-        amount_paid: finalAmountPaid,
-        payment_mode: paymentMode,
-        payment_type: isCreditMode ? undefined : paymentType,
-        due_date: isCreditMode ? dueDate : undefined,
-        payment_terms: newSale.paymentTerms,
-        channel: newSale.channel || SalesChannel.WALK_IN,
-        delivery_status: newSale.deliveryStatus || DeliveryStatus.NOT_APPLICABLE,
-        delivery_address: newSale.deliveryAddress,
-        notes: newSale.notes || undefined,
-        date: saleDate,
-        ...saleItemPayload,
-      },
-      {
-        onSuccess: (result) => {
-          if (result.creditRecord) {
-            toast.success(
-              `Sale recorded — credit of ${fmt(result.creditRecord.amountOwed)} created, due ${dueDate}`,
-            );
-          } else {
-            toast.success('Sale recorded.');
-          }
-          setShowAddModal(false);
-          resetForm();
-        },
-        onError: (err) => toast.error(err.message || 'Failed to record sale.'),
-      },
-    );
-  };
+  const resolveHubId = (hubName: string) => (activeHubs.find((h) => h.name === hubName) ?? hubs.find((h) => h.name === hubName))?.id;
 
   const handleUpdateDeliveryStatus = (id: string, status: DeliveryStatus) => {
     updateDeliveryStatusMutation.mutate(
       { id, delivery_status: status },
       {
         onSuccess: (updated) => {
-          if (selectedSale?.id === id) setSelectedSale(updated);
+          if (selectedSale?.id === id) setPatchedSale(updated);
           toast.success(`Delivery: ${status}`);
         },
         onError: (err) => toast.error(err.message),
@@ -754,7 +158,6 @@ export function useSalesPage() {
     setEditForm({
       amount: selectedSale.amount,
       discount: selectedSale.discount ?? 0,
-      amountPaid: selectedSale.amountPaid,
       paymentMode: selectedSale.paymentMode,
       notes: selectedSale.notes,
       deliveryAddress: selectedSale.deliveryAddress,
@@ -764,6 +167,8 @@ export function useSalesPage() {
       hubName: selectedSale.hubName,
       item: selectedSale.item,
     });
+    setShowVoidConfirm(false);
+    setDetailTab('overview');
     setIsEditing(true);
   };
 
@@ -775,10 +180,6 @@ export function useSalesPage() {
       toast.error(lockedSaleMessage(selectedSale));
       return;
     }
-    if (editBatchPriceError) {
-      toast.error(editBatchPriceError);
-      return;
-    }
     const amount = Number(editForm.amount) || selectedSale.amount;
     const hubId = editForm.hubName ? resolveHubId(editForm.hubName) : undefined;
     updateSale.mutate(
@@ -786,7 +187,8 @@ export function useSalesPage() {
         id: selectedSale.id,
         amount,
         discount: Number(editForm.discount ?? selectedSale.discount ?? 0) || 0,
-        amount_paid: Number(editForm.amountPaid ?? selectedSale.amountPaid ?? 0) || 0,
+        // amount_paid is not sent: payments go through the credit repayment
+        // flow (Credits > Record payment) so the ledger stays correct.
         payment_mode: editForm.paymentMode ?? selectedSale.paymentMode,
         notes: editForm.notes,
         delivery_address: editForm.deliveryAddress,
@@ -807,7 +209,7 @@ export function useSalesPage() {
       },
       {
         onSuccess: (updated) => {
-          setSelectedSale(updated);
+          setPatchedSale(updated);
           setIsEditing(false);
           toast.success('Sale updated.');
         },
@@ -824,7 +226,7 @@ export function useSalesPage() {
     }
     voidSale.mutate(selectedSale.id, {
       onSuccess: (updated) => {
-        setSelectedSale(updated);
+        setPatchedSale(updated);
         setShowVoidConfirm(false);
         toast.success('Sale voided.');
       },
@@ -832,13 +234,11 @@ export function useSalesPage() {
     });
   };
 
+  // ── Export, template, import
   const exportSales = useExportSales();
   const handleExport = () => {
     exportSales.mutate(
-      {
-        ...summaryFilters,
-        ...(sortBy ? { sort_by: sortBy, sort_dir: sortDir } : {}),
-      },
+      { ...filters.summaryFilters, ...filters.sortParams },
       {
         onSuccess: () => toast.success('Sales export downloaded'),
         onError: (err) => toast.error(err.message || 'Export failed'),
@@ -846,18 +246,26 @@ export function useSalesPage() {
     );
   };
 
+  const downloadTemplate = useDownloadSalesImportTemplate();
   const handleDownloadTemplate = (type: 'catalog' | 'custom' = 'catalog') => {
     const toastId = toast.loading('Preparing your template…');
     downloadTemplate.mutate(type, {
-      onSuccess: () =>
-        toast.success(
-          `${type === 'custom' ? 'Custom' : 'Catalog'} template downloaded.`,
-          { id: toastId },
-        ),
-      onError: (err) =>
-        toast.error(err.message || 'Failed to download template.', { id: toastId }),
+      onSuccess: () => toast.success(`${type === 'custom' ? 'Custom' : 'Catalog'} template downloaded.`, { id: toastId }),
+      onError: (err) => toast.error(err.message || 'Failed to download template.', { id: toastId }),
     });
   };
+
+  const validateImport = useValidateSalesImport();
+  const importInputRef = useRef<HTMLInputElement>(null);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importPreview, setImportPreview] = useState<SalesImportPreviewRow[]>([]);
+  const [importSummary, setImportSummary] = useState<{ total: number; valid: number; invalid: number } | null>(null);
+  const [validateAuditId, setValidateAuditId] = useState<string | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState<{ processed: number; total: number; imported: number; failed: number } | null>(null);
+  const [importResult, setImportResult] = useState<SalesImportChunkResult | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
+  const [showImportConfirm, setShowImportConfirm] = useState(false);
 
   const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -868,9 +276,7 @@ export function useSalesPage() {
       return;
     }
     if (file.size === 0) {
-      toast.error(
-        'This file is empty (0 bytes). If it is from Google Drive, download it first or make it available offline, then select the local copy.',
-      );
+      toast.error('This file is empty (0 bytes). If it is from Google Drive, download it first or make it available offline, then select the local copy.');
       return;
     }
     setShowImportModal(true);
@@ -912,15 +318,12 @@ export function useSalesPage() {
       setShowImportConfirm(true);
       return;
     }
-
     setImporting(true);
     setImportProgress({ processed: 0, total: validCount, imported: 0, failed: 0 });
     setImportResult(null);
     setImportError(null);
     try {
-      const result = await runChunkedSalesImport(validateAuditId, validCount, (progress) => {
-        setImportProgress(progress);
-      });
+      const result = await runChunkedSalesImport(validateAuditId, validCount, (progress) => setImportProgress(progress));
       const importedCount = result.imported_so_far ?? result.imported;
       // Close/reset before invalidateQueries so the preview + active Import
       // button never flash while cache refreshes.
@@ -946,169 +349,36 @@ export function useSalesPage() {
     }
   };
 
-  const saleStockLogs = useMemo(() => {
-    if (!selectedSale) return [];
-    return stockLogs.filter((l) => l.referenceId === selectedSale.id);
-  }, [selectedSale, stockLogs]);
+  const closeImportModal = () => {
+    setShowImportModal(false);
+    setImportPreview([]);
+    setImportSummary(null);
+    setShowImportConfirm(false);
+  };
 
+  const stockLogs = stockLogsResult?.data;
+  const saleStockLogs = useMemo(() => (selectedSale && stockLogs ? stockLogs.filter((l) => l.referenceId === selectedSale.id) : []), [selectedSale, stockLogs]);
   const customerSalesHistory = useMemo(() => {
     if (!selectedSale) return [];
     return sales
-      .filter(
-        (s) => s.customerId === selectedSale.customerId && s.id !== selectedSale.id && s.status !== 'Voided',
-      )
+      .filter((s) => s.customerId === selectedSale.customerId && s.id !== selectedSale.id && s.status !== 'Voided')
       .toSorted((a, b) => b.date.localeCompare(a.date))
       .slice(0, 10);
   }, [selectedSale, sales]);
 
-  const closeDetailPanel = () => {
-    setSelectedSale(null);
-    setIsEditing(false);
-  };
-
   return {
-    user,
-    can,
-    isAdmin,
-    hubScope,
-    dateFrom,
-    setDateFrom,
-    dateTo,
-    setDateTo,
-    dateFieldFilter,
-    setDateFieldFilter,
-    quickPreset,
-    setQuickPreset,
-    applyPreset,
-    listFilters,
-    summaryFilters,
-    sales,
-    salesMeta,
-    salesLoading,
-    salesFetching,
-    summaryFetching,
-    page,
-    setPage,
-    customers: saleModalCustomers,
-    customersFetching,
-    setCustomerSearch,
-    agents,
-    inventory,
-    filteredSales,
-    kpis,
-    activeHubs,
-    hasFilters,
-    clearFilters,
-    selectedSale,
-    setSelectedSale,
-    detailTab,
-    setDetailTab,
-    isEditing,
-    setIsEditing,
-    editForm,
-    setEditForm,
-    showVoidConfirm,
-    setShowVoidConfirm,
-    saleStockLogs,
-    customerSalesHistory,
-    closeDetailPanel,
-    handleUpdateDeliveryStatus,
-    startEditing,
-    saveEdit,
-    editBatchPriceError,
-    handleVoidSale,
-    showAddModal,
-    setShowAddModal,
-    newSale,
-    setNewSale,
-    selectedHub,
-    setSelectedHub,
-    selectedProductId,
-    setSelectedProductId,
-    selectedBatchNumber,
-    setSelectedBatchNumber,
-    productBatches,
-    batchesLoading,
-    quantity,
-    saleUnit,
-    saleWeightKg,
-    handleSaleWeightChange,
-    paymentMode,
-    setPaymentMode,
-    paymentType,
-    setPaymentType,
-    amountPaid,
-    setAmountPaid,
-    dueDate,
-    setDueDate,
-    touched,
-    setTouched,
-    validationErrors,
-    productDetailsText,
-    setProductDetailsText,
-    isHistoricalSale,
-    isMealSale,
-    isFormValid,
-    customerCreditWarning,
-    selectedFormCustomer,
-    availableInventory,
-    selectedInventoryItem,
-    isCartonProduct,
-    isVolumeProduct,
-    handleProductChange,
-    handleBatchChange,
-    handleQuantityChange,
-    handleSaleUnitChange,
-    listUnitPriceForSale,
-    selectedBatch,
-    handleSaveSale,
-    resetForm,
-    showImportModal,
-    setShowImportModal,
-    importPreview,
-    setImportPreview,
-    importSummary,
-    setImportSummary,
-    validateAuditId,
-    importing,
-    importProgress,
-    importResult,
-    importError,
-    showImportConfirm,
-    setShowImportConfirm,
+    user, can, isAdmin, hubScope, activeHubs, agents,
+    filters, skuOptions, productCategories: PRODUCT_CATEGORIES,
+    sales, salesMeta, page, setPage, pageSize, setPageSize, salesLoading, salesFetching, summaryFetching, kpis, revenueChangePct, profitChangePct,
+    showAddModal, setShowAddModal, closeRecordSale, recordSale,
+    saleId, selectedSale, saleFetching, openSale, closeDetailPanel,
+    detailTab, setDetailTab, isEditing, setIsEditing, editForm, setEditForm, showVoidConfirm, setShowVoidConfirm,
+    saleStockLogs, customerSalesHistory, handleUpdateDeliveryStatus, startEditing, saveEdit, editBatchPriceError, handleVoidSale,
+    savingEdit: updateSale.isPending, voidingSale: voidSale.isPending, updatingDelivery: updateDeliveryStatusMutation.isPending,
+    handleExport, exportingSales: exportSales.isPending,
+    handleDownloadTemplate, downloadingTemplate: downloadTemplate.isPending,
+    importInputRef, handleImportFile, handleImportConfirm, closeImportModal,
+    showImportModal, importPreview, importSummary, importing, importProgress, importResult, importError, showImportConfirm, setShowImportConfirm,
     validating: validateImport.isPending,
-    handleDownloadTemplate,
-    handleImportFile,
-    handleImportConfirm,
-    importInputRef,
-    downloadingTemplate: downloadTemplate.isPending,
-    handleExport,
-    exportingSales: exportSales.isPending,
-    searchTerm,
-    setSearchTerm,
-    filterAgent,
-    setFilterAgent,
-    filterStatus,
-    setFilterStatus,
-    filterChannel,
-    setFilterChannel,
-    filterCategories,
-    setFilterCategories,
-    toggleCategoryFilter,
-    filterProductIds,
-    setFilterProductIds,
-    skuOptions,
-    productCategories: PRODUCT_CATEGORIES,
-    sortBy,
-    sortDir,
-    toggleSort,
-    btnPrimary: BTN_PRIMARY,
-    btnSecondary: BTN_SECONDARY,
-    inputCls: INPUT_CLS,
-    labelCls: LABEL_CLS,
-    savingSale: createSale.isPending,
-    savingEdit: updateSale.isPending,
-    voidingSale: voidSale.isPending,
-    updatingDelivery: updateDeliveryStatusMutation.isPending,
   };
 }

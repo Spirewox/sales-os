@@ -1,15 +1,18 @@
 'use client';
 
-import { X, Edit3, Save } from 'lucide-react';
-import { Sale, DeliveryStatus, Hub } from '@/types';
-import type { HubScopeFilter } from '@/hooks/use-hub-scope';
-import type { DetailTab } from './sales-utils';
-import { isKitchenSale, isLockedSale } from './sales-utils';
+import Link from 'next/link';
+import { toast } from 'sonner';
+import { Banknote, Edit3, Printer, Trash2 } from 'lucide-react';
+import type { Sale, DeliveryStatus, Hub, StockLog } from '@/types';
 import type { Permission } from '@/lib/permissions';
-import { ModalDialog } from './modal-dialog';
-import { SaleDetailTabContent } from './sale-detail-tabs';
-import type { StockLog } from '@/types';
+import { useCustomerCredits } from '@/hooks/use-queries';
+import { formatDate, formatMoney } from '@/lib/format';
+import { lagosDay } from '@/lib/period';
+import { EntityDrawer, OverflowMenu, RowAction, StatusBadge } from '@/components/app';
 import { SubmitButton } from '@/components/submit-button';
+import { isKitchenSale, isLockedSale, lockedSaleMessage, saleBalance, salePaymentStatus, saleRef, type DetailTab } from './sales-utils';
+import { SaleDetailTabContent } from './sale-detail-tabs';
+import { printSaleReceipt } from './sale-receipt';
 
 export type SaleDetailPanelProps = Readonly<{
   sale: Sale;
@@ -34,136 +37,116 @@ export type SaleDetailPanelProps = Readonly<{
   updatingDelivery?: boolean;
   can: (permission: Permission) => boolean;
   isCompanyAdmin: boolean;
-  hubScope: HubScopeFilter;
   activeHubs: Hub[];
   batchPriceError?: string | null;
 }>;
 
-function DetailPanelHeader({
-  sale,
-  isEditing,
-  setIsEditing,
-  onClose,
-  onStartEditing,
-  onSaveEdit,
-  savingEdit = false,
-  can,
-}: Readonly<{
-  sale: Sale;
-  isEditing: boolean;
-  setIsEditing: (v: boolean) => void;
-  onClose: () => void;
-  onStartEditing: () => void;
-  onSaveEdit: () => void;
-  savingEdit?: boolean;
-  can: (permission: Permission) => boolean;
-}>) {
-  return (
-    <div className="p-6 border-b flex justify-between items-start sticky top-0 bg-card z-10">
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <h2 className="text-lg font-bold truncate">{sale.customerName}</h2>
-          {sale.isCredit && <span className="text-xs font-semibold px-2 py-0.5 rounded bg-orange-50 text-orange-700">Credit</span>}
-          {isKitchenSale(sale) && <span className="text-xs font-semibold px-2 py-0.5 rounded bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400">Kitchen</span>}
-        </div>
-        <p className="text-sm text-muted-foreground mt-0.5">{sale.date} &middot; {sale.agentName} &middot; {sale.channel || 'Walk-In'}</p>
-      </div>
-      <div className="flex items-center gap-2 ml-4 shrink-0">
-        {sale.status !== 'Voided' && !isEditing && !isLockedSale(sale) && can('sales.edit') && (
-          <button type="button" onClick={onStartEditing} className="h-8 px-3 rounded-md flex items-center gap-1.5 border hover:bg-accent text-sm font-medium"><Edit3 size={14} /> Edit</button>
-        )}
-        {isEditing && (
-          <>
-            <SubmitButton type="button" onClick={onSaveEdit} loading={savingEdit} className="h-8 px-3 gap-1.5 text-sm"><Save size={14} /> Save</SubmitButton>
-            <button type="button" onClick={() => setIsEditing(false)} className="h-8 px-3 rounded-md flex items-center gap-1.5 border hover:bg-accent text-sm font-medium">Cancel</button>
-          </>
-        )}
-        <button type="button" onClick={onClose} className="text-muted-foreground hover:text-foreground" aria-label="Close"><X size={20} /></button>
-      </div>
-    </div>
+/** Sale drawer: amount and payment status up top, Record payment and Receipt, Edit and Void in the overflow. */
+export function SaleDetailPanel(props: SaleDetailPanelProps) {
+  const { sale, detailTab, setDetailTab, isEditing, setIsEditing, showVoidConfirm, setShowVoidConfirm, onClose, onStartEditing, onSaveEdit, onVoidSale, savingEdit = false, voidingSale = false, can, customerSalesHistory } = props;
+
+  // The linked credit record carries repayments made after the sale, so it is the true balance.
+  const { data: credits } = useCustomerCredits(sale.customerId || null);
+  const credit = credits?.find((c) => c.sale?.id === sale.id);
+  const creditOwed = credit && credit.status !== 'Voided' ? credit.amountOwed : null;
+  const { paid, balance } = saleBalance(sale, creditOwed);
+  const today = lagosDay();
+  const status = salePaymentStatus(sale, { creditOwed, overdue: credit ? credit.status === 'Overdue' : undefined, today });
+  const dueDate = credit?.dueDate || sale.dueDate;
+
+  const voided = sale.status === 'Voided';
+  const locked = isLockedSale(sale);
+  const canEdit = !voided && !locked && can('sales.edit');
+  const canVoid = !voided && !locked && can('sales.void');
+  const creditHref = `/credits?customer=${sale.customerId}`;
+
+  const close = () => {
+    if (isEditing && !window.confirm('Discard your changes to this sale?')) return;
+    onClose();
+  };
+
+  const receipt = () => {
+    if (!printSaleReceipt(sale, { balance })) toast.error('Allow pop-ups for this site to print the receipt.');
+  };
+
+  const actions = isEditing ? (
+    <>
+      <SubmitButton type="button" onClick={onSaveEdit} loading={savingEdit} className="h-8 px-3 text-sm">Save changes</SubmitButton>
+      <button type="button" onClick={() => setIsEditing(false)} className="h-8 rounded-md border bg-background px-3 text-sm font-medium hover:bg-muted">Cancel</button>
+    </>
+  ) : (
+    <>
+      {!voided && balance > 0 && (
+        <RowAction href={creditHref} tone="primary"><Banknote aria-hidden /> Record payment</RowAction>
+      )}
+      <RowAction onClick={receipt}><Printer aria-hidden /> Receipt</RowAction>
+    </>
   );
-}
 
-export function SaleDetailPanel({
-  sale,
-  detailTab,
-  setDetailTab,
-  isEditing,
-  setIsEditing,
-  editForm,
-  setEditForm,
-  showVoidConfirm,
-  setShowVoidConfirm,
-  saleStockLogs,
-  customerSalesHistory,
-  onClose,
-  onSelectSale,
-  onStartEditing,
-  onSaveEdit,
-  onVoidSale,
-  onUpdateDeliveryStatus,
-  savingEdit = false,
-  voidingSale = false,
-  updatingDelivery = false,
-  can,
-  isCompanyAdmin,
-  hubScope,
-  activeHubs,
-  batchPriceError,
-}: SaleDetailPanelProps) {
   return (
-    <ModalDialog onClose={onClose} align="end">
-      <div className="relative z-10 w-full max-w-2xl bg-card border-l shadow-xl h-full overflow-y-auto animate-in slide-in-from-right duration-200">
-        <DetailPanelHeader
-          sale={sale}
-          isEditing={isEditing}
-          setIsEditing={setIsEditing}
-          onClose={onClose}
-          onStartEditing={onStartEditing}
-          onSaveEdit={onSaveEdit}
-          savingEdit={savingEdit}
-          can={can}
+    <EntityDrawer
+      onClose={close}
+      width="lg"
+      title={formatMoney(sale.amount)}
+      status={<StatusBadge domain="payment" status={status} />}
+      subtitle={
+        <>
+          {sale.customerId ? (
+            <Link href={`/customers?customer=${sale.customerId}`} className="font-medium text-foreground hover:underline">{sale.customerName}</Link>
+          ) : sale.customerName}
+          {` · Sale #${saleRef(sale.id)} · ${sale.channel || 'Walk-In'}`}
+          {isKitchenSale(sale) && ' · Kitchen'}
+        </>
+      }
+      actions={actions}
+      overflow={!isEditing && (
+        <OverflowMenu
+          label="Sale actions"
+          size="sm"
+          items={[
+            { label: 'Edit sale', icon: <Edit3 aria-hidden />, onSelect: onStartEditing, hidden: !canEdit },
+            { label: 'Void sale', icon: <Trash2 aria-hidden />, destructive: true, onSelect: () => setShowVoidConfirm(true), hidden: !canVoid },
+          ]}
         />
+      )}
+      stats={[
+        { label: 'Amount', value: formatMoney(sale.amount) },
+        { label: 'Paid', value: formatMoney(voided ? 0 : paid), tone: !voided && balance <= 0 ? 'good' : 'default' },
+        { label: 'Balance', value: formatMoney(voided ? 0 : balance), tone: voided || balance <= 0 ? 'default' : status === 'Overdue' ? 'danger' : 'warning' },
+        { label: 'Date', value: formatDate(sale.date) },
+      ]}
+      tabs={isEditing ? undefined : {
+        items: [
+          { id: 'overview', label: 'Overview' },
+          { id: 'delivery', label: 'Delivery' },
+          { id: 'history', label: 'History', count: customerSalesHistory.length },
+        ],
+        value: detailTab,
+        onChange: setDetailTab,
+      }}
+    >
+      <div className="space-y-6">
+        {locked && <p className="rounded-md bg-muted/60 px-3 py-2 text-sm text-muted-foreground">{lockedSaleMessage(sale)}</p>}
 
-        <div className="flex border-b">
-          {(['overview', 'delivery', 'history'] as const).map((tab) => (
-            <button
-              key={tab}
-              type="button"
-              onClick={() => setDetailTab(tab)}
-              className={`flex-1 py-3 text-xs font-medium text-center transition-colors ${detailTab === tab ? 'border-b-2 border-primary text-primary' : 'text-muted-foreground hover:text-foreground'}`}
-            >
-              {tab === 'overview' && 'Overview'}
-              {tab === 'delivery' && 'Delivery'}
-              {tab === 'history' && `History (${customerSalesHistory.length})`}
-            </button>
-          ))}
-        </div>
+        {showVoidConfirm && canVoid && (
+          <div role="alertdialog" aria-labelledby="void-sale-title" className="rounded-xl border border-destructive/30 bg-destructive/10 p-4">
+            <p id="void-sale-title" className="mb-3 text-sm font-medium text-destructive">Void this sale? This reverses customer stats and marks the sale as voided.</p>
+            <div className="flex gap-2">
+              <SubmitButton type="button" onClick={onVoidSale} loading={voidingSale} variant="destructive" className="h-8 px-3">Yes, void sale</SubmitButton>
+              <button type="button" onClick={() => setShowVoidConfirm(false)} className="h-8 rounded-md border bg-background px-3 text-sm font-medium hover:bg-muted">Keep sale</button>
+            </div>
+          </div>
+        )}
 
-        <div className="p-6 space-y-6">
-          <SaleDetailTabContent
-            detailTab={detailTab}
-            sale={sale}
-            isEditing={isEditing}
-            editForm={editForm}
-            setEditForm={setEditForm}
-            showVoidConfirm={showVoidConfirm}
-            setShowVoidConfirm={setShowVoidConfirm}
-            saleStockLogs={saleStockLogs}
-            customerSalesHistory={customerSalesHistory}
-            onSelectSale={onSelectSale}
-            onVoidSale={onVoidSale}
-            onUpdateDeliveryStatus={onUpdateDeliveryStatus}
-            voidingSale={voidingSale}
-            updatingDelivery={updatingDelivery}
-            can={can}
-            isCompanyAdmin={isCompanyAdmin}
-            hubScope={hubScope}
-            activeHubs={activeHubs}
-            batchPriceError={batchPriceError}
-          />
-        </div>
+        {!voided && balance > 0 && !isEditing && (
+          <p className="text-sm text-muted-foreground">
+            {formatMoney(balance)} outstanding{dueDate ? `, due ${formatDate(dueDate)}` : ''}.{' '}
+            <Link href={creditHref} className="font-medium text-primary hover:underline">Open credit</Link>
+          </p>
+        )}
+
+        <SaleDetailTabContent {...props} detailTab={isEditing ? 'overview' : detailTab} />
       </div>
-    </ModalDialog>
+    </EntityDrawer>
   );
 }

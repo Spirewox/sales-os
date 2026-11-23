@@ -13,10 +13,10 @@ function valueSizeClass(value: string): string {
 }
 
 export function MetricValue({ value, className = '' }: MetricValueProps) {
-  const text = String(value ?? '—');
+  const text = String(value ?? '-');
   return (
     <p
-      className={`${valueSizeClass(text)} font-black leading-tight whitespace-nowrap overflow-hidden text-ellipsis ${className}`.trim()}
+      className={`${valueSizeClass(text)} font-semibold tracking-tight tabular-nums leading-tight whitespace-nowrap overflow-hidden text-ellipsis ${className}`.trim()}
       title={text}
     >
       {text}

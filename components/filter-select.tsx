@@ -20,6 +20,7 @@ export function FilterSelect({
   icon,
   className = '',
   ariaLabel,
+  size = 'default',
 }: {
   id?: string;
   value: string;
@@ -28,6 +29,8 @@ export function FilterSelect({
   icon?: ReactNode;
   className?: string;
   ariaLabel?: string;
+  /** compact = 36px, for filter bars. */
+  size?: 'default' | 'compact';
 }) {
   return (
     <Select
@@ -40,7 +43,7 @@ export function FilterSelect({
       <SelectTrigger
         id={id}
         aria-label={ariaLabel}
-        className={`h-10 w-full rounded-md bg-background px-3 font-medium shadow-none data-[size=default]:h-10 ${className}`}
+        className={`${size === 'compact' ? 'h-9 w-auto min-w-40 data-[size=default]:h-9' : 'h-10 w-full data-[size=default]:h-10'} rounded-md bg-background px-3 font-medium shadow-none ${className}`}
       >
         {icon}
         <SelectValue />

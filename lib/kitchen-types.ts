@@ -276,10 +276,10 @@ const naira0 = new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NG
 const naira2 = new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 2, maximumFractionDigits: 2 });
 /** ₦1,234 (whole naira) or ₦12.50 below ₦100. */
 export function naira(v: number | null | undefined): string {
-  if (v == null || !Number.isFinite(v)) return '—';
+  if (v == null || !Number.isFinite(v)) return '-';
   return Math.abs(v) < 100 && v % 1 !== 0 ? naira2.format(v) : naira0.format(v);
 }
-export const pct = (v: number | null | undefined) => (v == null || !Number.isFinite(v) ? '—' : `${(v * 100).toFixed(1)}%`);
+export const pct = (v: number | null | undefined) => (v == null || !Number.isFinite(v) ? '-' : `${(v * 100).toFixed(1)}%`);
 
 const LAGOS = 'Africa/Lagos';
 export function formatDue(iso: string | null | undefined, now = Date.now()): string {

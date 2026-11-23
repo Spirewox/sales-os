@@ -1,105 +1,73 @@
 'use client';
 
-import { PosPaymentSettings } from '@/components/pos-payment-settings';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { useCreateTillCode, usePosTills, useRevokeTill } from '@/hooks/use-queries';
+import { useQueryClient } from '@tanstack/react-query';
+import { FormField, FormSection, FormSheet } from '@/components/app';
+import { FilterSelect } from '@/components/filter-select';
+import { useCreateTillCode } from '@/hooks/use-queries';
 import { usePermissions } from '@/hooks/use-permissions';
-import { useAuth } from '@/contexts/auth-context';
+import { formatDateTime } from '@/lib/format';
 
-export function TillRegistration({
-  hubId,
-  hubName,
-  onClose,
-}: {
-  hubId: string;
-  hubName: string;
+/**
+ * Register till: pick a location, create a one-time code, then enter it on the till and
+ * create its passkey there. The sheet stays open so the code can be read off the screen.
+ */
+export function RegisterTillSheet({ locations, defaultHubId, onClose }: Readonly<{
+  locations: { id: string; name: string }[];
+  defaultHubId?: string;
   onClose: () => void;
-}) {
+}>) {
   const { can } = usePermissions();
-  const { user } = useAuth();
   const canManage = can('pos.manage_tills');
-  const tills = usePosTills(hubId, JSON.stringify([user?.id, user?.visibleHubIds, user?.permissions]));
+  const qc = useQueryClient();
   const createCode = useCreateTillCode();
-  const revoke = useRevokeTill();
-  const [issued, setIssued] = useState<{ code: string; expiresAt: string } | null>(null);
+  const [hubId, setHubId] = useState(defaultHubId ?? (locations.length === 1 ? locations[0].id : ''));
+  const [issued, setIssued] = useState<{ code: string; expiresAt: string; hubName: string } | null>(null);
+  const hubName = locations.find((l) => l.id === hubId)?.name ?? '';
 
   const issue = async () => {
     try {
       const res = await createCode.mutateAsync(hubId);
-      setIssued({ code: res.data.code, expiresAt: res.data.expiresAt });
+      setIssued({ code: res.data.code, expiresAt: res.data.expiresAt, hubName });
+      void qc.invalidateQueries({ queryKey: ['pos-operations'] });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Could not create a registration code');
     }
   };
 
+  const disabledReason = !canManage ? 'You need permission to register tills' : !hubId ? 'Choose a location' : null;
+
   return (
-    <div className="rounded-xl border bg-card p-6 space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h3 className="font-bold">Tills at {hubName}</h3>
-          <p className="mt-0.5 text-xs text-muted-foreground">A new till stays closed until someone enters a code on that device and creates its passkey.</p>
-        </div>
-        <div className="flex gap-2">
-          {canManage && <button type="button" onClick={() => void issue()} disabled={createCode.isPending} className="h-9 rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground disabled:opacity-50">
-            {createCode.isPending ? 'Creating…' : 'New registration code'}
-          </button>}
-          <button type="button" onClick={onClose} className="h-9 rounded-md border px-3 text-sm">Close</button>
-        </div>
-      </div>
-
-      {canManage && issued && (
-        <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
-          <p className="text-xs text-muted-foreground">Show this code once. It can be used on one till and expires {new Date(issued.expiresAt).toLocaleString()}.</p>
-          <p className="mt-2 font-mono text-2xl font-black tracking-[0.25em]">{issued.code}</p>
-        </div>
+    <FormSheet
+      title="Register till"
+      description="A new till stays closed until someone enters a code on that device and creates its passkey."
+      onClose={onClose}
+      onSubmit={() => void issue()}
+      submitLabel={issued ? 'Create another code' : 'Create registration code'}
+      submitting={createCode.isPending}
+      disabledReason={disabledReason}
+    >
+      <FormSection title="Where the till sells">
+        <FormField label="Location" htmlFor="register-till-location" required hint="The till can only sell from this location.">
+          <FilterSelect
+            id="register-till-location"
+            ariaLabel="Location"
+            value={hubId}
+            onChange={(v) => { setHubId(v); setIssued(null); }}
+            options={[{ value: '', label: 'Choose a location' }, ...locations.map((l) => ({ value: l.id, label: l.name }))]}
+            className="h-9 data-[size=default]:h-9"
+          />
+        </FormField>
+      </FormSection>
+      {issued && (
+        <section aria-labelledby="register-till-code" className="rounded-lg border border-primary/30 bg-primary/5 p-4" role="status">
+          <h3 id="register-till-code" className="text-sm font-semibold">Registration code for {issued.hubName}</h3>
+          <p className="mt-3 font-mono text-3xl font-semibold tracking-[0.25em]">{issued.code}</p>
+          <p className="mt-3 text-xs text-muted-foreground">Show this code once. It works on one till and expires {formatDateTime(issued.expiresAt)}.</p>
+        </section>
       )}
-
-      {user?.roleName === 'company_admin' && <PosPaymentSettings hubId={hubId} />}
-      {tills.isPending && <p role="status" className="text-sm text-muted-foreground">Loading tills…</p>}
-      {tills.isError && <div role="alert" className="text-sm text-destructive">{tills.error.message} <button type="button" className="underline" onClick={() => void tills.refetch()}>Retry</button></div>}
-      <div className="relative overflow-x-auto rounded-lg border">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b bg-muted/40 text-left text-xs text-muted-foreground">
-              <th className="p-3 font-medium">Label</th>
-              <th className="p-3 font-medium">Passkey</th>
-              <th className="p-3 font-medium">Last seen</th>
-              <th className="p-3 font-medium"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {(tills.data ?? []).map((till) => (
-              <tr key={till.deviceId} className="border-b last:border-0">
-                <td className="p-3">
-                  <div className="font-medium">{till.label || 'Store till'}</div>
-                  <div className="font-mono text-[10px] text-muted-foreground">{till.deviceId}</div>
-                </td>
-                <td className="p-3">{till.passkey ? 'Yes' : 'Not yet'}</td>
-                <td className="p-3 text-muted-foreground">{till.lastSeen ? new Date(till.lastSeen).toLocaleString() : '—'}</td>
-                <td className="p-3 text-right">
-                  {canManage && <button
-                    type="button"
-                    className="text-xs text-destructive hover:underline"
-                    disabled={revoke.isPending}
-                    onClick={() => {
-                      if (!window.confirm('Revoke this till? It cannot sign in until it is registered again.')) return;
-                      void revoke.mutateAsync({ hubId, deviceId: till.deviceId }).catch((err) => {
-                        toast.error(err instanceof Error ? err.message : 'Could not revoke this till');
-                      });
-                    }}
-                  >
-                    Revoke
-                  </button>}
-                </td>
-              </tr>
-            ))}
-            {tills.data && tills.data.length === 0 && (
-              <tr><td colSpan={4} className="p-4 text-center text-sm text-muted-foreground">No tills registered for this location.</td></tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
+      <p className="text-sm text-muted-foreground">Enter the code on the till, then create its passkey there. The till shows as Registered once that is done.</p>
+    </FormSheet>
   );
 }

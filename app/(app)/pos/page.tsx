@@ -1,377 +1,99 @@
 'use client';
 
 import { Suspense, useState } from 'react';
-import {
-  Banknote,
-  Monitor,
-  Receipt,
-  RefreshCw,
-  ShieldCheck,
-} from 'lucide-react';
-import { useSearchParams, useRouter } from 'next/navigation';
-import { PosOperations } from './operations';
+import { Plus, RefreshCw } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
+import { OverflowMenu, PageHeader, SectionErrorBoundary, SectionTabs, useSectionTab, type SectionTab } from '@/components/app';
 import { usePermissions } from '@/hooks/use-permissions';
-import { useHubs } from '@/hooks/use-queries';
-import { usePosOverview } from '@/hooks/use-pos-overview';
-import { TillRegistration } from '@/components/till-registration';
-import { LocationTypeTag } from '@/components/hub-scope-filter';
-import { LivePosPanel } from '@/components/live-pos-panel';
+import { useHubScopeFilter } from '@/hooks/use-hub-scope';
+import { useUrlState } from '@/hooks/use-url-state';
+import { RegisterTillSheet } from '@/components/till-registration';
+import type { PosLocation } from '@/hooks/use-pos-overview';
+import { TAB_FILTER_KEYS } from './use-pos-filters';
+import type { PosTab } from './pos-utils';
+import { OverviewTab } from './overview';
+import { TransactionsTab } from './transactions';
+import { TillsTab } from './tills';
+import { ShiftsTab, ReviewsTab } from './shifts-reviews';
 
-const money = (value: number) =>
-  new Intl.NumberFormat('en-NG', {
-    style: 'currency',
-    currency: 'NGN',
-    maximumFractionDigits: 2,
-  }).format(value);
-const today = () =>
-  new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Africa/Lagos',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(new Date());
+const TABS: SectionTab<PosTab>[] = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'transactions', label: 'Transactions' },
+  { id: 'tills', label: 'Tills' },
+  { id: 'shifts', label: 'Shifts' },
+  { id: 'reviews', label: 'Payment review' },
+];
 
 export default function PosPage() {
   const { can } = usePermissions();
-  // The inner component only mounts after authorization, so forbidden users issue no POS queries.
+  // The workspace only mounts after authorization, so forbidden users issue no POS queries.
   if (!can('pos.view'))
     return (
-      <div role="alert" className="rounded-xl border p-6">
-        <h1 className="text-xl font-bold">POS access required</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Your role does not have permission to view tills and POS metrics.
-        </p>
+      <div role="alert" className="rounded-xl border bg-card p-6">
+        <h1 className="text-xl font-semibold">POS access required</h1>
+        <p className="mt-2 text-sm text-muted-foreground">Your role does not have permission to view tills and POS metrics.</p>
       </div>
     );
-  return <Suspense fallback={<p role="status">Loading POS…</p>}><PosWorkspace /></Suspense>;
+  return <Suspense fallback={<p role="status" className="text-sm text-muted-foreground">Loading POS…</p>}><PosWorkspace /></Suspense>;
 }
 
 function PosWorkspace() {
-  const params = useSearchParams();
-  const router = useRouter();
-  const section = params.get('tab') || 'overview';
-  const [locationId, setLocationId] = useState(params.get('hub_id') || '');
-  const switchTab = (tab: string, hub = locationId) => {
-    const next = new URLSearchParams({ tab, date_from: from, date_to: to });
-    if (hub) next.set('hub_id', hub);
-    router.replace(`?${next}`, { scroll: false });
+  const { can } = usePermissions();
+  const { params, set } = useUrlState();
+  const scope = useHubScopeFilter();
+  const qc = useQueryClient();
+  const tab = useSectionTab(TABS, 'overview');
+  const [registering, setRegistering] = useState(false);
+  const canRegister = can('pos.manage_tills');
+
+  // Tab filters (status, till, search…) mean different things per tab, so a tab starts clean.
+  const changeTab = (next: PosTab) => set({ ...Object.fromEntries(TAB_FILTER_KEYS.map((k) => [k, null])), tab: next === 'overview' ? null : next });
+  const tabHref = (next: string) => {
+    const q = new URLSearchParams(params.toString());
+    TAB_FILTER_KEYS.forEach((k) => q.delete(k));
+    q.set('tab', next);
+    return `/pos?${q}`;
   };
-  const [from, setFrom] = useState(() => params.get('date_from') || today());
-  const [to, setTo] = useState(today);
-  const [tillLocation, setTillLocation] = useState<{
-    id: string;
-    name: string;
-  } | null>(null);
-  const hubs = useHubs();
-  const invalidRange = !from || !to || from > to;
-  const overview = usePosOverview({
-    hub_id: locationId || undefined,
-    date_from: from,
-    date_to: to,
-  });
-  const data = overview.data;
-  const [locationSearch, setLocationSearch] = useState('');
-  const [locationPage, setLocationPage] = useState(0);
-  const matchingLocations = data?.locations.filter(location => location.name.toLowerCase().includes(locationSearch.trim().toLowerCase())) ?? [];
-  const currentPage = Math.min(locationPage, Math.max(0, Math.ceil(matchingLocations.length / 50) - 1));
-  const locations = hubs.data?.filter((hub) => hub.isActive) ?? [];
-  const inputClass =
-    'h-10 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-2 focus-visible:outline-primary';
+  const viewTills = (location: PosLocation) => {
+    scope.setFilterHub(location.name);
+    changeTab('tills');
+  };
+  const refresh = () => {
+    void qc.invalidateQueries({ queryKey: ['pos-overview'] });
+    void qc.invalidateQueries({ queryKey: ['pos-operations'] });
+    void qc.invalidateQueries({ queryKey: ['hubs'] });
+  };
 
   return (
-    <div className="space-y-6">
-      <nav aria-label="POS sections" className="flex flex-wrap gap-2 border-b pb-2">
-        {Object.entries({ overview: 'Overview', transactions: 'Transactions', tills: 'Tills', shifts: 'Shifts', reviews: 'Payment Review' }).map(([id, label]) => (
-          <button key={id} type="button" aria-current={section === id ? 'page' : undefined}
-            className={`rounded-md px-3 py-2 text-sm font-medium ${section === id ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'}`}
-            onClick={() => switchTab(id)}>{label}</button>
-        ))}
-      </nav>
-      {['transactions', 'tills', 'shifts', 'reviews'].includes(section) && <PosOperations key={section} section={section} locations={locations.map(location => ({ id: location.id, name: location.name }))} />}
-      {section === 'overview' && <>
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
-            <Monitor className="text-primary" size={25} />
-            POS
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Till operations and recorded sales across your locations.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => {
-            void overview.refetch();
-            void hubs.refetch();
-          }}
-          disabled={overview.isFetching || invalidRange}
-          className="inline-flex h-10 items-center gap-2 rounded-md border bg-card px-4 text-sm font-medium disabled:opacity-50"
-        >
-          <RefreshCw
-            size={15}
-            className={overview.isFetching ? 'animate-spin' : ''}
-          />
-          Refresh
-        </button>
-      </div>
-
-      <div className="grid gap-4 rounded-xl border bg-card p-4 sm:grid-cols-3">
-        <label className="space-y-1.5 text-xs font-semibold">
-          Location
-          <select
-            className={inputClass}
-            value={locationId}
-            onChange={(event) => {
-              setLocationId(event.target.value);
-              setTillLocation(null);
-            }}
-          >
-            <option value="">All permitted locations</option>
-            {locations.map((hub) => (
-              <option key={hub.id} value={hub.id}>
-                {hub.name} ({hub.locationType === 'rsp' ? 'RSP' : 'Hub'})
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="space-y-1.5 text-xs font-semibold">
-          From
-          <input
-            className={inputClass}
-            type="date"
-            value={from}
-            max={to || undefined}
-            onChange={(event) => setFrom(event.target.value)}
-          />
-        </label>
-        <label className="space-y-1.5 text-xs font-semibold">
-          To
-          <input
-            className={inputClass}
-            type="date"
-            value={to}
-            min={from || undefined}
-            onChange={(event) => setTo(event.target.value)}
-          />
-        </label>
-        <p className="text-xs text-muted-foreground sm:col-span-3">
-          Sales dates use Africa/Lagos. Till registration counts show the
-          current state. Offline sales appear after syncing.
-        </p>
-      </div>
-      <LivePosPanel locationId={locationId} locationNames={Object.fromEntries(locations.map(location => [location.id, location.name]))} />
-      {invalidRange && (
-        <p role="alert" className="text-sm text-destructive">
-          Choose a valid start and end date.
-        </p>
-      )}
-      {hubs.isError && (
-        <p role="alert" className="text-sm text-destructive">
-          Could not load location options. Use Refresh to try again.
-        </p>
-      )}
-      {overview.isError && (
-        <div
-          role="alert"
-          className="rounded-xl border border-destructive/40 bg-card p-5"
-        >
-          <p className="text-sm text-destructive">{overview.error.message}</p>
-          <button
-            type="button"
-            onClick={() => void overview.refetch()}
-            className="mt-2 text-sm font-semibold underline"
-          >
-            Try again
+    <div className="space-y-5">
+      <PageHeader
+        title="POS"
+        description="Till operations and recorded sales across your locations."
+        actions={tab === 'tills' && canRegister ? (
+          <button type="button" onClick={() => setRegistering(true)} className="inline-flex h-9 items-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">
+            <Plus size={16} aria-hidden />
+            Register till
           </button>
-        </div>
+        ) : undefined}
+        overflow={<OverflowMenu items={[{ label: 'Refresh', icon: <RefreshCw />, onSelect: refresh }]} />}
+        tabs={<SectionTabs label="POS sections" tabs={TABS} value={tab} onChange={changeTab} />}
+      />
+
+      <SectionErrorBoundary label={TABS.find((t) => t.id === tab)?.label} resetKey={tab}>
+        {tab === 'overview' && <OverviewTab onViewTills={viewTills} tabHref={tabHref} />}
+        {tab === 'transactions' && <TransactionsTab />}
+        {tab === 'tills' && <TillsTab onRegister={canRegister ? () => setRegistering(true) : undefined} />}
+        {tab === 'shifts' && <ShiftsTab />}
+        {tab === 'reviews' && <ReviewsTab />}
+      </SectionErrorBoundary>
+
+      {registering && (
+        <RegisterTillSheet
+          locations={scope.activeHubs.map((h) => ({ id: h.id, name: h.name }))}
+          defaultHubId={scope.hubIdForApi}
+          onClose={() => setRegistering(false)}
+        />
       )}
-      {overview.isPending && !invalidRange && (
-        <p role="status" className="py-8 text-sm text-muted-foreground">
-          Loading POS overview…
-        </p>
-      )}
-
-      {data && !invalidRange && !overview.isError && (
-        <>
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {[
-              {
-                label: 'Registered tills',
-                value: data.tillCount.toLocaleString(),
-                note: 'Non-revoked devices',
-                icon: Monitor,
-              },
-              {
-                label: 'Passkeys created',
-                value: data.registeredCount.toLocaleString(),
-                note: 'Devices with a passkey',
-                icon: ShieldCheck,
-              },
-              {
-                label: 'Net POS sales',
-                value: money(data.netSales),
-                note: `${data.refunds} refund${data.refunds === 1 ? '' : 's'} · voided sales excluded`,
-                icon: Banknote,
-              },
-              {
-                label: 'Transactions',
-                value: data.transactions.toLocaleString(),
-                note: 'Sales recorded in the selected period',
-                icon: Receipt,
-              },
-            ].map((metric) => (
-              <div key={metric.label} className="rounded-xl border bg-card p-5">
-                <div className="flex items-center justify-between gap-3 text-sm text-muted-foreground">
-                  <span>{metric.label}</span>
-                  <metric.icon size={17} className="text-primary" />
-                </div>
-                <p className="mt-3 break-words text-2xl font-bold tabular-nums">
-                  {metric.value}
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {metric.note}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          <section className="overflow-hidden rounded-xl border bg-card">
-            <div className="border-b p-5">
-              <h2 className="font-bold">Locations and tills</h2>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Sales are reported by location. Open a location to inspect its
-                tills and last-seen information.
-              </p>
-            </div>
-            <div className="relative overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-muted/40 text-xs text-muted-foreground">
-                  <tr>
-                    {[
-                      'Location',
-                      'Tills',
-                      'Passkeys',
-                      'Net POS sales',
-                      'Transactions',
-                      '',
-                    ].map((heading, index) => (
-                      <th
-                        key={index}
-                        scope="col"
-                        className="whitespace-nowrap p-4 font-medium"
-                      >
-                        {heading || <span className="sr-only">Actions</span>}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {matchingLocations.slice(currentPage * 50, (currentPage + 1) * 50).map((location) => (
-                    <tr key={location.id} className="border-t">
-                      <td className="p-4">
-                        <div className="flex items-center gap-2 font-medium">
-                          {location.name}
-                          <LocationTypeTag
-                            locationType={location.locationType}
-                          />
-                        </div>
-                      </td>
-                      <td className="p-4 tabular-nums">{location.tillCount}</td>
-                      <td className="p-4 tabular-nums">
-                        {location.registeredCount}
-                      </td>
-                      <td className="whitespace-nowrap p-4 tabular-nums">
-                        {money(location.netSales)}
-                      </td>
-                      <td className="p-4 tabular-nums">
-                        {location.transactions}
-                      </td>
-                      <td className="p-4">
-                        <button
-                          type="button"
-                          className="whitespace-nowrap font-medium text-primary hover:underline"
-                          onClick={() =>
-                            setTillLocation({
-                              id: location.id,
-                              name: location.name,
-                            })
-                          }
-                          aria-label={`View tills at ${location.name}`}
-                        >
-                          View tills
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                  {!data.locations.length && (
-                    <tr>
-                      <td
-                        colSpan={6}
-                        className="p-8 text-center text-muted-foreground"
-                      >
-                        No permitted locations are available. Contact your
-                        administrator to check your location assignment.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </section>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <input aria-label="Search locations" placeholder="Search locations" className={inputClass}
-              value={locationSearch} onChange={event => { setLocationSearch(event.target.value); setLocationPage(0); }} />
-            <button disabled={currentPage === 0} onClick={() => setLocationPage(currentPage - 1)}>Previous locations</button>
-            <button disabled={(currentPage + 1) * 50 >= matchingLocations.length} onClick={() => setLocationPage(currentPage + 1)}>Next locations</button>
-          </div>
-          {tillLocation &&
-            data.locations.some(
-              (location) => location.id === tillLocation.id,
-            ) && (
-              <TillRegistration
-                key={tillLocation.id}
-                hubId={tillLocation.id}
-                hubName={tillLocation.name}
-                onClose={() => setTillLocation(null)}
-              />
-            )}
-
-          <section className="rounded-xl border bg-card p-5">
-            <h2 className="font-bold">Recorded payment types</h2>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Based on each sale’s recorded payment classification; this is not
-              a cash reconciliation report.
-            </p>
-            {!data.payments.length ? (
-              <p className="py-6 text-sm text-muted-foreground">
-                No POS sales were recorded in this period.
-              </p>
-            ) : (
-              <div className="mt-4 divide-y">
-                {data.payments.map((payment) => (
-                  <div
-                    key={payment.method}
-                    className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm"
-                  >
-                    <div>
-                      <p className="font-medium">{payment.method}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {payment.transactions} transactions
-                      </p>
-                    </div>
-                    <span className="font-semibold tabular-nums">
-                      {money(payment.netSales)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-        </>
-      )}
-      </>}
     </div>
   );
 }

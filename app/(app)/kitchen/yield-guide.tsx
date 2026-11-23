@@ -8,7 +8,7 @@ const fmt = (v: number) => v.toLocaleString('en-NG', { maximumFractionDigits: v 
 
 function GuideTable({ title, head, rows, hint, wide }: { title: string; head: string[]; rows: readonly (readonly string[])[]; hint?: string; wide?: boolean }) {
   return (
-    <section className={`rounded-md border bg-card ${wide ? 'lg:col-span-2' : ''}`}>
+    <section className={`rounded-xl border bg-card ${wide ? 'lg:col-span-2' : ''}`}>
       <h3 className="border-b px-4 py-3 text-sm font-semibold">{title}</h3>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
@@ -16,7 +16,7 @@ function GuideTable({ title, head, rows, hint, wide }: { title: string; head: st
             <tr>{head.map((h) => <th key={h} scope="col" className="px-4 py-2 text-left font-medium">{h}</th>)}</tr>
           </thead>
           <tbody className="divide-y">
-            {rows.map((r) => <tr key={r[0]}>{r.map((c, i) => <td key={i} className={`px-4 py-2 ${i === 0 ? 'font-medium' : ''}`}>{c || '—'}</td>)}</tr>)}
+            {rows.map((r) => <tr key={r[0]}>{r.map((c, i) => <td key={i} className={`px-4 py-2 ${i === 0 ? 'font-medium' : ''}`}>{c || '-'}</td>)}</tr>)}
           </tbody>
         </table>
       </div>
@@ -35,8 +35,8 @@ export function YieldGuide() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-md border bg-card p-4">
-        <h2 className="text-base font-semibold">How much should I buy?</h2>
+      <section className="rounded-xl border bg-card p-4">
+        <h2 className="text-sm font-semibold">How much should I buy?</h2>
         <div className="mt-3 grid gap-3 sm:grid-cols-[2fr_1fr_1fr]">
           <Field label="Item" htmlFor="pl-item">
             <select id="pl-item" className={inputClass} value={k} onChange={(e) => setK(e.target.value)}>
@@ -51,10 +51,10 @@ export function YieldGuide() {
             <input type="checkbox" checked={bulk} onChange={(e) => setBulk(e.target.checked)} /> Cooking 10kg+ at once ({item.bulkPer} scoops per kg)
           </label>
         )}
-        <div className="mt-4 rounded-md bg-primary/5 p-4" aria-live="polite">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">You need</p>
-          <p className="text-2xl font-bold tabular-nums">{fmt(plan.need)} {item.unit}</p>
-          <p className="text-sm text-muted-foreground">{fmt(plan.units)} scoops/pieces ÷ {plan.per} each · buy {plan.packs} × {item.packLabel}</p>
+        <div className="mt-4 rounded-xl bg-muted/50 p-4" aria-live="polite">
+          <p className="text-xs text-muted-foreground">You need</p>
+          <p className="text-2xl font-semibold tracking-tight tabular-nums">{fmt(plan.need)} {item.unit}</p>
+          <p className="text-sm tabular-nums text-muted-foreground">{fmt(plan.units)} scoops/pieces ÷ {plan.per} each, buy {plan.packs} × {item.packLabel}</p>
         </div>
         <p className="mt-2 text-xs text-muted-foreground">Round up a little, but keep extra under 10%: more than that eats into the food cost. For meat, plan on the minimum or average count per carton, since piece sizes vary.</p>
       </section>

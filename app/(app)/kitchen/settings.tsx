@@ -35,9 +35,9 @@ const RECIPIENT_LABELS: Record<KitchenAlertRecipient['kind'], string> = {
 
 function Card({ title, description, children, footer }: { title: string; description?: string; children: React.ReactNode; footer?: React.ReactNode }) {
   return (
-    <section className="rounded-md border bg-card">
+    <section className="rounded-xl border bg-card">
       <div className="border-b px-5 py-4">
-        <h2 className="text-base font-semibold">{title}</h2>
+        <h2 className="text-sm font-semibold">{title}</h2>
         {description && <p className="text-sm text-muted-foreground">{description}</p>}
       </div>
       <div className="space-y-4 p-5">{children}</div>
@@ -163,7 +163,7 @@ function TimingCard({ defaults, canEdit }: { defaults: KitchenDefaults; canEdit:
       {canEdit ? (
         <div className="grid gap-3 sm:grid-cols-2">
           {fields.map(([k, label, suffix]) => (
-            <Field key={k} label={label} htmlFor={`t-${k}`}><NumberInput id={`t-${k}`} value={d[k] as number} min={1} onChange={(v) => setD({ ...d, [k]: v })} suffix={suffix.slice(0, 4)} /></Field>
+            <Field key={k} label={label} htmlFor={`t-${k}`}><NumberInput id={`t-${k}`} value={d[k] as number} min={1} onChange={(v) => setD({ ...d, [k]: v })} suffix={suffix} /></Field>
           ))}
         </div>
       ) : (
@@ -207,7 +207,7 @@ function RunningCostsCard({ running, source, hubId, setHubId, hubScope, hasOverr
       </Field>
       <p className="text-xs text-muted-foreground">{scopeLabel}{source === 'company' && hubId && canEdit ? '. Saving creates its own figures.' : '.'}</p>
       {!r ? (
-        <p className="text-sm italic text-muted-foreground">Running costs are only shown to people who can see costs.</p>
+        <p className="text-sm text-muted-foreground">Running costs are only shown to people who can see costs.</p>
       ) : (
         <>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -227,14 +227,14 @@ function RunningCostsCard({ running, source, hubId, setHubId, hubScope, hasOverr
                       <input aria-label="Role" className={inputClass} value={st.role} onChange={(e) => setR({ ...r, staff: r.staff.map((x, j) => (j === i ? { ...x, role: e.target.value } : x)) })} />
                       <NumberInput ariaLabel="People" value={st.people} onChange={(v) => setR({ ...r, staff: r.staff.map((x, j) => (j === i ? { ...x, people: v } : x)) })} />
                       <MoneyInput ariaLabel="Monthly salary each" value={st.monthly} onChange={(v) => setR({ ...r, staff: r.staff.map((x, j) => (j === i ? { ...x, monthly: v } : x)) })} />
-                      <button type="button" className={btnGhost} aria-label={`Remove ${st.role}`} onClick={() => setR({ ...r, staff: r.staff.filter((_, j) => j !== i) })}><Trash2 size={14} /></button>
+                      <button type="button" className={btnGhost} aria-label={`Remove ${st.role}`} onClick={() => setR({ ...r, staff: r.staff.filter((_, j) => j !== i) })}><Trash2 size={14} aria-hidden /></button>
                     </>
                   ) : (
-                    <p className="col-span-4 flex justify-between text-sm"><span>{st.people} × {st.role}</span><span className="tabular-nums">{naira(st.monthly)} each</span></p>
+                    <p className="col-span-4 flex justify-between text-sm"><span className="tabular-nums">{st.people} × {st.role}</span><span className="tabular-nums">{naira(st.monthly)} each</span></p>
                   )}
                 </div>
               ))}
-              {canEdit && <button type="button" className={btnSecondary} onClick={() => setR({ ...r, staff: [...r.staff, { role: '', people: 1, monthly: 0 }] })}><Plus size={14} /> Add role</button>}
+              {canEdit && <button type="button" className={btnSecondary} onClick={() => setR({ ...r, staff: [...r.staff, { role: '', people: 1, monthly: 0 }] })}><Plus size={14} aria-hidden /> Add role</button>}
             </div>
           </div>
           <div className="grid gap-3 sm:grid-cols-3">
@@ -254,10 +254,10 @@ function RunningCostsCard({ running, source, hubId, setHubId, hubScope, hasOverr
             </Field>
           </div>
           {rates && (
-            <div className="rounded-md bg-primary/5 p-4" aria-live="polite">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Each {rates.basis === 'day' ? 'kitchen day' : 'portion'} carries</p>
-              <p className="text-2xl font-bold tabular-nums">{rates.divisor > 0 ? naira(rates.per_utilities + rates.per_staff) : '—'}</p>
-              <p className="text-sm text-muted-foreground">{naira(rates.total)} a month ({naira(rates.utilities_total)} running costs + {naira(rates.staff_total)} salaries) ÷ {rates.divisor || '—'} {rates.basis === 'day' ? 'days' : 'portions'}</p>
+            <div className="rounded-xl bg-muted/50 p-4" aria-live="polite">
+              <p className="text-xs text-muted-foreground">Each {rates.basis === 'day' ? 'kitchen day' : 'portion'} carries</p>
+              <p className="text-2xl font-semibold tracking-tight tabular-nums">{rates.divisor > 0 ? naira(rates.per_utilities + rates.per_staff) : '-'}</p>
+              <p className="text-sm tabular-nums text-muted-foreground">{naira(rates.total)} a month ({naira(rates.utilities_total)} running costs + {naira(rates.staff_total)} salaries) ÷ {rates.divisor || '-'} {rates.basis === 'day' ? 'days' : 'portions'}</p>
             </div>
           )}
         </>
@@ -288,10 +288,10 @@ function AlertRulesCard({ rules, canEdit, canListUsers }: { rules: KitchenAlertR
     >
       <ul className="space-y-4">
         {list.map((rule) => (
-          <li key={rule.type} className="rounded-md border p-3">
+          <li key={rule.type} className="rounded-xl border p-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <p className="text-sm font-semibold">{ALERT_LABELS[rule.type].label}</p>
+                <p className="text-sm font-medium">{ALERT_LABELS[rule.type].label}</p>
                 <p className="text-xs text-muted-foreground">{ALERT_LABELS[rule.type].when}</p>
               </div>
               {canEdit ? (
@@ -299,7 +299,7 @@ function AlertRulesCard({ rules, canEdit, canListUsers }: { rules: KitchenAlertR
                   <input type="checkbox" checked={rule.enabled} onChange={(e) => updateRule(rule.type, { enabled: e.target.checked })} /> On
                 </label>
               ) : (
-                <span className={cn('rounded px-2 py-0.5 text-xs font-semibold', rule.enabled ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-muted text-muted-foreground')}>{rule.enabled ? 'On' : 'Off'}</span>
+                <span className={cn('inline-flex h-5 items-center rounded-full px-2 text-xs font-medium', rule.enabled ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground')}>{rule.enabled ? 'On' : 'Off'}</span>
               )}
             </div>
             <div className="mt-2 flex flex-wrap gap-1.5">
@@ -307,11 +307,11 @@ function AlertRulesCard({ rules, canEdit, canListUsers }: { rules: KitchenAlertR
                 <span key={i} className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs">
                   {recipientText(r)}
                   {canEdit && (
-                    <button type="button" aria-label={`Remove ${recipientText(r)}`} onClick={() => updateRule(rule.type, { recipients: rule.recipients.filter((_, j) => j !== i) })}><X size={11} /></button>
+                    <button type="button" className="-mr-1 rounded-full p-0.5 text-muted-foreground hover:bg-background hover:text-foreground" aria-label={`Remove ${recipientText(r)}`} onClick={() => updateRule(rule.type, { recipients: rule.recipients.filter((_, j) => j !== i) })}><X size={14} aria-hidden /></button>
                   )}
                 </span>
               ))}
-              {!rule.recipients.length && <span className="text-xs italic text-muted-foreground">Nobody</span>}
+              {!rule.recipients.length && <span className="text-xs text-muted-foreground">Nobody</span>}
             </div>
             {canEdit && (
               <AddRecipient
@@ -423,7 +423,7 @@ function ImportCard({ hubScope }: { hubScope: HubScopeFilter }) {
         }}
       />
       <div className="flex flex-wrap items-end gap-3">
-        <button type="button" className={btnSecondary} onClick={() => file.current?.click()}><Upload size={14} /> Choose file</button>
+        <button type="button" className={btnSecondary} onClick={() => file.current?.click()}><Upload size={14} aria-hidden /> Choose file</button>
         {fileName && <span className="text-sm text-muted-foreground">{fileName}</span>}
       </div>
       <Field label="Put the prototype's running costs on" htmlFor="imp-hub">
@@ -433,8 +433,8 @@ function ImportCard({ hubScope }: { hubScope: HubScopeFilter }) {
         </select>
       </Field>
       {summary && (
-        <div className="rounded-md border p-4 text-sm" aria-live="polite">
-          <p className="font-semibold">{summary.dry_run ? 'This import will:' : 'Imported:'}</p>
+        <div className="rounded-xl border p-4 text-sm" aria-live="polite">
+          <p className="font-medium">{summary.dry_run ? 'This import will:' : 'Imported:'}</p>
           <ul className="mt-1 list-disc space-y-0.5 pl-5">
             <li>Ingredients: {summary.ingredients.created} new, {summary.ingredients.updated} updated</li>
             <li>Recipes: {summary.recipes.created} new, {summary.recipes.updated} updated</li>
@@ -443,7 +443,7 @@ function ImportCard({ hubScope }: { hubScope: HubScopeFilter }) {
             {(summary.skipped.quotes > 0 || summary.skipped.orders > 0) && <li className="text-muted-foreground">Skipped {summary.skipped.orders} orders and {summary.skipped.quotes} quotes (not imported)</li>}
           </ul>
           {!!summary.warnings.length && (
-            <ul className="mt-2 space-y-0.5 text-xs text-amber-700 dark:text-amber-400">{summary.warnings.map((w, i) => <li key={i}>{w}</li>)}</ul>
+            <ul className="mt-2 space-y-0.5 text-xs text-warning">{summary.warnings.map((w, i) => <li key={i}>{w}</li>)}</ul>
           )}
           {summary.dry_run && (
             <SubmitButton type="button" loading={importer.isPending} className="mt-3 h-9 px-4 text-sm" onClick={() => run(false)}>Import now</SubmitButton>

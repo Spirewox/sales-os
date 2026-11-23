@@ -5,9 +5,12 @@ import {
   useInventory,
   useSaleCredits,
   useAgents,
+  supplierIssueRows,
 } from '@/hooks/use-queries';
 import { useHubScopeFilter } from '@/hooks/use-hub-scope';
-import { useMetricsPeriod } from '@/components/metrics-period-bar';
+import { useUrlState } from '@/hooks/use-url-state';
+import { parsePeriod, periodRange } from '@/lib/period';
+import { DEFAULT_PERIOD } from '@/hooks/use-insights-api';
 import type { DataBundle } from '@/lib/insights';
 import type { Sale, StockLog, CreditRecord, SupplierIssue } from '@/types';
 import { axiosGet } from '@/lib/api';
@@ -55,22 +58,17 @@ export function useInsightDataBundle(options?: {
   applyPeriod?: boolean;
 }) {
   const hubScope = useHubScopeFilter();
-  const metricsPeriod = useMetricsPeriod('month');
+  // Same period as Analytics: ?period= in the URL, Last 30 days by default.
+  const { params } = useUrlState();
+  const period = parsePeriod(params, DEFAULT_PERIOD);
+  const range = periodRange(period);
 
   const hubId = options?.hubId ?? hubScope.hubIdForApi;
   const hubName =
     options?.hubName ??
     (hubScope.filterHub !== 'All' ? hubScope.filterHub : undefined);
-  const dateFrom =
-    options?.dateFrom ??
-    (metricsPeriod.isCustom || metricsPeriod.preset !== 'all'
-      ? metricsPeriod.apiParams.date_from
-      : undefined);
-  const dateTo =
-    options?.dateTo ??
-    (metricsPeriod.isCustom || metricsPeriod.preset !== 'all'
-      ? metricsPeriod.apiParams.date_to
-      : undefined);
+  const dateFrom = options?.dateFrom ?? range.from ?? undefined;
+  const dateTo = options?.dateTo ?? range.to ?? undefined;
   const applyPeriod = options?.applyPeriod ?? true;
 
   const salesFilters = {
@@ -132,7 +130,7 @@ export function useInsightDataBundle(options?: {
           chunk.map(async (id) => {
             try {
               const raw = await axiosGet(`suppliers/${id}/issues`, true);
-              const list: ApiSupplierIssue[] = Array.isArray(raw) ? raw : [];
+              const list: ApiSupplierIssue[] = supplierIssueRows(raw);
               return list.map(mapSupplierIssue);
             } catch {
               return [] as SupplierIssue[];
@@ -201,7 +199,7 @@ export function useInsightDataBundle(options?: {
     bundle,
     isLoading,
     hubScope,
-    metricsPeriod,
+    period,
     dateFrom,
     dateTo,
     hubId,

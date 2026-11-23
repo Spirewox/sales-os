@@ -9,7 +9,7 @@ type TableSkeletonProps = Readonly<{
 
 export function TableSkeleton({ rows = 6, cols = 5, className }: TableSkeletonProps) {
   return (
-    <div className={cn('w-full space-y-3 p-4', className)} aria-busy="true" aria-label="Loading table">
+    <div className={cn('w-full space-y-3 p-4', className)} role="status" aria-busy="true" aria-label="Loading table">
       <div className="flex gap-3 border-b pb-3">
         {Array.from({ length: cols }).map((_, i) => (
           <Skeleton key={`h-${i}`} className="h-3 flex-1" />
@@ -52,6 +52,7 @@ export function ChartSkeleton({ className, height = 220 }: ChartSkeletonProps) {
   return (
     <div
       className={cn('rounded-xl border bg-card p-4 space-y-4', className)}
+      role="status"
       aria-busy="true"
       aria-label="Loading chart"
     >
@@ -97,7 +98,7 @@ type AnalyticsPageSkeletonProps = Readonly<{
 
 export function AnalyticsPageSkeleton({ className }: AnalyticsPageSkeletonProps) {
   return (
-    <div className={cn('space-y-6', className)} aria-busy="true" aria-label="Loading analytics">
+    <div className={cn('space-y-6', className)} role="status" aria-busy="true" aria-label="Loading analytics">
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
           <CardSkeleton key={`card-${i}`} />
@@ -118,7 +119,7 @@ type CreditSheetSkeletonProps = Readonly<{
 
 export function CreditSheetSkeleton({ className }: CreditSheetSkeletonProps) {
   return (
-    <div className={cn('space-y-4 py-4', className)} aria-busy="true" aria-label="Loading credits">
+    <div className={cn('space-y-4 py-4', className)} role="status" aria-busy="true" aria-label="Loading credits">
       {Array.from({ length: 4 }).map((_, i) => (
         <div key={`credit-${i}`} className="rounded-lg border p-3 space-y-2">
           <div className="flex justify-between gap-3">
