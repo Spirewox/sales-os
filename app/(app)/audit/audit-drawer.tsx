@@ -54,7 +54,7 @@ export function AuditDrawer({ log, onClose }: Readonly<{ log: AuditLog; onClose:
       stats={bulk ? [
         { label: 'Domain', value: <span className="capitalize">{bulk.domain ?? '-'}</span> },
         { label: 'Type', value: bulk.importType ?? '-' },
-        { label: 'Stage', value: bulk.stage ?? log.action },
+        { label: 'Stage', value: bulk.stage ?? formatAuditAction(log.action) },
         { label: 'Record ID', value: <span className="text-sm">{log.entityId || '-'}</span> },
       ] : undefined}
       tabs={bulk ? { items: [{ id: 'changes', label: 'Summary' }, { id: 'rows', label: 'Rows' }, { id: 'results', label: 'Results' }], value: tab, onChange: setTab } : undefined}

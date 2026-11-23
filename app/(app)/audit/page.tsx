@@ -51,7 +51,7 @@ function RecordCell({ log }: Readonly<{ log: AuditLog }>) {
 
 function When({ ts }: Readonly<{ ts: string }>) {
   return (
-    <span className="whitespace-nowrap">
+    <span className="whitespace-nowrap tabular-nums">
       <span className="font-medium">{formatDate(ts, { day: 'numeric', month: 'short' })}</span>
       <span className="ml-1.5 text-xs text-muted-foreground tabular-nums">{timeOf(ts)}</span>
     </span>
@@ -156,7 +156,7 @@ function AuditTrail() {
   ];
 
   const bulkColumns: Column<AuditLog>[] = [
-    { id: 'file', header: 'File', mobile: 'title', cell: (l) => <span className="block max-w-[220px] truncate" title={l.bulkUpload?.fileName}>{l.bulkUpload?.fileName ?? 'Upload'}</span> },
+    { id: 'file', header: 'File', mobile: 'title', cell: (l) => <span className="block max-w-56 truncate" title={l.bulkUpload?.fileName}>{l.bulkUpload?.fileName ?? 'Upload'}</span> },
     { id: 'type', header: 'Type', mobile: 'subtitle', cell: (l) => <span className="capitalize">{[l.bulkUpload?.domain, l.bulkUpload?.importType].filter(Boolean).join(', ') || '-'}</span> },
     { id: 'rows', header: 'Rows', align: 'right', mobile: 'meta', cell: (l) => <span className="flex flex-col items-end"><span>{summaryNumber(l, 'total')} total</span><span className="text-xs text-muted-foreground">{summaryNumber(l, 'valid')} valid, {summaryNumber(l, 'invalid')} invalid</span></span> },
     { id: 'imported', header: 'Processed', align: 'right', hideBelow: 'lg', cell: (l) => <span className="flex flex-col items-end"><span>{summaryNumber(l, 'processed')} processed</span><span className="text-xs text-muted-foreground">{summaryNumber(l, 'imported')} imported, {summaryNumber(l, 'failed')} failed</span></span> },

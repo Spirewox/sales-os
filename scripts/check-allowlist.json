@@ -111,9 +111,6 @@
     }
   },
   "app/(app)/audit/page.tsx": {
-    "rule/arbitrary-value": {
-      "max-w-[220px]": 1
-    },
     "trap/native-control": {
       "<button> where the system has Button": 1
     }
@@ -787,11 +784,6 @@
   "components/credits/customer-credit-sheet.tsx": {
     "trap/native-control": {
       "<button> where the system has Button": 1
-    }
-  },
-  "components/filter-select.tsx": {
-    "rule/component-override": {
-      "<SelectTrigger> rounded-md, bg-background, px-3": 1
     }
   },
   "components/hub-scope-filter.tsx": {
