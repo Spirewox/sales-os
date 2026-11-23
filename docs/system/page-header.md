@@ -28,7 +28,7 @@ Real uses, 12 call sites (`rg -n "<PageHeader\b" app components lib --glob '!com
 - Settings, title and description only: `app/(app)/settings/page.tsx:52`.
 - POS, one primary on the Tills tab, overflow with Refresh, tabs: `app/(app)/pos/page.tsx:69`.
 - Engagement, description that changes with the tab, one primary, tabs: `app/(app)/engagement/page.tsx:57`.
-- Audit trail, overflow with one export item, tabs: `app/(app)/audit/page.tsx:170`.
+- Audit trail, overflow with one export item, tabs: `app/(app)/audit/page.tsx:170`, the pilot screen.
 
 ### Example files
 | File | Covers | Caption |

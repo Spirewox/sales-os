@@ -35,7 +35,7 @@ Real uses, 19 call sites (`rg -n "<FilterBar\b" app components lib --glob '*.{ts
 - Engagement, feedback: `app/(app)/engagement/feedback-table.tsx:73`, search, filters, chips, count.
 - Inventory, stock: `app/(app)/inventory/stock-tab.tsx:176`, search, filters, SKU field in `more`, chips, count.
 - POS tabs, through the POS wrapper: `app/(app)/pos/pos-filter-bar.tsx:26`, search, period, `more`, chips, count.
-- Audit log: `app/(app)/audit/page.tsx:181`, search, period, three fields in `more` in two columns.
+- Audit log: `app/(app)/audit/page.tsx:187`, search, period, three fields in `more` in two columns.
 
 ### Example files
 | File | Covers | Caption |
@@ -104,7 +104,7 @@ Real uses, 19 call sites (`rg -n "<FilterBar\b" app components lib --glob '*.{ts
 - `rule/filter-bar-more-field`: When a control goes inside `more`, wrap it in `MoreFilterField` with a `label`, because the panel gives the control no other visible label and the two-column grid sizes each wrapper as one cell. Evidence: app 8/8 bars that pass `more` wrap its fields in `MoreFilterField` (20 tags); principle heuristic: visible labels on every field. Check: review the `more` slot at each call site.
   - Don't: `<FilterBar more={<FilterSelect ariaLabel="Till" value={till} onChange={setTill} options={tills} />} />`
   - Do: `<FilterBar more={<MoreFilterField label="Till"><FilterSelect ariaLabel="Till" value={till} onChange={setTill} options={tills} /></MoreFilterField>} />`
-- `rule/filter-bar-more-count`: When `more` is passed, pass `moreActiveCount` with the number of fields in it that differ from their default, because a closed panel otherwise hides that rows are being filtered out. Evidence: app 8/8 bars with `more` pass `moreActiveCount`, such as `app/(app)/audit/page.tsx:199`; principle heuristic: visibility of system status. Check: review that `more=` and `moreActiveCount=` appear together.
+- `rule/filter-bar-more-count`: When `more` is passed, pass `moreActiveCount` with the number of fields in it that differ from their default, because a closed panel otherwise hides that rows are being filtered out. Evidence: app 8/8 bars with `more` pass `moreActiveCount`, such as `app/(app)/audit/page.tsx:205`; principle heuristic: visibility of system status. Check: review that `more=` and `moreActiveCount=` appear together.
   - Don't: `<FilterBar more={tillField} />`
   - Do: `<FilterBar more={tillField} moreActiveCount={till ? 1 : 0} />`
 - `rule/filter-bar-clear-all`: When `chips` can hold 2 or more chips, pass `onClearAll` too, because "Clear all" renders only when both are set and removing chips one by one takes one press each. Evidence: app 8/11 bars with chips pass `onClearAll`, strays `app/(app)/inventory/requests-tab.tsx:141`, `app/(app)/inventory/stock-tab.tsx:176` and `app/(app)/settings/users-section.tsx:114`. Check: review.
@@ -115,10 +115,10 @@ Real uses, 19 call sites (`rg -n "<FilterBar\b" app components lib --glob '*.{ts
 - `rule/filter-bar-search-label`: When `search` is passed, set `search.label` to "Search {records}" and the placeholder to the fields searched, because the placeholder disappears once someone types and the label is the field's only lasting name. Evidence: app 17/18 bars with search set a label apart from the placeholder, such as `app/(app)/customers/page.tsx:185`, stray `app/(app)/pos/pos-filter-bar.tsx:27`; principle wcag: 3.3.2 labels or instructions. Check: review.
   - Don't: `<FilterBar search={{ value: q, onChange: setQ }} />`
   - Do: `<FilterBar search={{ value: q, onChange: setQ, placeholder: 'Search name, phone, email, company', label: 'Search customers' }} />`
-- `rule/filter-bar-chip-label`: When a chip stands for a field filter, label it `{Field}: {value}` in sentence case, and a search chip `"{query}"` in quotes, because the chip row is the only place a filter set inside the closed panel stays visible. Evidence: app 9/11 chip builders use `{Field}: {value}` or `"{query}"`, such as `app/(app)/pos/transactions.tsx:31` and `app/(app)/credits/page.tsx:138`, strays `app/(app)/audit/page.tsx:133` ("By {name}") and `app/(app)/inventory/stock-tab.tsx:145` ("{n} SKUs"). Check: review.
+- `rule/filter-bar-chip-label`: When a chip stands for a field filter, label it `{Field}: {value}` in sentence case, and a search chip `"{query}"` in quotes, because the chip row is the only place a filter set inside the closed panel stays visible. Evidence: app 9/11 chip builders use `{Field}: {value}` or `"{query}"`, such as `app/(app)/pos/transactions.tsx:31` and `app/(app)/credits/page.tsx:138`, strays `app/(app)/audit/page.tsx:139` ("By {name}") and `app/(app)/inventory/stock-tab.tsx:145` ("{n} SKUs"). Check: review.
   - Don't: `{ key: 'till', label: tillLabel(till), onRemove }`
   - Do: `{ key: 'till', label: \`Till: ${tillLabel(till)}\`, onRemove }`
-- `rule/filter-bar-result-label`: When `resultLabel` is passed, write `{count} {noun}` with the singular noun for 1, and pass `undefined` while the list loads, because the line is announced on every change and a stale "0 sales" during a fetch is read as a result. Evidence: single use `components/app/filter-bar.tsx:80`; app 6/6 counted callers pass `undefined` while loading, such as `app/(app)/kitchen/jobs.tsx:210` and `app/(app)/audit/page.tsx:202`. Check: review.
+- `rule/filter-bar-result-label`: When `resultLabel` is passed, write `{count} {noun}` with the singular noun for 1, and pass `undefined` while the list loads, because the line is announced on every change and a stale "0 sales" during a fetch is read as a result. Evidence: single use `components/app/filter-bar.tsx:80`; app 6/6 counted callers pass `undefined` while loading, such as `app/(app)/kitchen/jobs.tsx:210` and `app/(app)/audit/page.tsx:208`. Check: review.
   - Don't: `<FilterBar resultLabel={\`${rows.length} sales\`} />`
   - Do: `<FilterBar resultLabel={list.data ? plural(rows.length, 'sale') : undefined} />`
 
