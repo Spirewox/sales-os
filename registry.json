@@ -209,7 +209,11 @@
       "docs": "/system/button",
       "markdown": "/system/button.md",
       "layer": "primitive",
-      "status": "ready-with-gaps"
+      "status": "ready-with-gaps",
+      "replaces": [
+        "components/submit-button.tsx"
+      ],
+      "replacesNote": "Held: SubmitButton has loading, h-9 rounded-md and a solid destructive that Button lacks (G-03). Do not migrate until Button has them."
     },
     {
       "id": "select",
@@ -275,6 +279,17 @@
       "docs": "/system/loading-skeletons",
       "markdown": "/system/loading-skeletons.md",
       "layer": "primitive",
+      "status": "ready-with-gaps"
+    },
+    {
+      "id": "filter-select",
+      "name": "FilterSelect",
+      "import": "@/components/app",
+      "source": "components/filter-select.tsx",
+      "entry": "docs/system/filter-select.md",
+      "docs": "/system/filter-select",
+      "markdown": "/system/filter-select.md",
+      "layer": "app kit",
       "status": "ready-with-gaps"
     }
   ]

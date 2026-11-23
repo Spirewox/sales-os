@@ -18,3 +18,4 @@ export { SEGMENT_ACTIVE, SEGMENT_IDLE } from './segmented';
 export { Calendar, formatDay, type DayString } from './calendar';
 export { DateField, DateTimeField } from './date-field';
 export { usePagedList } from './paged-list';
+export { FilterSelect, type FilterOption } from '../filter-select';
