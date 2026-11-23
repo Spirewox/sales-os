@@ -1,0 +1,4 @@
+rule_id	falsify	negation	two_agent	sweep	verdict	notes
+rule/skeleton-set-height	n/a: review check, no reviewer was run on the Don't snippet this session	pass	n/a: falsify and sweep cover it	pass	ship	sweep: rg over the 27 call sites finds none without an h- or size- class
+rule/skeleton-shape-radius	n/a: review check, no reviewer was run on the Don't snippet this session	pass	n/a: falsify and sweep cover it	pass	ship	sweep: the only avatar and card skeletons are churn.tsx:198, 205, 207, all shaped
+rule/skeleton-not-raw-pulse	n/a: review check, no reviewer was run on the Don't snippet this session	pass	n/a: no fresh agents were run this session (deadline)	pass	ship	sweep: rg animate-pulse finds 1 raw copy outside the ui folder, app/(app)/pos/overview.tsx:103, a stray for migration

@@ -1,0 +1,134 @@
+# SectionErrorBoundary
+
+## Description
+SectionErrorBoundary keeps one section's rendering failure inside that section, with a message and a way to try again, so the rest of the page keeps working.
+
+`import { SectionErrorBoundary } from "@/components/app"`, source `components/app/error-boundary.tsx`, status `ready-with-gaps`.
+Foundation: `hand-rolled`. Traps checked: `trap/toast-errors` (States, Failed: the message stays until the person acts, never a toast), `trap/color-only-status` (States: the failure shows a triangle icon and "couldn't load" text, not only the destructive tint), `trap/live-region-double` (ARIA: each fallback is its own `role="alert"`, and a finding for the Dashboard, where 6 can fire at once), `trap/disabled-drops-focus` (Keyboard, a finding: Try again unmounts itself and focus falls to the page body), `trap/native-control` and `trap/button-clone` (Tokens, a finding: Try again is a hand-styled `<button>`, not `Button`), `trap/loading-layout-shift` n/a because the boundary has no pending state, `trap/loader-small-dots` n/a because it shows no loader, `trap/decor-pointer` n/a because it draws no decorative layer, `trap/reduced-motion-ignored` n/a because nothing moves.
+
+### Foundation
+Not applicable: hand-rolled. A React class component in `components/app/error-boundary.tsx`, with no library under it.
+
+| Given by the foundation | Added by the team |
+|---|---|
+| React's `getDerivedStateFromError` and `componentDidCatch` | A fallback with the section's name, one line of guidance and Try again; `resetKey`, which clears the error when it changes; a console log tagged with the label |
+
+## Examples
+Default: `docs/system/examples/section-error-boundary/default.tsx`.
+
+Real uses, 22 call sites (`rg -n "<SectionErrorBoundary\b" app components lib --glob '!components/app/**'`):
+- Analytics, around the active tab's body, reset by tab: `app/(app)/analytics/page.tsx:123`.
+- Credits, around the credits list: `app/(app)/credits/page.tsx:163`.
+- Kitchen, around the active section, reset by section: `app/(app)/kitchen/page.tsx:127`.
+- Dashboard, six sections each in their own boundary: `app/(app)/_dashboard/dashboard-content.tsx:120`, `app/(app)/_dashboard/dashboard-content.tsx:130`, `app/(app)/_dashboard/dashboard-content.tsx:142`, `app/(app)/_dashboard/dashboard-content.tsx:147`, `app/(app)/_dashboard/dashboard-content.tsx:159`, `app/(app)/_dashboard/dashboard-content.tsx:164`.
+- Sales, around the sales list: `app/(app)/sales/page.tsx:167`.
+- Inventory, around the active tab, reset by tab: `app/(app)/inventory/page.tsx:224`.
+- Suppliers, around the list, reset by the filter key: `app/(app)/suppliers/page.tsx:219`.
+- Customers, around the list, reset by the page key: `app/(app)/customers/page.tsx:210`.
+- Supplier drawer and customer panel, reset by record and tab: `app/(app)/suppliers/supplier-drawer.tsx:90`, `app/(app)/customers/customer-detail-panel.tsx:135`.
+- Audit trail, POS, Settings and Engagement, around the active tab, reset by tab: `app/(app)/audit/page.tsx:211`, `app/(app)/pos/page.tsx:82`, `app/(app)/settings/page.tsx:59`, `app/(app)/engagement/page.tsx:65`.
+- POS overview, three sections: `app/(app)/pos/overview.tsx:50`, `app/(app)/pos/overview.tsx:53`, `app/(app)/pos/overview.tsx:56`.
+
+### Example files
+| File | Covers | Caption |
+|---|---|---|
+| `docs/system/examples/section-error-boundary/default.tsx` | default | Credits list wrapped in a boundary, rendering its children normally because nothing threw |
+| `docs/system/examples/section-error-boundary/failed.tsx` | state:failed | Supplier list whose child threw while rendering, so the contained message and Try again show in its place |
+| `docs/system/examples/section-error-boundary/unlabelled.tsx` | state:unlabelled | A boundary with no label, so the message falls back to This section couldn't load |
+| `docs/system/examples/section-error-boundary/reset-by-key.tsx` | state:reset-by-key | Inventory tab body whose boundary clears when the active tab changes, so a failed tab does not stick |
+| Not applicable: Try again re-renders the same children, so `failed.tsx` shows it by pressing the button | state:retried | none |
+| `docs/system/examples/section-error-boundary/in-kpi-strip.tsx` | composition:KpiStrip | Dashboard key figures, one boundary around the KPI strip so a bad summary leaves the charts below working |
+
+## Variants
+Not applicable: SectionErrorBoundary has no variant prop. `label` and `resetKey` change its text and its reset, which States covers.
+
+## States
+| State | Trigger | What the user can do | Shown by, besides color | Checked by |
+|---|---|---|---|---|
+| Healthy | Children render without throwing | Use the section | The children, and nothing from the boundary | screenshot |
+| Failed | A child throws while rendering, such as a response missing a field the section reads | Press Try again, use the rest of the page, or reload | Triangle icon, "{label} couldn't load" in semibold, "The rest of the page still works. Try again, or reload if it keeps happening.", a Try again button, in a bordered card, `role="alert"` | by hand |
+| Unlabelled | Failed with no `label`, which `app/(app)/pos/page.tsx:82` can reach when the tab id matches no tab | Same as Failed | The title reads "This section couldn't load" | by hand |
+| Retried | Try again pressed | Wait for the section; if it throws again the Failed state returns | The children render again in place of the card | by hand |
+| Reset by key | `resetKey` changes, such as a new tab, page or record | Use the new content | The card is replaced by the new children with no press | by hand |
+
+### State precedence
+- Failed and Reset by key: Reset by key wins. A new `resetKey` clears the error before the next render, so the new tab never inherits the old failure.
+- Failed and Retried: Failed wins when the children throw again. The card comes back at once.
+- Unlabelled and Failed: both show. Unlabelled only changes the title text.
+- Healthy and Failed: Not applicable: the boundary holds one or the other.
+
+### Motion
+Not applicable: no motion. `error-boundary.tsx` has no transition or animation, and the card appears in one frame.
+
+## Props
+gen-docs writes the table from `Props` in `components/app/error-boundary.tsx`.
+- `label` names the section in the title, "{label} couldn't load", and tags the console log.
+- `resetKey` is compared on every render; any change clears the error. 11 call sites pass it.
+- `children` is the section. Only errors thrown while rendering it are caught, not errors in event handlers or rejected requests that the section handles itself.
+
+## Usage
+
+### When to use
+- A section of a page renders data from its own request, such as a KPI strip, a chart, a list or a tab's body, and a bad response there should not blank the page
+- A drawer or panel shows one record in tabs, and one tab's failure should leave the others usable
+
+### When not to use
+- A request failed and the section knows it, such as a query in an error state. Use EmptyState instead, in the section, with the retry the section owns
+- A list loaded and has no rows. Use EmptyState instead
+- A form submit failed. Use FormSheet instead, which keeps the input and shows the error on the form
+
+### Rules
+- `rule/section-error-boundary-reset-key`: When the boundary wraps content that changes with a tab, a page of results or a record, pass that value as `resetKey` instead of leaving it out or remounting with `key`, because without it the Failed card stays after the person moves to content that would render. Evidence: app 11/12 boundaries around tabbed, filtered, paged or per-record content pass `resetKey`, and the stray `app/(app)/sales/page.tsx:167` wraps the paged sales list with none; single use `app/(app)/settings/page.tsx:59` also passes `key`, which remounts the boundary and its children on every tab change. Check: review.
+  - Don't: `<SectionErrorBoundary label="Inventory">{tab === 'stock' ? <StockTab /> : <BatchesTab />}</SectionErrorBoundary>`
+  - Do: `<SectionErrorBoundary label="Inventory" resetKey={tab}>{tab === 'stock' ? <StockTab /> : <BatchesTab />}</SectionErrorBoundary>`
+- `rule/section-error-boundary-per-section`: When a page shows sections that load on their own, such as KPIs, charts and lists, wrap each section in its own `SectionErrorBoundary` instead of one around the whole page, because one bad response then replaces only its own section. Evidence: app 22/22 boundaries wrap one section or one tab's body and none wraps a route, with 6 on the Dashboard and 3 on the POS overview; single use `components/app/error-boundary.tsx:15`, the JSDoc states the same job. Check: review.
+  - Don't: `<SectionErrorBoundary label="Dashboard"><DashboardKpis /><SalesChart /><TopCustomers /></SectionErrorBoundary>`
+  - Do: `<><SectionErrorBoundary label="Key figures"><DashboardKpis /></SectionErrorBoundary><SectionErrorBoundary label="Sales"><SalesChart /></SectionErrorBoundary></>`
+
+### Content
+- `rule/section-error-boundary-label`: When setting `label`, pass the section's name as a sentence-case noun phrase that reads before "couldn't load", such as "Customer list" or "Key figures", instead of leaving it out, because without it the title reads "This section couldn't load" and does not say which part failed. Evidence: app 22/22 call sites pass `label`, 19 as a fixed noun phrase and 3 from the active tab's name. Check: review.
+  - Don't: `<SectionErrorBoundary><CustomerTable /></SectionErrorBoundary>`
+  - Do: `<SectionErrorBoundary label="Customer list"><CustomerTable /></SectionErrorBoundary>`
+
+### Anti-slop
+- `rule/section-error-boundary-no-hand-boundary`: When a section needs an error fallback, wrap it in `SectionErrorBoundary` instead of writing another class with `getDerivedStateFromError` or a try and catch around JSX, because a second boundary drifts from this copy, this card and `resetKey`. Evidence: app 22/22 error fallbacks outside `components/app/` use SectionErrorBoundary, and `grep -rn "getDerivedStateFromError" app components lib` finds only `components/app/error-boundary.tsx`. Check: lint `grep -rn "getDerivedStateFromError\|componentDidCatch" app components lib` prints only `components/app/error-boundary.tsx`.
+  - Don't: `class ChartBoundary extends Component { static getDerivedStateFromError() { return { failed: true }; } }`
+  - Do: `<SectionErrorBoundary label="Revenue by category"><CategoryChart /></SectionErrorBoundary>`
+- `rule/section-error-boundary-no-raw-message`: When the fallback shows, keep its fixed copy instead of adding the caught `error.message` or a stack to the card, because the message is written for the person and the details go to the console under the label. Evidence: single use `components/app/error-boundary.tsx:32` logs the error with the label and `components/app/error-boundary.tsx:45` shows fixed guidance; principle heuristic: Nielsen's "help users recognize, diagnose and recover from errors" asks for plain language and a way out, not a code. Check: review.
+  - Don't: `<p className="text-sm text-muted-foreground">{this.state.error.message}</p>`
+  - Do: `<SectionErrorBoundary label="Payment mix"><PaymentMix /></SectionErrorBoundary>`
+
+### Limits
+- Not applicable: the boundary has no count, length or size to grow. How many boundaries share a page is held by `rule/section-error-boundary-per-section`.
+
+## Accessibility
+Rests on a native `div` with `role="alert"` and a native `button`.
+
+### Keyboard
+| Key | Where focus is | Effect | Focus after | Checked by |
+|---|---|---|---|---|
+| Tab | Before the card | Reaches Try again | Try again | by hand |
+| Enter or Space | Try again | Clears the error and renders the children again | The page body, because the button unmounts (finding) | by hand |
+
+### ARIA
+| Part | Role | Accessible name from | States and properties | Announced | Checked by |
+|---|---|---|---|---|---|
+| Card | alert | none | assertive live region | "{label} couldn't load. The rest of the page still works. Try again, or reload if it keeps happening. Try again" when it appears | by hand |
+| Icon | none | none | `aria-hidden` | Nothing | by hand |
+| Try again | button | its text | `type="button"` | "Try again, button" on focus | by hand |
+
+Contrast: NEEDS REVIEW. The destructive title on `bg-destructive/5` was not measured in either theme this session.
+
+## Tokens
+| Part | State | Token |
+|---|---|---|
+| Card | failed | `border-destructive/30`, `bg-destructive/5`, `rounded-xl`, `p-5` |
+| Title | failed | `--destructive`, `text-sm font-semibold` |
+| Body | failed | `--muted-foreground`, `text-sm` |
+| Try again | rest | `--background` fill, `--border` edge, `h-8`, `rounded-md`, `text-sm font-medium` |
+| Try again | hover | `--muted` |
+
+## Related
+- EmptyState: a section that loaded with no rows, or a request error the section handles itself.
+- SectionTabs: pass the active tab as `resetKey` so each tab starts clean.
+- KpiStrip: the Dashboard wraps it in its own boundary.

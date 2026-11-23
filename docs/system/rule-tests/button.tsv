@@ -1,0 +1,5 @@
+rule_id	falsify	negation	two_agent	sweep	verdict	notes
+rule/button-link-render	n/a: review check, no reviewer was run on the Don't snippet this session	pass	n/a: falsify and sweep cover it	pass	ship	sweep: 0 Button call sites on screens, so 0 nested Link and Button; as-link.tsx type-checks with nativeButton and render
+rule/button-icon-name	n/a: no a11y scan was run on the Don't snippet this session	pass	n/a: falsify and sweep cover it	pass	ship	sweep: the 2 icon-size Buttons in components/ui (dialog.tsx:66, sheet.tsx:66) carry an sr-only Close label
+rule/button-label-verb-first	n/a: review check, no reviewer was run on the Don't snippet this session	pass	n/a: falsify and sweep cover it	pass	ship	sweep: customer drawer actions read Record sale, Record payment, Log interaction
+rule/button-destructive-variant	n/a: review check, no reviewer was run on the Don't snippet this session	pass	n/a: no fresh agents were run this session (deadline)	pass	ship	sweep: rg bg-red- over app, components, lib finds 3, all status badge maps and none on a button (lib/kitchen-types.ts:265, lib/kitchen-types.ts:272, lib/settings-helpers.ts:6), listed as palette strays

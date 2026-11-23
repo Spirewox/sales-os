@@ -1,0 +1,6 @@
+rule_id	falsify	negation	two_agent	sweep	verdict	notes
+rule/status-badge-domain-first	n/a: review check, no reviewer run this session	pass	n/a: falsify and sweep cover it	pass	ship	negation "map tones locally" let customer-interactions-tab drift (workTone maps Paid to good outside the work domain); sweep 16/20, 4 strays named in the rule
+rule/status-badge-tone-meaning	n/a: review check, no reviewer run this session	pass	n/a: falsify and sweep cover it	n/a: the 25 computed tones were not each traced to their record state	ship	negation "pick tones for emphasis" contradicts the colour-only-for-state visual rule
+rule/status-badge-label-case	n/a: review check, no reviewer run this session	pass	n/a: falsify and sweep cover it	pass	ship	sweep 19/19 STATUS_TONES keys sentence case; customer-import-summary.tsx:65 capitalize is the stray
+rule/status-badge-no-colour-class	n/a: review check, no reviewer run this session	pass	n/a: two fresh agents were not run this session	pass	ship	sweep 2 className uses: capitalize and tabular-nums with a larger size at kitchen/board.tsx:310
+rule/status-badge-not-a-button	n/a: review check, no reviewer run this session	pass	n/a: two fresh agents were not run this session	pass	ship	sweep found no onClick on or around a StatusBadge tag

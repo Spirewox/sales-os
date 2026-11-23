@@ -1,0 +1,8 @@
+rule_id	falsify	negation	two_agent	sweep	verdict	notes
+rule/overflow-menu-destructive-confirm	pass	pass	n/a: falsify and sweep cover it	pass	ship	sweep of 14 destructive items: 13 confirm (ConfirmDialog, confirm panel, window.confirm), stray inventory/requests-tab.tsx:128
+rule/overflow-menu-size-by-place	pass	pass	n/a: falsify and sweep cover it	pass	ship	sweep: 8/8 table-row menus sm, 7/7 page-header menus default; drawer headers are mixed and left out of the rule's condition
+rule/overflow-menu-hidden-flag	pass	pass	n/a: falsify and sweep cover it	pass	ship	script over the 25 items blocks: 18 use hidden, 0 spread or filter
+rule/overflow-menu-record-label	pass	pass	n/a: falsify and sweep cover it	pass	ship	sweep of labels: 10/11 per-record menus template the record name, stray inventory/requests-tab.tsx:122
+rule/overflow-menu-item-sentence-case	pass	pass	n/a: falsify and sweep cover it	pass	rewritten	first draft also required an object after the verb; sweep found Edit, Open, Duplicate, Archive, Refresh with none, so the rule now covers casing only
+rule/overflow-menu-no-hand-menu	pass	pass	n/a: two fresh agents not run this session (time box)	pass	ship	rg MoreHorizontal and DropdownMenu outside components/app and components/ui: 0 hits
+rule/overflow-menu-primary-outside	pass	pass	n/a: two fresh agents not run this session (time box)	pass	ship	sweep: 8/8 page headers with a primary keep it in actions

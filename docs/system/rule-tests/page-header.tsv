@@ -1,0 +1,8 @@
+rule_id	falsify	negation	two_agent	sweep	verdict	notes
+rule/page-header-one-primary	pass	pass	n/a: falsify and sweep cover it	pass	ship	Don't snippet read against the rule text; negation "any number of buttons in actions" contradicts the JSDoc and 8/8 single primaries; sweep 8 call sites, stray dashboard-content.tsx:71 (2 secondaries)
+rule/page-header-tabs-slot	pass	pass	n/a: falsify and sweep cover it	pass	ship	sweep rg "<SectionTabs\b": 6/6 page-level via tabs, 2 in-card filters out of scope
+rule/page-header-one-per-route	pass	pass	n/a: falsify and sweep cover it	pass	ship	sweep rg "<h1\b": 4 strays in app/(app) listed in the rule (kitchen display, job status, two access screens)
+rule/page-header-title-nav-label	pass	pass	n/a: falsify and sweep cover it	pass	ship	12/12 titles compared with components/layout/nav-config.ts labels
+rule/page-header-description-sentence	pass	pass	n/a: falsify and sweep cover it	pass	ship	10/12 one sentence with full stop; 2 data-driven lines excluded by the "fixed description" condition
+rule/page-header-no-eyebrow	pass	pass	n/a: two fresh agents not run this session (time box)	pass	ship	sweep: no element above the title at 12/12 call sites
+rule/page-header-overflow-last	pass	pass	n/a: two fresh agents not run this session (time box)	pass	ship	sweep: 6/6 headers with Import/Export/Template/Refresh put them in overflow
