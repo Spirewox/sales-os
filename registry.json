@@ -210,7 +210,10 @@
       "markdown": "/system/button.md",
       "layer": "primitive",
       "status": "ready-with-gaps",
-      "replacesNote": "Not yet a replacement for components/submit-button.tsx: SubmitButton has loading, h-9 rounded-md and a solid destructive that Button lacks (G-03, migration held). Add replaces once Button has them."
+      "replaces": [
+        "components/submit-button.tsx"
+      ],
+      "replacesMap": "SubmitButton -> Button size=\"control\"; variant primary -> default, destructive -> destructive-solid; loading -> loading (G-03)"
     },
     {
       "id": "select",
@@ -231,6 +234,28 @@
       "entry": "docs/system/switch.md",
       "docs": "/system/switch",
       "markdown": "/system/switch.md",
+      "layer": "primitive",
+      "status": "ready-with-gaps"
+    },
+    {
+      "id": "checkbox",
+      "name": "Checkbox",
+      "import": "@/components/ui/checkbox",
+      "source": "components/ui/checkbox.tsx",
+      "entry": "docs/system/checkbox.md",
+      "docs": "/system/checkbox",
+      "markdown": "/system/checkbox.md",
+      "layer": "primitive",
+      "status": "ready-with-gaps"
+    },
+    {
+      "id": "textarea",
+      "name": "Textarea",
+      "import": "@/components/ui/textarea",
+      "source": "components/ui/textarea.tsx",
+      "entry": "docs/system/textarea.md",
+      "docs": "/system/textarea",
+      "markdown": "/system/textarea.md",
       "layer": "primitive",
       "status": "ready-with-gaps"
     },

@@ -9,7 +9,13 @@
       "max-w-[1400px]": 1
     },
     "trap/link-as-button": {
-      "<Link> sets a background and padding (bg-primary px-3.5)": 1
+      "<Link> sets a background and padding (bg-primary px-3.5)": 1,
+      "<Link> shares 4 classes with components/ui/button.tsx": 1
+    }
+  },
+  "app/(app)/_dashboard/panel.tsx": {
+    "trap/link-as-button": {
+      "<Link> shares 4 classes with components/ui/button.tsx": 1
     }
   },
   "app/(app)/_dashboard/sales-panel.tsx": {
@@ -320,6 +326,14 @@
     "trap/native-control": {
       "<button> where the system has Button": 5,
       "<input> where the system has Input": 1
+    },
+    "trap/button-clone": {
+      "<p> shares 4 classes with components/ui/button.tsx": 1
+    }
+  },
+  "app/(app)/inventory/request-drawer.tsx": {
+    "trap/button-clone": {
+      "<p> shares 4 classes with components/ui/button.tsx": 1
     }
   },
   "app/(app)/inventory/requests-tab.tsx": {
@@ -367,6 +381,9 @@
       "<button> where the system has Button": 5,
       "<input> where the system has Input": 4,
       "<select> where the system has Select": 1
+    },
+    "rule/deprecated-import": {
+      "@/components/submit-button": 1
     }
   },
   "app/(app)/kitchen/job-form-sections.tsx": {
@@ -396,11 +413,17 @@
     "trap/native-control": {
       "<button> where the system has Button": 3,
       "<input> where the system has Input": 2
+    },
+    "rule/deprecated-import": {
+      "@/components/submit-button": 1
     }
   },
   "app/(app)/kitchen/job-panel.tsx": {
     "trap/native-control": {
       "<button> where the system has Button": 2
+    },
+    "rule/deprecated-import": {
+      "@/components/submit-button": 1
     }
   },
   "app/(app)/kitchen/kitchen-ui.tsx": {
@@ -432,6 +455,9 @@
       "<button> where the system has Button": 6,
       "<input> where the system has Input": 1,
       "<select> where the system has Select": 7
+    },
+    "rule/deprecated-import": {
+      "@/components/submit-button": 1
     }
   },
   "app/(app)/kitchen/yield-guide.tsx": {
@@ -482,6 +508,9 @@
   "app/(app)/sales/sale-detail-panel.tsx": {
     "trap/native-control": {
       "<button> where the system has Button": 2
+    },
+    "rule/deprecated-import": {
+      "@/components/submit-button": 1
     }
   },
   "app/(app)/sales/sale-detail-tabs.tsx": {
@@ -492,6 +521,9 @@
       "<button> where the system has Button": 2,
       "<input> where the system has Input": 7,
       "<select> where the system has Select": 4
+    },
+    "rule/deprecated-import": {
+      "@/components/submit-button": 1
     }
   },
   "app/(app)/sales/sale-receipt.ts": {
@@ -575,7 +607,8 @@
   },
   "app/(app)/settings/settings-nav.tsx": {
     "trap/link-as-button": {
-      "<Link> shares 5 classes with components/ui/button.tsx": 1
+      "<Link> shares 5 classes with components/ui/button.tsx": 1,
+      "<Link> shares 6 classes with components/ui/button.tsx": 1
     }
   },
   "app/(app)/settings/sheet-select.tsx": {
@@ -648,6 +681,9 @@
   "app/forgot-password/page.tsx": {
     "trap/native-control": {
       "<input> where the system has Input": 1
+    },
+    "rule/deprecated-import": {
+      "@/components/submit-button": 1
     }
   },
   "app/globals.css": {
@@ -681,11 +717,17 @@
   "app/login/page.tsx": {
     "trap/native-control": {
       "<input> where the system has Input": 2
+    },
+    "rule/deprecated-import": {
+      "@/components/submit-button": 1
     }
   },
   "app/reset-password/reset-password-form.tsx": {
     "trap/native-control": {
       "<input> where the system has Input": 2
+    },
+    "rule/deprecated-import": {
+      "@/components/submit-button": 1
     }
   },
   "components/analytics-compare-tab.tsx": {
@@ -768,6 +810,9 @@
     },
     "trap/native-control": {
       "<button> where the system has Button": 2
+    },
+    "rule/deprecated-import": {
+      "@/components/submit-button": 1
     }
   },
   "components/credits/credit-forms.tsx": {
@@ -833,6 +878,9 @@
     "trap/native-control": {
       "<button> where the system has Button": 4,
       "<input> where the system has Input": 1
+    },
+    "trap/button-clone": {
+      "<label> shares 4 classes with components/ui/button.tsx": 1
     }
   },
   "components/searchable-customer-select.tsx": {

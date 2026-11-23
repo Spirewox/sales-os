@@ -7,6 +7,7 @@ New UI uses a registry component. If none fits, open a gate before writing one. 
 
 ## Components
 - [Button](/system/button.md): Button runs one action on the current screen when pressed, such as saving a form, recording a payment or opening a menu.
+- [Checkbox](/system/checkbox.md): Checkbox lets someone turn one option on or off, or pick several options from a list, where each choice stands on its own.
 - [DataTable](/system/data-table.md): DataTable lists records of one kind so someone can scan them, sort by a column, page through them and open one.
 - [EmptyState](/system/empty-state.md): EmptyState tells someone why a list, panel or section has nothing in it and what would fill it.
 - [EntityDrawer](/system/entity-drawer.md): EntityDrawer shows one record, such as a customer, sale, product or supplier, beside the list it was opened from, with that record's iden...
@@ -19,6 +20,7 @@ New UI uses a registry component. If none fits, open a gate before writing one. 
 - [SectionTabs](/system/section-tabs.md): SectionTabs switches between the sections of one page, keeps the chosen section in the URL so it can be linked, and turns into a select o...
 - [Skeleton](/system/skeleton.md): Skeleton holds the place of content that is still loading, at the size and shape that content will take, so the screen does not jump when...
 - [StatusBadge](/system/status-badge.md): StatusBadge names the state a record is in, such as Paid, Low or Resolved, in one word or two, with a tone that says how much it needs at...
+- [Textarea](/system/textarea.md): Textarea takes free text that runs past one line, such as notes for the kitchen or a reason for cancelling, and grows with what is typed.
 
 ## Rules
 - [Rules](/system/rules.md): every trap and rule ID, the page that answers it and the check that enforces it

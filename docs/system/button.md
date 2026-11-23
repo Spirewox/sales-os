@@ -4,15 +4,18 @@
 Button runs one action on the current screen when pressed, such as saving a form, recording a payment or opening a menu.
 
 `import { Button } from "@/components/ui/button"`, source `components/ui/button.tsx`, status `ready-with-gaps`.
-Foundation: `shadcn button (base-nova, base)`, on `@base-ui/react/button`. Traps checked: `trap/button-div` (Accessibility: renders a native `button`), `trap/native-control` (Examples, finding: raw copies outnumber Button), `trap/role-button` (ARIA), `trap/link-as-button` (Rules), `trap/link-wraps-button` (Rules), `trap/button-clone` (Examples, finding), `trap/control-height` (Variants), `trap/button-icon-name` (Rules, ARIA), `trap/icon-optical-size` (Tokens: icons 16px at default, 14px at sm, 12px at xs, NEEDS REVIEW for ink height), `trap/icon-optical-align` NEEDS REVIEW (not measured this session), `trap/button-type` (Accessibility: Base UI sets `type="button"`), `trap/submit-repeat` (States: no pending state in Button), `trap/weight-shift` (States: weight never changes), `trap/focus-ring-shape` (Tokens: ring follows the radius), `trap/hover-beats-focus` (State precedence), `trap/disabled-still-hovers` (States: `pointer-events-none`), `trap/disabled-drops-focus` (States, finding: `disabled` removes focus unless `focusableWhenDisabled`), `trap/loading-layout-shift` and `trap/loading-label-swap` (States: Button has no pending state; the app's SubmitButton has both traps, finding), `trap/button-label-wrap` (Tokens: `whitespace-nowrap`), `trap/tooltip-disabled-trigger` n/a because Button ships no tooltip, `trap/loader-small-dots` n/a because Button ships no loader, `trap/touch-hover-flash` and `trap/hover-unguarded` (States, finding: hover is not behind `@media (hover: hover)`), `trap/touch-tap-highlight` (States: `active` translate shows from pointer-down), `trap/press-delayed` (Motion), `trap/motion-transition-all` (Motion, finding).
+Foundation: `shadcn button (base-nova, base)`, on `@base-ui/react/button`. Traps checked: `trap/button-div` (Accessibility: renders a native `button`), `trap/native-control` (Examples, finding: raw copies outnumber Button), `trap/role-button` (ARIA), `trap/link-as-button` (Rules), `trap/link-wraps-button` (Rules), `trap/button-clone` (Examples, finding), `trap/control-height` (Variants), `trap/button-icon-name` (Rules, ARIA), `trap/icon-optical-size` (Tokens: icons 16px at default, 14px at sm, 12px at xs, NEEDS REVIEW for ink height), `trap/icon-optical-align` NEEDS REVIEW (not measured this session), `trap/button-type` (Accessibility: Base UI sets `type="button"`), `trap/submit-repeat` (States: `loading` disables the button while the action runs, so a second press does nothing), `trap/weight-shift` (States: weight never changes), `trap/focus-ring-shape` (Tokens: ring follows the radius), `trap/hover-beats-focus` (State precedence), `trap/disabled-still-hovers` (States: `pointer-events-none`), `trap/disabled-drops-focus` (States, finding: `disabled` removes focus unless `focusableWhenDisabled`; `loading` sets `focusableWhenDisabled`, so a pending button keeps focus), `trap/loading-layout-shift` and `trap/loading-label-swap` (States: `loading` adds a spinner before the label and keeps the caller's label, so the label is never swapped by Button; the spinner widens the button by its icon and gap, finding, NEEDS REVIEW for a fixed width; a caller that changes the label to "Saving…" chooses that swap itself), `trap/button-label-wrap` (Tokens: `whitespace-nowrap`), `trap/tooltip-disabled-trigger` n/a because Button ships no tooltip, `trap/loader-small-dots` (States: the loader is a 16px `Loader2` spinner, not small dots), `trap/touch-hover-flash` and `trap/hover-unguarded` (States, finding: hover is not behind `@media (hover: hover)`), `trap/touch-tap-highlight` (States: `active` translate shows from pointer-down), `trap/press-delayed` (Motion), `trap/motion-transition-all` (Motion, finding).
 
 ### Foundation
 | Given by the foundation | Added by the team |
 |---|---|
-| shadcn `button` for style `base-nova` on base `base` (`components.json`: `"style": "base-nova"`, `@base-ui/react` in `package.json`): the `cva` variants `default`, `outline`, `secondary`, `ghost`, `destructive`, `link` and sizes `default`, `xs`, `sm`, `lg`, `icon`, `icon-xs`, `icon-sm`, `icon-lg`, `data-slot="button"`, and `buttonVariants` | Stock. No team changes. The file is unchanged since the first commit (`git log --follow -- components/ui/button.tsx` shows only `e7ac166`) |
+| shadcn `button` for style `base-nova` on base `base` (`components.json`: `"style": "base-nova"`, `@base-ui/react` in `package.json`): the `cva` variants `default`, `outline`, `secondary`, `ghost`, `destructive`, `link` and sizes `default`, `xs`, `sm`, `lg`, `icon`, `icon-xs`, `icon-sm`, `icon-lg`, `data-slot="button"`, and `buttonVariants` | Team additions on 2026-11-23, on top of the stock file from the first commit `e7ac166`: the size `control`, the variant `destructive-solid` and the `loading` prop, listed in the rows below. Every stock variant, size and default is unchanged |
 | Upstream's current `default` variant hovers with `hover:bg-primary/80` | Not a team edit: the installed copy has the older `[a]:hover:bg-primary/80`, so a `button` element on the default variant has no hover change. Found by `npx shadcn@latest view button` diffed against the file this session |
 | Upstream's current `secondary` variant hovers with `hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)]` | Not a team edit: the installed copy has the older `hover:bg-secondary/80` |
 | The `cn` import from the registry's `cn` | Rewritten to `@/lib/utils` by the CLI on install, per `components.json` aliases |
+| Sizes `default`, `xs`, `sm`, `lg` and the icon sizes | Added size `control`: `h-9 gap-2 rounded-md px-4 py-2`, the app's de facto action button, matching `components/submit-button.tsx` so SubmitButton can move onto Button |
+| Variants `default` to `link`, with `destructive` on a 10% tint | Added variant `destructive-solid`: `bg-destructive text-destructive-foreground hover:bg-destructive/90`, the solid fill SubmitButton's `destructive` drew. SubmitButton used `text-white`; the label is now `--destructive-foreground`, `#1A0306` in the dark theme instead of white, an intended contrast change |
+| No pending prop | Added `loading`: sets `disabled` and `focusableWhenDisabled` so focus stays, sets `aria-busy`, adds `pointer-events-none opacity-50`, and renders a `Loader2` spinner (`animate-spin`, `aria-hidden`, `data-icon="inline-start"`) before the label. Exports `ButtonProps` |
 
 ## Examples
 Default: `docs/system/examples/button/default.tsx`.
@@ -31,18 +34,37 @@ Real uses, 0 call sites (`rg -n "<Button(\s|/|>|$)" app components lib --glob '*
 | `docs/system/examples/button/variant-ghost.tsx` | variant=ghost | Ghost button for a quiet action in a dense row, Clear filters |
 | `docs/system/examples/button/variant-destructive.tsx` | variant=destructive | Destructive tinted button for a step that cannot be undone, Void sale |
 | `docs/system/examples/button/variant-link.tsx` | variant=link | Link-styled button for an inline action in text, View all purchases |
+| `docs/system/examples/button/variant-destructive-solid.tsx` | variant=destructive-solid | Solid destructive button for the confirm step of a void or delete, Void sale |
 | Not applicable: `default` is the default size, shown by `default.tsx` | size=default | none |
 | `docs/system/examples/button/size-xs.tsx` | size=xs | Extra small 24px button in a table cell, Edit |
 | `docs/system/examples/button/size-sm.tsx` | size=sm | Small 28px button in a toolbar, Export CSV |
 | `docs/system/examples/button/size-lg.tsx` | size=lg | Large 36px button, the height of the app's own action buttons, Save changes |
+| `docs/system/examples/button/size-control.tsx` | size=control | Control 36px button, the app's own action button that replaces SubmitButton, Save changes |
 | `docs/system/examples/button/size-icon.tsx` | size=icon | Icon-only 32px button with an accessible name, Close |
 | `docs/system/examples/button/size-icon-xs.tsx` | size=icon-xs | Icon-only 24px button with an accessible name, Remove filter |
 | `docs/system/examples/button/size-icon-sm.tsx` | size=icon-sm | Icon-only 28px button with an accessible name, More actions |
 | `docs/system/examples/button/size-icon-lg.tsx` | size=icon-lg | Icon-only 36px button with an accessible name, Refresh |
 | `docs/system/examples/button/disabled.tsx` | state:disabled | Disabled main action while a required field is empty, Record payment |
+| `docs/system/examples/button/loading.tsx` | state:loading | Pending action that keeps focus and shows a spinner before the caller's label, Saving… |
 | `docs/system/examples/button/as-link.tsx` | state:as-link | One element that navigates: Button rendered as a Next.js link, Record sale |
 | `docs/system/examples/button/matrix.tsx` | matrix:variant,size | Every variant at the sm, default and lg sizes, for side-by-side review |
 | `docs/system/examples/button/in-entity-drawer.tsx` | composition:EntityDrawer | Button in an EntityDrawer actions row: one default action and one outline action |
+
+### Replaces
+`registry.json` lists `components/submit-button.tsx` as replaced by Button (gate G-03). Old to new:
+- `<SubmitButton>` becomes `<Button size="control">`.
+- `variant="primary"` (SubmitButton's default) becomes `variant="default"`.
+- `variant="destructive"` becomes `variant="destructive-solid"`.
+- `loading` stays `loading`.
+- SubmitButton defaults to `type="button"` and so does Button; pass `type="submit"` on both.
+
+Differences a migration shows:
+- Hover: SubmitButton's primary hovers to `bg-primary/90`. Button's `default` on a `button` element has no hover change, since only `[a]:hover` is set (Foundation).
+- Box: Button has `border border-transparent`, 1px each side, so at the same `px-4` it is 2px wider than SubmitButton.
+- Motion: Button uses `transition-all`; SubmitButton used `transition-colors`.
+- Focus: Button draws a focus-visible ring; SubmitButton drew none.
+- Loading focus: SubmitButton drops focus while loading, because a native `disabled` button cannot hold it. Button keeps focus, through `focusableWhenDisabled`.
+- Destructive label: SubmitButton's was `text-white`; Button's is `--destructive-foreground`, `#1A0306` in the dark theme.
 
 ## Variants
 
@@ -53,12 +75,14 @@ Real uses, 0 call sites (`rg -n "<Button(\s|/|>|$)" app components lib --glob '*
 - `ghost`: a quiet action in a dense row, and the Dialog and Sheet corner close (`components/ui/dialog.tsx:66`). Used at 0 call sites.
 - `destructive`: a step that deletes or voids, on a 10% destructive tint. Used at 0 call sites.
 - `link`: an action set inline in text. Used at 0 call sites.
+- `destructive-solid`: the solid destructive fill with `--destructive-foreground` text, for the confirm step of a void or delete, and SubmitButton's `destructive`. Used at 0 call sites.
 
 ### size
 - `default`: 32px tall (`h-8`). Used at 0 call sites.
 - `xs`: 24px tall, `text-xs`. Used at 0 call sites.
 - `sm`: 28px tall, `text-[0.8rem]`. Used at 0 call sites.
 - `lg`: 36px tall (`h-9`), the height of `SubmitButton` (`h-9`), the drawer close button (`size-9`) and the app's form controls. Used at 0 call sites.
+- `control`: 36px tall (`h-9`), `px-4`, `gap-2`, `rounded-md`, the app's action button and SubmitButton's replacement. Used at 0 call sites.
 - `icon`: 32px square. Used at 0 call sites.
 - `icon-xs`: 24px square. Used at 0 call sites.
 - `icon-sm`: 28px square, the Dialog and Sheet corner close. Used at 0 call sites.
@@ -74,7 +98,7 @@ Real uses, 0 call sites (`rg -n "<Button(\s|/|>|$)" app components lib --glob '*
 | Open | Its menu or popover is open, `aria-expanded="true"` | Use the popup | `outline`, `secondary` and `ghost` keep their hover fill while open | by hand |
 | Invalid | `aria-invalid="true"` | Fix the field it belongs to | A `border-destructive` border and a destructive ring | by hand |
 | Disabled | `disabled` | Nothing. It leaves the tab order unless `focusableWhenDisabled` is set (`trap/disabled-drops-focus`) | 50% opacity, `pointer-events-none`, the native `disabled` attribute | by hand |
-| Pending | Not applicable: Button has no pending or loading prop. The app's pending buttons are `SubmitButton`, which disables itself and appends a spinner (`components/submit-button.tsx:28`) | Not applicable | Not applicable | by hand |
+| Pending | `loading` | Nothing until the action ends. Focus stays on the button (`focusableWhenDisabled`), so Tab and screen readers keep their place; a second press does nothing (`trap/submit-repeat`) | A spinning `Loader2` before the label, `aria-busy="true"`, `aria-disabled`, 50% opacity, `pointer-events-none`. The label stays the caller's (`trap/loading-label-swap`). Before this prop the app's pending buttons were `SubmitButton`, which disables itself and shows a spinner (`components/submit-button.tsx:28`) | by hand |
 | As link | `render={<Link />}` with `nativeButton={false}` | Navigate, open in a new tab | Rendered as an `a` with the Button's look | by hand |
 
 ### State precedence
@@ -83,6 +107,10 @@ Real uses, 0 call sites (`rg -n "<Button(\s|/|>|$)" app components lib --glob '*
 - Disabled and hover: disabled wins. `pointer-events-none` stops hover, so nothing changes (`trap/disabled-still-hovers`).
 - Disabled and focus visible: disabled wins. A disabled native button cannot hold focus unless `focusableWhenDisabled` is set.
 - Open and pressed: open wins. `active:not-aria-[haspopup]` skips the 1px move on a menu trigger.
+- Pending and focus visible: both show. `focusableWhenDisabled` keeps focus, so the ring stays over the 50% opacity.
+- Pending and hover: pending wins. `pointer-events-none` stops hover.
+- Pending and disabled: pending wins on the cue, since both disable the button and only pending adds the spinner and `aria-busy`.
+- Pending and invalid: both show. The destructive ring and border stay under the spinner.
 
 ### Motion
 | Trigger | Kind | Preset | Properties | Reduced motion |
@@ -90,13 +118,16 @@ Real uses, 0 call sites (`rg -n "<Button(\s|/|>|$)" app components lib --glob '*
 | Rest to hover, and back | announce | `transition-all`, Tailwind default 150ms ease, no named preset | background-color, color, border-color | Same. Nothing guards it under `prefers-reduced-motion` (finding) |
 | Rest to focus visible | announce | `transition-all`, 150ms | box-shadow (ring), border-color | Same |
 | Rest to pressed | announce | `transition-all`, 150ms | transform (`translate-y-px`) | Same. The 1px move still eases over 150ms (`trap/press-delayed` NEEDS REVIEW: not measured) |
+| Pending | announce | `animate-spin`, Tailwind default 1s linear infinite, no named preset | transform (rotate) on the spinner | Same. Nothing guards the spin under `prefers-reduced-motion` (finding) |
 
 ## Props
 gen-docs writes the table from `ButtonPrimitive.Props` and `VariantProps<typeof buttonVariants>`.
 - `variant`: defaults to `default`.
 - `size`: defaults to `default`.
 - `nativeButton`: Base UI's flag. Set it to `false` whenever `render` swaps in a non-button element, such as a link.
-- `focusableWhenDisabled`: Base UI's flag. Keeps a disabled button in the tab order with `aria-disabled`.
+- `focusableWhenDisabled`: Base UI's flag. Keeps a disabled button in the tab order with `aria-disabled`. `loading` turns it on.
+- `loading`: team prop, defaults to `false`. Disables the button, keeps focus on it, sets `aria-busy` and shows a spinner before the label. The label is the caller's choice.
+- `ButtonProps`: the exported props type, `ButtonPrimitive.Props` plus the variant props plus `loading`.
 
 ## Usage
 
@@ -141,6 +172,8 @@ Rests on Base UI's `Button`, which renders a native `button` with `type="button"
 | Space | Button | Runs `onClick` on key up | Stays on the button | by hand |
 | Enter | Button rendered as a link | Follows the link | The new route | by hand |
 | Tab | Disabled button | Skips it | The next control | by hand |
+| Tab | Before a loading button | Moves focus onto it, ring shows | The button, held while it loads | by hand |
+| Enter | Loading button | Nothing | Stays on the button | by hand |
 
 ### ARIA
 | Part | Role | Accessible name from | States and properties | Announced | Checked by |
@@ -148,8 +181,9 @@ Rests on Base UI's `Button`, which renders a native `button` with `type="button"
 | Button, text sizes | button | Its text | `disabled`, `aria-expanded` and `aria-haspopup` when it opens a popup, `aria-invalid` | Name and "button", and "collapsed" or "expanded" on a popup trigger | by hand |
 | Button, icon sizes | button | `aria-label` | Same | The `aria-label` and "button" | by hand |
 | Button as link | link | Its text | None | Name and "link" | by hand |
+| Button, loading | button | Its text; the spinner is `aria-hidden` | `aria-busy="true"`, `aria-disabled="true"` | Name, "button", "dimmed" or "unavailable", and busy where the reader supports it | by hand |
 
-Contrast: NEEDS REVIEW. `text-destructive` on the 10% destructive tint and the 50% opacity disabled state were not measured this session.
+Contrast: NEEDS REVIEW. `text-destructive` on the 10% destructive tint and the 50% opacity disabled state were not measured this session. `destructive-solid` (`--destructive-foreground` on `--destructive`, `#1A0306` in the dark theme) and the 50% opacity pending state were not measured either.
 
 ## Tokens
 | Part | State | Token |
@@ -161,16 +195,20 @@ Contrast: NEEDS REVIEW. `text-destructive` on the 10% destructive tint and the 5
 | Fill, outline | dark | `dark:bg-input/30`, `dark:border-input` (`--input`) |
 | Fill, secondary | all | `bg-secondary` (`--secondary`), `text-secondary-foreground` (`--secondary-foreground`) |
 | Fill, destructive | all | `bg-destructive/10` (`--destructive`), `text-destructive` |
+| Fill, destructive-solid | rest | `bg-destructive` (`--destructive`), `text-destructive-foreground` (`--destructive-foreground`) |
+| Fill, destructive-solid | hover | `bg-destructive/90` |
 | Label, link | all | `text-primary` (`--primary`) |
 | Focus ring | focus visible | `ring-ring/50`, `border-ring` (`--ring`) |
 | Ring and border | invalid | `border-destructive`, `ring-destructive/20` |
 | Radius | sizes default, lg, icon, icon-lg | `rounded-lg` (`--radius-lg`) |
+| Radius | size control | `rounded-md` (`--radius-md`) |
 | Radius | sizes xs, sm, icon-xs, icon-sm | `rounded-[min(var(--radius-md),10px)]` and `12px`, upstream literals |
 | Icon size | default, sm, xs | `size-4`, `size-3.5`, `size-3` |
+| Spinner | pending | `Loader2`, `animate-spin`, sized by the size's icon rule, `opacity-50` on the button |
 
 ## Related
 - RowAction: the app's small action in rows and drawer headers, a link or button at 32px.
-- SubmitButton: the app's pending-aware submit, outside the system (finding).
+- SubmitButton: the app's pending-aware submit, outside the system (finding). Replaced by Button `size="control"` with `loading`; see Replaces under Examples.
 - ConfirmDialog: the confirm step for a destructive Button.
 - EntityDrawer: hosts actions in its header row.
 - OverflowMenu: holds secondary and destructive actions past the one or two Buttons.

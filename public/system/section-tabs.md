@@ -12,7 +12,7 @@ Not applicable: hand-rolled.
 
 | Given by the foundation | Added by the team |
 |---|---|
-| Not applicable: hand-rolled, no tabs primitive underneath | `role="tablist"` with `role="tab"` buttons, roving `tabIndex`, ArrowLeft and ArrowRight that wrap, an underline for the active tab, count badges with three tones, `hidden` tabs, URL mode through `useUrlState`, controlled mode through `value` and `onChange`, and a `FilterSelect` below `md` unless `inlineOnMobile` |
+| Not applicable: hand-rolled, no tabs primitive underneath | `role="tablist"` with `role="tab"` buttons, roving `tabIndex`, ArrowLeft and ArrowRight that wrap, Home and End, an underline for the active tab, count badges with three tones, `hidden` tabs, URL mode through `useUrlState`, controlled mode through `value` and `onChange`, and a `FilterSelect` below `md` unless `inlineOnMobile` |
 | Not applicable: hand-rolled | `useSectionTab`, which reads `?tab=` (or `param`) and falls back to `defaultTab` when the value is missing, unknown or hidden |
 
 ## Examples
@@ -280,8 +280,8 @@ Rests on native `<button>` elements with `role="tab"` inside a `role="tablist"`,
 | Key | Where focus is | Effect | Focus after | Checked by |
 |---|---|---|---|---|
 | Tab | Before the bar | Enters the bar on the active tab only (roving `tabIndex`) | The active tab | by hand |
-| ArrowRight or ArrowLeft | A tab | Selects the next or previous visible tab, wrapping at the ends (automatic activation) | Meant to be the new tab through `requestAnimationFrame`; the callback reads `e.currentTarget`, which React has reset to null by then, so focus may stay on the old tab (finding) | by hand |
-| Home or End | A tab | Nothing; not handled (finding) | Stays | by hand |
+| ArrowRight or ArrowLeft | A tab | Selects the next or previous visible tab, wrapping at the ends (automatic activation) | The new tab, through `requestAnimationFrame`. The list element is saved before the frame, since React resets `e.currentTarget` to null once the handler returns (was a finding, fixed for G-16; driven in Storybook `app-kit-sectiontabs--default` with 0 page errors) | by hand |
+| Home or End | A tab | Selects the first or last visible tab (G-16; before this, not handled) | The selected tab | by hand |
 | Enter or Space | A tab | Selects it | Stays on it | by hand |
 | Tab | A tab | Leaves the bar to the section content | The next focusable element after the bar | by hand |
 

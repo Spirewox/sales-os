@@ -153,3 +153,38 @@ From .design-system/close.md: 646 allowlisted findings in 151 files (trap/native
 | F-08 | should-fix | shared | 646 allowlisted findings across 151 files | no clearance | migrate-design-system with the audit plan |
 | F-09 | note | shared | components/ui files are not in a drift list (scripts/ui-drift.tsv) | out of scope | add rows and `--hash-stock` |
 | F-10 | note | shared | check-spec call-site regex misses `<DataTable<T>`; example-export maps the barrel to one file | out of scope | report to the skill owner |
+
+## Harden: system-prep for the migration (2026-11-23, 23:38 to 23:55 WAT)
+
+Brief: close the gaps the migrate audit (.migration/2026-11-23-audit/plan.md) named for the system owner, so each duplicate family maps to a canonical member. Mode harden, foundation shadcn on base-ui, branch ds/2026-11-23-harden from 4f4f541. Workers: w-btn (Button spec, examples, stories) and w-ct (Checkbox, Textarea), both foreground, both closed.
+
+### Decisions
+| ID | Phase | Decision | Why | Proof |
+|---|---|---|---|---|
+| H-01 | 4 | Button gains size `control` (h-9 gap-2 rounded-md px-4), variant `destructive-solid` (bg-destructive text-destructive-foreground hover:bg-destructive/90) and a `loading` prop (disabled, focusableWhenDisabled, aria-busy, Loader2 before the label) | G-03 default: the app's de facto button is SubmitButton's h-9 rounded-md, solid destructive and pending state | esbuild + renderToStaticMarkup, old vs new Button: 192 variant x size x prop combos, 0 differing markup, so existing callers render unchanged |
+| H-02 | 4 | `destructive-solid` uses `text-destructive-foreground`, not SubmitButton's `text-white` | `text-white` fails rule/palette-use; in light it is oklch(0.99 0 0), in dark #1A0306 on #F0707E (intended change, not measured for contrast) | Storybook measure: h 36, radius 6.4px, bg rgb(200,38,58) |
+| H-03 | 4 | Registry: Button `replaces` components/submit-button.tsx; Checkbox and Textarea registered | G-03 closed, so D-12's hold lifts | node scripts/check.mjs exit 0 |
+| H-04 | 5 | 16 findings the change surfaced are allowlisted as counted exceptions: 10 rule/deprecated-import (the SubmitButton importers, the migration's to move) and 6 trap/link-as-button or trap/button-clone (rounded-md now shared with Button) | an existing hand-rolled site is the migration's to move; scope bars app/** | check-system before: 21 failing; after: 0 failing, 661 allowlisted |
+| H-05 | 4 | Checkbox (base-ui Checkbox.Root, rounded-sm) and Textarea (Input's classes, field-sizing-content min-h-16) with stories and specs | G-04 default | check-spec 15 specs 0 failures; Storybook: checkbox 16x16 role=checkbox aria-checked=true; textarea h 64 |
+| H-06 | 3 | `CHART_TEXT` in lib/format.ts beside CHART_TOOLTIP: tick, legend, legendBelow, label, the exact values the Recharts props use (fontSize 12, fill or color var(--muted-foreground), paddingTop 8) | G-05/G-08 default; export only, call-site swaps are the migration's | tsc exit 0 |
+| H-07 | 4 | ModalDialog traps Tab and Shift+Tab inside the topmost panel (popups portaled outside are left alone) and locks page scroll while any ModalDialog is open, restoring overflow and padding when the last closes | G-15 default (trap plus scroll lock, keeping the open attribute so toasts stay visible) | Playwright on primitives-modaldialog--closed: overflow visible, hidden while open, visible after; Tab order Confirm, Cancel, Confirm, Cancel, all inside the dialog; Escape returns focus to "Delete sale"; 0 page errors |
+| H-08 | 4 | SectionTabs saves the list element before the frame and handles Home and End | G-16 default | Playwright on app-kit-sectiontabs--default: Right, Right, End, Home, Left move focus and selection together; 0 page errors. The old throw was not reproduced before the fix |
+
+### Gates
+| ID | Question | Default applied |
+|---|---|---|
+| H-G1 | Allowlist the 16 findings H-04 lists, or hold the `replaces` entry until the migration moves the 10 importers? | allowlisted; the migration burns them down |
+| H-G2 | The loading spinner widens the button by 16px plus the gap (F-06 half fixed: focus kept, width not) | keep; measure in the verify pass |
+| H-G3 | Checkbox radius rounded-sm renders 4.8px against shadcn's 4px | keep rounded-sm |
+| H-G4 | Checkbox and Textarea specs hold no rules yet (0 call sites) | write rules after the 16 checkbox and 14 textarea raw sites move |
+| H-G5 | Button `destructive-solid` and pending contrast not measured | measure in the verify pass |
+| H-G6 | FilterSelect still lives at components/filter-select.tsx (G-01 move is outside this scope); hub-scope-filter has no canonical member (LocationSelect lacks the slot); confirm-preview-modal stays a composition (G-02) | no `replaces` for those three families |
+
+### Families to canonical members
+SubmitButton -> Button (size control; primary -> default, destructive -> destructive-solid; loading -> loading). FilterSelect -> FilterSelect (it is the canonical member, G-01). Raw checkbox -> Checkbox, raw textarea -> Textarea (new primitives, no `replaces` file). Recharts text props -> CHART_TEXT. ConfirmPreviewModal and HubScopeFilter: no canonical member (H-G6).
+
+### Commands
+- `node scripts/check.mjs`: exit 0 (check-system 0 failing, 661 allowlisted; check-spec 15 specs 0 failures; gen-docs --check fresh)
+- `npm run build-storybook`: exit 0
+- `npx tsc --noEmit -p .`: exit 0
+- `capture.mjs --base http://localhost:3456 --status --routes` (20 static routes): 20 routes, 0 not as expected
