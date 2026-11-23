@@ -44,6 +44,11 @@ Everything this app's UI must not do, in one place. Read it before writing UI. A
 | `rule/filter-bar-result-label` | When resultLabel is passed, write {count} {noun} with the singular noun for 1, and pass undefined while the list loads, because the line is announced on every change and a stale "0 sales" during a fetch is read as a result. | [filter-bar](/system/filter-bar.md) | app, single use | review |
 | `rule/filter-bar-search-label` | When search is passed, set search.label to "Search {records}" and the placeholder to the fields searched, because the placeholder disappears once someone types and the label is the field's only lasting name. | [filter-bar](/system/filter-bar.md) | app, principle | review |
 | `rule/filter-bar-trailing-actions` | When an action such as Export or a view toggle sits with the filters, pass it in trailing instead of filters, because trailing is pushed right with ml-auto and keeps actions apart from the controls that narrow the list. | [filter-bar](/system/filter-bar.md) | app, single use | review |
+| `rule/filter-select-accessible-name` | When FilterSelect renders, give it ariaLabel or an id that a <label htmlFor> points at, because the trigger is a combobox whose text is only the current value, so with neither it is announced as "Fish, combobox" with no field name. | [filter-select](/system/filter-select.md) | app | review each `<FilterSelect` for `ariaLabel=` or `id=` |
+| `rule/filter-select-all-option` | When a filter can be off, put a first option with a real value such as 'All' and map it to empty in onChange, because a value outside options shows the raw value, so '' renders an empty trigger with nothing checked and no way back to "no filter". | [filter-select](/system/filter-select.md) | app | review that `value` falls back to the first option's value |
+| `rule/filter-select-compact-size` | When FilterSelect sits in a FilterBar filters slot or a toolbar row, pass size="compact" instead of writing h-9 w-auto min-w-40 data-[size=default]:h-9 in className, because the hand-written classes drift in width (min-w-32, min-w-36, min-w-40) and break when the primitive's data-[size] height changes. | [filter-select](/system/filter-select.md) | app, single use | review `className` on each `<FilterSelect` for `h-9` |
+| `rule/filter-select-no-empty-fallback` | When a record's field can be missing, default value to a real option such as 'none' with the label "Choose a product" instead of ?? '', because '' matches no option and the field renders blank with no check. | [filter-select](/system/filter-select.md) | app | review `?? ''` inside `value=` on a `<FilterSelect` |
+| `rule/filter-select-off-label` | When the first option turns a filter off, label it "All {plural noun}" for a set of things or "Any {noun}" for a state, in sentence case, because the closed trigger shows only that label and it must read as "no filter" at a glance. | [filter-select](/system/filter-select.md) | app | review the first option's label |
 | `rule/inline-px` | A px, rem or em length for spacing, radius, size or font size in an inline style | none yet |  | `scripts/check-system.mjs` |
 | `rule/named-color` | A CSS named color in a style, in any quote style | none yet |  | `scripts/check-system.mjs` |
 | `rule/outside-name` | An outside product name from the config's names list in a shipped docs page. A warning, never a failure | none yet |  | `scripts/check-system.mjs` |
@@ -98,18 +103,18 @@ Everything this app's UI must not do, in one place. Read it before writing UI. A
 | `trap/button-label-wrap` | See the page | [button](/system/button.md), [data-table](/system/data-table.md), [page-header](/system/page-header.md) |  | review |
 | `trap/button-type` | See the page | [button](/system/button.md), [data-table](/system/data-table.md) |  | review |
 | `trap/color-only-status` | See the page | [data-table](/system/data-table.md), [empty-state](/system/empty-state.md), [entity-drawer](/system/entity-drawer.md), [section-error-boundary](/system/section-error-boundary.md), [skeleton](/system/skeleton.md), [status-badge](/system/status-badge.md) |  | review |
-| `trap/control-height` | See the page | [button](/system/button.md), [data-table](/system/data-table.md), [overflow-menu](/system/overflow-menu.md), [page-header](/system/page-header.md) |  | review |
+| `trap/control-height` | See the page | [button](/system/button.md), [data-table](/system/data-table.md), [filter-select](/system/filter-select.md), [overflow-menu](/system/overflow-menu.md), [page-header](/system/page-header.md) |  | review |
 | `trap/current-unmarked` | See the page | [page-header](/system/page-header.md), [period-select](/system/period-select.md), [section-tabs](/system/section-tabs.md) |  | review |
 | `trap/decor-pointer` | See the page | [empty-state](/system/empty-state.md), [section-error-boundary](/system/section-error-boundary.md), [skeleton](/system/skeleton.md), [status-badge](/system/status-badge.md) |  | review |
 | `trap/demo-on-timers` | See the page | [empty-state](/system/empty-state.md), [skeleton](/system/skeleton.md), [status-badge](/system/status-badge.md) |  | review |
 | `trap/disabled-drops-focus` | See the page | [button](/system/button.md), [data-table](/system/data-table.md), [section-error-boundary](/system/section-error-boundary.md) |  | review |
 | `trap/disabled-still-hovers` | See the page | [button](/system/button.md), [period-select](/system/period-select.md) |  | review |
 | `trap/empty-value` | See the page | [data-table](/system/data-table.md), [status-badge](/system/status-badge.md) |  | review |
-| `trap/escape-nested` | See the page | [entity-drawer](/system/entity-drawer.md), [filter-bar](/system/filter-bar.md), [overflow-menu](/system/overflow-menu.md), [period-select](/system/period-select.md) |  | review |
+| `trap/escape-nested` | See the page | [entity-drawer](/system/entity-drawer.md), [filter-bar](/system/filter-bar.md), [filter-select](/system/filter-select.md), [overflow-menu](/system/overflow-menu.md), [period-select](/system/period-select.md) |  | review |
 | `trap/exit-eats-input` | See the page | [entity-drawer](/system/entity-drawer.md), [overflow-menu](/system/overflow-menu.md) |  | review |
 | `trap/field-input-type` | See the page | [filter-bar](/system/filter-bar.md) |  | review |
-| `trap/field-label` | See the page | [filter-bar](/system/filter-bar.md), [period-select](/system/period-select.md) |  | review |
-| `trap/focus-ring-shape` | See the page | [button](/system/button.md), [filter-bar](/system/filter-bar.md), [period-select](/system/period-select.md), [section-tabs](/system/section-tabs.md) |  | review |
+| `trap/field-label` | See the page | [filter-bar](/system/filter-bar.md), [filter-select](/system/filter-select.md), [period-select](/system/period-select.md) |  | review |
+| `trap/focus-ring-shape` | See the page | [button](/system/button.md), [filter-bar](/system/filter-bar.md), [filter-select](/system/filter-select.md), [period-select](/system/period-select.md), [section-tabs](/system/section-tabs.md) |  | review |
 | `trap/gesture-axes` | See the page | [empty-state](/system/empty-state.md), [entity-drawer](/system/entity-drawer.md) |  | review |
 | `trap/gesture-drag` | See the page | [empty-state](/system/empty-state.md), [entity-drawer](/system/entity-drawer.md) |  | review |
 | `trap/hover-beats-focus` | See the page | [button](/system/button.md) |  | review |
@@ -139,14 +144,14 @@ Everything this app's UI must not do, in one place. Read it before writing UI. A
 | `trap/motion-restart` | See the page | [empty-state](/system/empty-state.md), [entity-drawer](/system/entity-drawer.md), [skeleton](/system/skeleton.md), [status-badge](/system/status-badge.md) |  | review |
 | `trap/motion-transition-all` | transition: all, transition-property: all or the transition-all utility, in CSS, a class list or an inline style | [button](/system/button.md), [overflow-menu](/system/overflow-menu.md) |  | `scripts/check-system.mjs` |
 | `trap/narrow-hidden-nav` | See the page | [data-table](/system/data-table.md), [page-header](/system/page-header.md), [section-tabs](/system/section-tabs.md), [status-badge](/system/status-badge.md) |  | review |
-| `trap/native-control` | A native control where a system component exists | [button](/system/button.md), [entity-drawer](/system/entity-drawer.md), [filter-bar](/system/filter-bar.md), [page-header](/system/page-header.md), [section-error-boundary](/system/section-error-boundary.md) |  | `scripts/check-system.mjs` |
+| `trap/native-control` | A native control where a system component exists | [button](/system/button.md), [entity-drawer](/system/entity-drawer.md), [filter-bar](/system/filter-bar.md), [filter-select](/system/filter-select.md), [page-header](/system/page-header.md), [section-error-boundary](/system/section-error-boundary.md) |  | `scripts/check-system.mjs` |
 | `trap/numbers-shift` | See the page | [data-table](/system/data-table.md), [empty-state](/system/empty-state.md), [filter-bar](/system/filter-bar.md), [period-select](/system/period-select.md), [section-tabs](/system/section-tabs.md), [skeleton](/system/skeleton.md), [status-badge](/system/status-badge.md) |  | review |
-| `trap/open-trigger-unfocused` | See the page | [entity-drawer](/system/entity-drawer.md), [filter-bar](/system/filter-bar.md), [overflow-menu](/system/overflow-menu.md), [period-select](/system/period-select.md) |  | review |
+| `trap/open-trigger-unfocused` | See the page | [entity-drawer](/system/entity-drawer.md), [filter-bar](/system/filter-bar.md), [filter-select](/system/filter-select.md), [overflow-menu](/system/overflow-menu.md), [period-select](/system/period-select.md) |  | review |
 | `trap/overflow-scrollbar` | See the page | [empty-state](/system/empty-state.md) |  | review |
 | `trap/overlay-conditional-render` | An overlay mounted by a condition, such as {open && <Dialog>} | [entity-drawer](/system/entity-drawer.md), [filter-bar](/system/filter-bar.md), [period-select](/system/period-select.md) |  | `scripts/check-system.mjs` |
 | `trap/overlay-destructive` | See the page | [entity-drawer](/system/entity-drawer.md) |  | review |
-| `trap/overlay-focus-return` | See the page | [entity-drawer](/system/entity-drawer.md), [filter-bar](/system/filter-bar.md), [overflow-menu](/system/overflow-menu.md), [period-select](/system/period-select.md) |  | review |
-| `trap/overlay-no-max-height` | See the page | [entity-drawer](/system/entity-drawer.md), [filter-bar](/system/filter-bar.md), [period-select](/system/period-select.md) |  | review |
+| `trap/overlay-focus-return` | See the page | [entity-drawer](/system/entity-drawer.md), [filter-bar](/system/filter-bar.md), [filter-select](/system/filter-select.md), [overflow-menu](/system/overflow-menu.md), [period-select](/system/period-select.md) |  | review |
+| `trap/overlay-no-max-height` | See the page | [entity-drawer](/system/entity-drawer.md), [filter-bar](/system/filter-bar.md), [filter-select](/system/filter-select.md), [period-select](/system/period-select.md) |  | review |
 | `trap/overlay-pending-dismiss` | See the page | [entity-drawer](/system/entity-drawer.md) |  | review |
 | `trap/overlay-title` | See the page | [entity-drawer](/system/entity-drawer.md), [filter-bar](/system/filter-bar.md), [period-select](/system/period-select.md) |  | review |
 | `trap/press-delayed` | See the page | [button](/system/button.md), [data-table](/system/data-table.md) |  | review |
@@ -154,8 +159,9 @@ Everything this app's UI must not do, in one place. Read it before writing UI. A
 | `trap/role-button` | role="button" on anything but a <button> | [button](/system/button.md) |  | `scripts/check-system.mjs` |
 | `trap/safe-area` | See the page | [empty-state](/system/empty-state.md), [page-header](/system/page-header.md) |  | review |
 | `trap/scroll-chain` | See the page | [empty-state](/system/empty-state.md), [entity-drawer](/system/entity-drawer.md), [overflow-menu](/system/overflow-menu.md) |  | review |
-| `trap/select-empty-value` | See the page | [period-select](/system/period-select.md) |  | review |
-| `trap/select-value-lost` | See the page | [period-select](/system/period-select.md) |  | review |
+| `trap/select-async` | See the page | [filter-select](/system/filter-select.md) |  | review |
+| `trap/select-empty-value` | See the page | [filter-select](/system/filter-select.md), [period-select](/system/period-select.md) |  | review |
+| `trap/select-value-lost` | See the page | [filter-select](/system/filter-select.md), [period-select](/system/period-select.md) |  | review |
 | `trap/submit-repeat` | See the page | [button](/system/button.md), [data-table](/system/data-table.md) |  | review |
 | `trap/surface-double-edge` | See the page | [empty-state](/system/empty-state.md) |  | review |
 | `trap/surface-matches-parent` | See the page | [empty-state](/system/empty-state.md) |  | review |
