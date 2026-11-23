@@ -159,3 +159,4 @@ Rests on the Base UI Popover dialog, native `<button>` elements, and the team `C
 - Calendar: the range grid PeriodSelect opens; use it alone for a day picker.
 - DateField: one date on a record, not a reporting window.
 - OverflowMenu: actions, never a choice of one period.
+- FilterSelect: a short fixed list such as status or channel; never a date window.

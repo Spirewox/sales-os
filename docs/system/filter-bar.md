@@ -175,3 +175,4 @@ Rests on a native `<label>` around `<input type="search">`, native `<button>` el
 - PeriodSelect: the period control that goes in `filters` on 6 bars.
 - SectionTabs: switches whole sections; a FilterBar then filters the list inside one section.
 - Segmented: two or three views of one list, where a filter row would be heavier.
+- FilterSelect: compact filters in the `filters` slot.
