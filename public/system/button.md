@@ -20,7 +20,7 @@ Default: `docs/system/examples/button/default.tsx`.
 
 Real uses, 0 call sites (`rg -n "<Button(\s|/|>|$)" app components lib --glob '*.tsx' --glob '!components/ui/**'`):
 - None on a screen. The only uses are inside the ui folder, in `components/ui/dialog.tsx:66`, `components/ui/dialog.tsx:112` and `components/ui/sheet.tsx:66`, and no screen imports Dialog or Sheet (`rg -n "components/ui/(dialog|sheet)" app components lib` finds only the files themselves).
-- Triage counted 152 raw `<button>` copies against 2 own Button uses (`.design-system/boss/triage/families.tsv`, Button row). A plain tag count this session, `rg -c "<button(\s|>|$)" app components lib --glob '*.tsx' --glob '!components/ui/**'`, finds 216 `<button` tags. The app's actions are raw buttons, `RowAction` (`components/app/data-table.tsx:274`) and `SubmitButton` (`components/submit-button.tsx:16`, 18 uses). No migration is part of this spec.
+- Triage counted 152 raw `<button>` copies against 2 own Button uses (the design-system triage of 2026-11-23, Button family row). A plain tag count this session, `rg -c "<button(\s|>|$)" app components lib --glob '*.tsx' --glob '!components/ui/**'`, finds 216 `<button` tags. The app's actions are raw buttons, `RowAction` (`components/app/data-table.tsx:274`) and `SubmitButton` (`components/submit-button.tsx:16`, 18 uses). No migration is part of this spec.
 
 ### Example files
 | File | Covers | Caption |
