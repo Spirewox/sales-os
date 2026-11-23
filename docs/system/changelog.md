@@ -3,6 +3,10 @@
 
 Changes to the design system docs and tokens, newest first.
 
+## 2026-11-23
+
+- Add specs for the pilot's families: DataTable, EmptyState, StatusBadge, FilterBar, PeriodSelect, SectionTabs, PageHeader, OverflowMenu, SectionErrorBoundary, EntityDrawer, Button, Skeleton (`1d6535b`)
+
 ## 2026-11-20
 
 - Rebuild the CRM UI on a shared component kit (`0123b26`)
