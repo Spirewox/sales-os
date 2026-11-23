@@ -2667,9 +2667,10 @@ export function useDashboardSalesSummary(
   });
 }
 
-export function useDashboardRevenueByCategory(period: DashboardPeriod = 'all', scope?: DashboardScopeFilters) {
+export function useDashboardRevenueByCategory(period: DashboardPeriod = 'all', scope?: DashboardScopeFilters, opts?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['dashboardRevenueByCategory', period, scope],
+    enabled: opts?.enabled ?? true,
     placeholderData: keepPreviousData,
     queryFn: async (): Promise<DashboardCategoryRevenue> => {
       if (!HAS_API) return EMPTY_DASHBOARD_CATEGORY_REVENUE;

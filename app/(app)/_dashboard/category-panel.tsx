@@ -50,7 +50,7 @@ export function CategoryPanel({ data, loading, periodLabel }: Readonly<{ data: D
           )}
         </div>
       ) : (
-        <EmptyState size="compact" title="No sales in this period" description="Category totals appear after the first sale." />
+        <EmptyState size="compact" title="No sales in this period" description="Totals by category show here once sales are recorded for this period." />
       )}
     </Panel>
   );

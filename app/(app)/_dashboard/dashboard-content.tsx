@@ -49,6 +49,13 @@ export function DashboardContent() {
   const singleDay = !!w.range.from && w.range.from === w.range.to;
   const { data: weekTrend } = useDashboardSalesSummary('week', { date_from: weekFrom, date_to: w.range.to ?? undefined, hub_id: hubId }, { enabled: singleDay });
   const { data: categories, isPending: categoriesLoading } = useDashboardRevenueByCategory(w.categoryPeriod, apiScope);
+  // Nothing sold yet today: show the last 7 days instead of an empty panel, matching the Sales chart beside it.
+  const noCategoriesToday = singleDay && !categoriesLoading && !categories?.categories.length;
+  const { data: weekCategories, isPending: weekCategoriesLoading } = useDashboardRevenueByCategory(
+    'week',
+    { date_from: weekFrom, date_to: w.range.to ?? undefined, hub_id: hubId },
+    { enabled: noCategoriesToday },
+  );
   const attention = useAttentionData(metrics, hubId);
 
   const stock = stockTotals(attention.items);
@@ -157,7 +164,11 @@ export function DashboardContent() {
           />
         </SectionErrorBoundary>
         <SectionErrorBoundary label="Revenue by category">
-          <CategoryPanel data={categories} loading={categoriesLoading} periodLabel={w.label} />
+          {noCategoriesToday ? (
+            <CategoryPanel data={weekCategories} loading={weekCategoriesLoading} periodLabel="Last 7 days · nothing sold yet today" />
+          ) : (
+            <CategoryPanel data={categories} loading={categoriesLoading} periodLabel={w.label} />
+          )}
         </SectionErrorBoundary>
       </div>
 
