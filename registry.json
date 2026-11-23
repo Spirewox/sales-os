@@ -1,0 +1,281 @@
+{
+  "name": "sales-os",
+  "homepage": "/system",
+  "components": [
+    {
+      "id": "page-header",
+      "name": "PageHeader",
+      "import": "@/components/app",
+      "source": "components/app/page-header.tsx",
+      "entry": "docs/system/page-header.md",
+      "docs": "/system/page-header",
+      "markdown": "/system/page-header.md",
+      "layer": "app kit",
+      "status": "ready-with-gaps"
+    },
+    {
+      "id": "section-tabs",
+      "name": "SectionTabs",
+      "import": "@/components/app",
+      "source": "components/app/section-tabs.tsx",
+      "entry": "docs/system/section-tabs.md",
+      "docs": "/system/section-tabs",
+      "markdown": "/system/section-tabs.md",
+      "layer": "app kit",
+      "status": "ready-with-gaps"
+    },
+    {
+      "id": "filter-bar",
+      "name": "FilterBar",
+      "import": "@/components/app",
+      "source": "components/app/filter-bar.tsx",
+      "entry": "docs/system/filter-bar.md",
+      "docs": "/system/filter-bar",
+      "markdown": "/system/filter-bar.md",
+      "layer": "app kit",
+      "status": "ready-with-gaps"
+    },
+    {
+      "id": "location-select",
+      "name": "LocationSelect",
+      "import": "@/components/app",
+      "source": "components/app/location-select.tsx",
+      "entry": "docs/system/location-select.md",
+      "docs": "/system/location-select",
+      "markdown": "/system/location-select.md",
+      "layer": "app kit",
+      "status": "ready-with-gaps"
+    },
+    {
+      "id": "period-select",
+      "name": "PeriodSelect",
+      "import": "@/components/app",
+      "source": "components/app/period-select.tsx",
+      "entry": "docs/system/period-select.md",
+      "docs": "/system/period-select",
+      "markdown": "/system/period-select.md",
+      "layer": "app kit",
+      "status": "ready-with-gaps"
+    },
+    {
+      "id": "kpi-strip",
+      "name": "KpiStrip",
+      "import": "@/components/app",
+      "source": "components/app/kpi-strip.tsx",
+      "entry": "docs/system/kpi-strip.md",
+      "docs": "/system/kpi-strip",
+      "markdown": "/system/kpi-strip.md",
+      "layer": "app kit",
+      "status": "ready-with-gaps"
+    },
+    {
+      "id": "data-table",
+      "name": "DataTable",
+      "import": "@/components/app",
+      "source": "components/app/data-table.tsx",
+      "entry": "docs/system/data-table.md",
+      "docs": "/system/data-table",
+      "markdown": "/system/data-table.md",
+      "layer": "app kit",
+      "status": "ready-with-gaps"
+    },
+    {
+      "id": "entity-drawer",
+      "name": "EntityDrawer",
+      "import": "@/components/app",
+      "source": "components/app/entity-drawer.tsx",
+      "entry": "docs/system/entity-drawer.md",
+      "docs": "/system/entity-drawer",
+      "markdown": "/system/entity-drawer.md",
+      "layer": "app kit",
+      "status": "ready-with-gaps"
+    },
+    {
+      "id": "form-sheet",
+      "name": "FormSheet",
+      "import": "@/components/app",
+      "source": "components/app/form-sheet.tsx",
+      "entry": "docs/system/form-sheet.md",
+      "docs": "/system/form-sheet",
+      "markdown": "/system/form-sheet.md",
+      "layer": "app kit",
+      "status": "ready-with-gaps"
+    },
+    {
+      "id": "status-badge",
+      "name": "StatusBadge",
+      "import": "@/components/app",
+      "source": "components/app/status-badge.tsx",
+      "entry": "docs/system/status-badge.md",
+      "docs": "/system/status-badge",
+      "markdown": "/system/status-badge.md",
+      "layer": "app kit",
+      "status": "ready-with-gaps"
+    },
+    {
+      "id": "empty-state",
+      "name": "EmptyState",
+      "import": "@/components/app",
+      "source": "components/app/empty-state.tsx",
+      "entry": "docs/system/empty-state.md",
+      "docs": "/system/empty-state",
+      "markdown": "/system/empty-state.md",
+      "layer": "app kit",
+      "status": "ready-with-gaps"
+    },
+    {
+      "id": "section-error-boundary",
+      "name": "SectionErrorBoundary",
+      "import": "@/components/app",
+      "source": "components/app/error-boundary.tsx",
+      "entry": "docs/system/section-error-boundary.md",
+      "docs": "/system/section-error-boundary",
+      "markdown": "/system/section-error-boundary.md",
+      "layer": "app kit",
+      "status": "ready-with-gaps"
+    },
+    {
+      "id": "overflow-menu",
+      "name": "OverflowMenu",
+      "import": "@/components/app",
+      "source": "components/app/overflow-menu.tsx",
+      "entry": "docs/system/overflow-menu.md",
+      "docs": "/system/overflow-menu",
+      "markdown": "/system/overflow-menu.md",
+      "layer": "app kit",
+      "status": "ready-with-gaps"
+    },
+    {
+      "id": "segmented",
+      "name": "Segmented",
+      "import": "@/components/app",
+      "source": "components/app/segmented.tsx",
+      "entry": "docs/system/segmented.md",
+      "docs": "/system/segmented",
+      "markdown": "/system/segmented.md",
+      "layer": "app kit",
+      "status": "ready-with-gaps"
+    },
+    {
+      "id": "calendar",
+      "name": "Calendar",
+      "import": "@/components/app",
+      "source": "components/app/calendar.tsx",
+      "entry": "docs/system/calendar.md",
+      "docs": "/system/calendar",
+      "markdown": "/system/calendar.md",
+      "layer": "app kit",
+      "status": "ready-with-gaps"
+    },
+    {
+      "id": "date-field",
+      "name": "DateField",
+      "import": "@/components/app",
+      "source": "components/app/date-field.tsx",
+      "entry": "docs/system/date-field.md",
+      "docs": "/system/date-field",
+      "markdown": "/system/date-field.md",
+      "layer": "app kit",
+      "status": "ready-with-gaps"
+    },
+    {
+      "id": "confirm-dialog",
+      "name": "ConfirmDialog",
+      "import": "@/components/app",
+      "source": "components/app/confirm-dialog.tsx",
+      "entry": "docs/system/confirm-dialog.md",
+      "docs": "/system/confirm-dialog",
+      "markdown": "/system/confirm-dialog.md",
+      "layer": "app kit",
+      "status": "ready-with-gaps"
+    },
+    {
+      "id": "unsaved-bar",
+      "name": "UnsavedBar",
+      "import": "@/components/app",
+      "source": "components/app/unsaved-bar.tsx",
+      "entry": "docs/system/unsaved-bar.md",
+      "docs": "/system/unsaved-bar",
+      "markdown": "/system/unsaved-bar.md",
+      "layer": "app kit",
+      "status": "ready-with-gaps"
+    },
+    {
+      "id": "button",
+      "name": "Button",
+      "import": "@/components/ui/button",
+      "source": "components/ui/button.tsx",
+      "entry": "docs/system/button.md",
+      "docs": "/system/button",
+      "markdown": "/system/button.md",
+      "layer": "primitive",
+      "status": "ready-with-gaps"
+    },
+    {
+      "id": "select",
+      "name": "Select",
+      "import": "@/components/ui/select",
+      "source": "components/ui/select.tsx",
+      "entry": "docs/system/select.md",
+      "docs": "/system/select",
+      "markdown": "/system/select.md",
+      "layer": "primitive",
+      "status": "ready-with-gaps"
+    },
+    {
+      "id": "switch",
+      "name": "Switch",
+      "import": "@/components/ui/switch",
+      "source": "components/ui/switch.tsx",
+      "entry": "docs/system/switch.md",
+      "docs": "/system/switch",
+      "markdown": "/system/switch.md",
+      "layer": "primitive",
+      "status": "ready-with-gaps"
+    },
+    {
+      "id": "skeleton",
+      "name": "Skeleton",
+      "import": "@/components/ui/skeleton",
+      "source": "components/ui/skeleton.tsx",
+      "entry": "docs/system/skeleton.md",
+      "docs": "/system/skeleton",
+      "markdown": "/system/skeleton.md",
+      "layer": "primitive",
+      "status": "ready-with-gaps"
+    },
+    {
+      "id": "modal-dialog",
+      "name": "ModalDialog",
+      "import": "@/components/ui/modal-dialog",
+      "source": "components/ui/modal-dialog.tsx",
+      "entry": "docs/system/modal-dialog.md",
+      "docs": "/system/modal-dialog",
+      "markdown": "/system/modal-dialog.md",
+      "layer": "primitive",
+      "status": "ready-with-gaps"
+    },
+    {
+      "id": "pagination-controls",
+      "name": "PaginationControls",
+      "import": "@/components/ui/pagination-controls",
+      "source": "components/ui/pagination-controls.tsx",
+      "entry": "docs/system/pagination-controls.md",
+      "docs": "/system/pagination-controls",
+      "markdown": "/system/pagination-controls.md",
+      "layer": "primitive",
+      "status": "ready-with-gaps"
+    },
+    {
+      "id": "loading-skeletons",
+      "name": "LoadingSkeletons",
+      "import": "@/components/ui/loading-skeletons",
+      "source": "components/ui/loading-skeletons.tsx",
+      "entry": "docs/system/loading-skeletons.md",
+      "docs": "/system/loading-skeletons",
+      "markdown": "/system/loading-skeletons.md",
+      "layer": "primitive",
+      "status": "ready-with-gaps"
+    }
+  ]
+}
