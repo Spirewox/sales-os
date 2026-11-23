@@ -1,0 +1,13 @@
+./app/kitchen-quote/[id]/page.tsx:38:text-slate-900
+./app/kitchen-quote/[id]/page.tsx:44:text-slate-600
+./app/kitchen-quote/[id]/page.tsx:45:text-slate-600
+./app/kitchen-quote/[id]/page.tsx:51:text-slate-500
+./app/kitchen-quote/[id]/page.tsx:54:text-slate-600
+./app/kitchen-quote/[id]/page.tsx:57:text-slate-500
+./app/kitchen-quote/[id]/page.tsx:59:text-slate-600
+./app/kitchen-quote/[id]/page.tsx:64:bg-slate-50
+./app/kitchen-quote/[id]/page.tsx:64:text-slate-500
+./app/kitchen-quote/[id]/page.tsx:72:border-slate-900
+./app/kitchen-quote/[id]/page.tsx:76:text-slate-600
+./app/kitchen-quote/[id]/page.tsx:83:text-slate-500
+./app/(app)/settings/password-section.tsx:36:bg-yellow-500

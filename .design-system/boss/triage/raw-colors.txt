@@ -1,0 +1,30 @@
+./lib/mock-api/handler.ts:354:        { name: 'B2B', value: db.customers.filter((c) => c.customer_type === 'B2B').length, fill: '#16a34a' },
+./lib/mock-api/handler.ts:355:        { name: 'B2C', value: db.customers.filter((c) => c.customer_type === 'B2C').length, fill: '#0891b2' },
+./lib/mock-api/data.ts:467:  ['sup_2', 'Quantity', 'Low', 'Two cartons short on invoice #4471.', 'Open'],
+./lib/mock-api/data.ts:560:export const categoryColor = (name: string) => PRODUCT_CATEGORY_COLORS[name] ?? '#64748b';
+./lib/product-categories.ts:27:  Fish: '#0891b2',
+./lib/product-categories.ts:28:  Seafood: '#0e7490',
+./lib/product-categories.ts:29:  Chicken: '#ea580c',
+./lib/product-categories.ts:30:  Turkey: '#7c3aed',
+./lib/product-categories.ts:31:  Goat: '#b91c1c',
+./lib/product-categories.ts:32:  Cow: '#991b1b',
+./lib/product-categories.ts:33:  Ram: '#7f1d1d',
+./lib/product-categories.ts:34:  Sheep: '#9f1239',
+./lib/product-categories.ts:35:  'Beef & Exotic': '#dc2626',
+./lib/product-categories.ts:36:  Sausage: '#ca8a04',
+./lib/product-categories.ts:37:  'Palm Oil': '#16a34a',
+./lib/product-categories.ts:38:  'Oil and Spice': '#15803d',
+./lib/product-categories.ts:39:  Grain: '#2563eb',
+./lib/product-categories.ts:40:  Flour: '#3b82f6',
+./lib/product-categories.ts:41:  Tuber: '#1d4ed8',
+./lib/product-categories.ts:42:  'Grains & Staples': '#1e40af',
+./lib/product-categories.ts:43:  Honey: '#f59e0b',
+./lib/product-categories.ts:44:  Kitchen: '#db2777',
+./lib/product-categories.ts:45:  Snacks: '#a855f7',
+./lib/product-categories.ts:46:  Other: '#6b7280',
+./app/(app)/sales/sale-receipt.ts:19:  body{font:14px/1.45 system-ui,-apple-system,Segoe UI,sans-serif;color:#111;margin:24px;max-width:360px}
+./app/(app)/sales/sale-receipt.ts:20:  h1{font-size:18px;margin:0 0 2px} p{margin:0;color:#555;font-size:12px}
+./app/(app)/sales/sale-receipt.ts:22:  .r{text-align:right} .b{font-weight:600} hr{border:0;border-top:1px dashed #999;margin:12px 0}
+./app/(app)/sales/sale-receipt.ts:37:${sale.status === 'Voided' ? '<p style="margin-top:12px;color:#b91c1c;font-weight:600">VOIDED</p>' : ''}
+./app/(app)/inventory/product-drawer-panels.tsx:88:            {b2bPct > 0 && <div className="flex items-center justify-center bg-series-1 text-white dark:text-[#06140b]" style={{ width: `${b2bPct}%` }}>{b2bPct >= 12 ? `B2B ${b2bPct}%` : ''}</div>}
+./app/(app)/inventory/product-drawer-panels.tsx:89:            {100 - b2bPct > 0 && <div className="flex items-center justify-center bg-series-2 text-white dark:text-[#1a0610]" style={{ width: `${100 - b2bPct}%` }}>{100 - b2bPct >= 12 ? `B2C ${100 - b2bPct}%` : ''}</div>}
