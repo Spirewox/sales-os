@@ -108,7 +108,7 @@ node scripts/check.mjs -> exit 0 (check-system 0 failing, 646 allowlisted in 151
 node scripts/check-system.mjs --self-test --fixtures <skills>/build-design-system/fixtures/check-system -> exit 0 (82 fixtures)
 node scripts/check-spec.mjs --self-test --fixtures <skills>/build-design-system/fixtures/check-spec -> exit 0 (56 fixtures)
 npm run build-storybook -> exit 0. npx tsc --noEmit -p tsconfig.json -> exit 0. npx eslint "app/(app)/audit" -> exit 0.
-Not run: clean-clone check, `npm run build` and production route status (no server could be started under the brief), montage.
+Clean clone: `git clone --branch ds/2026-11-23-harden` with the installed node_modules linked, `node scripts/check.mjs` -> exit 0 (it first failed on an untracked path cited in button.md, fixed). Not run: `npm run build` and production route status (no server could be started under the brief), montage.
 
 ### Screens
 Changed: /audit (pilot: D-07, D-08, D-09, G-08, G-12). Unchanged: every other route; no clearance and no captures.
