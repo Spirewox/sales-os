@@ -65,6 +65,9 @@ export default function Interactions({ openFeedbackSignal = 0 }: Readonly<{
       compValue: compensations.reduce((a, c) => a + c.amount, 0),
       avgResolution: resolved.length > 0 ? totalDays / resolved.length : null,
       resolvedCount: resolved.length,
+      // Same as the old KPI: feedback plus enquiries (compensations are counted by value).
+      total: feedbacks.length + enquiries.length,
+      satisfaction: feedbacks.length > 0 ? Math.round((feedbacks.filter((f) => f.type === FeedbackType.APPRECIATION).length / feedbacks.length) * 100) : 0,
     };
   }, [feedbacks, enquiries, compensations]);
 
@@ -145,6 +148,23 @@ export default function Interactions({ openFeedbackSignal = 0 }: Readonly<{
             detail: counts.pendingComps ? `${formatCount(counts.pendingComps)} pending approval` : 'None pending',
             active: view === 'compensations',
             onClick: () => showView('compensations'),
+          },
+        ]}
+      />
+
+      <KpiStrip
+        loading={kpisLoading}
+        label="Interaction volume"
+        cells={[
+          {
+            label: 'Total interactions',
+            value: formatCount(counts.total),
+            detail: `${plural(feedbacks.length, 'feedback item')}, ${plural(enquiries.length, 'enquiry', 'enquiries')}`,
+          },
+          {
+            label: 'Satisfaction',
+            value: `${counts.satisfaction}%`,
+            detail: feedbacks.length ? 'Share of feedback that is appreciation' : 'No feedback yet',
           },
         ]}
       />

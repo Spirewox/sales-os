@@ -224,7 +224,7 @@ function engagement(q: URLSearchParams) {
         avgInterval,
         daysLate: Math.max(0, days - avgInterval),
         lastOrderDate: new Date(NOW.getTime() - days * DAY).toISOString(),
-        recommendedAction: activity === 'Dormant' ? 'Send a win-back offer' : 'Call to check in',
+        recommendedAction: activity === 'Dormant' ? 'Send a win-back offer' : 'Send a WhatsApp check-in',
         ltv: c.total_spent ?? 0,
         totalOrders: c.total_orders ?? 0,
       };

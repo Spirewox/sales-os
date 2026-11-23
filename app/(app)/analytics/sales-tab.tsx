@@ -22,10 +22,11 @@ const PAYMENT_MODE_LABEL: Record<string, string> = {
   [PaymentMode.PARTIAL_CREDIT]: 'Part paid',
 };
 
+const signedPct = (n: number) => `${n > 0 ? '+' : ''}${n}%`;
 const ordersIn = (d: SalesData) => d.monthlyTrend.reduce((s, m) => s + m.orders, 0);
 
 export function SalesTab({ data, previous, period, hasPrevious }: Readonly<{ data: SalesData; previous?: SalesData; period: Period; hasPrevious: boolean }>) {
-  const { monthlyTrend, weeklyTrend, dailyTrend, dayOfWeekPattern, channelBreakdown, paymentModeSplit, paymentTypeSplit, collectedVsOutstanding, aovTrend, aovWeeklyTrend, totalRevenue } = data;
+  const { monthlyTrend, weeklyTrend, dailyTrend, growth, dayOfWeekPattern, channelBreakdown, paymentModeSplit, paymentTypeSplit, collectedVsOutstanding, aovTrend, aovWeeklyTrend, totalRevenue } = data;
 
   const grains = grainOptions(period);
   const [chosenGrain, setChosenGrain] = useState<Grain | null>(null);
@@ -43,8 +44,10 @@ export function SalesTab({ data, previous, period, hasPrevious }: Readonly<{ dat
     return effGrain === 'day' ? dailyTrend : effGrain === 'week' ? weeklyTrend : monthlyTrend;
   }, [drill, effGrain, dailyTrend, weeklyTrend, monthlyTrend]);
 
-  // Average order follows the trend: monthly when the trend shows months, weekly otherwise.
-  const aovGrain = grain === 'month' ? 'month' : 'week';
+  // Average order has its own week / month choice, as before; it starts on the coarsest the period allows.
+  const aovGrains = grainOptions(period, ['week', 'month']).filter(([g]) => g !== 'week' || aovWeeklyTrend.length > 0);
+  const [chosenAovGrain, setChosenAovGrain] = useState<Grain | null>(null);
+  const aovGrain = effectiveGrain(chosenAovGrain, aovGrains, 'month');
   const aovSeries = aovGrain === 'week' && aovWeeklyTrend.length ? aovWeeklyTrend : aovTrend;
 
   const orders = ordersIn(data);
@@ -67,6 +70,14 @@ export function SalesTab({ data, previous, period, hasPrevious }: Readonly<{ dat
       href: collectedVsOutstanding.outstanding > 0 ? '/credits' : undefined,
     },
   ];
+
+  // Month over month: the latest month against the one before, whatever the period (the old growth banner).
+  const growthCells: KpiCell[] = growth
+    ? [
+        { label: 'Revenue growth', value: signedPct(growth.revGrowth), tone: growth.revGrowth > 0 ? 'good' : growth.revGrowth < 0 ? 'danger' : 'default', detail: `Month on month, ${growth.currMonth} vs ${growth.prevMonth}` },
+        { label: 'Order growth', value: signedPct(growth.orderGrowth), tone: growth.orderGrowth > 0 ? 'good' : growth.orderGrowth < 0 ? 'danger' : 'default', detail: `Month on month, ${growth.currMonth} vs ${growth.prevMonth}` },
+      ]
+    : [];
 
   const isMoneyDow = dowMetric !== 'orders';
   const channelRows = [...channelBreakdown]
@@ -91,6 +102,7 @@ export function SalesTab({ data, previous, period, hasPrevious }: Readonly<{ dat
   return (
     <TabLayout>
       <KpiStrip cells={kpis} label="Sales figures" />
+      {growthCells.length > 0 && <KpiStrip cells={growthCells} label="Month on month growth" />}
 
       <Panel
         title={
@@ -159,7 +171,12 @@ export function SalesTab({ data, previous, period, hasPrevious }: Readonly<{ dat
           )}
         </Panel>
 
-        <Panel title="Average order value" subtitle={`Average sale ${aovGrain === 'week' ? 'per week' : 'per month'}`} bodyClassName="h-[260px]">
+        <Panel
+          title="Average order value"
+          subtitle={`Average sale ${aovGrain === 'week' ? 'per week' : 'per month'}`}
+          control={aovGrains.length > 1 && <Seg label="Average order grain" value={aovGrain} onChange={(g) => setChosenAovGrain(g)} options={aovGrains} />}
+          bodyClassName="h-[260px]"
+        >
           {aovSeries.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={aovSeries} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>

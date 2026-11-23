@@ -3,8 +3,8 @@
 import { Segmented } from '@/components/app/segmented';
 
 import Link from 'next/link';
-import type { ReactNode } from 'react';
-import { Info } from 'lucide-react';
+import { useState, type ReactNode } from 'react';
+import { ChevronDown, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatCount } from '@/lib/format';
 import type { Period } from '@/lib/period';
@@ -72,12 +72,15 @@ export type RankedRow = {
 /**
  * Ranked bar list with share of total: the replacement for pie and donut charts.
  * One list, no legend. `showShare=false` for values that aren't parts of a whole (ratios).
+ * With `limit`, the rest stay one click away ("Show all"), so no row is ever dropped.
  */
 export function RankedBars({ rows, format, emptyText = 'No data for this period', showShare = true, limit }: Readonly<{ rows: RankedRow[]; format: (n: number) => string; emptyText?: string; showShare?: boolean; limit?: number }>) {
+  const [expanded, setExpanded] = useState(false);
   if (rows.length === 0) return <ChartEmpty text={emptyText} />;
   const total = rows.reduce((s, r) => s + Math.max(0, r.value), 0);
   const max = Math.max(...rows.map((r) => Math.abs(r.value)), 1);
-  const shown = limit ? rows.slice(0, limit) : rows;
+  const capped = !!limit && rows.length > limit;
+  const shown = capped && !expanded ? rows.slice(0, limit) : rows;
   return (
     <div className="space-y-1">
       <ol className="space-y-3">
@@ -103,7 +106,17 @@ export function RankedBars({ rows, format, emptyText = 'No data for this period'
           );
         })}
       </ol>
-      {limit && rows.length > limit && <p className="pt-2 text-xs text-muted-foreground">Top {limit} of {formatCount(rows.length)}</p>}
+      {capped && (
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          aria-expanded={expanded}
+          className="mt-2 inline-flex items-center gap-1 rounded-md py-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+        >
+          {expanded ? `Show top ${limit}` : `Top ${limit} of ${formatCount(rows.length)}. Show all`}
+          <ChevronDown size={14} aria-hidden className={expanded ? 'rotate-180' : ''} />
+        </button>
+      )}
     </div>
   );
 }

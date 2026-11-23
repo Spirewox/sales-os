@@ -128,10 +128,25 @@ export function useSupplierList(f: SupplierFilters, hubScope: HubScopeFilter) {
     active: base.filter((r) => r.supplier.isActive).length,
   };
 
+  // Supplier base, as the original page showed it: the API's totals for this location, and the
+  // average lead time over every loaded supplier that has one.
+  const withLead = suppliers.filter((s) => s.leadTimeDays != null);
+  const supplierBase = {
+    total: supplierList?.summary.total ?? 0,
+    active: supplierList?.summary.active ?? 0,
+    avgLead: withLead.length ? Math.round(withLead.reduce((a, s) => a + (s.leadTimeDays || 0), 0) / withLead.length) : null,
+    withLead: withLead.length,
+  };
+
+  // Top 5 by spend among the filtered suppliers (follows the period).
+  const topBySpend = base.filter((r) => r.spend > 0).sort((a, b) => b.spend - a.spend).slice(0, 5);
+
   return {
     suppliers,
     rows: visible,
     kpis,
+    supplierBase,
+    topBySpend,
     listLoading: !supplierList || isFetching,
     kpiLoading: !supplierList || logsLoading || (ranged && periodLoading) || (supplierIds.length > 0 && issuesLoading),
     rowById: (id: string) => rows.find((r) => r.supplier.id === id) ?? null,

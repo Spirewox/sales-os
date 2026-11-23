@@ -1,40 +1,50 @@
 'use client';
 
 import { useId, useState } from 'react';
+import Link from 'next/link';
 import { ChevronDown } from 'lucide-react';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useInventorySalesMetrics } from '@/hooks/use-queries';
 import { CHART_TOOLTIP, formatCount, formatDate, formatMoney } from '@/lib/format';
+import { periodLabel, type Period } from '@/lib/period';
+import { periodToApiParams } from '@/hooks/use-insights-api';
+import { PeriodSelect } from '@/components/app';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
 /**
  * Sales analytics that used to sit above the stock table (volume by unit, meals served, best sellers,
- * most volatile). Collapsed by default and only fetched when opened. Moving it to Analytics is pending.
+ * most volatile), with the old reporting period control. Collapsed by default and only fetched when
+ * opened. The same figures, with more, are on Analytics > Inventory.
  */
-export function SalesTrendsSection({ hubId }: Readonly<{ hubId?: string }>) {
+export function SalesTrendsSection({ hubId, kitchenActive, onShowKitchen }: Readonly<{ hubId?: string; kitchenActive: boolean; onShowKitchen: () => void }>) {
   const [open, setOpen] = useState(false);
+  const [period, setPeriod] = useState<Period>({ preset: 'all' });
   const id = useId();
   return (
     <section className="rounded-xl border bg-card">
       <button type="button" aria-expanded={open} aria-controls={id} onClick={() => setOpen((o) => !o)} className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left">
         <span>
           <span className="block text-sm font-semibold">Sales trends</span>
-          <span className="block text-xs text-muted-foreground">Volume sold, meals served, best sellers and price volatility, all time</span>
+          <span className="block text-xs text-muted-foreground">Volume sold, meals served, best sellers and price volatility, {periodLabel(period).toLowerCase()}</span>
         </span>
         <ChevronDown size={16} aria-hidden className={cn('shrink-0 text-muted-foreground transition-transform', open && 'rotate-180')} />
       </button>
       {open && (
-        <div id={id} className="border-t px-5 py-4">
-          <SalesTrends hubId={hubId} />
+        <div id={id} className="space-y-4 border-t px-5 py-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <PeriodSelect value={period} onChange={setPeriod} />
+            <Link href="/analytics?tab=inventory" className="text-sm font-medium text-primary hover:underline">Open Analytics, Inventory</Link>
+          </div>
+          <SalesTrends hubId={hubId} period={period} kitchenActive={kitchenActive} onShowKitchen={onShowKitchen} />
         </div>
       )}
     </section>
   );
 }
 
-function SalesTrends({ hubId }: Readonly<{ hubId?: string }>) {
-  const { data: salesMetrics, isLoading } = useInventorySalesMetrics({ hub_id: hubId, period: 'all' });
+function SalesTrends({ hubId, period, kitchenActive, onShowKitchen }: Readonly<{ hubId?: string; period: Period; kitchenActive: boolean; onShowKitchen: () => void }>) {
+  const { data: salesMetrics, isLoading } = useInventorySalesMetrics({ hub_id: hubId, ...periodToApiParams(period) });
   if (isLoading) return <Skeleton className="h-48 w-full" />;
   const volumeChartData = [
     { unit: 'Kg', quantity: salesMetrics?.volumeByUnit.Kg ?? 0 },
@@ -49,8 +59,9 @@ function SalesTrends({ hubId }: Readonly<{ hubId?: string }>) {
     <div className="grid gap-6 lg:grid-cols-3">
       <div>
         <h3 className="mb-1 text-sm font-semibold">Volume sold by unit</h3>
-        <p className="mb-3 text-xs text-muted-foreground">
-          Meals served (kitchen, food plate): <span className="font-medium text-foreground tabular-nums">{formatCount(salesMetrics?.mealsServed ?? 0)}</span>
+        <p className="mb-3 flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
+          <span>Meals served (kitchen, food plate): <span className="font-medium text-foreground tabular-nums">{formatCount(salesMetrics?.mealsServed ?? 0)}</span></span>
+          {!kitchenActive && <button type="button" onClick={onShowKitchen} className="font-medium text-primary hover:underline">Show kitchen products</button>}
         </p>
         <div className="h-44">
           <ResponsiveContainer width="100%" height="100%">

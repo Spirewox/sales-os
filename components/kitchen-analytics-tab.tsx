@@ -40,11 +40,19 @@ export function KitchenAnalyticsTab({ scope, prevScope }: Readonly<{ scope: Scop
   const cells: KpiCell[] = [
     { label: 'Kitchen revenue', value: formatMoneyShort(a.completed.revenue), change: revChange == null ? null : { pct: revChange }, detail: `${plural(a.completed.jobs, 'completed job')}, average ${formatMoneyShort(a.completed.average)}` },
     showCosts
-      ? { label: 'Profit', value: costed ? formatMoneyShort(a.completed.profit) : '-', detail: costed ? `${pct(a.completed.margin)} margin, food cost ${pct(a.completed.food_cost_pct)} (target 30%)` : 'No costed jobs yet' }
+      ? { label: 'Profit', value: costed ? formatMoneyShort(a.completed.profit) : '-', detail: costed ? `${pct(a.completed.margin)} margin on ${plural(a.completed.costed_jobs, 'costed job')}` : 'No costed jobs yet' }
       : { label: 'Time to accept', value: minutes(a.time_to_accept.median_minutes), detail: a.time_to_accept.jobs ? `Median of ${a.time_to_accept.jobs} jobs` : 'No accepted jobs yet' },
     { label: 'Still owed', value: formatMoneyShort(a.completed.owed), tone: a.completed.owed > 0 ? 'warning' : 'default', detail: `${formatMoneyShort(a.completed.collected)} collected` },
     { label: 'Quotes turned into orders', value: pct(a.quotes.conversion_rate), detail: `${a.quotes.converted} of ${a.quotes.sent} sent` },
   ];
+
+  // Second strip (cost views only): the old Food cost tile, and how much of the work is costed.
+  const costCells: KpiCell[] = showCosts
+    ? [
+        { label: 'Food cost', value: costed ? pct(a.completed.food_cost_pct) : '-', tone: costed && (a.completed.food_cost_pct ?? 0) > 0.3 ? 'warning' : 'default', detail: costed ? 'Of the price, costed jobs (target 30%)' : 'Needs jobs priced from recipes' },
+        { label: 'Costed jobs', value: `${a.completed.costed_jobs} of ${a.completed.jobs}`, detail: 'Completed jobs with a recipe cost' },
+      ]
+    : [];
 
   const channels = [...a.by_channel].sort((x, y) => y.revenue - x.revenue).map((c) => ({ key: c.channel, label: c.channel, value: c.revenue, detail: plural(c.jobs, 'job') }));
   const outletColumns: Column<Outlet>[] = [
@@ -57,6 +65,7 @@ export function KitchenAnalyticsTab({ scope, prevScope }: Readonly<{ scope: Scop
   return (
     <TabLayout>
       <KpiStrip cells={cells} label="Kitchen figures" />
+      {costCells.length > 0 && <KpiStrip cells={costCells} label="Kitchen costs" />}
 
       <Panel
         title={showCosts ? 'Revenue and profit by month' : 'Revenue by month'}

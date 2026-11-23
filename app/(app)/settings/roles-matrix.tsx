@@ -110,6 +110,7 @@ export function RolesMatrix({ roles, rolePerms, dirtyIds, phoneRoleId, onToggleP
                     <tr key={perm.key} id={i === 0 ? rowsId : undefined} className="bg-muted/20">
                       <th scope="row" title={perm.key} className="sticky left-0 z-10 bg-muted px-4 py-2 pl-11 text-left font-normal">
                         {permissionDisplayLabel(perm.label)}
+                        <span className="block font-mono text-xs text-muted-foreground">{perm.key}</span>
                       </th>
                       {roles.map((r) => {
                         const checked = (rolePerms[r._id] || []).includes(perm.key);

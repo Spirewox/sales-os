@@ -46,6 +46,8 @@ export function useAttentionData(metrics: DashboardMetricsData | undefined, hubI
 
     return {
       owed, overdue, overdueAmount, stock, tickets,
+      // Full lists for the Stock and Credit book panels.
+      items, summaries,
       outOfStock: out.length, lowStock: low.length,
       creditsLoading, stockLoading,
     };

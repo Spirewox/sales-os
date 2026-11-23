@@ -244,4 +244,37 @@ export function stockState(item: Pick<InventoryItem, 'currentStock' | 'minStockL
   return 'In stock';
 }
 
+/** Above the minimum but within 1.5x of it (the old "Low" level, before "Critical"). */
+export function nearMinimum(item: Pick<InventoryItem, 'currentStock' | 'minStockLevel'>): boolean {
+  return item.minStockLevel > 0 && item.currentStock > item.minStockLevel && item.currentStock <= item.minStockLevel * 1.5;
+}
+
+const UOM_SHORT: Record<string, string> = { Kg: 'kg', Units: 'units', Cartons: 'cartons', Liters: 'L', ml: 'ml' };
+
+/**
+ * Stock position of a list of products: value at average cost, retail value, units by unit of measure.
+ * Negative stock counts as zero; retail uses the carton price for carton products (the old screen
+ * multiplied cartons by the per-kg price).
+ */
+export function stockPosition(items: InventoryItem[]) {
+  let cost = 0;
+  let retail = 0;
+  const byUom = new Map<string, number>();
+  const categories = new Set<string>();
+  for (const i of items) {
+    const onHand = Math.max(0, i.currentStock || 0);
+    cost += onHand * i.avgUnitCost;
+    retail += onHand * sellingPriceForMargin(i);
+    const uom = i.unitOfMeasure || 'Units';
+    byUom.set(uom, (byUom.get(uom) ?? 0) + onHand);
+    categories.add(i.category);
+  }
+  const units = [...byUom.values()].reduce((a, b) => a + b, 0);
+  const uomBreakdown = [...byUom.entries()]
+    .filter(([, n]) => n > 0)
+    .sort((a, b) => b[1] - a[1])
+    .map(([u, n]) => ({ uom: UOM_SHORT[u] ?? u, qty: n }));
+  return { cost, retail, units, uomBreakdown, categoryCount: categories.size };
+}
+
 export { downloadCsv } from '@/lib/csv';

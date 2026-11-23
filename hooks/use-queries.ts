@@ -2649,9 +2649,11 @@ export type DashboardScopeFilters = { date_from?: string; date_to?: string; hub_
 export function useDashboardSalesSummary(
   granularity: DashboardTrendGranularity = 'all',
   scope?: DashboardScopeFilters,
+  options?: { enabled?: boolean },
 ) {
   return useQuery({
     queryKey: ['dashboardSalesSummary', granularity, scope],
+    enabled: options?.enabled ?? true,
     placeholderData: keepPreviousData,
     queryFn: async (): Promise<DashboardSalesSummary> => {
       if (!HAS_API) return EMPTY_DASHBOARD_SALES_SUMMARY;

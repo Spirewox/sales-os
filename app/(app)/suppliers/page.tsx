@@ -25,6 +25,7 @@ import { IssueFormSheet } from './issue-form';
 import { SupplierRowMenu, supplierColumns, type SupplierActions } from './supplier-columns';
 import { SupplierDrawer } from './supplier-drawer';
 import { SupplierFormSheet } from './supplier-form';
+import { TopSuppliers } from './top-suppliers';
 import { BUSINESS_TYPES, STALE_DAYS } from './supplier-utils';
 import { useSupplierFilters, type SupplierStatus } from './use-supplier-filters';
 import { useSupplierList } from './use-supplier-list';
@@ -128,6 +129,23 @@ function Suppliers() {
     },
   ];
 
+  const sb = list.supplierBase;
+  const baseCells: KpiCell[] = [
+    { label: 'Suppliers', value: formatCount(sb.total), detail: `${formatCount(Math.max(0, sb.total - sb.active))} inactive` },
+    {
+      label: 'Active',
+      value: formatCount(sb.active),
+      detail: 'Can be chosen for purchases',
+      onClick: () => f.setStatus(f.status === 'Active' ? 'All' : 'Active'),
+      active: f.status === 'Active',
+    },
+    {
+      label: 'Average lead time',
+      value: sb.avgLead != null ? `${sb.avgLead} ${sb.avgLead === 1 ? 'day' : 'days'}` : '-',
+      detail: sb.withLead ? `Across ${plural(sb.withLead, 'supplier')}` : 'No lead times set',
+    },
+  ];
+
   const columns = supplierColumns();
   const filtered = f.chips.length > 0;
 
@@ -145,7 +163,9 @@ function Suppliers() {
         }
       />
 
-      <KpiStrip cells={kpiCells} loading={list.kpiLoading} label="Supplier figures" />
+      <KpiStrip cells={kpiCells} loading={list.kpiLoading} label="Spend and issues" />
+      <KpiStrip cells={baseCells} loading={list.listLoading} label="Supplier base" />
+      {!list.kpiLoading && <TopSuppliers rows={list.topBySpend} periodText={periodLabel(f.period)} onOpen={openSupplier} />}
 
       <FilterBar
         search={{ value: f.search.draft, onChange: f.search.setDraft, placeholder: 'Search name, code, contact, phone', label: 'Search suppliers' }}

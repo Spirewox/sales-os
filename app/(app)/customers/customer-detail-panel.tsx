@@ -2,7 +2,7 @@
 
 import { useMemo, useState, type ReactNode } from 'react';
 import Link from 'next/link';
-import { CreditCard, MessageCircle, MessageSquare, Phone, ShoppingCart, Pencil } from 'lucide-react';
+import { CreditCard, MessageCircle, MessageSquare, ShoppingCart, Pencil } from 'lucide-react';
 import { useCustomerCredits, useSales, useFeedback, useEnquiries, useCompensations } from '@/hooks/use-queries';
 import type { Customer } from '@/types';
 import { usePermissions } from '@/hooks/use-permissions';
@@ -10,13 +10,14 @@ import { formatDate, formatMoney, formatCount } from '@/lib/format';
 import { ModalDialog } from '@/components/ui/modal-dialog';
 import { EntityDrawer, OverflowMenu, SectionErrorBoundary, type SectionTab } from '@/components/app';
 import { buildPaymentSplit, buildPurchaseAnalytics, buildSpendingTrend, buildTopProducts } from './customer-analytics';
-import { creditHref, customerTitle, hasPhone, logFeedbackHref, recordSaleHref, telHref, whatsappHref } from './customer-links';
+import { creditHref, customerTitle, hasPhone, logFeedbackHref, recordSaleHref, whatsappHref } from './customer-links';
 import { prioritizeCustomerSegments } from './customer-segments';
 import { CustomerFormSheet, customerTypeLabel } from './customer-form';
 import { CustomerOverviewTab } from './customer-overview-tab';
 import { CustomerPurchasesTab } from './customer-purchases-tab';
 import { CustomerCreditTab } from './customer-credit-tab';
 import { CustomerInteractionsTab } from './customer-interactions-tab';
+import { CustomerBadges, creditGrade } from './customer-grades';
 
 // Kept for existing imports (engagement, older call sites).
 export { ProfileFields, clearOppositeProfileFields } from './customer-form';
@@ -106,10 +107,10 @@ export function CustomerDetailPanel({ customer, onClose, onUpdated, prioritySegm
       <EntityDrawer
         onClose={onClose}
         title={primary}
+        status={<CustomerBadges customer={customer} credits={creditsLoading ? undefined : allCredits} />}
         subtitle={[secondary, phone, customerTypeLabel(customer.type), customer.location].filter(Boolean).join(' · ')}
         actions={
           <>
-            {phone && <a href={telHref(phone)} className={ACTION}><Phone aria-hidden /> Call</a>}
             {phone && <a href={whatsappHref(phone)} target="_blank" rel="noopener noreferrer" className={ACTION}><MessageCircle aria-hidden /> WhatsApp</a>}
             {canSell && <Link href={recordSaleHref(customer.id)} className={ACTION}><ShoppingCart aria-hidden /> Record sale</Link>}
             {canPay && outstanding > 0 && <Link href={creditHref(customer.id)} className={ACTION}><CreditCard aria-hidden /> Record payment</Link>}
@@ -137,7 +138,7 @@ export function CustomerDetailPanel({ customer, onClose, onUpdated, prioritySegm
             <CustomerPurchasesTab sales={customerSales} analytics={analytics} topProducts={topProducts} loading={salesLoading} recordSaleHref={canSell ? recordSaleHref(customer.id) : undefined} />
           )}
           {tab === 'credit' && (
-            <CustomerCreditTab credits={credits} outstanding={outstanding} overdue={overdue} split={split} creditLink={creditHref(customer.id)} canRecordPayment={canPay} loading={creditsLoading} />
+            <CustomerCreditTab grade={creditGrade(allCredits)} credits={credits} outstanding={outstanding} overdue={overdue} split={split} creditLink={creditHref(customer.id)} canRecordPayment={canPay} loading={creditsLoading} />
           )}
           {tab === 'interactions' && (
             <CustomerInteractionsTab feedback={customerFeedback} enquiries={customerEnquiries} compensations={customerCompensations} logHref={canLog ? logFeedbackHref(customer.id) : undefined} />

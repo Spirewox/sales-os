@@ -1,7 +1,7 @@
 'use client';
 
-import { useSyncExternalStore, type ReactNode } from 'react';
-import { Loader2 } from 'lucide-react';
+import { useState, useSyncExternalStore, type ReactNode } from 'react';
+import { ChevronDown, Loader2 } from 'lucide-react';
 import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { CHART_TOOLTIP, formatAxisMoney, formatCount, formatMoney, formatMoneyShort } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -112,6 +112,30 @@ export function Chip({ children, onClick, disabled }: Readonly<{ children: React
     <button type="button" onClick={onClick} disabled={disabled} className="w-full rounded-md border bg-background px-3 py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50">
       {children}
     </button>
+  );
+}
+
+/**
+ * A short list of example prompts with the rest behind "More examples", so every example the old
+ * Insights page offered is still one click away.
+ */
+export function ExampleList({ title, featured, all, onPick, disabled }: Readonly<{ title: string; featured: string[]; all: readonly string[]; onPick: (q: string) => void; disabled?: boolean }>) {
+  const [open, setOpen] = useState(false);
+  const rest = all.filter((x) => !featured.includes(x));
+  const shown = open ? [...featured, ...rest] : featured;
+  return (
+    <section className="rounded-xl border bg-card p-4">
+      <h3 className="text-sm font-semibold">{title}</h3>
+      <div className="mt-3 space-y-2">
+        {shown.map((ex) => <Chip key={ex} onClick={() => onPick(ex)} disabled={disabled}>{ex}</Chip>)}
+      </div>
+      {rest.length > 0 && (
+        <button type="button" onClick={() => setOpen((v) => !v)} aria-expanded={open} className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground">
+          {open ? 'Fewer examples' : `More examples (${rest.length})`}
+          <ChevronDown size={14} aria-hidden className={open ? 'rotate-180' : ''} />
+        </button>
+      )}
+    </section>
   );
 }
 

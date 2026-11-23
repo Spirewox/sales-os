@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { MessageSquarePlus, Plus, UserPlus } from 'lucide-react';
-import { FilterBar, LocationSelect, OverflowMenu, PageHeader, SectionErrorBoundary } from '@/components/app';
+import { BarChart3, MessageSquarePlus, PackagePlus, Plus, UserPlus, Wallet } from 'lucide-react';
+import { FilterBar, LocationSelect, OverflowMenu, PageHeader, SectionErrorBoundary, type OverflowItem } from '@/components/app';
 import { usePermissions } from '@/hooks/use-permissions';
 import { useHubScopeFilter } from '@/hooks/use-hub-scope';
 import { useUrlState } from '@/hooks/use-url-state';
@@ -11,9 +11,11 @@ import { useDashboardMetrics, useDashboardRevenueByCategory, useDashboardSalesSu
 import { formatDate } from '@/lib/format';
 import { periodToParams } from '@/lib/period';
 import { DASHBOARD_DEFAULT_PERIOD, DASHBOARD_PERIODS, dashboardWindow, parseDashboardPeriod } from './dashboard-period';
-import { DashboardKpis } from './dashboard-kpis';
+import { DashboardKpis, DashboardTodayKpis } from './dashboard-kpis';
+import { stockTotals } from './stock-totals';
 import { NeedsAttention } from './needs-attention';
 import { SalesPanel } from './sales-panel';
+import { addDays } from '@/components/app/calendar';
 import { CategoryPanel } from './category-panel';
 import { TopCustomers } from './top-customers';
 import { Segmented } from './panel';
@@ -42,8 +44,21 @@ export function DashboardContent() {
     { enabled: !!w.previous },
   );
   const { data: trend, isPending: trendLoading, isPlaceholderData: trendStale } = useDashboardSalesSummary(w.granularity, apiScope);
+  // A single day can't draw a trend, so Today also loads the last 7 days to chart it against.
+  const weekFrom = w.range.to ? addDays(w.range.to, -6) : undefined;
+  const singleDay = !!w.range.from && w.range.from === w.range.to;
+  const { data: weekTrend } = useDashboardSalesSummary('week', { date_from: weekFrom, date_to: w.range.to ?? undefined, hub_id: hubId }, { enabled: singleDay });
   const { data: categories, isPending: categoriesLoading } = useDashboardRevenueByCategory(w.categoryPeriod, apiScope);
   const attention = useAttentionData(metrics, hubId);
+
+  const stock = stockTotals(attention.items);
+
+  // The old Quick actions row: Add stock, Manage credits and Analytics live in the overflow menu.
+  const quickActions: OverflowItem[] = [
+    { label: 'Add stock', icon: <PackagePlus aria-hidden />, onSelect: () => router.push('/inventory'), hidden: !can('inventory.create') },
+    { label: 'Manage credits', icon: <Wallet aria-hidden />, onSelect: () => router.push('/credits'), hidden: !can('credits.view') },
+    { label: 'Open analytics', icon: <BarChart3 aria-hidden />, onSelect: () => router.push('/analytics'), hidden: !can('analytics.view') },
+  ];
 
   const today = formatDate(new Date(), { weekday: 'long', day: 'numeric', month: 'long' });
   const where = scope.filterHub !== 'All' ? scope.filterHub : (user?.hubName ?? 'all locations');
@@ -73,13 +88,18 @@ export function DashboardContent() {
           </>
         }
         overflow={
-          <OverflowMenu
-            className="sm:hidden"
-            items={[
-              { label: 'Add customer', icon: <UserPlus aria-hidden />, onSelect: () => router.push('/customers?new=1'), hidden: !can('customers.create') },
-              { label: 'Log feedback', icon: <MessageSquarePlus aria-hidden />, onSelect: () => router.push('/engagement?tab=interactions&new=feedback'), hidden: !can('interactions.create') },
-            ]}
-          />
+          <>
+            {/* Phones: the two secondary buttons fold into the menu too. */}
+            <OverflowMenu
+              className="sm:hidden"
+              items={[
+                { label: 'Add customer', icon: <UserPlus aria-hidden />, onSelect: () => router.push('/customers?new=1'), hidden: !can('customers.create') },
+                { label: 'Log feedback', icon: <MessageSquarePlus aria-hidden />, onSelect: () => router.push('/engagement?tab=interactions&new=feedback'), hidden: !can('interactions.create') },
+                ...quickActions,
+              ]}
+            />
+            <OverflowMenu className="hidden sm:inline-flex" items={quickActions} />
+          </>
         }
       />
 
@@ -107,6 +127,18 @@ export function DashboardContent() {
         />
       </SectionErrorBoundary>
 
+      <SectionErrorBoundary label="Customers, tickets and stock">
+        <DashboardTodayKpis
+          metrics={metrics}
+          metricsLoading={metricsLoading}
+          stock={stock}
+          stockLoading={attention.stockLoading}
+          canCustomers={can('customers.view')}
+          canTickets={can('interactions.view')}
+          canStock={can('inventory.view')}
+        />
+      </SectionErrorBoundary>
+
       <SectionErrorBoundary label="Needs attention">
         <NeedsAttention data={attention} ticketsLoading={metricsLoading} />
       </SectionErrorBoundary>
@@ -116,6 +148,8 @@ export function DashboardContent() {
           <SalesPanel
             className="lg:col-span-2"
             summary={trend}
+            contextTrend={singleDay ? weekTrend : undefined}
+            range={w.range}
             loading={trendLoading}
             refreshing={trendStale}
             periodLabel={w.label}
@@ -130,6 +164,7 @@ export function DashboardContent() {
       <SectionErrorBoundary label="Top customers">
         <TopCustomers customers={metrics?.customers ?? []} loading={metricsLoading} hub={scope.filterHub} />
       </SectionErrorBoundary>
+
     </div>
   );
 }

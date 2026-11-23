@@ -225,6 +225,15 @@ export function KitchenBoard({
           { label: 'Done today', value: doneToday, detail: 'Completed jobs', href: '/kitchen?tab=jobs&stage=completed&period=today' },
         ]}
       />
+      <KpiStrip
+        label="Jobs by stage"
+        loading={jobs.isPending}
+        cells={[
+          { label: 'Waiting to accept', value: counts.new ?? 0, tone: (counts.new ?? 0) > 0 ? 'warning' : 'default', detail: 'New jobs not yet accepted' },
+          { label: 'In progress', value: (counts.accepted ?? 0) + (counts.cooking ?? 0), detail: `${counts.accepted ?? 0} accepted, ${counts.cooking ?? 0} cooking` },
+          { label: 'Ready', value: counts.ready ?? 0, detail: 'Waiting for pickup or delivery' },
+        ]}
+      />
       {focus && (
         <p className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground" aria-live="polite">
           <StatusBadge tone={focus === 'overdue' ? 'danger' : 'warning'}>{focus === 'overdue' ? 'Overdue only' : 'Due soon only'}</StatusBadge>

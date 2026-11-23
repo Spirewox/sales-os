@@ -12,7 +12,7 @@ import { formatInventoryStockDisplay } from '@/lib/format-carton-stock';
 import { SkuPhoto } from '@/components/product-image-editor';
 import { EmptyState, EntityDrawer, FormField, OverflowMenu, RowAction, StatusBadge, fieldClass, type SectionTab } from '@/components/app';
 import {
-  expiryTone, fmtMoney, getExpiryLabel, marginPct, parseMoneyInput, roundMoney2, roundQty2, stockState,
+  expiryTone, fmtMoney, getExpiryLabel, marginPct, nearMinimum, parseMoneyInput, roundMoney2, roundQty2, stockState,
   type FifoBatch, type RequestConfirm,
 } from './inventory-utils';
 import { ActivityPanel, PricePanel, SalesPanel, SuppliersPanel } from './product-drawer-panels';
@@ -192,6 +192,8 @@ function BatchesPanel({ item, batches, loaded, loading, requestConfirm, onPurcha
                   <div className="text-right">
                     <p className="text-base font-semibold tabular-nums">{qtyLabel(batch.quantityRemaining)} <span className="text-xs font-normal text-muted-foreground">{item.unitOfMeasure}</span></p>
                     <p className="text-xs text-muted-foreground tabular-nums">Cost ₦{fmtMoney(batch.unitCost)}</p>
+                    {/* Selling price applies to every batch of the product (as on the old batch cards). */}
+                    {canEditBatchPrices && <p className="text-xs text-muted-foreground tabular-nums">Price ₦{fmtMoney(item.baseSellingPrice)}</p>}
                   </div>
                 </div>
                 {canEditBatchPrices && can('inventory.edit') && !editing && (
@@ -263,7 +265,7 @@ function OverviewPanel({ item, margin }: Readonly<{ item: InventoryItem; margin:
     ...(item.cartonWeight != null ? [{ label: 'Carton weight', value: `${item.cartonWeight} Kg` }] : []),
     { label: 'Category', value: item.category },
     { label: 'Unit of measure', value: item.unitOfMeasure },
-    { label: 'Minimum level', value: String(item.minStockLevel) },
+    { label: 'Minimum level', value: nearMinimum(item) ? `${item.minStockLevel} (on hand is within 1.5x of it)` : String(item.minStockLevel) },
     { label: 'Last stock update', value: formatDate(item.lastStockUpdate) },
     ...(item.lastPurchasePrice != null ? [{ label: 'Last purchase price', value: `₦${fmtMoney(item.lastPurchasePrice)}` }] : []),
     ...(item.supplier

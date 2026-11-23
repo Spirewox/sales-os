@@ -1,8 +1,9 @@
 'use client';
 
 import { Suspense, useEffect, useMemo, useState } from 'react';
-import { CircleCheck, Phone, Wallet } from 'lucide-react';
+import { CircleCheck, MessageCircle, Wallet } from 'lucide-react';
 import { useCreditSummary } from '@/hooks/use-queries';
+import { buildMetricsFromSummary } from '@/lib/credit-mappers';
 import { useHubScopeFilter } from '@/hooks/use-hub-scope';
 import { usePermissions } from '@/hooks/use-permissions';
 import { useUrlState } from '@/hooks/use-url-state';
@@ -14,7 +15,7 @@ import {
 } from '@/components/app';
 import { CustomerCreditSheet } from '@/components/credits/customer-credit-sheet';
 import { GeneralRepaymentForm } from '@/components/credits/credit-forms';
-import { telHref } from '@/components/credits/credit-utils';
+import { whatsAppHref } from '@/components/credits/credit-utils';
 import { creditColumns, isDueThisWeek, matchesFilter, type CreditFilter } from './credit-columns';
 
 const PAGE_SIZE = 20;
@@ -80,6 +81,9 @@ function Credits() {
       weekAmount: hasWeekAmount ? week.reduce((s, r) => s + (r.dueThisWeekAmount ?? 0), 0) : null,
       flaggedCustomers: flagged.length,
       flaggedItems: flagged.reduce((s, r) => s + r.flaggedCount, 0),
+      openItems: inLocation.reduce((s, r) => s + r.openCreditCount, 0),
+      // Same calculation the old "Avg days overdue" card used (from each customer's oldest overdue item).
+      avgDaysOverdue: buildMetricsFromSummary(inLocation).avgDaysOverdue,
     };
   }, [inLocation]);
 
@@ -117,6 +121,18 @@ function Credits() {
     },
   ];
 
+  // Second strip: the old page's collection figures that do not filter the list.
+  const healthCells: KpiCell[] = [
+    {
+      label: 'Avg days overdue',
+      value: `${formatCount(kpis.avgDaysOverdue)} ${kpis.avgDaysOverdue === 1 ? 'day' : 'days'}`,
+      detail: kpis.overdueCustomers ? `From each overdue customer's oldest item (${kpis.overdueCustomers})` : 'Nothing overdue',
+      tone: kpis.avgDaysOverdue > 0 ? 'warning' : 'default',
+    },
+    { label: 'Open credit items', value: formatCount(kpis.openItems), detail: `Across ${plural(kpis.customers, 'customer')}` },
+    { label: 'Overdue items', value: formatCount(kpis.overdueItems), tone: kpis.overdueItems > 0 ? 'danger' : 'default', detail: kpis.openItems ? `${Math.round((kpis.overdueItems / kpis.openItems) * 100)}% of open items` : undefined },
+  ];
+
   const chips: FilterChip[] = [
     ...(filter ? [{ key: 'filter', label: FILTERS[filter], onRemove: () => setFilter(null) }] : []),
     ...(urlSearch ? [{ key: 'q', label: `"${urlSearch}"`, onRemove: () => { setSearch(''); set({ q: null }); } }] : []),
@@ -134,6 +150,7 @@ function Credits() {
       />
 
       <KpiStrip cells={cells} loading={loading} label="Credit summary" />
+      <KpiStrip cells={healthCells} loading={loading} label="Collection health" />
 
       <FilterBar
         search={{ value: search, onChange: setSearch, placeholder: 'Search customer or phone', label: 'Search customers' }}
@@ -154,10 +171,10 @@ function Credits() {
           defaultSort={{ id: 'oldest', dir: 'desc' }}
           pageSize={PAGE_SIZE}
           rowActions={(r) => {
-            const tel = telHref(r.phone);
+            const wa = whatsAppHref(r.phone);
             return (
               <>
-                {tel && <RowAction href={tel}><Phone aria-hidden /> Call</RowAction>}
+                {wa && <RowAction href={wa} external ariaLabel={`WhatsApp ${r.customerName}`}><MessageCircle aria-hidden /> WhatsApp</RowAction>}
                 {canPay && r.totalOutstanding > 0 && (
                   <RowAction tone="primary" onClick={() => setRepayFor(r)}><Wallet aria-hidden /><span className="md:hidden">Pay</span><span className="hidden md:inline">Record payment</span></RowAction>
                 )}

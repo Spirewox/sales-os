@@ -54,7 +54,22 @@ export function supplierColumns(): Column<SupplierRow>[] {
             <span className="truncate">{s.name}</span>
             {!s.isActive && <StatusBadge tone="neutral">Inactive</StatusBadge>}
           </span>
-          <span className="truncate font-mono text-xs font-normal text-muted-foreground">{s.code || '-'}</span>
+          <span className="truncate text-xs font-normal text-muted-foreground">
+            <span className="font-mono">{s.code || '-'}</span>
+            {s.businessName && s.businessName !== s.name && <span> · {s.businessName}</span>}
+          </span>
+        </span>
+      ),
+    },
+    {
+      id: 'contact',
+      header: 'Contact',
+      hideBelow: 'lg',
+      sortValue: (r) => (r.supplier.contactPerson || '').toLowerCase(),
+      cell: ({ supplier: s }) => (
+        <span className="flex min-w-0 flex-col">
+          <span className="truncate">{s.contactPerson || '-'}</span>
+          {(s.phone || s.email) && <span className="truncate text-xs text-muted-foreground">{s.phone || s.email}</span>}
         </span>
       ),
     },

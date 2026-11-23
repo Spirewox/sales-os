@@ -6,7 +6,7 @@ import { ChevronDown, FileText, ShoppingCart } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import type { InventoryItem, StockLog } from '@/types';
 import { CHART_TOOLTIP, formatAxisMoney, formatDate, formatMoney, plural } from '@/lib/format';
-import { EmptyState } from '@/components/app';
+import { EmptyState, usePagedList } from '@/components/app';
 import { cn } from '@/lib/utils';
 import { logValue } from './supplier-utils';
 
@@ -30,6 +30,7 @@ export function SupplierPurchasesTab({ purchases, loading, inventory, agentName,
 }>) {
   const [expanded, setExpanded] = useState<string | null>(null);
   const sorted = useMemo(() => [...purchases].sort((a, b) => b.date.localeCompare(a.date)), [purchases]);
+  const { pageItems, pager } = usePagedList(sorted, 'supplier-purchases', 10);
   const total = purchases.reduce((a, l) => a + logValue(l), 0);
 
   const trend = useMemo(() => {
@@ -50,6 +51,10 @@ export function SupplierPurchasesTab({ purchases, loading, inventory, agentName,
 
   return (
     <div className="space-y-5">
+      <p className="text-sm text-muted-foreground">
+        Average order <span className="font-semibold text-foreground tabular-nums">{formatMoney(total / purchases.length)}</span>
+        <span> across the {plural(purchases.length, 'order')} listed</span>
+      </p>
       {trend.length > 1 && (
         <section aria-label="Monthly spend">
           <h3 className="mb-2 text-sm font-semibold">Monthly spend</h3>
@@ -69,7 +74,7 @@ export function SupplierPurchasesTab({ purchases, loading, inventory, agentName,
 
       <section aria-label="Purchase orders" className="overflow-hidden rounded-xl border">
         <ul className="divide-y">
-          {sorted.map((l) => {
+          {pageItems.map((l) => {
             const open = expanded === l.id;
             const qty = Math.abs(l.quantity);
             const item = inventory.find((i) => i.id === l.itemId);
@@ -102,6 +107,7 @@ export function SupplierPurchasesTab({ purchases, loading, inventory, agentName,
             );
           })}
         </ul>
+        {pager}
         <div className="flex items-center justify-between border-t bg-muted/30 px-4 py-2.5 text-sm">
           <span className="text-muted-foreground">Total across {plural(purchases.length, 'order')}</span>
           <span className="font-semibold tabular-nums">{formatMoney(total)}</span>

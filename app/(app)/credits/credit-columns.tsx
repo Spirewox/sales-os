@@ -28,8 +28,14 @@ const lateness = (row: CreditCustomerSummary) => {
 
 function OverdueCell({ row }: Readonly<{ row: CreditCustomerSummary }>) {
   if (row.overdueCount === 0) return <span className="text-muted-foreground">-</span>;
-  const label = row.overdueAmount != null ? fmt(row.overdueAmount) : `${row.overdueCount} item${row.overdueCount === 1 ? '' : 's'}`;
-  return <span className="font-medium text-destructive">{label}</span>;
+  const items = `${row.overdueCount} item${row.overdueCount === 1 ? '' : 's'}`;
+  if (row.overdueAmount == null) return <span className="font-medium text-destructive">{items}</span>;
+  return (
+    <span className="inline-flex flex-col items-end">
+      <span className="font-medium text-destructive">{fmt(row.overdueAmount)}</span>
+      <span className="text-xs text-muted-foreground tabular-nums">{items}</span>
+    </span>
+  );
 }
 
 function OldestDueCell({ row }: Readonly<{ row: CreditCustomerSummary }>) {
@@ -65,7 +71,15 @@ export const creditColumns: Column<CreditCustomerSummary>[] = [
     align: 'right',
     mobile: 'value',
     sortValue: (r) => r.totalOutstanding,
-    cell: (r) => <span className="font-semibold">{fmt(r.totalOutstanding)}</span>,
+    cell: (r) => <span className={r.overdueCount > 0 ? 'font-semibold text-destructive' : 'font-semibold'}>{fmt(r.totalOutstanding)}</span>,
+  },
+  {
+    id: 'open',
+    header: 'Open items',
+    align: 'right',
+    hideBelow: 'xl',
+    sortValue: (r) => r.openCreditCount,
+    cell: (r) => <span className="tabular-nums">{r.openCreditCount}</span>,
   },
   {
     id: 'overdue',

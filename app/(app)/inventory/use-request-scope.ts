@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { useDataScope } from '@/hooks/use-data-scope';
 import { usePermissions } from '@/hooks/use-permissions';
 import { useInventoryRequests } from '@/hooks/use-queries';
-import type { ApiInventoryRequest } from '@/types/api';
+import type { ApiInventoryRequest, InventoryRequestStatus } from '@/types/api';
 
 type HubRef = ApiInventoryRequest['requesting_location'];
 
@@ -15,6 +15,18 @@ export function hubRefName(ref: HubRef) {
 
 export function hubRefId(ref: HubRef) {
   return typeof ref === 'object' && ref ? ref._id : String(ref);
+}
+
+export const REQUEST_STATUS_LABEL: Record<InventoryRequestStatus, string> = {
+  draft: 'Draft', submitted: 'Pending', approved: 'Approved', fulfilled: 'Fulfilled', rejected: 'Rejected', cancelled: 'Closed',
+};
+
+export function formatRequestLine(line: ApiInventoryRequest['lines'][number]) {
+  const sku = line.sku ? ` (${line.sku})` : '';
+  const weight = line.carton_weight_kg;
+  if (weight && weight > 0 && line.uom === 'Carton') return `${line.product_name}: ${line.quantity} Carton (= ${(line.quantity * weight).toFixed(2)} Kg)${sku}`;
+  if (weight && weight > 0 && line.uom === 'Kg') return `${line.product_name}: ${line.quantity} Kg (= ${(line.quantity / weight).toFixed(4)} Carton)${sku}`;
+  return `${line.product_name}: ${line.quantity} ${line.uom}${sku}`;
 }
 
 export const isOpenRequest = (r: ApiInventoryRequest) => r.status === 'submitted' || r.status === 'approved';

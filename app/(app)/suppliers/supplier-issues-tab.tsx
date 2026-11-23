@@ -5,7 +5,7 @@ import { CheckCircle2, ClipboardList } from 'lucide-react';
 import { toast } from 'sonner';
 import { useUpdateSupplierIssue } from '@/hooks/use-queries';
 import type { InventoryItem, SupplierIssue } from '@/types';
-import { formatDate } from '@/lib/format';
+import { formatCount, formatDate, plural } from '@/lib/format';
 import { EmptyState, StatusBadge, fieldClass } from '@/components/app';
 import { cn } from '@/lib/utils';
 
@@ -43,7 +43,14 @@ export function SupplierIssuesTab({ issues, loading, inventory, canResolve, reso
 
   return (
     <div className="space-y-3">
-      {action && issues.length > 0 && <div className="flex justify-end">{action}</div>}
+      {issues.length > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-sm text-muted-foreground">
+            {plural(issues.length, 'issue')} logged, {formatCount(issues.filter((i) => i.status === 'Open').length)} open
+          </p>
+          {action}
+        </div>
+      )}
       {issues.length === 0 ? (
         <EmptyState size="compact" icon={<ClipboardList />} title="No issues logged" description="This supplier has a clean record." action={action} />
       ) : (

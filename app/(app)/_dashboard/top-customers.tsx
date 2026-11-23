@@ -16,6 +16,9 @@ const TYPES = [
   { id: 'B2C', label: 'Individual' },
 ] as const;
 type TypeFilter = (typeof TYPES)[number]['id'];
+/** Same depth as the old dashboard: ten customers, and up to 50 purchases each. */
+const TOP = 10;
+const HISTORY_LIMIT = 50;
 
 /**
  * Best customers by lifetime spend at the selected location. The API only returns lifetime totals,
@@ -35,12 +38,12 @@ export function TopCustomers({ customers, loading, hub, className }: Readonly<{
     () => customers
       .filter((c) => c.totalSpent > 0 && (hub === 'All' || c.location === hub) && (type === 'all' || c.type === type))
       .sort((a, b) => b.totalSpent - a.totalSpent)
-      .slice(0, 8),
+      .slice(0, TOP),
     [customers, type, hub],
   );
 
   const { data: history, isPending: historyLoading } = useSales(
-    { customer_id: openId ?? undefined, limit: 20, exclude_voided: true },
+    { customer_id: openId ?? undefined, limit: HISTORY_LIMIT, exclude_voided: true },
     { enabled: !!openId },
   );
 
@@ -110,6 +113,11 @@ function CustomerRow({ rank, customer: c, open, onToggle, history, historyLoadin
           {historyLoading ? (
             <div className="space-y-2">{Array.from({ length: 3 }, (_, i) => <Skeleton key={i} className="h-5 w-full" />)}</div>
           ) : history.length > 0 ? (
+            <>
+            <p className="mb-2 text-xs text-muted-foreground tabular-nums">
+              {history.length >= HISTORY_LIMIT ? `Latest ${HISTORY_LIMIT} purchases` : plural(history.length, 'purchase')}
+            </p>
+            <div className="max-h-[260px] overflow-y-auto">
             <table className="w-full text-sm">
               <caption className="sr-only">Recent purchases by {c.name}</caption>
               <thead>
@@ -121,7 +129,7 @@ function CustomerRow({ rank, customer: c, open, onToggle, history, historyLoadin
                 </tr>
               </thead>
               <tbody>
-                {history.slice(0, 8).map((s) => (
+                {history.map((s) => (
                   <tr key={s.id} className="border-t border-border/60">
                     <td className="py-2 pr-3 whitespace-nowrap tabular-nums">
                       <Link href={`/sales?sale=${s.id}`} className="hover:underline">{formatDate(s.date, { day: 'numeric', month: 'short' })}</Link>
@@ -133,6 +141,8 @@ function CustomerRow({ rank, customer: c, open, onToggle, history, historyLoadin
                 ))}
               </tbody>
             </table>
+            </div>
+            </>
           ) : (
             <p className="text-sm text-muted-foreground">No purchases found.</p>
           )}

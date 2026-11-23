@@ -18,13 +18,16 @@ export const SALES_SORTS = [
   { value: 'quantity_asc', label: 'Quantity, low to high' },
 ] as const;
 
+/** Sale record status (separate from payment): the old "All status" filter. Voided lives under payment. */
+export const SALE_STATUSES = ['Pending', 'Approved', 'Paid'] as const;
+
 const csv = (v: string | null) => (v ? v.split(',').filter(Boolean) : []);
 
 type Names = { agentName?: (id: string) => string | undefined; skuName?: (id: string) => string | undefined };
 
 /**
  * Sales list filters, kept in the URL so a filtered view can be linked and survives refresh:
- * ?q= &period= &pay= &agent= &channel= &cat= &sku= &datefield=created &sort=
+ * ?q= &period= &pay= &status= &agent= &channel= &cat= &sku= &datefield=created &sort=
  * Location is the app-wide location from the sidebar (hubScope).
  */
 export function useSalesFilters(hubScope: HubScopeFilter, validSkuIds: string[] | null, names: Names = {}) {
@@ -32,6 +35,7 @@ export function useSalesFilters(hubScope: HubScopeFilter, validSkuIds: string[] 
   const period: Period = parsePeriod(params, SALES_DEFAULT_PERIOD);
   const urlSearch = get('q') ?? '';
   const pay = get('pay') ?? '';
+  const saleStatus = (SALE_STATUSES as readonly string[]).includes(get('status') ?? '') ? (get('status') as string) : '';
   const agent = get('agent') ?? '';
   const channel = get('channel') ?? '';
   const categories = csv(get('cat'));
@@ -59,12 +63,15 @@ export function useSalesFilters(hubScope: HubScopeFilter, validSkuIds: string[] 
         : pay === 'partial' ? { payment_mode: 'Partial Credit', exclude_voided: true }
           : pay === 'credit' ? { payment_mode: 'Full Credit', exclude_voided: true }
             : { exclude_voided: true };
+  // Sale status narrows further, except when payment already asks for voided sales.
+  const statusFilter = saleStatus && pay !== 'voided' ? { status: saleStatus } : {};
 
   const base = {
     hub_id: hubScope.hubIdForApi,
     ...(urlSearch.trim() ? { search: urlSearch.trim() } : {}),
     ...(agent ? { agent_id: agent } : {}),
     ...payFilter,
+    ...statusFilter,
     ...(channel ? { channel } : {}),
     ...(categories.length ? { categories: categories.join(',') } : {}),
     ...(productIds.length ? { product_ids: productIds.join(',') } : {}),
@@ -82,7 +89,7 @@ export function useSalesFilters(hubScope: HubScopeFilter, validSkuIds: string[] 
 
   const filterKey = JSON.stringify([summaryFilters, sortParams]);
 
-  const moreActiveCount = (agent ? 1 : 0) + (channel ? 1 : 0) + (categories.length ? 1 : 0) + (productIds.length ? 1 : 0) + (dateField === 'created' ? 1 : 0) + (sort !== 'newest' ? 1 : 0);
+  const moreActiveCount = (saleStatus ? 1 : 0) + (agent ? 1 : 0) + (channel ? 1 : 0) + (categories.length ? 1 : 0) + (productIds.length ? 1 : 0) + (dateField === 'created' ? 1 : 0) + (sort !== 'newest' ? 1 : 0);
 
   const payLabel = PAYMENT_STATUS_FILTERS.find((p) => p.value === pay)?.label;
   const chips: FilterChip[] = [
@@ -90,6 +97,7 @@ export function useSalesFilters(hubScope: HubScopeFilter, validSkuIds: string[] 
     ...(period.preset !== SALES_DEFAULT_PERIOD ? [{ key: 'period', label: periodLabel(period), onRemove: () => set(periodToParams({ preset: SALES_DEFAULT_PERIOD }, SALES_DEFAULT_PERIOD)) }] : []),
     ...(hubScope.canSwitchHubs && hubScope.filterHub !== 'All' ? [{ key: 'hub', label: hubScope.filterHub, onRemove: () => hubScope.setFilterHub('All') }] : []),
     ...(payLabel ? [{ key: 'pay', label: payLabel, onRemove: () => set({ pay: null }) }] : []),
+    ...(saleStatus ? [{ key: 'status', label: `Status: ${saleStatus}`, onRemove: () => set({ status: null }) }] : []),
     ...(agent ? [{ key: 'agent', label: `By ${names.agentName?.(agent) ?? 'agent'}`, onRemove: () => set({ agent: null }) }] : []),
     ...(channel ? [{ key: 'channel', label: channel, onRemove: () => set({ channel: null }) }] : []),
     ...(categories.length ? [{ key: 'cat', label: categories.join(', '), onRemove: () => set({ cat: null }) }] : []),
@@ -101,13 +109,14 @@ export function useSalesFilters(hubScope: HubScopeFilter, validSkuIds: string[] 
   const clearAll = () => {
     setSearch('');
     if (hubScope.canSwitchHubs) hubScope.setFilterHub('All');
-    set({ q: null, pay: null, agent: null, channel: null, cat: null, sku: null, datefield: null, sort: null, ...periodToParams({ preset: SALES_DEFAULT_PERIOD }, SALES_DEFAULT_PERIOD) });
+    set({ q: null, pay: null, status: null, agent: null, channel: null, cat: null, sku: null, datefield: null, sort: null, ...periodToParams({ preset: SALES_DEFAULT_PERIOD }, SALES_DEFAULT_PERIOD) });
   };
 
   return {
     period, setPeriod: (p: Period) => set(periodToParams(p, SALES_DEFAULT_PERIOD)),
     search, setSearch,
     pay, setPay: (v: string) => set({ pay: v || null }),
+    saleStatus, setSaleStatus: (v: string) => set({ status: v || null }),
     agent, setAgent: (v: string) => set({ agent: v || null }),
     channel, setChannel: (v: string) => set({ channel: v || null }),
     categories, setCategories: (v: string[]) => set({ cat: v.length ? v.join(',') : null }),

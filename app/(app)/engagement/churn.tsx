@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { MessageCircle, MessageSquare, Phone, ShoppingCart, X } from 'lucide-react';
+import { MessageCircle, MessageSquare, ShoppingCart, X } from 'lucide-react';
 import {
   DataTable, EmptyState, FilterBar, KpiStrip, LocationSelect, MoreFilterField, OverflowMenu, RowAction,
   type FilterChip,
@@ -16,7 +16,7 @@ import { usePermissions } from '@/hooks/use-permissions';
 import { formatCount, formatDateTime, formatMoneyShort, plural } from '@/lib/format';
 import type { Customer } from '@/types';
 import { CustomerDetailPanel, CustomerDrawer } from '../customers/customer-detail-panel';
-import { hasPhone, recordSaleHref, telHref, whatsappHref } from '../customers/customer-links';
+import { hasPhone, recordSaleHref, whatsappHref } from '../customers/customer-links';
 import { LOYALTY_OPTIONS, activityLabel, churnColumns, type ChurnActivity } from './churn-columns';
 import { logFeedbackHref } from './interaction-utils';
 
@@ -153,7 +153,6 @@ export default function Churn() {
           const phone = hasPhone(r.phone) ? r.phone : null;
           return (
             <>
-              {phone && <a href={telHref(phone)} className={ROW_LINK} aria-label={`Call ${r.name}`}><Phone aria-hidden /> Call</a>}
               {phone && (
                 <a href={whatsappHref(phone)} target="_blank" rel="noopener noreferrer" className={ROW_LINK} aria-label={`WhatsApp ${r.name}`}>
                   <MessageCircle aria-hidden /> WhatsApp

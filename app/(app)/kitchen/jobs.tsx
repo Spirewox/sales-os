@@ -1,5 +1,6 @@
 'use client';
 
+import { usePageSize } from '@/hooks/use-page-size';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Download } from 'lucide-react';
@@ -57,13 +58,14 @@ export function KitchenJobs({ hubId, hubScope, dueSoonMinutes, canCosts, onOpenJ
   const stage = STAGE_FILTERS.some((f) => f.value === get('stage')) ? get('stage')! : 'all';
   const [q, setQ] = useState('');
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = usePageSize('kitchen-jobs', 25);
   const [exporting, setExporting] = useState(false);
   const setPeriod = (v: string) => { setUrl({ period: v === '30' ? null : v }); setPage(1); };
   const setStage = (v: string) => { setUrl({ stage: v === 'all' ? null : v }); setPage(1); };
 
   const filters: KitchenJobFilters = useMemo(
-    () => ({ ...periodRange(period), stage: stage === 'all' ? undefined : stage, hub_id: hubId, q: q.trim() || undefined, page, limit: 25 }),
-    [period, stage, hubId, q, page],
+    () => ({ ...periodRange(period), stage: stage === 'all' ? undefined : stage, hub_id: hubId, q: q.trim() || undefined, page, limit: pageSize }),
+    [period, stage, hubId, q, page, pageSize],
   );
   const jobs = useKitchenJobs(filters);
   const rows = jobs.data?.data ?? [];
@@ -224,7 +226,8 @@ export function KitchenJobs({ hubId, hubScope, dueSoonMinutes, canCosts, onOpenJ
         getRowId={(j) => j._id}
         onRowClick={(j) => onOpenJob(j._id)}
         manualSort
-        pagination={meta ? { page: meta.page, totalPages: meta.totalPages, onPageChange: setPage } : undefined}
+        pageSize={pageSize}
+        pagination={meta ? { page: meta.page, totalPages: meta.totalPages, onPageChange: setPage, pageSize, onPageSizeChange: (n) => { setPageSize(n); setPage(1); }, total: meta.total } : undefined}
         empty={
           <EmptyState
             size="compact"

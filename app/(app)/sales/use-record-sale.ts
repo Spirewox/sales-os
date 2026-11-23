@@ -100,6 +100,23 @@ export function useRecordSale({ open, presetCustomerId, hubScope, hubs, creditSu
   const saleDateStr = newSale.date || today();
   const isHistoricalSale = isHistoricalDate(saleDateStr);
 
+  // Re-price an unrecorded sale when the chosen SKU's price changes (e.g. edited in Inventory while
+  // this form is open and the list refetches). Compared during render, no effect. Product, quantity
+  // and unit changes already re-price in their own handlers. Past-dated sales keep the typed amount.
+  const priceKey = selectedInventoryItem && !isMealSale
+    ? `${selectedInventoryItem.id}|${selectedInventoryItem.baseSellingPrice}|${selectedInventoryItem.cartonPrice ?? ''}`
+    : null;
+  const [seenPriceKey, setSeenPriceKey] = useState(priceKey);
+  const [repriced, setRepriced] = useState(false);
+  if (priceKey !== seenPriceKey) {
+    const sameProduct = !!priceKey && !!seenPriceKey && priceKey.split('|')[0] === seenPriceKey.split('|')[0];
+    setSeenPriceKey(priceKey);
+    setRepriced(sameProduct && !isHistoricalSale);
+    if (sameProduct && !isHistoricalSale && selectedInventoryItem) {
+      setNewSale((prev) => ({ ...prev, amount: computeSaleAmount(selectedInventoryItem, quantity, saleUnit), discount: 0 }));
+    }
+  }
+
   const validationErrors = (() => {
     const errors: Record<string, string> = {};
     if (!customerId) errors.customerId = 'Choose a customer.';
@@ -227,6 +244,7 @@ export function useRecordSale({ open, presetCustomerId, hubScope, hubs, creditSu
   };
 
   const resetForm = () => {
+    setRepriced(false);
     setNewSale(blankSale());
     setPickedHub(null);
     setSelectedProductId('');
@@ -313,7 +331,7 @@ export function useRecordSale({ open, presetCustomerId, hubScope, hubs, creditSu
     selectedHub, setHub, activeHubs: hubScope.activeHubs,
     inventory, selectedProductId, handleProductChange, selectedInventoryItem, isMealSale, isCartonProduct, isVolumeProduct,
     listUnitPriceForSale, quantity, handleQuantityChange, saleUnit, handleSaleUnitChange, saleWeightKg, handleSaleWeightChange,
-    productDetailsText, setProductDetailsText, isHistoricalSale,
+    productDetailsText, setProductDetailsText, isHistoricalSale, repriced,
     paymentMode, setPaymentMode: handlePaymentModeChange, paymentType, setPaymentType, amountPaid, setAmountPaid, dueDate, setDueDate,
     amount, paidNow, balance: Math.max(0, amount - paidNow),
     handleSaveSale, resetForm, saving: createSale.isPending,

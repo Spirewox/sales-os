@@ -12,7 +12,6 @@ export function hasPhone(phone?: string | null): phone is string {
   return !!phone && !isPlaceholderPhone(phone);
 }
 
-export const telHref = (phone: string) => `tel:${phone.replace(/[^\d+]/g, '')}`;
 
 /** wa.me wants digits only, with the country code: a local 0803... becomes 234803... */
 export function whatsappHref(phone: string) {

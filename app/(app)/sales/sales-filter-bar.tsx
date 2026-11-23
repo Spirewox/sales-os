@@ -6,7 +6,7 @@ import { SalesChannel, type Agent, type InventoryItem } from '@/types';
 import { FilterSelect } from '@/components/filter-select';
 import { FilterBar, LocationSelect, MoreFilterField, PeriodSelect } from '@/components/app';
 import { PAYMENT_STATUS_FILTERS, type SaleDateFieldFilter } from './sales-utils';
-import { SALES_SORTS, type SalesFilters } from './use-sales-filters';
+import { SALE_STATUSES, SALES_SORTS, type SalesFilters } from './use-sales-filters';
 
 type Props = Readonly<{
   filters: SalesFilters;
@@ -37,6 +37,9 @@ export function SalesFilterBar({ filters: f, hubScope, agents, categories, skuOp
       }
       more={
         <>
+          <MoreFilterField label="Sale status">
+            <FilterSelect ariaLabel="Sale status" value={f.saleStatus || 'All'} onChange={(v) => f.setSaleStatus(v === 'All' ? '' : v)} options={[{ value: 'All', label: 'Any status' }, ...SALE_STATUSES.map((s) => ({ value: s, label: s }))]} />
+          </MoreFilterField>
           <MoreFilterField label="Agent">
             <FilterSelect ariaLabel="Agent" value={f.agent || 'All'} onChange={(v) => f.setAgent(v === 'All' ? '' : v)} options={[{ value: 'All', label: 'All agents' }, ...agents.map((a) => ({ value: a.id, label: a.name }))]} />
           </MoreFilterField>

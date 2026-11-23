@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ChevronRight } from 'lucide-react';
-import { Bar, BarChart, CartesianGrid, ComposedChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Bar, BarChart, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import type { AnalyticsOverviewData } from '@/types/api';
 import { CHART_TOOLTIP, formatAxisMoney, formatCount, formatMoney, formatMoneyShort, plural } from '@/lib/format';
 import type { Period } from '@/lib/period';
@@ -27,6 +27,10 @@ export function CustomersTab({ data, period }: Readonly<{ data: CustomersData; p
   const acqSeries = acqGrain === 'week' && acquisitionWeeklyTrend.length ? acquisitionWeeklyTrend : acquisitionTrend;
   const [clvMetric, setClvMetric] = useState<'count' | 'revenue'>('count');
   const [segMetric, setSegMetric] = useState<'revenue' | 'customers'>('revenue');
+  // New per bucket, or the running total (the old chart drew both on two axes; one at a time here).
+  const [acqMetric, setAcqMetric] = useState<'new' | 'total'>('new');
+  // The old tab had two lists: top spenders and repeat customers. Both are back behind this toggle.
+  const [list, setList] = useState<'all' | 'spenders' | 'repeat'>('all');
 
   const hasCustomers = kpis.totalCustomers > 0;
   const cells: KpiCell[] = [
@@ -44,10 +48,12 @@ export function CustomersTab({ data, period }: Readonly<{ data: CustomersData; p
 
   // Top spenders and most frequent buyers, one row per customer.
   const customers = useMemo(() => {
+    if (list === 'spenders') return topSpenders;
+    if (list === 'repeat') return repeatCustomers;
     const byId = new Map<string, CustomerRow>();
     for (const c of [...topSpenders, ...repeatCustomers]) if (!byId.has(c.id)) byId.set(c.id, c);
     return [...byId.values()];
-  }, [topSpenders, repeatCustomers]);
+  }, [topSpenders, repeatCustomers, list]);
 
   const columns: Column<CustomerRow>[] = [
     { id: 'name', header: 'Customer', mobile: 'title', cell: (c) => c.name, sortValue: (c) => c.name.toLowerCase() },
@@ -63,8 +69,13 @@ export function CustomersTab({ data, period }: Readonly<{ data: CustomersData; p
 
       <Panel
         title="Customer acquisition"
-        subtitle={`New customers ${acqGrain === 'week' ? 'per week' : 'per month'}${acqSeries.length ? `, ${formatCount(acqSeries[acqSeries.length - 1].total)} in total by the end` : ''}`}
-        control={<Seg label="Acquisition grain" value={acqGrain} onChange={(g) => setChosenGrain(g)} options={grains} />}
+        subtitle={`${acqMetric === 'new' ? 'New customers' : 'Customers in total'} ${acqGrain === 'week' ? 'per week' : 'per month'}${acqSeries.length ? `, ${formatCount(acqSeries[acqSeries.length - 1].total)} in total by the end` : ''}`}
+        control={
+          <>
+            <Seg label="Acquisition metric" value={acqMetric} onChange={setAcqMetric} options={[['new', 'New'], ['total', 'Running total']]} />
+            <Seg label="Acquisition grain" value={acqGrain} onChange={(g) => setChosenGrain(g)} options={grains} />
+          </>
+        }
         bodyClassName="h-[300px]"
       >
         {acqSeries.length > 0 ? (
@@ -74,8 +85,12 @@ export function CustomersTab({ data, period }: Readonly<{ data: CustomersData; p
               <XAxis dataKey="month" axisLine={false} tickLine={false} tick={AXIS_TICK} dy={8} minTickGap={16} />
               <YAxis axisLine={false} tickLine={false} tick={AXIS_TICK} width={40} allowDecimals={false} />
               <Tooltip {...CHART_TOOLTIP} cursor={BAR_CURSOR} formatter={(v) => formatCount(Number(v))} />
-              {/* One series, one axis: the running total is in the subtitle rather than on a second y-axis. */}
-              <Bar dataKey="new" name="New customers" fill="var(--chart-1)" radius={[4, 4, 0, 0]} maxBarSize={16} />
+              {/* One series, one axis: new customers or the running total, picked above. */}
+              {acqMetric === 'new' ? (
+                <Bar dataKey="new" name="New customers" fill="var(--chart-1)" radius={[4, 4, 0, 0]} maxBarSize={16} />
+              ) : (
+                <Line type="monotone" dataKey="total" name="Customers in total" stroke="var(--chart-1)" strokeWidth={2} dot={false} />
+              )}
             </ComposedChart>
           </ResponsiveContainer>
         ) : (
@@ -105,7 +120,7 @@ export function CustomersTab({ data, period }: Readonly<{ data: CustomersData; p
           )}
         </Panel>
 
-        <Panel title="Buyer types" subtitle="Customers by type">
+        <Panel title="Buyer engagement tiers" subtitle="Customers in each tier">
           <RankedBars rows={buyerRows} format={formatCount} emptyText="No customers yet" />
         </Panel>
 
@@ -125,18 +140,22 @@ export function CustomersTab({ data, period }: Readonly<{ data: CustomersData; p
         <div className="flex flex-wrap items-end justify-between gap-2">
           <div>
             <h3 className="text-sm font-semibold">Top customers</h3>
-            <p className="text-xs text-muted-foreground">Biggest spenders and most frequent buyers, lifetime. Select one to open it.</p>
+            <p className="text-xs text-muted-foreground">
+              {list === 'spenders' ? 'Ranked by lifetime spend.' : list === 'repeat' ? 'Customers with the most orders (repeat buyers), lifetime.' : 'Biggest spenders and most frequent buyers, lifetime.'} Select one to open it.
+            </p>
           </div>
+          <Seg label="Customer list" value={list} onChange={setList} options={[['all', 'Both'], ['spenders', 'Top spenders'], ['repeat', 'Repeat buyers']]} />
           <Link href="/customers" className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">
             All customers <ChevronRight size={14} aria-hidden />
           </Link>
         </div>
         <DataTable
+          key={list}
           label="Top customers"
           columns={columns}
           rows={customers}
           getRowId={(c) => c.id}
-          defaultSort={{ id: 'spent', dir: 'desc' }}
+          defaultSort={{ id: list === 'repeat' ? 'orders' : 'spent', dir: 'desc' }}
           onRowClick={(c) => router.push(`/customers?customer=${encodeURIComponent(c.id)}`)}
           pageSize={10}
           empty={<p className="px-4 py-8 text-center text-sm text-muted-foreground">No customers with purchases yet</p>}

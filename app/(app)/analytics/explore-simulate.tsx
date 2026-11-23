@@ -9,7 +9,7 @@ import { CHART_TOOLTIP, formatAxisMoney, formatCount, formatMoney, formatMoneySh
 import { cn } from '@/lib/utils';
 import { StatusBadge } from '@/components/app';
 import { AXIS_TICK, BAR_CURSOR, LEGEND_STYLE } from './analytics-ui';
-import { Chip, Pending, TwoPane, selectClass } from './explore-shared';
+import { ExampleList, Pending, TwoPane, selectClass } from './explore-shared';
 
 const EXAMPLES = SIM_EXAMPLES.slice(0, 4);
 const fmtM = (v: number, k: SimMetric['kind']) => (k === 'money' ? formatMoneyShort(v) : k === 'percent' ? `${Math.round(v)}%` : formatCount(v));
@@ -73,12 +73,7 @@ export function ExploreSimulate({ scope }: Readonly<{ scope: InsightScopeParams 
           def.levers.map((ld) => <LeverControl key={ld.key} def={ld} levers={levers} patch={patch} targets={targets} segments={segments} />)
         )}
       </section>
-      <section className="rounded-xl border bg-card p-4">
-        <h3 className="text-sm font-semibold">Try</h3>
-        <div className="mt-3 space-y-2">
-          {EXAMPLES.map((ex) => <Chip key={ex} onClick={() => runNL(ex)} disabled={interpretMut.isPending}>{ex}</Chip>)}
-        </div>
-      </section>
+      <ExampleList title="Try" featured={EXAMPLES} all={SIM_EXAMPLES} onPick={runNL} disabled={interpretMut.isPending} />
     </>
   );
 

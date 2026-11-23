@@ -9,11 +9,12 @@ import { EntityDrawer, OverflowMenu, RowAction, SectionErrorBoundary, StatusBadg
 import type { SupplierActions } from './supplier-columns';
 import { SupplierDetailsTab } from './supplier-details-tab';
 import { SupplierIssuesTab, type ResolveState } from './supplier-issues-tab';
+import { SupplierPerformanceTab } from './supplier-performance-tab';
 import { SupplierProductsTab } from './supplier-products-tab';
 import { SupplierPurchasesTab } from './supplier-purchases-tab';
 import { logValue } from './supplier-utils';
 
-type DrawerTab = 'purchases' | 'issues' | 'products' | 'details';
+type DrawerTab = 'purchases' | 'issues' | 'products' | 'performance' | 'details';
 
 /** One supplier: Call, Record purchase and Log issue up top; Edit and Deactivate in `⋯`. Purchases first. */
 export function SupplierDrawer({ supplier: s, onClose, actions, canResolve }: Readonly<{
@@ -49,6 +50,7 @@ export function SupplierDrawer({ supplier: s, onClose, actions, canResolve }: Re
     { id: 'purchases', label: 'Purchases', count: purchases.length },
     { id: 'issues', label: 'Issues', count: openIssues, countTone: 'warning' },
     { id: 'products', label: 'Products', count: productCount },
+    { id: 'performance', label: 'Performance' },
     { id: 'details', label: 'Details' },
   ];
 
@@ -62,7 +64,7 @@ export function SupplierDrawer({ supplier: s, onClose, actions, canResolve }: Re
       onClose={onClose}
       dismissible={!resolve.issueId}
       title={s.name}
-      subtitle={[s.code, s.businessType, s.location].filter(Boolean).join(' · ')}
+      subtitle={[s.code, s.businessName !== s.name ? s.businessName : null, s.businessType, s.location].filter(Boolean).join(' · ')}
       status={!s.isActive ? <StatusBadge tone="neutral">Inactive</StatusBadge> : undefined}
       actions={
         <>
@@ -89,6 +91,7 @@ export function SupplierDrawer({ supplier: s, onClose, actions, canResolve }: Re
         {tab === 'purchases' && <SupplierPurchasesTab purchases={purchases} loading={purchasesLoading} inventory={inventory} agentName={agentName} action={purchaseButton} />}
         {tab === 'issues' && <SupplierIssuesTab issues={issues} loading={issuesLoading} inventory={inventory} canResolve={canResolve} resolve={resolve} setResolve={setResolve} action={issueButton} />}
         {tab === 'products' && <SupplierProductsTab purchases={purchases} inventory={inventory} />}
+        {tab === 'performance' && (purchasesLoading ? <p role="status" className="py-6 text-center text-sm text-muted-foreground">Loading purchases…</p> : <SupplierPerformanceTab purchases={purchases} />)}
         {tab === 'details' && <SupplierDetailsTab supplier={s} />}
       </SectionErrorBoundary>
     </EntityDrawer>

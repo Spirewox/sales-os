@@ -39,13 +39,6 @@ const CREDIT_TONE: Record<CreditStatus, Tone> = {
 };
 export const creditTone = (status: CreditStatus): Tone => CREDIT_TONE[status] ?? 'neutral';
 
-/** tel: link with only digits and a leading +. */
-export function telHref(phone?: string | null): string | undefined {
-  if (!phone) return undefined;
-  const cleaned = phone.replace(/[^\d+]/g, '');
-  return cleaned.replace(/\D/g, '').length >= 7 ? `tel:${cleaned}` : undefined;
-}
-
 /** wa.me link: digits only, local Nigerian 0XXXXXXXXXX numbers converted to 234XXXXXXXXXX. */
 export function whatsAppHref(phone?: string | null): string | undefined {
   if (!phone) return undefined;

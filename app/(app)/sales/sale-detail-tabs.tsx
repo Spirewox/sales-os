@@ -113,6 +113,9 @@ function OverviewTab({
         {sale.isCredit && !sale.paymentMode && (
           <span className="rounded-full bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning">Credit sale</span>
         )}
+        {!isEditing && (sale.discount ?? 0) > 0 && (
+          <span className="text-xs text-muted-foreground tabular-nums">Discount: {fmt(sale.discount ?? 0)}</span>
+        )}
       </div>
 
       <div className="rounded-xl border p-4">

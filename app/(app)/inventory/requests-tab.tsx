@@ -15,7 +15,8 @@ import {
   DataTable, EmptyState, FilterBar, FormField, FormSheet, LocationSelect, OverflowMenu, RowAction, StatusBadge,
   fieldClass, type Column, type FilterChip,
 } from '@/components/app';
-import { hubRefName, isOpenRequest, type RequestScope } from './use-request-scope';
+import { REQUEST_STATUS_LABEL as STATUS_LABEL, formatRequestLine as formatLineDisplay, hubRefName, isOpenRequest, type RequestScope } from './use-request-scope';
+import { RequestDrawer } from './request-drawer';
 
 type RequestFilter = 'mine' | 'open' | 'all' | InventoryRequestStatus;
 const FILTERS: { value: RequestFilter; label: string }[] = [
@@ -29,18 +30,6 @@ const FILTERS: { value: RequestFilter; label: string }[] = [
   { value: 'cancelled', label: 'Cancelled' },
 ];
 
-const STATUS_LABEL: Record<InventoryRequestStatus, string> = {
-  draft: 'Draft', submitted: 'Pending', approved: 'Approved', fulfilled: 'Fulfilled', rejected: 'Rejected', cancelled: 'Closed',
-};
-
-function formatLineDisplay(line: ApiInventoryRequest['lines'][number]) {
-  const sku = line.sku ? ` (${line.sku})` : '';
-  const weight = line.carton_weight_kg;
-  if (weight && weight > 0 && line.uom === 'Carton') return `${line.product_name}: ${line.quantity} Carton (= ${(line.quantity * weight).toFixed(2)} Kg)${sku}`;
-  if (weight && weight > 0 && line.uom === 'Kg') return `${line.product_name}: ${line.quantity} Kg (= ${(line.quantity / weight).toFixed(4)} Carton)${sku}`;
-  return `${line.product_name}: ${line.quantity} ${line.uom}${sku}`;
-}
-
 /** Requests between locations. Defaults to the ones waiting on this user; approve, fulfil and reject inline. */
 export function RequestsTab({ hubScope, scope }: Readonly<{ hubScope: HubScopeFilter; scope: RequestScope }>) {
   const { get, set } = useUrlState();
@@ -52,6 +41,9 @@ export function RequestsTab({ hubScope, scope }: Readonly<{ hubScope: HubScopeFi
   const cancelRequest = useCancelInventoryRequest();
   const [rejecting, setRejecting] = useState<ApiInventoryRequest | null>(null);
   const [rejectReason, setRejectReason] = useState('');
+  // Full request (every line, notes, rejection reason, who reviewed and fulfilled); the table truncates.
+  const [openId, setOpenId] = useState<string | null>(null);
+  const openRequest = openId ? scope.requests.find((r) => r._id === openId) ?? null : null;
 
   const rows = scope.requests.filter((r) => {
     if (filter === 'mine') return scope.needsMyAction(r);
@@ -170,6 +162,7 @@ export function RequestsTab({ hubScope, scope }: Readonly<{ hubScope: HubScopeFi
         rows={scope.isLoading ? undefined : rows}
         loading={scope.isLoading}
         getRowId={(r) => r._id}
+        onRowClick={(r) => setOpenId(r._id)}
         rowActions={rowActions}
         defaultSort={{ id: 'by', dir: 'desc' }}
         empty={
@@ -184,6 +177,14 @@ export function RequestsTab({ hubScope, scope }: Readonly<{ hubScope: HubScopeFi
           />
         }
       />
+
+      {openRequest && (
+        <RequestDrawer
+          request={openRequest}
+          onClose={() => setOpenId(null)}
+          actions={rowActions(openRequest)}
+        />
+      )}
 
       {rejecting && (
         <FormSheet

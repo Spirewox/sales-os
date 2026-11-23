@@ -5,7 +5,7 @@ import { ChevronRight, CreditCard, ShoppingCart, Sparkles } from 'lucide-react';
 import type { Sale } from '@/types';
 import { formatDate, formatMoney, plural } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import { EmptyState, StatusBadge } from '@/components/app';
+import { EmptyState, StatusBadge, usePagedList } from '@/components/app';
 import type { PurchaseAnalytics } from './customer-analytics';
 import { saleHref } from './customer-links';
 
@@ -22,6 +22,7 @@ export function CustomerPurchasesTab({ sales, analytics, topProducts, loading, r
   loading: boolean;
   recordSaleHref?: string;
 }>) {
+  const { pageItems, pager } = usePagedList(sales, 'customer-purchases', 10);
   if (loading && sales.length === 0) return <p className="py-8 text-center text-sm text-muted-foreground">Loading purchases…</p>;
   if (sales.length === 0 || !analytics) {
     return (
@@ -72,8 +73,9 @@ export function CustomerPurchasesTab({ sales, analytics, topProducts, loading, r
           <h3 className="text-xs font-medium text-muted-foreground">All purchases</h3>
           <span className="text-xs text-muted-foreground tabular-nums">{plural(sales.length, 'order')}, {formatMoney(total)}</span>
         </div>
-        <ul className="divide-y rounded-xl border">
-          {sales.map((sale) => (
+        <div className="overflow-hidden rounded-xl border">
+        <ul className="divide-y">
+          {pageItems.map((sale) => (
             <li key={sale.id}>
               <Link href={saleHref(sale.id)} className="flex items-center gap-3 px-3 py-2.5 text-sm transition-colors hover:bg-muted/40 focus-visible:bg-muted/40 focus-visible:outline-none">
                 <div className="min-w-0 flex-1">
@@ -81,7 +83,7 @@ export function CustomerPurchasesTab({ sales, analytics, topProducts, loading, r
                     <span className="truncate">{sale.productDetails || sale.item?.productName || 'Sale'}</span>
                     {sale.isCredit && <CreditCard size={14} aria-label="On credit" className="shrink-0 text-warning" />}
                   </p>
-                  <p className="text-xs text-muted-foreground tabular-nums">{formatDate(sale.date)}{sale.channel ? `, ${sale.channel}` : ''}</p>
+                  <p className="text-xs text-muted-foreground tabular-nums">{formatDate(sale.date)}{sale.channel ? `, ${sale.channel}` : ''}{sale.agentName ? `, ${sale.agentName}` : ''}{`, profit ${formatMoney(sale.profitAmount || 0)} (${sale.profitMargin || 0}%)`}</p>
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-1">
                   <span className="font-medium tabular-nums">{formatMoney(sale.amount)}</span>
@@ -92,6 +94,8 @@ export function CustomerPurchasesTab({ sales, analytics, topProducts, loading, r
             </li>
           ))}
         </ul>
+        {pager}
+        </div>
       </section>
     </div>
   );

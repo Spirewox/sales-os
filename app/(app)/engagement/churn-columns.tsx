@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { StatusBadge, type Column } from '@/components/app';
 import type { EngagementCustomer } from '@/hooks/use-queries';
 import { formatDate, formatMoney, plural } from '@/lib/format';
+import { hasPhone } from '../customers/customer-links';
 
 export type ChurnActivity = 'All' | 'At Risk' | 'Dormant';
 
@@ -26,6 +27,7 @@ export const churnColumns: Column<EngagementCustomer>[] = [
         <span className="block">{r.name}</span>
         {r.company && r.company !== r.name && muted(r.company)}
         {muted([r.loyaltyGrade ? `${r.loyalty}, ${r.loyaltyGrade}` : r.loyalty, r.hub].filter(Boolean).join(' · '))}
+        {hasPhone(r.phone) && <span className="block text-xs font-normal text-muted-foreground tabular-nums max-md:hidden">{r.phone}</span>}
       </span>
     ),
   },
@@ -34,7 +36,7 @@ export const churnColumns: Column<EngagementCustomer>[] = [
     header: 'Risk',
     mobile: 'value',
     sortValue: (r) => (r.activity === 'Dormant' ? 2 : 1),
-    cell: (r) => <span title={r.recommendedAction || undefined}><RiskBadge activity={r.activity} /></span>,
+    cell: (r) => <RiskBadge activity={r.activity} />,
   },
   {
     id: 'lastPurchase',
@@ -76,5 +78,13 @@ export const churnColumns: Column<EngagementCustomer>[] = [
         <span className="block text-xs text-muted-foreground max-md:inline max-md:ml-1">{plural(r.totalOrders, 'order')}</span>
       </span>
     ),
+  },
+  {
+    id: 'suggested',
+    header: 'Suggested action',
+    mobile: 'meta',
+    cell: (r) => (r.recommendedAction
+      ? <span className="block max-w-xs text-sm leading-snug text-muted-foreground max-md:text-xs"><span className="md:hidden">Suggested: </span>{r.recommendedAction}</span>
+      : <span className="text-muted-foreground">-</span>),
   },
 ];

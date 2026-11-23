@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { MessageCircle, Phone, Receipt, User, Wallet } from 'lucide-react';
+import { MessageCircle, Receipt, User, Wallet } from 'lucide-react';
 import { usePermissions } from '@/hooks/use-permissions';
 import { useCustomer, useCustomerCredits, useFlagCredit } from '@/hooks/use-queries';
 import type { CreditCustomerSummary, SaleCreditRecord } from '@/types/credits';
@@ -11,7 +11,7 @@ import { EmptyState, EntityDrawer, OverflowMenu, StatusBadge } from '@/component
 import { CreditSheetSkeleton } from '@/components/ui/loading-skeletons';
 import { CreditItemCard } from './credit-item-card';
 import { ExtendDueDateForm, GeneralRepaymentForm, RecordPaymentForm } from './credit-forms';
-import { fmt, formatDate, telHref, whatsAppHref } from './credit-utils';
+import { fmt, formatDate, whatsAppHref } from './credit-utils';
 
 interface CustomerCreditSheetProps {
   /** Open when set. */
@@ -60,7 +60,6 @@ function CreditSheetBody({ customerId, summary, onClose }: Readonly<{ customerId
 
   const name = customer?.companyName || customer?.name || summary?.customerName || credits[0]?.customerName || 'Customer';
   const phone = customer?.phone || summary?.phone;
-  const tel = telHref(phone);
   const whatsapp = whatsAppHref(phone);
   const location = customer?.location || summary?.hubName;
 
@@ -74,7 +73,7 @@ function CreditSheetBody({ customerId, summary, onClose }: Readonly<{ customerId
   };
 
   const status =
-    overdueCount > 0 ? <StatusBadge tone="danger">Overdue</StatusBadge>
+    overdueCount > 0 ? <StatusBadge tone="danger">{overdueCount} overdue</StatusBadge>
     : totalOutstanding > 0 ? <StatusBadge tone="warning">Pending</StatusBadge>
     : loaded ? <StatusBadge tone="good">Clear</StatusBadge>
     : null;
@@ -105,7 +104,6 @@ function CreditSheetBody({ customerId, summary, onClose }: Readonly<{ customerId
                 <Wallet aria-hidden /> Record repayment
               </button>
             )}
-            {tel && <a href={tel} className={contactBtn}><Phone aria-hidden /> Call</a>}
             {whatsapp && (
               <a href={whatsapp} target="_blank" rel="noopener noreferrer" className={contactBtn}>
                 <MessageCircle aria-hidden /> WhatsApp

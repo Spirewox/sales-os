@@ -7,6 +7,9 @@ import type { CreditCustomerSummary } from '@/types/credits';
 import { formatDate, formatMoney, formatCount } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { OverflowMenu, type Column } from '@/components/app';
+import { customerTypeLabel } from './customer-form';
+import { customerStatus } from './customer-grades';
+import { SegmentChips, prioritizeCustomerSegments } from './customer-segments';
 import { customerTitle, hasPhone, logFeedbackHref, recordSaleHref } from './customer-links';
 
 type Router = ReturnType<typeof useRouter>;
@@ -23,8 +26,11 @@ function Outstanding({ credit }: Readonly<{ credit?: CreditCustomerSummary }>) {
   );
 }
 
-/** Columns for the customer list. `credits` is keyed by customer id; omit when it isn't loaded. */
-export function customerColumns(credits: Map<string, CreditCustomerSummary> | null): Column<Customer>[] {
+/**
+ * Columns for the customer list. `credits` is keyed by customer id; omit when it isn't loaded.
+ * `prioritySegments` (the segments being filtered by) are listed first in the Segments column.
+ */
+export function customerColumns(credits: Map<string, CreditCustomerSummary> | null, prioritySegments: string[] = []): Column<Customer>[] {
   return [
     {
       id: 'customer',
@@ -40,8 +46,38 @@ export function customerColumns(credits: Map<string, CreditCustomerSummary> | nu
         );
       },
     },
-    { id: 'phone', header: 'Phone', mobile: 'subtitle', cell: (c) => (hasPhone(c.phone) ? <span className="whitespace-nowrap tabular-nums">{c.phone}</span> : <span className="text-muted-foreground">-</span>) },
-    { id: 'hub', header: 'Hub', mobile: 'meta', hideBelow: 'lg', cell: (c) => c.location || '-' },
+    {
+      id: 'contact',
+      header: 'Contact',
+      mobile: 'subtitle',
+      cell: (c) => (
+        <span className="flex min-w-0 flex-col">
+          {hasPhone(c.phone) ? <span className="whitespace-nowrap tabular-nums">{c.phone}</span> : <span className="text-muted-foreground">-</span>}
+          {c.email && <span className="max-w-32 truncate text-xs text-muted-foreground max-md:hidden" title={c.email}>{c.email}</span>}
+        </span>
+      ),
+    },
+    {
+      id: 'hub',
+      header: 'Hub and type',
+      mobile: 'meta',
+      hideBelow: 'lg',
+      cell: (c) => (
+        <span className="flex flex-col">
+          <span>{c.location || '-'}</span>
+          <span className="text-xs text-muted-foreground max-md:hidden">{customerTypeLabel(c.type)}</span>
+        </span>
+      ),
+    },
+    {
+      id: 'segments',
+      header: 'Segments',
+      hideBelow: 'xl',
+      cell: (c) => {
+        const segs = prioritizeCustomerSegments(c.segments ?? [], prioritySegments);
+        return segs.length ? <span className="block max-w-56"><SegmentChips segments={segs} max={3} /></span> : <span className="text-muted-foreground">-</span>;
+      },
+    },
     {
       id: 'last',
       header: 'Last purchase',
@@ -49,7 +85,13 @@ export function customerColumns(credits: Map<string, CreditCustomerSummary> | nu
       hideBelow: 'xl',
       cell: (c) => (c.lastPurchaseDate ? <span className="whitespace-nowrap">{formatDate(c.lastPurchaseDate)}</span> : <span className="text-muted-foreground">-</span>),
     },
-    { id: 'orders', header: 'Orders', align: 'right', sortable: true, mobile: 'meta', cell: (c) => <span className="md:font-normal">{formatCount(c.totalOrders)}<span className="md:hidden"> orders</span></span> },
+    { id: 'orders', header: 'Orders', align: 'right', sortable: true, mobile: 'meta', cell: (c) => (
+        <span className="md:font-normal">
+          {formatCount(c.totalOrders)}<span className="md:hidden"> orders</span>
+          <span className="block text-xs text-muted-foreground max-md:ml-1 max-md:inline">{customerStatus(c)}</span>
+        </span>
+      ),
+    },
     { id: 'revenue', header: 'Revenue', align: 'right', sortable: true, mobile: 'value', cell: (c) => <span className="font-medium">{formatMoney(c.totalSpent)}</span> },
     ...(credits
       ? [{ id: 'outstanding', header: 'Outstanding', align: 'right' as const, mobile: 'meta' as const, cell: (c: Customer) => <Outstanding credit={credits.get(c.id)} /> }]

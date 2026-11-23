@@ -7,6 +7,8 @@ import { DEFAULT_PERIOD, useInsightScope } from '@/hooks/use-insights-api';
 import { usePermissions } from '@/hooks/use-permissions';
 import { useUrlState } from '@/hooks/use-url-state';
 import { HAS_API } from '@/lib/require-api';
+import { formatDate } from '@/lib/format';
+import { periodRange, type Period } from '@/lib/period';
 import { ENTITY_KINDS, type EntityKind } from '@/lib/insights';
 import { AnalyticsPageSkeleton } from '@/components/ui/loading-skeletons';
 import { AnalyticsCompareTab } from '@/components/analytics-compare-tab';
@@ -19,9 +21,19 @@ import { ProductsTab } from './products-tab';
 import { CustomersTab } from './customers-tab';
 import { CreditTab } from './credit-tab';
 import { ExploreTab } from './explore-tab';
+import { InventoryTab } from './inventory-tab';
+import { SuppliersTab } from './suppliers-tab';
 
-type AnalyticsTab = 'sales' | 'products' | 'customers' | 'credit' | 'kitchen' | 'compare' | 'explore';
+type AnalyticsTab = 'sales' | 'products' | 'customers' | 'credit' | 'inventory' | 'suppliers' | 'kitchen' | 'compare' | 'explore';
 const OVERVIEW_TABS: AnalyticsTab[] = ['sales', 'products', 'customers', 'credit'];
+
+/** "1 Nov to 20 Nov 2026", or "All available data" for All time. */
+function activeRange(p: Period): string {
+  const { from, to } = periodRange(p);
+  if (!from && !to) return 'All available data';
+  const day = (s: string | null, year: boolean) => (s ? formatDate(`${s}T12:00:00Z`, { day: 'numeric', month: 'short', ...(year ? { year: 'numeric' } : {}) }) : '…');
+  return from === to ? day(from, true) : `${day(from, false)} to ${day(to, true)}`;
+}
 
 export default function AnalyticsPage() {
   return (
@@ -41,6 +53,8 @@ function Analytics() {
     { id: 'products', label: 'Products' },
     { id: 'customers', label: 'Customers' },
     { id: 'credit', label: 'Credit' },
+    { id: 'inventory', label: 'Inventory', hidden: !can('inventory.view') },
+    { id: 'suppliers', label: 'Suppliers', hidden: !can('suppliers.view') },
     { id: 'kitchen', label: 'Kitchen', hidden: !can('kitchen.view') },
     { id: 'compare', label: 'Compare' },
     { id: 'explore', label: 'Explore' },
@@ -66,7 +80,7 @@ function Analytics() {
   const header = (
     <PageHeader
       title="Analytics"
-      description="Trends, products, customers and credit for the selected location and period."
+      description="Trends in sales, products, customers, credit, stock and suppliers for the selected location and period."
       tabs={<SectionTabs tabs={tabDefs} defaultTab="sales" label="Analytics sections" />}
     />
   );
@@ -75,6 +89,8 @@ function Analytics() {
     <div className="flex flex-wrap items-center gap-2">
       <LocationSelect scope={hubScope} />
       <PeriodSelect value={period} onChange={setPeriod} />
+      {/* The exact days, as the old "Active range" line showed them. */}
+      <span className="text-xs text-muted-foreground tabular-nums">{activeRange(period)}</span>
       {!isDefaultPeriod && (
         <button
           type="button"
@@ -105,7 +121,11 @@ function Analytics() {
       {filters}
 
       <SectionErrorBoundary resetKey={tab} label="This tab">
-        {tab === 'kitchen' ? (
+        {tab === 'inventory' ? (
+          <InventoryTab scope={scope} />
+        ) : tab === 'suppliers' ? (
+          <SuppliersTab scope={scope} prevScope={prevScope} period={period} />
+        ) : tab === 'kitchen' ? (
           <KitchenAnalyticsTab scope={scope} prevScope={prevScope} />
         ) : tab === 'compare' ? (
           <AnalyticsCompareTab

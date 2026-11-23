@@ -10,7 +10,7 @@ import { formatAuditAction, formatAuditEntity } from '@/lib/api-mappers';
 import { formatDate } from '@/lib/format';
 import { parsePeriod, periodLabel, periodRange, periodToParams } from '@/lib/period';
 import { FilterSelect } from '@/components/filter-select';
-import { PaginationControls } from '@/components/ui/pagination-controls';
+import { usePageSize } from '@/hooks/use-page-size';
 import {
   DataTable, EmptyState, FilterBar, MoreFilterField, OverflowMenu, PageHeader, PeriodSelect, SectionErrorBoundary,
   SectionTabs, StatusBadge, useSectionTab, type Column, type FilterChip, type SectionTab,
@@ -20,6 +20,7 @@ import { AuditDrawer, timeOf } from './audit-drawer';
 
 type AuditTab = 'all' | 'bulk' | 'sales' | 'inventory' | 'customers';
 const ENTITIES = ['Inventory', 'Sale', 'Customer', 'System'] as const;
+const MODULES = [{ value: 'sales', label: 'Sales' }, { value: 'inventory', label: 'Inventory' }, { value: 'customers', label: 'Customers' }, { value: 'system', label: 'System' }] as const;
 const PAGE_SIZE = 25;
 
 
@@ -70,9 +71,12 @@ function AuditTrail() {
   const period = parsePeriod(params, 'all');
   const entity = get('entity') ?? 'All';
   const agent = get('agent') ?? 'All';
+  const moduleParam = get('module');
+  const moduleFilter = MODULES.some((m) => m.value === moduleParam) ? moduleParam! : 'All';
   const urlSearch = get('q') ?? '';
   const [search, setSearch] = useState(urlSearch);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = usePageSize('audit', PAGE_SIZE);
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
   const { data: agents = [] } = useAgents();
 
@@ -93,7 +97,7 @@ function AuditTrail() {
   const tab = useSectionTab(tabDefs, 'all');
   const range = periodRange(period);
 
-  const filterKey = [tab, entity, agent, urlSearch, range.from, range.to].join('|');
+  const filterKey = [tab, entity, moduleFilter, agent, urlSearch, range.from, range.to].join('|');
   const [seenKey, setSeenKey] = useState(filterKey);
   if (seenKey !== filterKey) {
     setSeenKey(filterKey);
@@ -105,27 +109,31 @@ function AuditTrail() {
     ...(urlSearch.trim() ? { search: urlSearch.trim() } : {}),
     ...(entity !== 'All' ? { entity_type: entity } : {}),
     ...(agent !== 'All' ? { user_id: agent } : {}),
+    // A section tab picks its own module, as before; the Module filter applies on All activity.
+    ...(moduleFilter !== 'All' && tab === 'all' ? { module: moduleFilter as 'sales' | 'inventory' | 'customers' | 'system' } : {}),
     ...(range.from ? { date_from: range.from } : {}),
     ...(range.to ? { date_to: range.to } : {}),
     ...(tab === 'bulk' ? { category: 'bulk_upload' } : tab === 'all' ? {} : { module: tab as 'sales' | 'inventory' | 'customers' }),
     page,
-    limit: PAGE_SIZE,
+    limit: pageSize,
   };
 
   const { data: auditList, isFetching } = useAuditLogs(apiFilters);
   const logs = auditList?.items;
-  const meta = auditList?.meta ?? { page: 1, limit: PAGE_SIZE, total: 0, totalPages: 1 };
+  const meta = auditList?.meta ?? { page: 1, limit: pageSize, total: 0, totalPages: 1 };
   const summary = auditList?.summary;
-  const tabs = tabDefs.map((t) => ({ ...t, count: t.id === 'bulk' ? summary?.bulk : undefined }));
+  const tabCount: Record<AuditTab, number | undefined> = { all: summary?.total, bulk: summary?.bulk, sales: summary?.sales, inventory: summary?.inventory, customers: summary?.customers };
+  const tabs = tabDefs.map((t) => ({ ...t, count: tabCount[t.id] }));
 
   const agentName = agents.find((a) => a.id === agent)?.name;
   const chips: FilterChip[] = [
     ...(period.preset !== 'all' ? [{ key: 'period', label: periodLabel(period), onRemove: () => set(periodToParams({ preset: 'all' }, 'all')) }] : []),
     ...(entity !== 'All' ? [{ key: 'entity', label: `Record: ${entity}`, onRemove: () => set({ entity: null }) }] : []),
+    ...(moduleFilter !== 'All' && tab === 'all' ? [{ key: 'module', label: `Module: ${MODULES.find((m) => m.value === moduleFilter)!.label}`, onRemove: () => set({ module: null }) }] : []),
     ...(agent !== 'All' ? [{ key: 'agent', label: `By ${agentName ?? 'user'}`, onRemove: () => set({ agent: null }) }] : []),
     ...(urlSearch ? [{ key: 'q', label: `"${urlSearch}"`, onRemove: () => { setSearch(''); set({ q: null }); } }] : []),
   ];
-  const clearAll = () => { setSearch(''); set({ q: null, entity: null, agent: null, period: null, from: null, to: null }); };
+  const clearAll = () => { setSearch(''); set({ q: null, entity: null, module: null, agent: null, period: null, from: null, to: null }); };
 
   const summaryNumber = (log: AuditLog, key: string) => {
     const value = log.bulkUpload?.summary?.[key];
@@ -144,8 +152,8 @@ function AuditTrail() {
   const bulkColumns: Column<AuditLog>[] = [
     { id: 'file', header: 'File', mobile: 'title', cell: (l) => <span className="block max-w-[220px] truncate" title={l.bulkUpload?.fileName}>{l.bulkUpload?.fileName ?? 'Upload'}</span> },
     { id: 'type', header: 'Type', mobile: 'subtitle', cell: (l) => <span className="capitalize">{[l.bulkUpload?.domain, l.bulkUpload?.importType].filter(Boolean).join(', ') || '-'}</span> },
-    { id: 'rows', header: 'Rows', align: 'right', mobile: 'meta', cell: (l) => <span>{summaryNumber(l, 'total')} <span className="text-xs text-muted-foreground">({summaryNumber(l, 'invalid')} invalid)</span></span> },
-    { id: 'imported', header: 'Imported', align: 'right', hideBelow: 'lg', cell: (l) => <span>{summaryNumber(l, 'imported')} <span className="text-xs text-muted-foreground">({summaryNumber(l, 'failed')} failed)</span></span> },
+    { id: 'rows', header: 'Rows', align: 'right', mobile: 'meta', cell: (l) => <span className="flex flex-col items-end"><span>{summaryNumber(l, 'total')} total</span><span className="text-xs text-muted-foreground">{summaryNumber(l, 'valid')} valid, {summaryNumber(l, 'invalid')} invalid</span></span> },
+    { id: 'imported', header: 'Processed', align: 'right', hideBelow: 'lg', cell: (l) => <span className="flex flex-col items-end"><span>{summaryNumber(l, 'processed')} processed</span><span className="text-xs text-muted-foreground">{summaryNumber(l, 'imported')} imported, {summaryNumber(l, 'failed')} failed</span></span> },
     { id: 'stage', header: 'Status', mobile: 'meta', cell: (l) => <StatusBadge tone="neutral">{l.bulkUpload?.stage ?? formatAuditAction(l.action)}</StatusBadge> },
     { id: 'user', header: 'User', hideBelow: 'lg', cell: (l) => l.userName },
     { id: 'time', header: 'Time', mobile: 'value', cell: (l) => <When ts={l.timestamp} /> },
@@ -178,12 +186,17 @@ function AuditTrail() {
             <MoreFilterField label="Record type">
               <FilterSelect ariaLabel="Record type" value={entity} onChange={(v) => set({ entity: v === 'All' ? null : v })} options={[{ value: 'All', label: 'All records' }, ...ENTITIES.map((e) => ({ value: e, label: e }))]} />
             </MoreFilterField>
+            {tab === 'all' && (
+              <MoreFilterField label="Module">
+                <FilterSelect ariaLabel="Module" value={moduleFilter} onChange={(v) => set({ module: v === 'All' ? null : v })} options={[{ value: 'All', label: 'All modules' }, ...MODULES]} />
+              </MoreFilterField>
+            )}
             <MoreFilterField label="User">
               <FilterSelect ariaLabel="User" value={agent} onChange={(v) => set({ agent: v === 'All' ? null : v })} options={[{ value: 'All', label: 'All users' }, ...agents.map((a) => ({ value: a.id, label: a.name }))]} />
             </MoreFilterField>
           </>
         }
-        moreActiveCount={(entity !== 'All' ? 1 : 0) + (agent !== 'All' ? 1 : 0)}
+        moreActiveCount={(entity !== 'All' ? 1 : 0) + (agent !== 'All' ? 1 : 0) + (moduleFilter !== 'All' && tab === 'all' ? 1 : 0)}
         chips={chips}
         onClearAll={clearAll}
         resultLabel={logs ? `${meta.total.toLocaleString()} ${meta.total === 1 ? 'entry' : 'entries'}` : undefined}
@@ -197,7 +210,8 @@ function AuditTrail() {
           loading={isFetching}
           getRowId={(l) => l.id}
           onRowClick={setSelectedLog}
-          pageSize={PAGE_SIZE}
+          pageSize={pageSize}
+          pagination={{ page: meta.page, totalPages: meta.totalPages, onPageChange: setPage, pageSize, onPageSizeChange: (n) => { setPageSize(n); setPage(1); }, total: meta.total }}
           empty={
             <EmptyState
               size="compact"
@@ -210,14 +224,6 @@ function AuditTrail() {
         />
       </SectionErrorBoundary>
 
-      {meta.totalPages > 1 && (
-        <div className="flex flex-col items-center justify-between gap-2 sm:flex-row">
-          <p className="text-sm text-muted-foreground tabular-nums">
-            {(meta.page - 1) * meta.limit + 1} to {Math.min(meta.page * meta.limit, meta.total)} of {meta.total.toLocaleString()}
-          </p>
-          <PaginationControls page={meta.page} totalPages={meta.totalPages} onPageChange={setPage} />
-        </div>
-      )}
 
       {selectedLog && <AuditDrawer log={selectedLog} onClose={() => setSelectedLog(null)} />}
     </div>

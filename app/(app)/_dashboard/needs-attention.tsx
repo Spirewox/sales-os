@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { PackagePlus, Phone } from 'lucide-react';
+import { MessageCircle, PackagePlus } from 'lucide-react';
+import { whatsAppHref } from '@/components/credits/credit-utils';
 import { DataTable, EmptyState, RowAction, SectionTabs, StatusBadge, type Column, type SectionTab } from '@/components/app';
 import { usePermissions } from '@/hooks/use-permissions';
 import { formatCount, formatDate, formatMoney, plural } from '@/lib/format';
@@ -50,8 +51,9 @@ export function NeedsAttention({ data, ticketsLoading }: Readonly<{ data: Attent
           getRowId={(r) => r.customerId}
           loading={data.creditsLoading}
           pageSize={PAGE_SIZE}
+          fixedPageSize
           onRowClick={can('credits.view') ? (r) => router.push(`/credits?customer=${r.customerId}`) : undefined}
-          rowActions={(r) => (r.phoneNumber ? <RowAction href={`tel:${r.phoneNumber}`}><Phone aria-hidden /> Call</RowAction> : null)}
+          rowActions={(r) => { const wa = whatsAppHref(r.phoneNumber); return wa ? <RowAction href={wa} external ariaLabel={`WhatsApp ${r.customerName}`}><MessageCircle aria-hidden /> WhatsApp</RowAction> : null; }}
           columns={overdueColumns}
           empty={<EmptyState size="compact" title="No overdue credit" description="Customers whose credit passes its due date show up here." />}
         />
@@ -64,6 +66,7 @@ export function NeedsAttention({ data, ticketsLoading }: Readonly<{ data: Attent
           getRowId={(r) => r.id}
           loading={data.stockLoading}
           pageSize={PAGE_SIZE}
+          fixedPageSize
           onRowClick={can('inventory.view') ? (r) => router.push(`/inventory?product=${r.id}`) : undefined}
           rowActions={can('inventory.adjust_stock') ? (r) => (
             <RowAction onClick={() => router.push(`/inventory?product=${r.id}`)}><PackagePlus aria-hidden /> Restock</RowAction>
@@ -80,6 +83,7 @@ export function NeedsAttention({ data, ticketsLoading }: Readonly<{ data: Attent
           getRowId={(r) => r.id}
           loading={ticketsLoading}
           pageSize={PAGE_SIZE}
+          fixedPageSize
           onRowClick={can('interactions.view') ? () => router.push('/engagement?tab=interactions') : undefined}
           columns={ticketColumns}
           empty={<EmptyState size="compact" title="No open tickets" description="Open feedback and enquiries show up here." />}

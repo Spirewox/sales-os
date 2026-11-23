@@ -58,6 +58,7 @@ export function LivePosPanel({ locationId, locationNames }: Readonly<{
       rows={filtered}
       getRowId={(t) => `${t.hubId}:${t.tillId}`}
       pageSize={10}
+      fixedPageSize
       empty={<p className="px-4 py-6 text-center text-sm text-muted-foreground">{connected ? 'No tills for this location.' : 'Waiting for till status.'}</p>}
     />
     <details className="rounded-xl border bg-card px-4">

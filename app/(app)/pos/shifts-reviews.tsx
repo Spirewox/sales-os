@@ -82,7 +82,9 @@ export function ReviewsTab() {
     { id: 'time', header: 'Time', mobile: 'meta', className: 'whitespace-nowrap', cell: (r) => posTime(r.createdAt) },
     { id: 'reference', header: 'Reference', mobile: 'title', cell: (r) => <span className="break-all">{rowReference(r)}</span> },
     { id: 'location', header: 'Location', mobile: 'subtitle', hideBelow: 'lg', cell: (r) => f.hubName(r.hub) },
-    { id: 'terminal', header: 'Terminal', hideBelow: 'xl', cell: (r) => r.evidence?.terminalSerial || '-' },
+    { id: 'terminal', header: 'Terminal', hideBelow: 'xl', cell: (r) => r.evidence?.terminalSerial || r.device_id || '-' },
+    { id: 'cashier', header: 'Cashier', hideBelow: 'xl', cell: (r) => r.cashier_name || '-' },
+    { id: 'txnref', header: 'Provider reference', hideBelow: 'xl', cell: (r) => <span className="break-all font-mono text-xs">{r.evidence?.transactionReference || '-'}</span> },
     { id: 'reason', header: 'Reason', mobile: 'subtitle', className: 'max-w-xs', cell: (r) => <span className="line-clamp-2">{r.review_reason || 'Needs review'}</span> },
     { id: 'amount', header: 'Amount', align: 'right', mobile: 'value', cell: (r) => formatKobo(r.evidence?.amountKobo) },
   ];

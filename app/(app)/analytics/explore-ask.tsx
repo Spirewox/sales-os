@@ -12,11 +12,11 @@ import { formatDate } from '@/lib/format';
 import { InsightButton } from '@/components/insight-button';
 import { EmptyState, StatusBadge } from '@/components/app';
 import { Panel } from './analytics-ui';
-import { Chip, Pending, ResultChart, TwoPane, addRecentQuestion, clearRecentQuestions, fmtShort, toChartKind, useRecentQuestions } from './explore-shared';
+import { Chip, ExampleList, Pending, ResultChart, TwoPane, addRecentQuestion, clearRecentQuestions, fmtShort, toChartKind, useRecentQuestions } from './explore-shared';
 
 export type SeedQuery = { dataset: string; measure: string; groupBy: string; filters: Filter[] };
 
-/** Four starting points, one per kind of answer (breakdown, pattern, find, credit). */
+/** Four starting points, one per kind of answer (breakdown, pattern, find, credit); the other six are under "More examples". */
 const EXAMPLES = [ASK_EXAMPLES[5], ASK_EXAMPLES[4], ASK_EXAMPLES[0], ASK_EXAMPLES[9]].filter(Boolean);
 const winnerDot = (w?: string | null) => (w === 'a' ? 'var(--series-1)' : w === 'b' ? 'var(--series-2)' : 'var(--border)');
 
@@ -58,12 +58,7 @@ export function ExploreAsk({ scope, initialQ, onRefine }: Readonly<{ scope: Insi
 
   const controls = (
     <>
-      <section className="rounded-xl border bg-card p-4">
-        <h3 className="text-sm font-semibold">Try asking</h3>
-        <div className="mt-3 space-y-2">
-          {EXAMPLES.map((ex) => <Chip key={ex} onClick={() => run(ex)} disabled={pending}>{ex}</Chip>)}
-        </div>
-      </section>
+      <ExampleList title="Try asking" featured={EXAMPLES} all={ASK_EXAMPLES} onPick={run} disabled={pending} />
       {recent.length > 0 && (
         <section className="rounded-xl border bg-card p-4">
           <div className="flex items-center justify-between gap-2">

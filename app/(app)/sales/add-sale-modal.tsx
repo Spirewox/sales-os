@@ -62,6 +62,7 @@ export function RecordSaleSheet({ form, onClose, agents, user, canCreateSale, hu
             <span>{f.selectedCustomer.type}</span>
             <span>{f.selectedCustomer.totalOrders} orders</span>
             <span>{formatMoney(f.selectedCustomer.totalSpent)} spent</span>
+            {f.selectedCustomer.avgOrder > 0 && <span title="From the sales loaded on this page">{formatMoney(Math.round(f.selectedCustomer.avgOrder))} avg order</span>}
             {f.selectedCustomer.lastSale && <span>Last purchase {f.selectedCustomer.lastSale}</span>}
             {f.customerCredit && (
               <Link href={`/credits?customer=${f.customerId}`} className="hover:underline" title={f.customerCredit.text}>
@@ -71,6 +72,10 @@ export function RecordSaleSheet({ form, onClose, agents, user, canCreateSale, hu
               </Link>
             )}
           </div>
+        )}
+        {/* Shown whatever the payment mode, as before; credit modes add a line under Payment. */}
+        {f.customerCredit && !credit && (
+          <p className="flex items-start gap-1.5 text-xs text-warning"><AlertTriangle size={14} aria-hidden className="mt-px shrink-0" /> {f.customerCredit.text}.</p>
         )}
       </FormSection>
 
@@ -82,6 +87,7 @@ export function RecordSaleSheet({ form, onClose, agents, user, canCreateSale, hu
           <p className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground tabular-nums">
             <span>{item.currentStock} {item.unitOfMeasure} on hand at {f.selectedHub}</span>
             {f.isCartonProduct && item.cartonWeight ? <span>{item.cartonWeight} kg per carton</span> : null}
+            <span>{skuPriceLabel(f)} (SKU price)</span>
             {item.currentStock <= item.minStockLevel && <span className="inline-flex items-center gap-1 font-medium text-warning"><AlertTriangle size={12} aria-hidden /> Low stock</span>}
           </p>
         )}
@@ -122,6 +128,7 @@ export function RecordSaleSheet({ form, onClose, agents, user, canCreateSale, hu
           )}
         </div>
         {item && !f.isMealSale && f.quantity > 0 && <ListPriceLine form={f} />}
+        {f.repriced && <p className="text-xs text-muted-foreground">The SKU price changed, so the amount was recalculated from the new price.</p>}
       </FormSection>
 
       <FormSection title="Payment">
@@ -205,6 +212,14 @@ export function RecordSaleSheet({ form, onClose, agents, user, canCreateSale, hu
       </FormSection>
     </FormSheet>
   );
+}
+
+/** SKU selling price per sale unit: carton and kg for carton SKUs, each volume unit for liquids. */
+function skuPriceLabel(f: RecordSaleForm): string {
+  const item = f.selectedInventoryItem!;
+  if (f.isCartonProduct) return `${formatMoney(item.cartonPrice ?? 0)}/carton, ${formatMoney(item.baseSellingPrice)}/kg`;
+  if (f.isVolumeProduct) return volumeUnitOptions(item.unitOfMeasure).map((u) => `${formatMoney(f.listUnitPriceForSale(item, u))}/${u}`).join(', ');
+  return `${formatMoney(item.baseSellingPrice)}/${item.unitOfMeasure}`;
 }
 
 /** List price vs what is being charged, so under-list sales are visible before saving. */

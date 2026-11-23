@@ -14,9 +14,10 @@ import {
   type Column, type FilterChip,
 } from '@/components/app';
 import { cn } from '@/lib/utils';
-import { expiryTone, getExpiryLabel, marginPct, sellingPriceForMargin, stockState } from './inventory-utils';
+import { expiryTone, getExpiryLabel, marginPct, nearMinimum, sellingPriceForMargin, stockState } from './inventory-utils';
 import type { StockView } from './use-stock-view';
 import { SalesTrendsSection } from './sales-trends';
+import { LowStockAlert, StockPositionStrip } from './stock-summary';
 
 export type StockActions = {
   open: (item: InventoryItem) => void;
@@ -27,9 +28,9 @@ export type StockActions = {
   bulkUpdate?: (items: InventoryItem[]) => void;
 };
 
-const STOCK_LABEL = { low: 'Low stock', out: 'Out of stock', expiring: 'Expiring in 30 days' } as const;
+const STOCK_LABEL = { low: 'Low stock', out: 'Out of stock', below: 'At or below minimum', expiring: 'Expiring in 30 days' } as const;
 
-/** Stock tab: attention strip, one-row filters, the stock table, then collapsed sales trends. */
+/** Stock tab: low stock alert, attention and stock position strips, filters, the stock table, then collapsed sales trends. */
 export function StockTab({ hubScope, view, loading, pendingRequests, needsActionCount, actions }: Readonly<{
   hubScope: HubScopeFilter;
   view: StockView;
@@ -48,12 +49,16 @@ export function StockTab({ hubScope, view, loading, pendingRequests, needsAction
           <SkuPhoto url={i.imageUrl} className="hidden h-8 w-8 md:inline-grid" />
           <span className="min-w-0">
             <span className="block">{i.name}</span>
-            <span className="block font-mono text-xs font-normal text-muted-foreground">{i.sku}</span>
+            <span className="block text-xs font-normal text-muted-foreground">
+              <span className="font-mono">{i.sku}</span>
+              {i.supplier && <span className="hidden md:inline">, via {i.supplier}</span>}
+            </span>
           </span>
         </span>
       ),
       sortValue: (i) => i.name.toLowerCase(),
     },
+    { id: 'category', header: 'Category', hideBelow: 'xl', cell: (i) => <span className="text-muted-foreground">{i.category}</span>, sortValue: (i) => i.category },
     { id: 'location', header: 'Location', mobile: 'subtitle', hideBelow: 'lg', cell: (i) => <span className="text-muted-foreground">{i.location}</span>, sortValue: (i) => i.location },
     {
       id: 'onhand', header: 'On hand', mobile: 'value', align: 'right',
@@ -62,7 +67,9 @@ export function StockTab({ hubScope, view, loading, pendingRequests, needsAction
         return (
           <span className="inline-flex flex-col items-end">
             <span className={cn('font-medium', s === 'Out' ? 'text-destructive' : s === 'Low' ? 'text-warning' : '')}>{formatInventoryStockDisplay(i)}</span>
-            <span className="text-xs font-normal text-muted-foreground">min {formatStockQuantity(i.minStockLevel, i.unitOfMeasure)}</span>
+            <span className={cn('text-xs font-normal', nearMinimum(i) ? 'text-warning' : 'text-muted-foreground')}>
+              min {formatStockQuantity(i.minStockLevel, i.unitOfMeasure)}{nearMinimum(i) ? ', near minimum' : ''}
+            </span>
           </span>
         );
       },
@@ -79,11 +86,25 @@ export function StockTab({ hubScope, view, loading, pendingRequests, needsAction
         const next = nextExpiryByItem.get(i.id);
         if (!next) return <span className="hidden text-muted-foreground md:inline">-</span>;
         const tone = expiryTone(next);
-        const batches = expiringByItem.get(i.id)?.length ?? 0;
+        const due = expiringByItem.get(i.id) ?? [];
+        // With the expiring filter on, list each batch due (code, quantity left, days), as the old table did.
+        if (stockFilter === 'expiring' && due.length) {
+          return (
+            <ul className="space-y-1">
+              {due.map((b) => (
+                <li key={`${b.logId}-${b.batchNumber}`} className="flex flex-wrap items-center gap-1.5 text-xs">
+                  <span className="font-mono font-medium">{b.batchNumber || 'No code'}</span>
+                  <span className="text-muted-foreground tabular-nums">{formatStockQuantity(b.quantityRemaining, i.unitOfMeasure)} {i.unitOfMeasure} left</span>
+                  <StatusBadge tone={expiryTone(b.expiryDate)}>{getExpiryLabel(b.expiryDate)}</StatusBadge>
+                </li>
+              ))}
+            </ul>
+          );
+        }
         return (
           <span className="inline-flex flex-col gap-0.5">
             {tone === 'neutral' ? <span>{formatDate(next)}</span> : <StatusBadge tone={tone}>{getExpiryLabel(next)}</StatusBadge>}
-            {batches > 1 && <span className="text-xs text-muted-foreground">{batches} batches due</span>}
+            {due.length > 1 && <span className="text-xs text-muted-foreground">{due.length} batches due</span>}
           </span>
         );
       },
@@ -128,6 +149,9 @@ export function StockTab({ hubScope, view, loading, pendingRequests, needsAction
 
   return (
     <div className="space-y-4">
+      {!showLoading && (
+        <LowStockAlert items={counts.belowMinimum} location={hubScope.filterHub} active={stockFilter === 'below'} onToggle={() => view.toggleStockFilter('below')} />
+      )}
       <KpiStrip
         label="Needs attention"
         loading={showLoading}
@@ -146,6 +170,8 @@ export function StockTab({ hubScope, view, loading, pendingRequests, needsAction
           },
         ]}
       />
+
+      <StockPositionStrip items={filteredItems} loading={showLoading} />
 
       <FilterBar
         search={{ value: view.search, onChange: view.setSearch, placeholder: 'Search product or SKU', label: 'Search stock' }}
@@ -199,7 +225,7 @@ export function StockTab({ hubScope, view, loading, pendingRequests, needsAction
         }
       />
 
-      <SalesTrendsSection hubId={hubScope.hubIdForApi} />
+      <SalesTrendsSection hubId={hubScope.hubIdForApi} kitchenActive={view.category === 'Kitchen'} onShowKitchen={view.showKitchen} />
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import { Check, Copy } from 'lucide-react';
 import { Customer, CustomerType } from '@/types';
-import { CHART_TOOLTIP, formatAxisMoney, formatDate, formatMoney } from '@/lib/format';
+import { CHART_TOOLTIP, formatAxisMoney, formatDate, formatMoney, plural } from '@/lib/format';
 import { hasPhone } from './customer-links';
 import { SegmentChips } from './customer-segments';
 import type { PurchaseAnalytics } from './customer-analytics';
@@ -73,13 +73,20 @@ export function CustomerOverviewTab({ customer, segments, analytics, trend }: Re
         <section>
           <h3 className={sectionTitle}>Buying pattern</h3>
           <dl className="divide-y">
+            <Row label="Lifetime value">{formatMoney(analytics.totalSpent)}<span className="font-normal text-muted-foreground tabular-nums">{`· ${plural(analytics.n, 'order')}`}</span></Row>
+            <Row label="Profit">{formatMoney(analytics.totalProfit)}<span className="font-normal text-muted-foreground tabular-nums">{`· ${analytics.avgMargin.toFixed(0)}% margin`}</span></Row>
             <Row label="Average order">{formatMoney(analytics.aov)}</Row>
-            <Row label="Frequency">{analytics.avgInterval > 0 ? `About every ${Math.round(analytics.avgInterval)} days` : analytics.regularity}</Row>
+            <Row label="Frequency">
+              {analytics.avgInterval > 0 ? `About every ${Math.round(analytics.avgInterval)} days` : '-'}
+              <span className="font-normal text-muted-foreground tabular-nums">{`· ${analytics.ordersPerMonth.toFixed(1)} a month`}</span>
+            </Row>
+            <Row label="Cadence">{analytics.regularity}</Row>
             <Row label="Activity">{analytics.activity}, last order {analytics.daysSinceLast} days ago</Row>
-            <Row label="Trend (90 days)">{analytics.trend}{analytics.trendPct !== 0 && <span className="text-muted-foreground tabular-nums">{` ${analytics.trendPct > 0 ? '+' : ''}${analytics.trendPct}%`}</span>}</Row>
+            <Row label="Trend (90 days)">{analytics.trend}<span className="font-normal text-muted-foreground tabular-nums">{` ${analytics.trendPct > 0 ? '+' : ''}${analytics.trendPct}% vs prior 90 days`}</span></Row>
             <Row label="Top channel">{analytics.preferredChannel}</Row>
-            <Row label="Profit margin">{analytics.avgMargin.toFixed(0)}%</Row>
-            {analytics.nextExpected && <Row label="Next order expected">{formatDate(analytics.nextExpected)}</Row>}
+            <Row label="Paid at sale / on credit">{`${analytics.cashCount} / ${analytics.creditCount}`}</Row>
+            <Row label="Next order expected">{analytics.nextExpected ? formatDate(analytics.nextExpected) : '-'}</Row>
+            <Row label="Biggest order">{formatMoney(analytics.biggest.amount)}<span className="font-normal text-muted-foreground tabular-nums">{`· ${formatDate(analytics.biggest.date)}`}</span></Row>
           </dl>
         </section>
       )}

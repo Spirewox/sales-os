@@ -1,5 +1,6 @@
 'use client';
 
+import { usePageSize } from '@/hooks/use-page-size';
 import { useState, useMemo, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -59,20 +60,27 @@ export function useSalesPage() {
 
   // Reset to page 1 whenever the filters change (no effect: compare during render).
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSizeRaw] = usePageSize('sales', SALES_PAGE_SIZE);
+  const setPageSize = (n: number) => { setPageSizeRaw(n); setPage(1); };
   const [seenKey, setSeenKey] = useState(filters.filterKey);
   if (seenKey !== filters.filterKey) {
     setSeenKey(filters.filterKey);
     setPage(1);
   }
 
-  const { data: salesList, isLoading: salesLoading, isFetching: salesFetching } = useSales({ ...filters.summaryFilters, ...filters.sortParams, page, limit: SALES_PAGE_SIZE });
+  const { data: salesList, isLoading: salesLoading, isFetching: salesFetching } = useSales({ ...filters.summaryFilters, ...filters.sortParams, page, limit: pageSize });
   const { data: salesSummary, isFetching: summaryFetching } = useSalesSummary(filters.summaryFilters);
   const { data: previousSummary } = useSalesSummary(filters.previousFilters ?? undefined, { enabled: !!filters.previousFilters });
   const sales = useMemo(() => salesList?.items ?? [], [salesList]);
-  const salesMeta = salesList?.meta ?? { page: 1, limit: SALES_PAGE_SIZE, total: 0, totalPages: 1 };
+  const salesMeta = salesList?.meta ?? { page: 1, limit: pageSize, total: 0, totalPages: 1 };
   const kpis = salesSummary ?? EMPTY_KPIS;
   const revenueChangePct = filters.previousFilters && previousSummary && previousSummary.revenue > 0
     ? ((kpis.revenue - previousSummary.revenue) / previousSummary.revenue) * 100
+    : null;
+  // Same comparison for profit (the old page showed it "vs last month" from the server).
+  const previousProfit = previousSummary?.profit ?? 0;
+  const profitChangePct = filters.previousFilters && previousProfit > 0
+    ? (((kpis.profit ?? 0) - previousProfit) / previousProfit) * 100
     : null;
 
   const { data: stockLogsResult } = useStockLogs();
@@ -361,7 +369,7 @@ export function useSalesPage() {
   return {
     user, can, isAdmin, hubScope, activeHubs, agents,
     filters, skuOptions, productCategories: PRODUCT_CATEGORIES,
-    sales, salesMeta, page, setPage, salesLoading, salesFetching, summaryFetching, kpis, revenueChangePct,
+    sales, salesMeta, page, setPage, pageSize, setPageSize, salesLoading, salesFetching, summaryFetching, kpis, revenueChangePct, profitChangePct,
     showAddModal, setShowAddModal, closeRecordSale, recordSale,
     saleId, selectedSale, saleFetching, openSale, closeDetailPanel,
     detailTab, setDetailTab, isEditing, setIsEditing, editForm, setEditForm, showVoidConfirm, setShowVoidConfirm,

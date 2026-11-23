@@ -408,6 +408,7 @@ export function TicketLine({ ticket, input, canCosts }: { ticket: Ticket; input:
         <>
           <span>Cost {naira(c.cost)}</span>
           <span className={cn((c.profit ?? 0) < 0 && 'text-destructive')}>Profit {naira(c.profit)} ({pct(c.margin)})</span>
+          <span>Food cost {pct(c.food_cost_pct)}</span>
         </>
       )}
       {ticket.loading && <span>Updating…</span>}

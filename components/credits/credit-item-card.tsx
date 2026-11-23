@@ -46,6 +46,7 @@ export function CreditItemCard({ credit, expanded, onToggle, canRecordPayment, c
               Due {formatDate(credit.dueDate)}{late ? `, ${lateLabel(late)}` : ''}
             </span>
             <span>Sale {formatDate(credit.sale.date)}, {fmt(credit.sale.amount)}</span>
+            {credit.sale.paymentMode && <span>{credit.sale.paymentMode}</span>}
             {(credit.sale.quantity != null || credit.sale.unit) && <span>{[credit.sale.quantity, credit.sale.unit].filter(Boolean).join(' ')}</span>}
           </p>
         </div>

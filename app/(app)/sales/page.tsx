@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense } from 'react';
+import { PaymentMode, SalesChannel } from '@/types';
 import { Download, FileSpreadsheet, Plus, Receipt, Upload } from 'lucide-react';
 import type { Sale } from '@/types';
 import { formatCount, formatDate, formatMoney, formatMoneyShort, plural } from '@/lib/format';
@@ -8,7 +9,7 @@ import { lagosDay, periodLabel } from '@/lib/period';
 import {
   DataTable, EmptyState, KpiStrip, OverflowMenu, PageHeader, SectionErrorBoundary, StatusBadge, type Column,
 } from '@/components/app';
-import { saleBalance, saleItemsLabel, salePaymentStatus, saleRef } from './sales-utils';
+import { saleBalance, saleItemsLabel, salePaymentStatus, saleRef, unitsSoldRows } from './sales-utils';
 import { useSalesPage } from './use-sales-page';
 import { SalesFilterBar } from './sales-filter-bar';
 import { SaleDetailPanel } from './sale-detail-panel';
@@ -37,6 +38,7 @@ function salesColumns(today: string): Column<Sale>[] {
       ),
     },
     { id: 'items', header: 'Items', mobile: 'subtitle', className: 'max-w-[240px]', cell: (s) => <span className="block truncate" title={saleItemsLabel(s)}>{saleItemsLabel(s)}</span> },
+    { id: 'category', header: 'Category', hideBelow: 'xl', cell: (s) => <span className="text-muted-foreground">{s.item?.category || '-'}</span> },
     { id: 'hub', header: 'Hub', hideBelow: 'xl', cell: (s) => <span className="text-muted-foreground">{s.hubName || '-'}</span> },
     {
       id: 'amount', header: 'Amount', align: 'right', mobile: 'value', sortable: true,
@@ -50,7 +52,20 @@ function salesColumns(today: string): Column<Sale>[] {
         );
       },
     },
-    { id: 'status', header: 'Payment', mobile: 'meta', cell: (s) => <StatusBadge domain="payment" status={salePaymentStatus(s, { today })} /> },
+    {
+      id: 'status', header: 'Payment', mobile: 'meta',
+      cell: (s) => {
+        const status = salePaymentStatus(s, { today });
+        // Method (Cash, Transfer, POS) under the badge, as the old table showed it; not for unpaid credit.
+        const method = s.paymentType && s.status !== 'Voided' && s.paymentMode !== PaymentMode.FULL_CREDIT ? s.paymentType : null;
+        return (
+          <span className="inline-flex flex-col items-start gap-0.5">
+            <StatusBadge domain="payment" status={status} />
+            {method && <span className="text-xs text-muted-foreground">{method}</span>}
+          </span>
+        );
+      },
+    },
   ];
 }
 
@@ -62,6 +77,14 @@ function Sales() {
   const tableLoading = p.salesLoading || p.salesFetching;
   const columns = salesColumns(lagosDay());
   const period = periodLabel(filters.period).toLowerCase();
+  const units = unitsSoldRows(kpis.unitsByUnit);
+  const [topUnit, ...otherUnits] = units;
+  const unitLabel = (u: { unit: string; qty: number }) => `${u.qty.toLocaleString('en-NG')} ${u.unit}`;
+  const selectedSkus = p.skuOptions.filter((s) => filters.productIds.includes(s.id));
+  const unitsScope = selectedSkus.length
+    ? selectedSkus.map((s) => [s.sku, s.name].filter(Boolean).join(' ')).join(', ')
+    : filters.categories.length ? filters.categories.join(', ') : 'All categories';
+  const deliveriesOnly = filters.channel === SalesChannel.DELIVERY;
 
   const recordButton = canCreate && (
     <button type="button" onClick={() => p.setShowAddModal(true)} className="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary px-3.5 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90">
@@ -104,6 +127,34 @@ function Sales() {
         ]}
       />
 
+      {/* Second strip: profit and volume figures from the same summary (old page showed 7 cards). */}
+      <KpiStrip
+        label="Profit and volume"
+        loading={p.summaryFetching}
+        cells={[
+          {
+            label: 'Profit',
+            hidden: !p.isAdmin,
+            value: formatMoneyShort(kpis.profit ?? 0),
+            change: p.profitChangePct != null ? { pct: p.profitChangePct, label: 'vs previous period' } : null,
+            detail: p.profitChangePct == null ? period : undefined,
+            tone: (kpis.profit ?? 0) < 0 ? 'danger' : 'default',
+          },
+          {
+            label: 'Deliveries',
+            value: formatCount(kpis.deliveryCount),
+            detail: deliveriesOnly ? 'Showing deliveries only' : 'Show delivery sales',
+            onClick: () => filters.setChannel(deliveriesOnly ? '' : SalesChannel.DELIVERY),
+            active: deliveriesOnly,
+          },
+          {
+            label: 'Units sold',
+            value: topUnit ? unitLabel(topUnit) : '0',
+            detail: <span title={unitsScope}>{otherUnits.length ? `${otherUnits.map(unitLabel).join(', ')}. ` : ''}{unitsScope}</span>,
+          },
+        ]}
+      />
+
       <SalesFilterBar
         filters={filters}
         hubScope={p.hubScope}
@@ -121,11 +172,11 @@ function Sales() {
           loading={tableLoading}
           getRowId={(s) => s.id}
           onRowClick={p.openSale}
-          pageSize={salesMeta.limit || 25}
+          pageSize={p.pageSize}
           manualSort
           sort={filters.sort.startsWith('amount_') ? { id: 'amount', dir: filters.sort === 'amount_asc' ? 'asc' : 'desc' } : null}
           onSortChange={(s) => filters.setSort(s ? `amount_${s.dir}` : 'newest')}
-          pagination={salesMeta.totalPages > 1 ? { page: salesMeta.page, totalPages: salesMeta.totalPages, onPageChange: p.setPage } : undefined}
+          pagination={{ page: salesMeta.page, totalPages: salesMeta.totalPages, onPageChange: p.setPage, pageSize: p.pageSize, onPageSizeChange: p.setPageSize, total: salesMeta.total }}
           rowClassName={(s) => (s.status === 'Voided' ? 'opacity-60' : undefined)}
           empty={
             <EmptyState

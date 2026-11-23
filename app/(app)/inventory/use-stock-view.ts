@@ -5,11 +5,11 @@ import type { InventoryItem, StockLog } from '@/types';
 import { useUrlState } from '@/hooks/use-url-state';
 import { buildFifoBatches, expiringOpenBatches, stockState, type FifoBatch, type ProductCategory } from './inventory-utils';
 
-export type StockFilter = 'low' | 'out' | 'expiring';
-const STOCK_FILTERS: StockFilter[] = ['low', 'out', 'expiring'];
+export type StockFilter = 'low' | 'out' | 'below' | 'expiring';
+const STOCK_FILTERS: StockFilter[] = ['low', 'out', 'below', 'expiring'];
 
 /**
- * Stock tab filters (URL: ?q=, ?category=, ?stock=low|out|expiring, ?sku=id,id) and the rows they select.
+ * Stock tab filters (URL: ?q=, ?category=, ?stock=low|out|below|expiring, ?sku=id,id) and the rows they select.
  * `items` must already be limited to active products in the app location.
  */
 export function useStockView(items: InventoryItem[], logs: StockLog[]) {
@@ -57,14 +57,17 @@ export function useStockView(items: InventoryItem[], logs: StockLog[]) {
   const counts = useMemo(() => {
     let low = 0;
     let out = 0;
+    // At or below minimum, out of stock included (the old "critically low" alert list).
+    const belowMinimum: InventoryItem[] = [];
     for (const i of items) {
       const s = stockState(i);
       if (s === 'Low') low += 1;
       else if (s === 'Out') out += 1;
+      if (s !== 'In stock') belowMinimum.push(i);
     }
     let expiringBatches = 0;
     for (const b of expiringByItem.values()) expiringBatches += b.length;
-    return { low, out, expiring: expiringByItem.size, expiringBatches };
+    return { low, out, expiring: expiringByItem.size, expiringBatches, belowMinimum };
   }, [items, expiringByItem]);
 
   const filteredItems = useMemo(() => {
@@ -75,6 +78,7 @@ export function useStockView(items: InventoryItem[], logs: StockLog[]) {
       if (skuIds.length && !skuIds.includes(i.id)) return false;
       if (stockFilter === 'low' && stockState(i) !== 'Low') return false;
       if (stockFilter === 'out' && stockState(i) !== 'Out') return false;
+      if (stockFilter === 'below' && stockState(i) === 'In stock') return false;
       if (stockFilter === 'expiring' && !expiringByItem.has(i.id)) return false;
       return true;
     });
@@ -91,6 +95,7 @@ export function useStockView(items: InventoryItem[], logs: StockLog[]) {
   );
 
   const toggleStockFilter = (f: StockFilter) => set({ stock: stockFilter === f ? null : f });
+  const showKitchen = () => { setSearch(''); set({ q: null, stock: null, sku: null, category: 'Kitchen' }); };
   const setCategory = (c: string) => set({ category: c === 'All' ? null : c, sku: null });
   const setSkuIds = (ids: string[]) => set({ sku: ids.length ? ids.join(',') : null });
   const clearAll = () => {
@@ -100,7 +105,7 @@ export function useStockView(items: InventoryItem[], logs: StockLog[]) {
 
   return {
     search, setSearch, urlSearch,
-    category, setCategory,
+    category, setCategory, showKitchen,
     stockFilter, toggleStockFilter, clearStockFilter: () => set({ stock: null }),
     skuIds, setSkuIds, skuOptions,
     filteredItems, counts, expiringByItem, nextExpiryByItem,

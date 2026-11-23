@@ -361,10 +361,12 @@ export function AnalyticsCompareTab({
                         <span className={`text-sm font-semibold tabular-nums text-right ${r.winner === 'a' ? 'text-primary' : ''}`}>
                           {r.winner === 'a' && <Crown size={14} className="inline mr-1 text-primary" aria-label="Winner" />}
                           {r.a.display}
+                          {r.winner === 'a' && r.deltaPct > 0 && <Lead pct={r.deltaPct} />}
                         </span>
                         <span className={`text-sm font-semibold tabular-nums text-right ${r.winner === 'b' ? 'text-primary' : ''}`}>
                           {r.winner === 'b' && <Crown size={14} className="inline mr-1 text-primary" aria-label="Winner" />}
                           {r.b?.display ?? '-'}
+                          {r.winner === 'b' && r.deltaPct > 0 && <Lead pct={r.deltaPct} />}
                         </span>
                       </div>
                     ))}
@@ -406,4 +408,9 @@ export function AnalyticsCompareTab({
       )}
     </div>
   );
+}
+
+/** The winner's lead on a metric, as the old Insights compare showed it. */
+function Lead({ pct }: Readonly<{ pct: number }>) {
+  return <span className="ml-2 text-xs font-normal text-muted-foreground">{pct}% ahead</span>;
 }

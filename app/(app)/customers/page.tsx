@@ -6,12 +6,13 @@ import { toast } from 'sonner';
 import { Download, FileSpreadsheet, Plus, Upload, Users } from 'lucide-react';
 import { useOpenFromQuery } from '@/hooks/use-open-from-query';
 import { useUrlState } from '@/hooks/use-url-state';
+import { usePageSize } from '@/hooks/use-page-size';
 import { useCreditSummary, useCustomer, useCustomers, useExportCustomers, useSegments } from '@/hooks/use-queries';
 import { usePermissions } from '@/hooks/use-permissions';
 import { useHubScopeFilter } from '@/hooks/use-hub-scope';
 import { Customer, CustomerType } from '@/types';
 import type { CreditCustomerSummary } from '@/types/credits';
-import { formatCount, plural } from '@/lib/format';
+import { formatCount, formatMoney, formatMoneyShort, plural } from '@/lib/format';
 import { FilterSelect } from '@/components/filter-select';
 import {
   DataTable, EmptyState, FilterBar, KpiStrip, LocationSelect, PageHeader, PeriodSelect, SectionErrorBoundary,
@@ -26,8 +27,8 @@ import { CustomerRowActions, customerColumns } from './customer-columns';
 import { useCustomerFilters, type CustomerSort } from './use-customer-filters';
 import { useCustomerImport } from './use-customer-import';
 
-const PAGE_SIZE = 20;
-const EMPTY_SUMMARY = { total: 0, repeat: 0, newThisMonth: 0, newLastMonth: 0, newCustomersMomPct: 0 };
+const PAGE_SIZE = 25;
+const EMPTY_SUMMARY = { total: 0, b2b: 0, b2c: 0, repeat: 0, totalRevenue: 0, avgValue: 0, ytdCustomers: 0, newThisMonth: 0, newLastMonth: 0, newCustomersMomPct: 0, retentionRate: 0 };
 
 export default function CustomersPage() {
   return (
@@ -55,6 +56,7 @@ function Customers() {
 
   // Paging resets whenever the filters (or location) change.
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = usePageSize('customers', PAGE_SIZE);
   const pageKey = `${f.key}|${hubScope.hubIdForApi ?? ''}`;
   const [seenKey, setSeenKey] = useState(pageKey);
   if (seenKey !== pageKey) {
@@ -63,9 +65,9 @@ function Customers() {
   }
 
   const exportFilters = { ...f.apiFilters, hub_id: hubScope.hubIdForApi };
-  const { data: list, isFetching } = useCustomers({ ...exportFilters, page, limit: PAGE_SIZE });
+  const { data: list, isFetching } = useCustomers({ ...exportFilters, page, limit: pageSize });
   const customers = list?.items;
-  const meta = list?.meta ?? { page: 1, limit: PAGE_SIZE, total: 0, totalPages: 1 };
+  const meta = list?.meta ?? { page: 1, limit: pageSize, total: 0, totalPages: 1 };
   const kpis = list?.summary ?? EMPTY_SUMMARY;
   const exportCustomers = useExportCustomers();
   const imports = useCustomerImport();
@@ -89,12 +91,20 @@ function Customers() {
 
   const periodScoped = f.periodScoped;
   const repeatActive = f.ordersMode === 'min' && f.ordersCount === 2;
+  const businessActive = f.type === CustomerType.B2B;
+  // Detail lines carry the old period hint: what each number counts in "all time" vs a chosen period.
   const kpiCells: KpiCell[] = [
-    { label: 'Customers', value: formatCount(kpis.total), detail: periodScoped ? 'In this period' : 'Matching filters' },
+    { label: 'Customers', value: formatCount(kpis.total), detail: periodScoped ? 'Bought in this period' : 'All time, matching filters' },
+    {
+      label: periodScoped ? 'Active in period' : 'Created this year',
+      value: formatCount(kpis.ytdCustomers ?? 0),
+      detail: periodScoped ? 'Transacted in this period' : 'Joined since 1 January',
+    },
     {
       label: periodScoped ? 'New in period' : 'New this month',
-      value: formatCount(kpis.newThisMonth),
-      change: !periodScoped && kpis.newLastMonth > 0 ? { pct: kpis.newCustomersMomPct, label: 'vs last month' } : null,
+      value: formatCount(kpis.newThisMonth ?? 0),
+      detail: periodScoped ? 'First purchase in this period' : 'First purchase this calendar month',
+      change: list ? { pct: kpis.newCustomersMomPct ?? 0, label: periodScoped ? 'vs prior period' : 'vs last month' } : null,
     },
     {
       label: 'Repeat customers',
@@ -104,10 +114,22 @@ function Customers() {
       active: repeatActive,
     },
   ];
+  const valueCells: KpiCell[] = [
+    { label: 'Revenue', value: formatMoneyShort(kpis.totalRevenue), detail: `${formatMoney(kpis.totalRevenue)} from these customers${periodScoped ? ' this period' : ''}` },
+    { label: 'Average value', value: formatMoney(Math.round(kpis.avgValue)), detail: 'Revenue per customer' },
+    { label: 'Retention', value: `${(kpis.retentionRate ?? 0).toFixed(1)}%`, detail: periodScoped ? 'For this period' : 'All time' },
+    {
+      label: 'Business customers',
+      value: formatCount(kpis.b2b),
+      detail: `${formatCount(kpis.b2c)} individual`,
+      onClick: () => f.setType(businessActive ? 'All' : CustomerType.B2B),
+      active: businessActive,
+    },
+  ];
 
   const canSell = can('sales.create');
   const canLog = can('interactions.create');
-  const columns = customerColumns(creditByCustomer);
+  const columns = customerColumns(creditByCustomer, f.segmentNames);
   const filtered = f.chips.length > 0;
 
   const runExport = () =>
@@ -120,7 +142,7 @@ function Customers() {
     <div className="space-y-5">
       <PageHeader
         title="Customers"
-        description="Find a customer, then call, sell or follow up."
+        description="Find a customer, then message, sell or follow up."
         actions={
           can('customers.create') ? (
             <button type="button" onClick={openAdd} className="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary px-3.5 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90">
@@ -154,7 +176,10 @@ function Customers() {
         />
       )}
 
-      <KpiStrip cells={kpiCells} loading={!list} label="Customer figures" />
+      <div className="space-y-3">
+        <KpiStrip cells={kpiCells} loading={!list} label="Customer growth" />
+        <KpiStrip cells={valueCells} loading={!list} label="Customer value and mix" />
+      </div>
 
       <FilterBar
         search={{ value: f.search, onChange: f.setSearch, placeholder: 'Search name, phone, email, company', label: 'Search customers' }}
@@ -191,11 +216,11 @@ function Customers() {
           getRowId={(c) => c.id}
           onRowClick={openCustomer}
           rowActions={canSell || canLog ? (c) => <CustomerRowActions customer={c} router={router} canSell={canSell} canLog={canLog} /> : undefined}
-          pageSize={PAGE_SIZE}
+          pageSize={pageSize}
           manualSort
           sort={f.sort === 'default' ? null : { id: f.sort.startsWith('orders') ? 'orders' : 'revenue', dir: f.sort.endsWith('_asc') ? 'asc' : 'desc' }}
           onSortChange={(s) => f.setSort(s ? ((s.id + (s.dir === 'asc' ? '_asc' : '')) as CustomerSort) : 'default')}
-          pagination={{ page: meta.page, totalPages: meta.totalPages, onPageChange: setPage }}
+          pagination={{ page: meta.page, totalPages: meta.totalPages, onPageChange: setPage, pageSize, onPageSizeChange: (n) => { setPageSize(n); setPage(1); }, total: meta.total }}
           empty={
             <EmptyState
               size="compact"

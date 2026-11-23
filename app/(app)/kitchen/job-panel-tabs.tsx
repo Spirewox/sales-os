@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
-import { Phone } from 'lucide-react';
+import { MessageCircle } from 'lucide-react';
+import { whatsAppHref } from '@/components/credits/credit-utils';
 import { SubmitButton } from '@/components/submit-button';
 import { EmptyState } from '@/components/app';
 import { useAddKitchenNote, useKitchenJobEvents, useKitchenJobs, useRecordKitchenPayment } from '@/hooks/use-kitchen';
@@ -33,7 +34,7 @@ export function SummaryTab({ job, onOpenJob }: { job: KitchenJob; onOpenJob: (id
         <h3 className="mb-2 text-sm font-semibold">Customer & service</h3>
         <dl className="divide-y">
           <Row label="Customer">{customerId ? <Link href={`/customers?customer=${customerId}`} className="text-primary hover:underline">{job.customer_name || 'Customer'}</Link> : job.customer_name || '-'}</Row>
-          <Row label="Phone">{job.phone ? <a href={`tel:${job.phone}`} className="inline-flex items-center gap-1 text-primary hover:underline"><Phone size={14} aria-hidden /> {job.phone}</a> : '-'}</Row>
+          <Row label="Phone">{job.phone ? <span className="inline-flex flex-wrap items-center gap-x-3 gap-y-1"><span className="tabular-nums">{job.phone}</span>{whatsAppHref(job.phone) && <a href={whatsAppHref(job.phone)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline"><MessageCircle size={14} aria-hidden /> WhatsApp</a>}</span> : '-'}</Row>
           <Row label="Channel">{job.channel}</Row>
           <Row label="Fulfilment">{job.fulfilment === 'delivery' ? 'Delivery' : 'Pickup'}</Row>
           {job.fulfilment === 'delivery' && <Row label="Address">{job.address || '-'}</Row>}

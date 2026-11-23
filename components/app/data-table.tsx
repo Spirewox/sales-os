@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { ArrowDown, ArrowUp, ChevronsUpDown } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PaginationControls } from '@/components/ui/pagination-controls';
+import { FilterSelect } from '@/components/filter-select';
+import { PAGE_SIZE_OPTIONS, usePageSize } from '@/hooks/use-page-size';
 import { cn } from '@/lib/utils';
 
 export type Column<T> = {
@@ -38,8 +40,12 @@ type DataTableProps<T> = {
   /** Shown only after loading finishes with no rows. Use <EmptyState size="compact" />. */
   empty?: ReactNode;
   defaultSort?: SortState;
-  /** Rows per page; pagination shows when rows exceed it. */
+  /** Default rows per page. Users can change it unless `fixedPageSize`; their choice is remembered per table. */
   pageSize?: number;
+  /** Keep `pageSize` fixed and hide the rows-per-page picker (small dashboard widgets). */
+  fixedPageSize?: boolean;
+  /** Storage key for the remembered page size; defaults to `label`. */
+  pageSizeKey?: string;
   /** Bulk selection: renders checkboxes and a sticky bar with these actions. */
   bulkActions?: (selected: T[], clear: () => void) => ReactNode;
   className?: string;
@@ -49,7 +55,16 @@ type DataTableProps<T> = {
   onSortChange?: (sort: SortState) => void;
   manualSort?: boolean;
   /** Server pagination: rows are one page already; the table renders these controls instead of slicing. */
-  pagination?: { page: number; totalPages: number; onPageChange: (page: number) => void };
+  pagination?: {
+    page: number;
+    totalPages: number;
+    onPageChange: (page: number) => void;
+    /** Current server page size and its setter: shows the rows-per-page picker. */
+    pageSize?: number;
+    onPageSizeChange?: (n: number) => void;
+    /** Total rows on the server, for "26 to 50 of 110". */
+    total?: number;
+  };
   /** Client pagination returns to page 1 whenever this changes (pass the active filters). */
   resetPageKey?: string;
 };
@@ -58,7 +73,7 @@ type DataTableProps<T> = {
  * The one table. Sortable headers, rows that open a drawer, labelled row actions, pagination,
  * a loading state that never says "nothing here", and card rows below 768px.
  */
-export function DataTable<T>({ label, columns, rows, getRowId, onRowClick, rowActions, loading, empty, defaultSort = null, pageSize = 25, bulkActions, className, rowClassName, sort: sortProp, onSortChange, manualSort, pagination, resetPageKey }: Readonly<DataTableProps<T>>) {
+export function DataTable<T>({ label, columns, rows, getRowId, onRowClick, rowActions, loading, empty, defaultSort = null, pageSize: defaultPageSize = 25, fixedPageSize, pageSizeKey, bulkActions, className, rowClassName, sort: sortProp, onSortChange, manualSort, pagination, resetPageKey }: Readonly<DataTableProps<T>>) {
   const [sortState, setSortState] = useState<SortState>(defaultSort);
   const sort = sortProp !== undefined ? sortProp : sortState;
   const setSort = (next: SortState | ((s: SortState) => SortState)) => {
@@ -67,6 +82,12 @@ export function DataTable<T>({ label, columns, rows, getRowId, onRowClick, rowAc
     onSortChange?.(value);
   };
   const [page, setPage] = useState(1);
+  const [storedSize, setStoredSize] = usePageSize(pageSizeKey ?? label, defaultPageSize);
+  const pageSize = fixedPageSize ? defaultPageSize : storedSize;
+  const changePageSize = (n: number) => {
+    setStoredSize(n);
+    setPage(1);
+  };
   const [seenResetKey, setSeenResetKey] = useState(resetPageKey);
   if (seenResetKey !== resetPageKey) {
     setSeenResetKey(resetPageKey);
@@ -235,19 +256,16 @@ export function DataTable<T>({ label, columns, rows, getRowId, onRowClick, rowAc
 
       {isEmpty && (empty ?? <p className="px-4 py-8 text-center text-sm text-muted-foreground">Nothing to show.</p>)}
 
-      {pagination ? (
-        pagination.totalPages > 1 && (
-          <div className="border-t px-4 py-2">
-            <PaginationControls page={pagination.page} totalPages={pagination.totalPages} onPageChange={pagination.onPageChange} />
-          </div>
-        )
-      ) : (
-        sorted.length > pageSize && (
-          <div className="border-t px-4 py-2">
-            <PaginationControls page={safePage} totalPages={totalPages} onPageChange={setPage} />
-          </div>
-        )
-      )}
+      <TableFooter
+        page={pagination ? pagination.page : safePage}
+        totalPages={pagination ? pagination.totalPages : totalPages}
+        onPageChange={pagination ? pagination.onPageChange : setPage}
+        pageSize={pagination ? pagination.pageSize : pageSize}
+        onPageSizeChange={pagination ? pagination.onPageSizeChange : fixedPageSize ? undefined : changePageSize}
+        total={pagination ? pagination.total : sorted.length}
+        shown={pageRows.length}
+        hidden={isLoading || isEmpty}
+      />
     </div>
   );
 }
@@ -259,4 +277,39 @@ export function RowAction({ children, onClick, href, tone = 'default', external,
   if (href?.startsWith('/')) return <Link href={href} className={cls} aria-label={ariaLabel}>{children}</Link>;
   if (href) return <a href={href} className={cls} aria-label={ariaLabel} {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>{children}</a>;
   return <button type="button" onClick={onClick} className={cls} aria-label={ariaLabel}>{children}</button>;
+}
+
+/** "Rows per page" picker, "26 to 50 of 110", and page buttons. Shown only when there's something to page. */
+export function TableFooter({ page, totalPages, onPageChange, pageSize, onPageSizeChange, total, shown, hidden }: Readonly<{ page: number; totalPages: number; onPageChange: (p: number) => void; pageSize?: number; onPageSizeChange?: (n: number) => void; total?: number; shown: number; hidden: boolean }>) {
+  const canPick = !!onPageSizeChange && !!pageSize;
+  // A picker only helps once there are more rows than the smallest option.
+  const showPicker = canPick && (total == null ? totalPages > 1 || shown >= PAGE_SIZE_OPTIONS[0] : total > PAGE_SIZE_OPTIONS[0]);
+  if (hidden || (totalPages <= 1 && !showPicker)) return null;
+  const from = pageSize ? (page - 1) * pageSize + 1 : null;
+  const to = from != null ? from + shown - 1 : null;
+  return (
+    <div className="flex flex-col gap-3 border-t px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
+        {showPicker && (
+          <label className="flex items-center gap-2">
+            <span>Rows per page</span>
+            <FilterSelect
+              ariaLabel="Rows per page"
+              value={String(pageSize)}
+              onChange={(v) => onPageSizeChange!(Number(v))}
+              className="h-8 w-20 data-[size=default]:h-8"
+              options={PAGE_SIZE_OPTIONS.map((n) => ({ value: String(n), label: String(n) }))}
+            />
+          </label>
+        )}
+        {from != null && to != null && shown > 0 && (
+          <span className="tabular-nums" aria-live="polite">
+            {from.toLocaleString()} to {to.toLocaleString()}
+            {total != null ? ` of ${total.toLocaleString()}` : ''}
+          </span>
+        )}
+      </div>
+      {totalPages > 1 && <PaginationControls page={page} totalPages={totalPages} onPageChange={onPageChange} />}
+    </div>
+  );
 }

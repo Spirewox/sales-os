@@ -6,8 +6,11 @@ import type { SaleCreditRecord } from '@/types/credits';
 import { formatDate, formatMoney, plural } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { EmptyState, StatusBadge } from '@/components/app';
+import { CreditGradeBadge, type creditGrade } from './customer-grades';
 
-export function CustomerCreditTab({ credits, outstanding, overdue, split, creditLink, canRecordPayment, loading }: Readonly<{
+export function CustomerCreditTab({ grade, credits, outstanding, overdue, split, creditLink, canRecordPayment, loading }: Readonly<{
+  /** From every credit record on file, cleared ones included (old drawer rule). */
+  grade: ReturnType<typeof creditGrade>;
   credits: SaleCreditRecord[];
   outstanding: number;
   overdue: boolean;
@@ -32,6 +35,18 @@ export function CustomerCreditTab({ credits, outstanding, overdue, split, credit
     </section>
   );
 
+  const gradeSection = (
+    <section>
+      <h3 className="mb-2 text-xs font-medium text-muted-foreground">Credit grade</h3>
+      <div className="flex flex-wrap items-center gap-2 rounded-xl border px-3 py-2.5 text-sm">
+        <CreditGradeBadge grade={grade} />
+        <span className="text-xs text-muted-foreground">
+          {grade === 'N/A' ? 'No credit sales on record yet.' : grade === 'F' ? 'At least one credit item is overdue.' : 'Credit on record, nothing overdue.'}
+        </span>
+      </div>
+    </section>
+  );
+
   if (loading && credits.length === 0) return <p className="py-8 text-center text-sm text-muted-foreground">Loading credit…</p>;
 
   if (credits.length === 0) {
@@ -39,6 +54,7 @@ export function CustomerCreditTab({ credits, outstanding, overdue, split, credit
       <div className="space-y-5">
         <EmptyState size="compact" icon={<CreditCard />} title="Nothing owed" description="This customer has no open credit." />
         {split.cashCount + split.creditCount > 0 && breakdown}
+        {gradeSection}
       </div>
     );
   }
@@ -77,6 +93,7 @@ export function CustomerCreditTab({ credits, outstanding, overdue, split, credit
         </ul>
       </section>
 
+      {gradeSection}
       {breakdown}
     </div>
   );

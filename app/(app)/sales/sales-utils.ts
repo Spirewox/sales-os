@@ -360,3 +360,15 @@ export const PAYMENT_MODE_LABEL: Record<PaymentMode, string> = {
   [PaymentMode.PARTIAL_CREDIT]: 'Part paid',
   [PaymentMode.FULL_CREDIT]: 'On credit',
 };
+
+/** Units sold, main units first in a fixed order, then any other recorded unit by size (as the old Units sold card). */
+const MAIN_UNIT_ORDER = ['Kg', 'Cartons', 'Liters', 'ml', 'Plates', 'Units'];
+export function unitsSoldRows(unitsByUnit: Record<string, number> | undefined): { unit: string; qty: number; main: boolean }[] {
+  const byUnit = unitsByUnit ?? {};
+  const main = MAIN_UNIT_ORDER.filter((u) => byUnit[u]).map((u) => ({ unit: u, qty: byUnit[u], main: true }));
+  const other = Object.entries(byUnit)
+    .filter(([u, q]) => q && !MAIN_UNIT_ORDER.includes(u))
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([unit, qty]) => ({ unit, qty, main: false }));
+  return [...main, ...other];
+}
