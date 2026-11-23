@@ -1,0 +1,2 @@
+ID	Severity	Route	What	Why not fixed	Fix
+F-17	note	/jobs/[id]	1 raw control, no raw values	no clearance	Follows G-03

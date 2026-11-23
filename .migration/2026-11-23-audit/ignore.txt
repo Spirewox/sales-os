@@ -1,0 +1,37 @@
+# Excluded paths (build-design-system/references/inventory.md, Excluded paths)
+.agents/**
+.claude/**
+docs/system/**
+public/system/**
+**/__fixtures__/**
+**/*.fixture
+.design-system/**
+.migration/**
+node_modules/**
+.next/**
+dist/**
+build/**
+# migrate extras: the system package defines the tokens; scripts quote raw values
+components/ui/**
+components/app/**
+app/globals.css
+scripts/**
+# run scaffolding the parallel harden step writes (Storybook showcase)
+.storybook/**
+stories/**
+**/*.stories.tsx
+**/*.stories.ts
+# not rendered UI: mock backend data, tests, docs, review output, tool config
+lib/mock-api/**
+**/*.test.ts
+**/*.test.tsx
+docs/**
+featurespec/**
+.ui-review/**
+public/**
+next.config.ts
+eslint.config.mjs
+postcss.config.mjs
+next-env.d.ts
+# Storybook build output (harden step)
+storybook-static/**

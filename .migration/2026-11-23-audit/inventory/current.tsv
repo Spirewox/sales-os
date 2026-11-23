@@ -1,0 +1,684 @@
+kind	file	line	match	surface
+bypass	app/(app)/_dashboard/category-panel.tsx	41	<button>	dashboard
+raw	app/(app)/_dashboard/dashboard-content.tsx	67	max-w-[1400px]	dashboard
+raw	app/(app)/_dashboard/sales-panel.tsx	59	h-[220px]	dashboard
+raw	app/(app)/_dashboard/sales-panel.tsx	68	fontSize: 12	dashboard
+raw	app/(app)/_dashboard/sales-panel.tsx	69	fontSize: 12	dashboard
+raw	app/(app)/_dashboard/sales-panel.tsx	88	fontSize: 12	dashboard
+raw	app/(app)/_dashboard/sales-panel.tsx	89	fontSize: 12	dashboard
+bypass	app/(app)/_dashboard/top-customers.tsx	97	<button>	dashboard
+raw	app/(app)/_dashboard/top-customers.tsx	120	max-h-[260px]	dashboard
+raw	app/(app)/_dashboard/top-customers.tsx	137	max-w-[220px]	dashboard
+raw	app/(app)/analytics/analytics-ui.tsx	13	fontSize: 12	analytics
+raw	app/(app)/analytics/analytics-ui.tsx	16	fontSize: 12	analytics
+bypass	app/(app)/analytics/analytics-ui.tsx	110	<button>	analytics
+raw	app/(app)/analytics/credit-tab.tsx	77	h-[280px]	analytics
+raw	app/(app)/analytics/credit-tab.tsx	86	paddingTop: 8	analytics
+raw	app/(app)/analytics/customers-tab.tsx	79	h-[300px]	analytics
+raw	app/(app)/analytics/customers-tab.tsx	106	h-[280px]	analytics
+bypass	app/(app)/analytics/explore-ask.tsx	66	<button>	analytics
+bypass	app/(app)/analytics/explore-ask.tsx	91	<input>	analytics
+bypass	app/(app)/analytics/explore-ask.tsx	92	<button>	analytics
+bypass	app/(app)/analytics/explore-ask.tsx	118	<button>	analytics
+raw	app/(app)/analytics/explore-ask.tsx	175	max-h-[520px]	analytics
+bypass	app/(app)/analytics/explore-ask.tsx	197	<button>	analytics
+bypass	app/(app)/analytics/explore-build.tsx	61	<select>	analytics
+bypass	app/(app)/analytics/explore-build.tsx	68	<select>	analytics
+bypass	app/(app)/analytics/explore-build.tsx	74	<select>	analytics
+bypass	app/(app)/analytics/explore-build.tsx	80	<select>	analytics
+bypass	app/(app)/analytics/explore-build.tsx	95	<select>	analytics
+bypass	app/(app)/analytics/explore-build.tsx	104	<button>	analytics
+bypass	app/(app)/analytics/explore-build.tsx	110	<button>	analytics
+bypass	app/(app)/analytics/explore-build.tsx	161	<button>	analytics
+bypass	app/(app)/analytics/explore-shared.tsx	23	const selectClass	analytics
+raw	app/(app)/analytics/explore-shared.tsx	33	h-[320px]	analytics
+raw	app/(app)/analytics/explore-shared.tsx	103	grid-cols-[minmax(280px,340px)_1fr]	analytics
+bypass	app/(app)/analytics/explore-shared.tsx	112	<button>	analytics
+bypass	app/(app)/analytics/explore-shared.tsx	133	<button>	analytics
+bypass	app/(app)/analytics/explore-simulate.tsx	65	<select>	analytics
+bypass	app/(app)/analytics/explore-simulate.tsx	91	<input>	analytics
+bypass	app/(app)/analytics/explore-simulate.tsx	92	<button>	analytics
+bypass	app/(app)/analytics/explore-simulate.tsx	189	<select>	analytics
+bypass	app/(app)/analytics/explore-simulate.tsx	200	<select>	analytics
+bypass	app/(app)/analytics/explore-simulate.tsx	215	<input>	analytics
+raw	app/(app)/analytics/inventory-tab.tsx	130	h-[260px]	analytics
+raw	app/(app)/analytics/page.tsx	74	max-w-[1400px]	analytics
+bypass	app/(app)/analytics/page.tsx	95	<button>	analytics
+raw	app/(app)/analytics/page.tsx	108	max-w-[1400px]	analytics
+raw	app/(app)/analytics/page.tsx	119	max-w-[1400px]	analytics
+raw	app/(app)/analytics/products-tab.tsx	72	h-[340px]	analytics
+bypass	app/(app)/analytics/sales-tab.tsx	112	<button>	analytics
+raw	app/(app)/analytics/sales-tab.tsx	120	h-[300px]	analytics
+raw	app/(app)/analytics/sales-tab.tsx	157	h-[260px]	analytics
+raw	app/(app)/analytics/sales-tab.tsx	178	h-[260px]	analytics
+raw	app/(app)/analytics/suppliers-tab.tsx	180	h-[280px]	analytics
+raw	app/(app)/audit/audit-drawer.tsx	90	max-h-[60vh]	audit
+raw	app/(app)/audit/audit-drawer.tsx	91	max-h-[60vh]	audit
+candidate	app/(app)/audit/page.tsx	12	@/components/filter-select (G-01)	audit
+raw	app/(app)/audit/page.tsx	153	max-w-[220px]	audit
+bypass	app/(app)/audit/page.tsx	221	<button>	audit
+raw	app/(app)/credits/page.tsx	146	max-w-[1400px]	credits
+bypass	app/(app)/credits/page.tsx	190	<button>	credits
+candidate	app/(app)/customers/customer-form.tsx	16	@/components/filter-select (G-01)	customers
+bypass	app/(app)/customers/customer-form.tsx	69	<input>	customers
+bypass	app/(app)/customers/customer-form.tsx	212	<input>	customers
+bypass	app/(app)/customers/customer-form.tsx	215	<input>	customers
+bypass	app/(app)/customers/customer-form.tsx	228	<input>	customers
+bypass	app/(app)/customers/customer-form.tsx	235	<input>	customers
+bypass	app/(app)/customers/customer-form.tsx	239	<input>	customers
+raw	app/(app)/customers/customer-import-modal.tsx	60	max-h-[90vh]	customers
+bypass	app/(app)/customers/customer-import-modal.tsx	68	<button>	customers
+bypass	app/(app)/customers/customer-import-modal.tsx	87	<button>	customers
+bypass	app/(app)/customers/customer-import-modal.tsx	178	<button>	customers
+bypass	app/(app)/customers/customer-import-modal.tsx	179	<button>	customers
+raw	app/(app)/customers/customer-import-summary.tsx	20	max-h-[90vh]	customers
+bypass	app/(app)/customers/customer-import-summary.tsx	26	<button>	customers
+bypass	app/(app)/customers/customer-import-summary.tsx	74	<button>	customers
+candidate	app/(app)/customers/customer-more-filters.tsx	5	@/components/filter-select (G-01)	customers
+bypass	app/(app)/customers/customer-more-filters.tsx	40	<input>	customers
+bypass	app/(app)/customers/customer-more-filters.tsx	58	<button>	customers
+bypass	app/(app)/customers/customer-more-filters.tsx	70	<input>	customers
+bypass	app/(app)/customers/customer-overview-tab.tsx	18	<button>	customers
+raw	app/(app)/customers/customer-overview-tab.tsx	106	fontSize: 12	customers
+raw	app/(app)/customers/customer-overview-tab.tsx	107	fontSize: 12	customers
+candidate	app/(app)/customers/page.tsx	16	@/components/filter-select (G-01)	customers
+bypass	app/(app)/customers/page.tsx	148	<button>	customers
+bypass	app/(app)/customers/page.tsx	165	<input>	customers
+bypass	app/(app)/customers/page.tsx	230	<button>	customers
+candidate	app/(app)/engagement/churn.tsx	10	@/components/filter-select (G-01)	engagement
+bypass	app/(app)/engagement/churn.tsx	180	<button>	engagement
+bypass	app/(app)/engagement/churn.tsx	189	<button>	engagement
+bypass	app/(app)/engagement/compensation-drawer.tsx	45	<button>	engagement
+candidate	app/(app)/engagement/compensation-form.tsx	6	@/components/filter-select (G-01)	engagement
+bypass	app/(app)/engagement/compensation-form.tsx	81	<input>	engagement
+bypass	app/(app)/engagement/compensation-form.tsx	89	<button>	engagement
+bypass	app/(app)/engagement/compensation-form.tsx	97	<input>	engagement
+bypass	app/(app)/engagement/compensation-form.tsx	106	<input>	engagement
+bypass	app/(app)/engagement/enquiry-drawer.tsx	60	<textarea>	engagement
+bypass	app/(app)/engagement/enquiry-drawer.tsx	64	<button>	engagement
+bypass	app/(app)/engagement/enquiry-drawer.tsx	65	<button>	engagement
+candidate	app/(app)/engagement/enquiry-form.tsx	6	@/components/filter-select (G-01)	engagement
+bypass	app/(app)/engagement/enquiry-form.tsx	43	<input>	engagement
+bypass	app/(app)/engagement/enquiry-form.tsx	47	<input>	engagement
+bypass	app/(app)/engagement/enquiry-form.tsx	50	<textarea>	engagement
+bypass	app/(app)/engagement/enquiry-form.tsx	63	<input>	engagement
+candidate	app/(app)/engagement/enquiry-table.tsx	6	@/components/filter-select (G-01)	engagement
+bypass	app/(app)/engagement/enquiry-table.tsx	108	<button>	engagement
+bypass	app/(app)/engagement/feedback-drawer.tsx	73	<button>	engagement
+bypass	app/(app)/engagement/feedback-drawer.tsx	74	<button>	engagement
+bypass	app/(app)/engagement/feedback-drawer.tsx	92	<textarea>	engagement
+bypass	app/(app)/engagement/feedback-drawer.tsx	103	<button>	engagement
+bypass	app/(app)/engagement/feedback-drawer.tsx	104	<button>	engagement
+candidate	app/(app)/engagement/feedback-form.tsx	6	@/components/filter-select (G-01)	engagement
+bypass	app/(app)/engagement/feedback-form.tsx	85	<input>	engagement
+bypass	app/(app)/engagement/feedback-form.tsx	86	<button>	engagement
+bypass	app/(app)/engagement/feedback-form.tsx	114	<textarea>	engagement
+candidate	app/(app)/engagement/feedback-table.tsx	6	@/components/filter-select (G-01)	engagement
+bypass	app/(app)/engagement/feedback-table.tsx	123	<button>	engagement
+raw	app/(app)/engagement/interaction-insights.tsx	42	fontSize: 12	engagement
+raw	app/(app)/engagement/interaction-insights.tsx	56	fontSize: 12	engagement
+raw	app/(app)/engagement/interaction-insights.tsx	57	fontSize: 12	engagement
+bypass	app/(app)/engagement/interactions.tsx	99	<button>	engagement
+bypass	app/(app)/engagement/interactions.tsx	103	<button>	engagement
+bypass	app/(app)/engagement/interactions.tsx	106	<button>	engagement
+bypass	app/(app)/engagement/page.tsx	46	<button>	engagement
+candidate	app/(app)/inventory/forms/adjust-form.tsx	11	@/components/filter-select (G-01)	inventory
+bypass	app/(app)/inventory/forms/adjust-form.tsx	95	<input>	inventory
+bypass	app/(app)/inventory/forms/adjust-form.tsx	102	<input>	inventory
+bypass	app/(app)/inventory/forms/adjust-form.tsx	108	<input>	inventory
+candidate	app/(app)/inventory/forms/batch-update-form.tsx	8	@/components/confirm-preview-modal (G-02)	inventory
+candidate	app/(app)/inventory/forms/batch-update-form.tsx	9	@/components/filter-select (G-01)	inventory
+bypass	app/(app)/inventory/forms/batch-update-form.tsx	100	<input>	inventory
+bypass	app/(app)/inventory/forms/batch-update-form.tsx	117	<input>	inventory
+bypass	app/(app)/inventory/forms/batch-update-form.tsx	129	<input>	inventory
+candidate	app/(app)/inventory/forms/create-sku-form.tsx	13	@/components/confirm-preview-modal (G-02)	inventory
+candidate	app/(app)/inventory/forms/create-sku-form.tsx	14	@/components/filter-select (G-01)	inventory
+bypass	app/(app)/inventory/forms/create-sku-form.tsx	224	<input>	inventory
+bypass	app/(app)/inventory/forms/create-sku-form.tsx	234	<input>	inventory
+bypass	app/(app)/inventory/forms/create-sku-form.tsx	248	<input>	inventory
+bypass	app/(app)/inventory/forms/create-sku-form.tsx	253	<input>	inventory
+bypass	app/(app)/inventory/forms/create-sku-form.tsx	267	<input>	inventory
+bypass	app/(app)/inventory/forms/create-sku-form.tsx	306	<input>	inventory
+bypass	app/(app)/inventory/forms/create-sku-form.tsx	318	<input>	inventory
+bypass	app/(app)/inventory/forms/create-sku-form.tsx	347	<input>	inventory
+bypass	app/(app)/inventory/forms/create-sku-form.tsx	363	<input>	inventory
+bypass	app/(app)/inventory/forms/create-sku-form.tsx	404	<input>	inventory
+candidate	app/(app)/inventory/forms/edit-sku-form.tsx	12	@/components/confirm-preview-modal (G-02)	inventory
+candidate	app/(app)/inventory/forms/edit-sku-form.tsx	13	@/components/filter-select (G-01)	inventory
+bypass	app/(app)/inventory/forms/edit-sku-form.tsx	152	<input>	inventory
+bypass	app/(app)/inventory/forms/edit-sku-form.tsx	162	<input>	inventory
+bypass	app/(app)/inventory/forms/edit-sku-form.tsx	168	<input>	inventory
+bypass	app/(app)/inventory/forms/edit-sku-form.tsx	177	<button>	inventory
+bypass	app/(app)/inventory/forms/edit-sku-form.tsx	185	<input>	inventory
+bypass	app/(app)/inventory/forms/edit-sku-form.tsx	189	<input>	inventory
+bypass	app/(app)/inventory/forms/edit-sku-form.tsx	194	<input>	inventory
+bypass	app/(app)/inventory/forms/edit-sku-form.tsx	199	<input>	inventory
+candidate	app/(app)/inventory/forms/form-bits.tsx	4	@/components/filter-select (G-01)	inventory
+bypass	app/(app)/inventory/forms/form-bits.tsx	10	const selectClass	inventory
+candidate	app/(app)/inventory/forms/purchase-form.tsx	8	@/components/filter-select (G-01)	inventory
+bypass	app/(app)/inventory/forms/purchase-form.tsx	220	<input>	inventory
+bypass	app/(app)/inventory/forms/purchase-form.tsx	267	<input>	inventory
+bypass	app/(app)/inventory/forms/purchase-form.tsx	281	<input>	inventory
+bypass	app/(app)/inventory/forms/purchase-form.tsx	298	<input>	inventory
+bypass	app/(app)/inventory/forms/purchase-form.tsx	312	<input>	inventory
+bypass	app/(app)/inventory/forms/purchase-form.tsx	366	<input>	inventory
+candidate	app/(app)/inventory/forms/request-form.tsx	9	@/components/filter-select (G-01)	inventory
+bypass	app/(app)/inventory/forms/request-form.tsx	137	<input>	inventory
+bypass	app/(app)/inventory/forms/request-form.tsx	171	<input>	inventory
+candidate	app/(app)/inventory/forms/transfer-form.tsx	8	@/components/filter-select (G-01)	inventory
+bypass	app/(app)/inventory/forms/transfer-form.tsx	138	<input>	inventory
+bypass	app/(app)/inventory/forms/transfer-form.tsx	159	<input>	inventory
+raw	app/(app)/inventory/inventory-import-modal.tsx	52	max-h-[90vh]	inventory
+bypass	app/(app)/inventory/inventory-import-modal.tsx	60	<button>	inventory
+bypass	app/(app)/inventory/inventory-import-modal.tsx	70	<button>	inventory
+raw	app/(app)/inventory/inventory-import-modal.tsx	130	max-w-[180px]	inventory
+bypass	app/(app)/inventory/inventory-import-modal.tsx	156	<button>	inventory
+bypass	app/(app)/inventory/inventory-import-modal.tsx	157	<button>	inventory
+candidate	app/(app)/inventory/inventory-utils.ts	3	@/components/confirm-preview-modal (G-02)	inventory
+candidate	app/(app)/inventory/movements-tab.tsx	10	@/components/filter-select (G-01)	inventory
+bypass	app/(app)/inventory/movements-tab.tsx	148	<button>	inventory
+candidate	app/(app)/inventory/page.tsx	15	@/components/confirm-preview-modal (G-02)	inventory
+raw	app/(app)/inventory/page.tsx	186	min-h-[60vh]	inventory
+bypass	app/(app)/inventory/page.tsx	194	<button>	inventory
+bypass	app/(app)/inventory/page.tsx	198	<button>	inventory
+bypass	app/(app)/inventory/page.tsx	222	<input>	inventory
+raw	app/(app)/inventory/product-drawer-panels.tsx	88	text-[#06140b]	inventory
+raw	app/(app)/inventory/product-drawer-panels.tsx	89	text-[#1a0610]	inventory
+bypass	app/(app)/inventory/product-drawer.tsx	146	<button>	inventory
+bypass	app/(app)/inventory/product-drawer.tsx	168	<button>	inventory
+bypass	app/(app)/inventory/product-drawer.tsx	200	<button>	inventory
+bypass	app/(app)/inventory/product-drawer.tsx	208	<input>	inventory
+bypass	app/(app)/inventory/product-drawer.tsx	219	<button>	inventory
+bypass	app/(app)/inventory/product-drawer.tsx	220	<button>	inventory
+candidate	app/(app)/inventory/requests-tab.tsx	13	@/components/filter-select (G-01)	inventory
+bypass	app/(app)/inventory/requests-tab.tsx	175	<button>	inventory
+bypass	app/(app)/inventory/requests-tab.tsx	203	<input>	inventory
+bypass	app/(app)/inventory/sales-trends.tsx	26	<button>	inventory
+bypass	app/(app)/inventory/sales-trends.tsx	64	<button>	inventory
+raw	app/(app)/inventory/sales-trends.tsx	70	fontSize: 12	inventory
+raw	app/(app)/inventory/sales-trends.tsx	71	fontSize: 12	inventory
+bypass	app/(app)/inventory/stock-summary.tsx	33	<button>	inventory
+candidate	app/(app)/inventory/stock-tab.tsx	11	@/components/filter-select (G-01)	inventory
+bypass	app/(app)/inventory/stock-tab.tsx	209	<button>	inventory
+bypass	app/(app)/inventory/stock-tab.tsx	223	<button>	inventory
+bypass	app/(app)/jobs/[id]/page.tsx	34	<button>	kitchen-job
+bypass	app/(app)/kitchen/board.tsx	191	<button>	kitchen
+bypass	app/(app)/kitchen/board.tsx	194	<button>	kitchen
+bypass	app/(app)/kitchen/board.tsx	213	<button>	kitchen
+bypass	app/(app)/kitchen/board.tsx	240	<button>	kitchen
+bypass	app/(app)/kitchen/board.tsx	250	<button>	kitchen
+raw	app/(app)/kitchen/board.tsx	256	rounded-[calc(var(--radius)-2px)]	kitchen
+bypass	app/(app)/kitchen/board.tsx	304	<button>	kitchen
+bypass	app/(app)/kitchen/board.tsx	328	<button>	kitchen
+candidate	app/(app)/kitchen/ingredients.tsx	6	@/components/filter-select (G-01)	kitchen
+candidate	app/(app)/kitchen/ingredients.tsx	7	@/components/submit-button (G-03)	kitchen
+bypass	app/(app)/kitchen/ingredients.tsx	106	<button>	kitchen
+bypass	app/(app)/kitchen/ingredients.tsx	113	<button>	kitchen
+bypass	app/(app)/kitchen/ingredients.tsx	114	<button>	kitchen
+bypass	app/(app)/kitchen/ingredients.tsx	142	<button>	kitchen
+bypass	app/(app)/kitchen/ingredients.tsx	190	<input>	kitchen
+bypass	app/(app)/kitchen/ingredients.tsx	191	<input>	kitchen
+bypass	app/(app)/kitchen/ingredients.tsx	196	<input>	kitchen
+raw	app/(app)/kitchen/ingredients.tsx	197	grid-cols-[1fr_6rem]	kitchen
+bypass	app/(app)/kitchen/ingredients.tsx	200	<select>	kitchen
+bypass	app/(app)/kitchen/ingredients.tsx	206	<input>	kitchen
+bypass	app/(app)/kitchen/ingredients.tsx	211	<input>	kitchen
+bypass	app/(app)/kitchen/ingredients.tsx	236	<button>	kitchen
+bypass	app/(app)/kitchen/job-form-sections.tsx	44	<button>	kitchen
+bypass	app/(app)/kitchen/job-form-sections.tsx	53	<input>	kitchen
+bypass	app/(app)/kitchen/job-form-sections.tsx	81	<button>	kitchen
+bypass	app/(app)/kitchen/job-form-sections.tsx	86	<input>	kitchen
+bypass	app/(app)/kitchen/job-form-sections.tsx	92	<button>	kitchen
+raw	app/(app)/kitchen/job-form-sections.tsx	112	grid-cols-[1fr_1fr_auto]	kitchen
+bypass	app/(app)/kitchen/job-form-sections.tsx	113	<input>	kitchen
+bypass	app/(app)/kitchen/job-form-sections.tsx	114	<input>	kitchen
+bypass	app/(app)/kitchen/job-form-sections.tsx	115	<button>	kitchen
+bypass	app/(app)/kitchen/job-form-sections.tsx	140	<button>	kitchen
+bypass	app/(app)/kitchen/job-form-sections.tsx	145	<button>	kitchen
+bypass	app/(app)/kitchen/job-form-sections.tsx	149	<input>	kitchen
+bypass	app/(app)/kitchen/job-form-sections.tsx	155	<button>	kitchen
+bypass	app/(app)/kitchen/job-form-sections.tsx	161	<select>	kitchen
+bypass	app/(app)/kitchen/job-form-sections.tsx	168	<textarea>	kitchen
+raw	app/(app)/kitchen/job-form-sections.tsx	198	grid-cols-[1fr_7rem_auto]	kitchen
+bypass	app/(app)/kitchen/job-form-sections.tsx	200	<select>	kitchen
+bypass	app/(app)/kitchen/job-form-sections.tsx	207	<button>	kitchen
+bypass	app/(app)/kitchen/job-form-sections.tsx	212	<button>	kitchen
+raw	app/(app)/kitchen/job-form-sections.tsx	225	grid-cols-[1fr_1fr_5rem_8rem_auto]	kitchen
+bypass	app/(app)/kitchen/job-form-sections.tsx	227	<select>	kitchen
+bypass	app/(app)/kitchen/job-form-sections.tsx	241	<input>	kitchen
+bypass	app/(app)/kitchen/job-form-sections.tsx	244	<button>	kitchen
+bypass	app/(app)/kitchen/job-form-sections.tsx	247	<button>	kitchen
+raw	app/(app)/kitchen/job-form-sections.tsx	267	grid-cols-[1fr_5rem_7rem_8rem_auto]	kitchen
+bypass	app/(app)/kitchen/job-form-sections.tsx	268	<input>	kitchen
+bypass	app/(app)/kitchen/job-form-sections.tsx	271	<select>	kitchen
+bypass	app/(app)/kitchen/job-form-sections.tsx	277	<button>	kitchen
+bypass	app/(app)/kitchen/job-form-sections.tsx	280	<button>	kitchen
+raw	app/(app)/kitchen/job-form-sections.tsx	286	grid-cols-[1fr_5rem_5rem_8rem_auto]	kitchen
+bypass	app/(app)/kitchen/job-form-sections.tsx	287	<input>	kitchen
+bypass	app/(app)/kitchen/job-form-sections.tsx	291	<button>	kitchen
+bypass	app/(app)/kitchen/job-form-sections.tsx	294	<button>	kitchen
+bypass	app/(app)/kitchen/job-form-sections.tsx	300	<input>	kitchen
+bypass	app/(app)/kitchen/job-form-sections.tsx	332	<button>	kitchen
+bypass	app/(app)/kitchen/job-form.tsx	189	<button>	kitchen
+bypass	app/(app)/kitchen/job-form.tsx	192	<button>	kitchen
+bypass	app/(app)/kitchen/job-form.tsx	193	<button>	kitchen
+candidate	app/(app)/kitchen/job-panel-tabs.tsx	8	@/components/submit-button (G-03)	kitchen
+bypass	app/(app)/kitchen/job-panel-tabs.tsx	81	<button>	kitchen
+raw	app/(app)/kitchen/job-panel-tabs.tsx	145	min-w-[28rem]	kitchen
+bypass	app/(app)/kitchen/job-panel-tabs.tsx	204	<button>	kitchen
+bypass	app/(app)/kitchen/job-panel-tabs.tsx	211	<input>	kitchen
+bypass	app/(app)/kitchen/job-panel-tabs.tsx	216	<button>	kitchen
+bypass	app/(app)/kitchen/job-panel-tabs.tsx	254	<input>	kitchen
+raw	app/(app)/kitchen/job-panel-tabs.tsx	266	-left-[26px]	kitchen
+candidate	app/(app)/kitchen/job-panel.tsx	7	@/components/submit-button (G-03)	kitchen
+bypass	app/(app)/kitchen/job-panel.tsx	161	<textarea>	kitchen
+bypass	app/(app)/kitchen/job-panel.tsx	166	<button>	kitchen
+bypass	app/(app)/kitchen/job-panel.tsx	180	<button>	kitchen
+candidate	app/(app)/kitchen/jobs.tsx	7	@/components/filter-select (G-01)	kitchen
+bypass	app/(app)/kitchen/kitchen-ui.tsx	9	const btnPrimary	kitchen
+bypass	app/(app)/kitchen/kitchen-ui.tsx	10	const btnSecondary	kitchen
+bypass	app/(app)/kitchen/kitchen-ui.tsx	11	const btnGhost	kitchen
+bypass	app/(app)/kitchen/kitchen-ui.tsx	12	const btnDanger	kitchen
+bypass	app/(app)/kitchen/kitchen-ui.tsx	13	const inputClass	kitchen
+bypass	app/(app)/kitchen/kitchen-ui.tsx	52	<button>	kitchen
+bypass	app/(app)/kitchen/kitchen-ui.tsx	74	<input>	kitchen
+bypass	app/(app)/kitchen/kitchen-ui.tsx	93	<input>	kitchen
+bypass	app/(app)/kitchen/page.tsx	115	<button>	kitchen
+bypass	app/(app)/kitchen/page.tsx	118	<button>	kitchen
+bypass	app/(app)/kitchen/recipes.tsx	63	<button>	kitchen
+bypass	app/(app)/kitchen/recipes.tsx	69	<button>	kitchen
+bypass	app/(app)/kitchen/recipes.tsx	92	<button>	kitchen
+bypass	app/(app)/kitchen/recipes.tsx	218	<input>	kitchen
+bypass	app/(app)/kitchen/recipes.tsx	219	<input>	kitchen
+bypass	app/(app)/kitchen/recipes.tsx	221	<input>	kitchen
+raw	app/(app)/kitchen/recipes.tsx	234	grid-cols-[1fr_8rem_auto]	kitchen
+bypass	app/(app)/kitchen/recipes.tsx	236	<select>	kitchen
+bypass	app/(app)/kitchen/recipes.tsx	243	<button>	kitchen
+bypass	app/(app)/kitchen/recipes.tsx	253	<button>	kitchen
+bypass	app/(app)/kitchen/recipes.tsx	260	<textarea>	kitchen
+bypass	app/(app)/kitchen/recipes.tsx	266	<button>	kitchen
+candidate	app/(app)/kitchen/settings.tsx	6	@/components/submit-button (G-03)	kitchen
+bypass	app/(app)/kitchen/settings.tsx	124	<select>	kitchen
+bypass	app/(app)/kitchen/settings.tsx	130	<input>	kitchen
+bypass	app/(app)/kitchen/settings.tsx	193	<button>	kitchen
+bypass	app/(app)/kitchen/settings.tsx	203	<select>	kitchen
+raw	app/(app)/kitchen/settings.tsx	224	grid-cols-[1fr_5rem_9rem_auto]	kitchen
+bypass	app/(app)/kitchen/settings.tsx	227	<input>	kitchen
+bypass	app/(app)/kitchen/settings.tsx	230	<button>	kitchen
+bypass	app/(app)/kitchen/settings.tsx	237	<button>	kitchen
+bypass	app/(app)/kitchen/settings.tsx	243	<select>	kitchen
+bypass	app/(app)/kitchen/settings.tsx	299	<input>	kitchen
+bypass	app/(app)/kitchen/settings.tsx	310	<button>	kitchen
+bypass	app/(app)/kitchen/settings.tsx	325	<input>	kitchen
+bypass	app/(app)/kitchen/settings.tsx	344	<select>	kitchen
+bypass	app/(app)/kitchen/settings.tsx	349	<select>	kitchen
+bypass	app/(app)/kitchen/settings.tsx	355	<select>	kitchen
+bypass	app/(app)/kitchen/settings.tsx	361	<button>	kitchen
+bypass	app/(app)/kitchen/settings.tsx	402	<input>	kitchen
+bypass	app/(app)/kitchen/settings.tsx	426	<button>	kitchen
+bypass	app/(app)/kitchen/settings.tsx	430	<select>	kitchen
+raw	app/(app)/kitchen/yield-guide.tsx	40	grid-cols-[2fr_1fr_1fr]	kitchen
+bypass	app/(app)/kitchen/yield-guide.tsx	42	<select>	kitchen
+bypass	app/(app)/kitchen/yield-guide.tsx	51	<input>	kitchen
+candidate	app/(app)/pos/overview.tsx	6	@/components/hub-scope-filter (G-01)	pos
+bypass	app/(app)/pos/overview.tsx	37	<button>	pos
+bypass	app/(app)/pos/page.tsx	73	<button>	pos
+candidate	app/(app)/pos/pos-filter-bar.tsx	6	@/components/filter-select (G-01)	pos
+bypass	app/(app)/pos/pos-utils.tsx	70	<button>	pos
+bypass	app/(app)/pos/tills.tsx	87	<button>	pos
+bypass	app/(app)/sales/add-sale-modal.tsx	96	<input>	sales
+bypass	app/(app)/sales/add-sale-modal.tsx	103	<select>	sales
+bypass	app/(app)/sales/add-sale-modal.tsx	111	<input>	sales
+bypass	app/(app)/sales/add-sale-modal.tsx	116	<input>	sales
+bypass	app/(app)/sales/add-sale-modal.tsx	120	<input>	sales
+bypass	app/(app)/sales/add-sale-modal.tsx	125	<input>	sales
+bypass	app/(app)/sales/add-sale-modal.tsx	139	<button>	sales
+bypass	app/(app)/sales/add-sale-modal.tsx	150	<button>	sales
+bypass	app/(app)/sales/add-sale-modal.tsx	159	<input>	sales
+bypass	app/(app)/sales/add-sale-modal.tsx	176	<select>	sales
+bypass	app/(app)/sales/add-sale-modal.tsx	181	<input>	sales
+bypass	app/(app)/sales/add-sale-modal.tsx	185	<select>	sales
+bypass	app/(app)/sales/add-sale-modal.tsx	193	<input>	sales
+bypass	app/(app)/sales/add-sale-modal.tsx	196	<input>	sales
+bypass	app/(app)/sales/add-sale-modal.tsx	204	<select>	sales
+bypass	app/(app)/sales/add-sale-modal.tsx	210	<textarea>	sales
+raw	app/(app)/sales/page.tsx	40	max-w-[240px]	sales
+bypass	app/(app)/sales/page.tsx	90	<button>	sales
+raw	app/(app)/sales/page.tsx	96	max-w-[1400px]	sales
+bypass	app/(app)/sales/page.tsx	97	<input>	sales
+bypass	app/(app)/sales/page.tsx	188	<button>	sales
+bypass	app/(app)/sales/page.tsx	198	<button>	sales
+bypass	app/(app)/sales/product-combobox.tsx	44	<input>	sales
+bypass	app/(app)/sales/product-combobox.tsx	69	<button>	sales
+candidate	app/(app)/sales/sale-detail-panel.tsx	12	@/components/submit-button (G-03)	sales
+bypass	app/(app)/sales/sale-detail-panel.tsx	75	<button>	sales
+bypass	app/(app)/sales/sale-detail-panel.tsx	136	<button>	sales
+candidate	app/(app)/sales/sale-detail-tabs.tsx	16	@/components/submit-button (G-03)	sales
+bypass	app/(app)/sales/sale-detail-tabs.tsx	87	<input>	sales
+bypass	app/(app)/sales/sale-detail-tabs.tsx	89	<input>	sales
+bypass	app/(app)/sales/sale-detail-tabs.tsx	130	<input>	sales
+bypass	app/(app)/sales/sale-detail-tabs.tsx	150	<input>	sales
+bypass	app/(app)/sales/sale-detail-tabs.tsx	172	<input>	sales
+bypass	app/(app)/sales/sale-detail-tabs.tsx	192	<select>	sales
+bypass	app/(app)/sales/sale-detail-tabs.tsx	288	<select>	sales
+bypass	app/(app)/sales/sale-detail-tabs.tsx	306	<select>	sales
+bypass	app/(app)/sales/sale-detail-tabs.tsx	317	<select>	sales
+bypass	app/(app)/sales/sale-detail-tabs.tsx	352	<textarea>	sales
+bypass	app/(app)/sales/sale-detail-tabs.tsx	406	<button>	sales
+bypass	app/(app)/sales/sale-detail-tabs.tsx	429	<input>	sales
+bypass	app/(app)/sales/sale-detail-tabs.tsx	437	<input>	sales
+bypass	app/(app)/sales/sale-detail-tabs.tsx	465	<button>	sales
+raw	app/(app)/sales/sale-detail-tabs.tsx	477	max-w-[350px]	sales
+raw	app/(app)/sales/sale-receipt.ts	19	#111	sales
+raw	app/(app)/sales/sale-receipt.ts	19	font:14px	sales
+raw	app/(app)/sales/sale-receipt.ts	19	margin:24px	sales
+raw	app/(app)/sales/sale-receipt.ts	20	#555	sales
+raw	app/(app)/sales/sale-receipt.ts	20	font-size:12px	sales
+raw	app/(app)/sales/sale-receipt.ts	20	font-size:18px	sales
+raw	app/(app)/sales/sale-receipt.ts	20	margin:0 0 2px	sales
+raw	app/(app)/sales/sale-receipt.ts	21	margin-top:16px	sales
+raw	app/(app)/sales/sale-receipt.ts	21	padding:4px	sales
+raw	app/(app)/sales/sale-receipt.ts	22	#999	sales
+raw	app/(app)/sales/sale-receipt.ts	22	margin:12px	sales
+raw	app/(app)/sales/sale-receipt.ts	37	#b91c1c	sales
+candidate	app/(app)/sales/sales-filter-bar.tsx	6	@/components/filter-select (G-01)	sales
+bypass	app/(app)/sales/sales-filter-bar.tsx	82	<input>	sales
+bypass	app/(app)/sales/sales-filter-bar.tsx	88	<input>	sales
+raw	app/(app)/sales/sales-import-modal.tsx	70	max-h-[90vh]	sales
+bypass	app/(app)/sales/sales-import-modal.tsx	78	<button>	sales
+bypass	app/(app)/sales/sales-import-modal.tsx	143	<button>	sales
+raw	app/(app)/sales/sales-import-modal.tsx	194	min-w-[200px]	sales
+raw	app/(app)/sales/sales-import-modal.tsx	207	max-w-[180px]	sales
+raw	app/(app)/sales/sales-import-modal.tsx	229	max-w-[280px]	sales
+bypass	app/(app)/sales/sales-import-modal.tsx	259	<button>	sales
+bypass	app/(app)/sales/sales-import-modal.tsx	263	<button>	sales
+bypass	app/(app)/sales/sales-import-modal.tsx	267	<button>	sales
+bypass	app/(app)/sales/sales-utils.ts	15	const INPUT_CLS	sales
+bypass	app/(app)/sales/sales-utils.ts	17	const BTN_PRIMARY	sales
+bypass	app/(app)/sales/sales-utils.ts	18	const BTN_SECONDARY	sales
+bypass	app/(app)/settings/downgrade-sheet.tsx	68	<input>	settings
+bypass	app/(app)/settings/downgrade-sheet.tsx	72	<input>	settings
+bypass	app/(app)/settings/downgrade-sheet.tsx	91	<input>	settings
+bypass	app/(app)/settings/downgrade-sheet.tsx	95	<input>	settings
+bypass	app/(app)/settings/location-form-sheet.tsx	81	<input>	settings
+bypass	app/(app)/settings/location-form-sheet.tsx	97	<input>	settings
+bypass	app/(app)/settings/location-form-sheet.tsx	121	<input>	settings
+bypass	app/(app)/settings/location-form-sheet.tsx	128	<input>	settings
+bypass	app/(app)/settings/location-form-sheet.tsx	132	<input>	settings
+candidate	app/(app)/settings/locations-section.tsx	9	@/components/filter-select (G-01)	settings
+bypass	app/(app)/settings/locations-section.tsx	115	<button>	settings
+bypass	app/(app)/settings/locations-section.tsx	149	<button>	settings
+raw	app/(app)/settings/page.tsx	53	grid-cols-[12rem_minmax(0,1fr)]	settings
+raw	app/(app)/settings/page.tsx	53	grid-cols-[14rem_minmax(0,1fr)]	settings
+palette	app/(app)/settings/password-section.tsx	36	bg-yellow-500	settings
+bypass	app/(app)/settings/password-section.tsx	46	<input>	settings
+raw	app/(app)/settings/password-section.tsx	48	max-w-[calc(50%-0.5rem)]	settings
+bypass	app/(app)/settings/password-section.tsx	50	<input>	settings
+bypass	app/(app)/settings/password-section.tsx	55	<input>	settings
+bypass	app/(app)/settings/password-section.tsx	65	<input>	settings
+bypass	app/(app)/settings/password-section.tsx	69	<button>	settings
+bypass	app/(app)/settings/profile-section.tsx	71	<input>	settings
+bypass	app/(app)/settings/profile-section.tsx	74	<input>	settings
+bypass	app/(app)/settings/profile-section.tsx	77	<input>	settings
+bypass	app/(app)/settings/profile-section.tsx	80	<input>	settings
+bypass	app/(app)/settings/profile-section.tsx	89	<button>	settings
+bypass	app/(app)/settings/role-form-sheet.tsx	47	<input>	settings
+bypass	app/(app)/settings/role-form-sheet.tsx	50	<textarea>	settings
+bypass	app/(app)/settings/roles-matrix.tsx	36	<button>	settings
+bypass	app/(app)/settings/roles-matrix.tsx	77	<button>	settings
+bypass	app/(app)/settings/roles-matrix.tsx	94	<input>	settings
+bypass	app/(app)/settings/roles-matrix.tsx	119	<input>	settings
+candidate	app/(app)/settings/roles-section.tsx	11	@/components/filter-select (G-01)	settings
+bypass	app/(app)/settings/roles-section.tsx	128	<button>	settings
+candidate	app/(app)/settings/settings-nav.tsx	6	@/components/filter-select (G-01)	settings
+bypass	app/(app)/settings/settings-ui.tsx	13	const btnPrimary	settings
+bypass	app/(app)/settings/settings-ui.tsx	14	const btnSecondary	settings
+candidate	app/(app)/settings/sheet-select.tsx	3	@/components/filter-select (G-01)	settings
+bypass	app/(app)/settings/sheet-select.tsx	15	<input>	settings
+bypass	app/(app)/settings/user-form-sheet.tsx	118	<input>	settings
+bypass	app/(app)/settings/user-form-sheet.tsx	121	<input>	settings
+bypass	app/(app)/settings/user-form-sheet.tsx	125	<input>	settings
+bypass	app/(app)/settings/user-form-sheet.tsx	128	<input>	settings
+candidate	app/(app)/settings/users-section.tsx	13	@/components/filter-select (G-01)	settings
+bypass	app/(app)/settings/users-section.tsx	110	<button>	settings
+bypass	app/(app)/settings/users-section.tsx	162	<button>	settings
+bypass	app/(app)/suppliers/issue-form.tsx	50	<select>	suppliers
+bypass	app/(app)/suppliers/issue-form.tsx	55	<select>	suppliers
+bypass	app/(app)/suppliers/issue-form.tsx	61	<textarea>	suppliers
+bypass	app/(app)/suppliers/issue-form.tsx	72	<select>	suppliers
+candidate	app/(app)/suppliers/page.tsx	15	@/components/filter-select (G-01)	suppliers
+candidate	app/(app)/suppliers/page.tsx	16	@/components/confirm-preview-modal (G-02)	suppliers
+bypass	app/(app)/suppliers/page.tsx	159	<button>	suppliers
+bypass	app/(app)/suppliers/page.tsx	205	<input>	suppliers
+bypass	app/(app)/suppliers/page.tsx	208	<input>	suppliers
+bypass	app/(app)/suppliers/page.tsx	237	<button>	suppliers
+bypass	app/(app)/suppliers/star-rating.tsx	28	<button>	suppliers
+raw	app/(app)/suppliers/supplier-details-tab.tsx	11	grid-cols-[8rem_1fr]	suppliers
+bypass	app/(app)/suppliers/supplier-details-tab.tsx	20	<button>	suppliers
+bypass	app/(app)/suppliers/supplier-form.tsx	80	<input>	suppliers
+bypass	app/(app)/suppliers/supplier-form.tsx	83	<input>	suppliers
+bypass	app/(app)/suppliers/supplier-form.tsx	87	<select>	suppliers
+bypass	app/(app)/suppliers/supplier-form.tsx	92	<select>	suppliers
+bypass	app/(app)/suppliers/supplier-form.tsx	108	<input>	suppliers
+bypass	app/(app)/suppliers/supplier-form.tsx	111	<input>	suppliers
+bypass	app/(app)/suppliers/supplier-form.tsx	115	<input>	suppliers
+bypass	app/(app)/suppliers/supplier-form.tsx	118	<input>	suppliers
+bypass	app/(app)/suppliers/supplier-form.tsx	125	<select>	suppliers
+bypass	app/(app)/suppliers/supplier-form.tsx	130	<input>	suppliers
+bypass	app/(app)/suppliers/supplier-form.tsx	143	<button>	suppliers
+bypass	app/(app)/suppliers/supplier-form.tsx	160	<textarea>	suppliers
+bypass	app/(app)/suppliers/supplier-issues-tab.tsx	86	<textarea>	suppliers
+bypass	app/(app)/suppliers/supplier-issues-tab.tsx	88	<button>	suppliers
+bypass	app/(app)/suppliers/supplier-issues-tab.tsx	89	<button>	suppliers
+bypass	app/(app)/suppliers/supplier-issues-tab.tsx	96	<button>	suppliers
+raw	app/(app)/suppliers/supplier-performance-tab.tsx	168	fontSize: 12	suppliers
+raw	app/(app)/suppliers/supplier-performance-tab.tsx	169	fontSize: 12	suppliers
+raw	app/(app)/suppliers/supplier-purchases-tab.tsx	65	fontSize: 12	suppliers
+raw	app/(app)/suppliers/supplier-purchases-tab.tsx	66	fontSize: 12	suppliers
+bypass	app/(app)/suppliers/supplier-purchases-tab.tsx	85	<button>	suppliers
+bypass	app/(app)/suppliers/top-suppliers.tsx	20	<button>	suppliers
+candidate	app/forgot-password/page.tsx	6	@/components/submit-button (G-03)	auth
+bypass	app/forgot-password/page.tsx	63	<input>	auth
+bypass	app/kitchen-quote/[id]/page.tsx	34	<button>	kitchen-quote
+palette	app/kitchen-quote/[id]/page.tsx	38	text-slate-900	kitchen-quote
+palette	app/kitchen-quote/[id]/page.tsx	44	text-slate-600	kitchen-quote
+palette	app/kitchen-quote/[id]/page.tsx	45	text-slate-600	kitchen-quote
+palette	app/kitchen-quote/[id]/page.tsx	51	text-slate-500	kitchen-quote
+palette	app/kitchen-quote/[id]/page.tsx	54	text-slate-600	kitchen-quote
+palette	app/kitchen-quote/[id]/page.tsx	57	text-slate-500	kitchen-quote
+palette	app/kitchen-quote/[id]/page.tsx	59	text-slate-600	kitchen-quote
+palette	app/kitchen-quote/[id]/page.tsx	64	bg-slate-50	kitchen-quote
+palette	app/kitchen-quote/[id]/page.tsx	64	text-slate-500	kitchen-quote
+palette	app/kitchen-quote/[id]/page.tsx	72	border-slate-900	kitchen-quote
+palette	app/kitchen-quote/[id]/page.tsx	76	text-slate-600	kitchen-quote
+palette	app/kitchen-quote/[id]/page.tsx	83	text-slate-500	kitchen-quote
+candidate	app/login/page.tsx	6	@/components/submit-button (G-03)	auth
+bypass	app/login/page.tsx	53	<input>	auth
+bypass	app/login/page.tsx	74	<input>	auth
+candidate	app/reset-password/reset-password-form.tsx	6	@/components/submit-button (G-03)	auth
+bypass	app/reset-password/reset-password-form.tsx	86	<input>	auth
+bypass	app/reset-password/reset-password-form.tsx	109	<input>	auth
+bypass	components/analytics-compare-tab.tsx	160	<button>	shared-components
+raw	components/analytics-compare-tab.tsx	165	rounded-[calc(var(--radius)-2px)]	shared-components
+bypass	components/analytics-compare-tab.tsx	179	<button>	shared-components
+raw	components/analytics-compare-tab.tsx	184	rounded-[calc(var(--radius)-2px)]	shared-components
+bypass	components/analytics-compare-tab.tsx	199	<button>	shared-components
+raw	components/analytics-compare-tab.tsx	204	rounded-[calc(var(--radius)-2px)]	shared-components
+raw	components/analytics-compare-tab.tsx	215	grid-cols-[1fr_auto_1fr]	shared-components
+bypass	components/analytics-compare-tab.tsx	218	<select>	shared-components
+bypass	components/analytics-compare-tab.tsx	232	<select>	shared-components
+bypass	components/analytics-compare-tab.tsx	288	<button>	shared-components
+raw	components/analytics-compare-tab.tsx	292	rounded-[calc(var(--radius)-2px)]	shared-components
+bypass	components/analytics-compare-tab.tsx	296	<button>	shared-components
+raw	components/analytics-compare-tab.tsx	300	rounded-[calc(var(--radius)-2px)]	shared-components
+bypass	components/analytics-compare-tab.tsx	305	<button>	shared-components
+raw	components/analytics-compare-tab.tsx	317	h-[360px]	shared-components
+raw	components/analytics-compare-tab.tsx	329	fontSize: 12	shared-components
+raw	components/analytics-compare-tab.tsx	330	fontSize: 12	shared-components
+raw	components/analytics-compare-tab.tsx	340	fontSize: 12	shared-components
+raw	components/analytics-compare-tab.tsx	358	grid-cols-[1fr_auto_auto]	shared-components
+raw	components/analytics-compare-tab.tsx	358	grid-cols-[minmax(120px,1fr)_1fr_1fr]	shared-components
+raw	components/brand/brand-mark.tsx	22	text-[#00A228]	shared-components
+candidate	components/confirm-preview-modal.tsx	4	@/components/submit-button (G-03)	shared-components
+raw	components/confirm-preview-modal.tsx	40	max-h-[90vh]	shared-components
+bypass	components/confirm-preview-modal.tsx	48	<button>	shared-components
+bypass	components/confirm-preview-modal.tsx	87	<button>	shared-components
+bypass	components/credits/credit-forms.tsx	30	<input>	shared-components
+bypass	components/credits/credit-forms.tsx	42	<button>	shared-components
+bypass	components/credits/credit-forms.tsx	50	<button>	shared-components
+bypass	components/credits/credit-forms.tsx	66	<input>	shared-components
+bypass	components/credits/credit-forms.tsx	237	<textarea>	shared-components
+bypass	components/credits/credit-item-card.tsx	61	<button>	shared-components
+bypass	components/credits/credit-item-card.tsx	66	<button>	shared-components
+bypass	components/credits/credit-item-card.tsx	71	<button>	shared-components
+bypass	components/credits/credit-item-card.tsx	76	<button>	shared-components
+bypass	components/credits/customer-credit-sheet.tsx	99	<button>	shared-components
+candidate	components/hub-scope-filter.tsx	6	@/components/filter-select (G-01)	shared-components
+bypass	components/hub-scope-filter.tsx	78	<button>	shared-components
+raw	components/hub-scope-filter.tsx	82	rounded-[calc(var(--radius)-2px)]	shared-components
+bypass	components/hub-scope-filter.tsx	92	<button>	shared-components
+raw	components/hub-scope-filter.tsx	97	rounded-[calc(var(--radius)-2px)]	shared-components
+bypass	components/insight-button.tsx	13	<button>	shared-components
+bypass	components/insight-button.tsx	29	<button>	shared-components
+raw	components/kitchen-analytics-tab.tsx	73	h-[280px]	shared-components
+raw	components/kitchen-analytics-tab.tsx	82	paddingTop: 8	shared-components
+raw	components/layout/sidebar.tsx	152	transition-[transform,visibility,width]	shared
+raw	components/layout/sidebar.tsx	152	w-[260px]	shared
+raw	components/layout/sidebar.tsx	154	w-[68px]	shared
+bypass	components/layout/sidebar.tsx	165	<button>	shared
+bypass	components/layout/sidebar.tsx	180	<button>	shared
+raw	components/layout/sidebar.tsx	208	text-[13px]	shared
+bypass	components/layout/sidebar.tsx	232	<button>	shared
+raw	components/layout/sidebar.tsx	238	text-[13px]	shared
+raw	components/layout/sidebar.tsx	273	text-[13px]	shared
+raw	components/layout/sidebar.tsx	281	w-[244px]	shared
+bypass	components/layout/sidebar.tsx	322	<button>	shared
+bypass	components/pos-payment-settings.tsx	44	<button>	shared-components
+bypass	components/product-image-editor.tsx	105	<input>	shared-components
+bypass	components/product-image-editor.tsx	110	<button>	shared-components
+bypass	components/product-image-editor.tsx	111	<button>	shared-components
+bypass	components/product-image-editor.tsx	112	<button>	shared-components
+bypass	components/product-image-editor.tsx	117	<input>	shared-components
+bypass	components/product-image-editor.tsx	118	<button>	shared-components
+bypass	components/searchable-customer-select.tsx	90	<input>	shared-components
+bypass	components/searchable-customer-select.tsx	120	<button>	shared-components
+bypass	components/searchable-customer-select.tsx	142	<button>	shared-components
+bypass	components/sku-multi-select.tsx	99	<button>	shared-components
+bypass	components/sku-multi-select.tsx	117	<button>	shared-components
+raw	components/sku-multi-select.tsx	121	max-w-[180px]	shared-components
+raw	components/sku-multi-select.tsx	132	max-w-[80vw]	shared-components
+bypass	components/sku-multi-select.tsx	133	<input>	shared-components
+bypass	components/sku-multi-select.tsx	148	<button>	shared-components
+bypass	components/sku-multi-select.tsx	167	<input>	shared-components
+bypass	components/sku-multi-select.tsx	187	<button>	shared-components
+bypass	components/submit-button.tsx	26	<button>	shared-components
+candidate	components/till-registration.tsx	7	@/components/filter-select (G-01)	shared-components
+raw	components/till-registration.tsx	66	tracking-[0.25em]	shared-components
+bypass	contexts/crm-notifications-context.tsx	174	<button>	shared
+raw	contexts/crm-notifications-context.tsx	192	w-[min(22rem,calc(100vw-2rem))]	shared
+bypass	contexts/crm-notifications-context.tsx	198	<button>	shared
+bypass	contexts/crm-notifications-context.tsx	231	<button>	shared
+raw	lib/format.ts	66	fontSize: 12	shared
+palette	lib/kitchen-types.ts	257	bg-green-100	shared
+palette	lib/kitchen-types.ts	257	bg-green-900	shared
+palette	lib/kitchen-types.ts	257	text-green-400	shared
+palette	lib/kitchen-types.ts	257	text-green-800	shared
+palette	lib/kitchen-types.ts	258	bg-yellow-100	shared
+palette	lib/kitchen-types.ts	258	bg-yellow-900	shared
+palette	lib/kitchen-types.ts	258	text-yellow-400	shared
+palette	lib/kitchen-types.ts	258	text-yellow-800	shared
+palette	lib/kitchen-types.ts	259	bg-orange-100	shared
+palette	lib/kitchen-types.ts	259	bg-orange-900	shared
+palette	lib/kitchen-types.ts	259	text-orange-400	shared
+palette	lib/kitchen-types.ts	259	text-orange-800	shared
+palette	lib/kitchen-types.ts	264	bg-blue-100	shared
+palette	lib/kitchen-types.ts	264	bg-blue-900	shared
+palette	lib/kitchen-types.ts	264	text-blue-400	shared
+palette	lib/kitchen-types.ts	264	text-blue-800	shared
+palette	lib/kitchen-types.ts	265	bg-red-100	shared
+palette	lib/kitchen-types.ts	265	bg-red-900	shared
+palette	lib/kitchen-types.ts	265	text-red-400	shared
+palette	lib/kitchen-types.ts	265	text-red-800	shared
+palette	lib/kitchen-types.ts	266	bg-amber-100	shared
+palette	lib/kitchen-types.ts	266	bg-amber-900	shared
+palette	lib/kitchen-types.ts	266	text-amber-400	shared
+palette	lib/kitchen-types.ts	266	text-amber-800	shared
+palette	lib/kitchen-types.ts	267	bg-orange-100	shared
+palette	lib/kitchen-types.ts	267	bg-orange-900	shared
+palette	lib/kitchen-types.ts	267	text-orange-400	shared
+palette	lib/kitchen-types.ts	267	text-orange-800	shared
+palette	lib/kitchen-types.ts	268	bg-green-100	shared
+palette	lib/kitchen-types.ts	268	bg-green-900	shared
+palette	lib/kitchen-types.ts	268	text-green-400	shared
+palette	lib/kitchen-types.ts	268	text-green-800	shared
+palette	lib/kitchen-types.ts	269	bg-emerald-100	shared
+palette	lib/kitchen-types.ts	269	bg-emerald-900	shared
+palette	lib/kitchen-types.ts	269	text-emerald-400	shared
+palette	lib/kitchen-types.ts	269	text-emerald-800	shared
+palette	lib/kitchen-types.ts	270	bg-slate-100	shared
+palette	lib/kitchen-types.ts	270	bg-slate-800	shared
+palette	lib/kitchen-types.ts	270	text-slate-300	shared
+palette	lib/kitchen-types.ts	270	text-slate-700	shared
+palette	lib/kitchen-types.ts	271	bg-slate-100	shared
+palette	lib/kitchen-types.ts	271	bg-slate-800	shared
+palette	lib/kitchen-types.ts	271	text-slate-300	shared
+palette	lib/kitchen-types.ts	271	text-slate-700	shared
+palette	lib/kitchen-types.ts	272	bg-red-50	shared
+palette	lib/kitchen-types.ts	272	bg-red-900	shared
+palette	lib/kitchen-types.ts	272	text-red-400	shared
+palette	lib/kitchen-types.ts	272	text-red-700	shared
+raw	lib/product-categories.ts	27	#0891b2	shared
+raw	lib/product-categories.ts	28	#0e7490	shared
+raw	lib/product-categories.ts	29	#ea580c	shared
+raw	lib/product-categories.ts	30	#7c3aed	shared
+raw	lib/product-categories.ts	31	#b91c1c	shared
+raw	lib/product-categories.ts	32	#991b1b	shared
+raw	lib/product-categories.ts	33	#7f1d1d	shared
+raw	lib/product-categories.ts	34	#9f1239	shared
+raw	lib/product-categories.ts	35	#dc2626	shared
+raw	lib/product-categories.ts	36	#ca8a04	shared
+raw	lib/product-categories.ts	37	#16a34a	shared
+raw	lib/product-categories.ts	38	#15803d	shared
+raw	lib/product-categories.ts	39	#2563eb	shared
+raw	lib/product-categories.ts	40	#3b82f6	shared
+raw	lib/product-categories.ts	41	#1d4ed8	shared
+raw	lib/product-categories.ts	42	#1e40af	shared
+raw	lib/product-categories.ts	43	#f59e0b	shared
+raw	lib/product-categories.ts	44	#db2777	shared
+raw	lib/product-categories.ts	45	#a855f7	shared
+raw	lib/product-categories.ts	46	#6b7280	shared
+palette	lib/settings-helpers.ts	6	bg-red-100	shared
+palette	lib/settings-helpers.ts	6	bg-red-900	shared
+palette	lib/settings-helpers.ts	6	text-red-400	shared
+palette	lib/settings-helpers.ts	6	text-red-700	shared
+palette	lib/settings-helpers.ts	7	bg-blue-100	shared
+palette	lib/settings-helpers.ts	7	bg-blue-900	shared
+palette	lib/settings-helpers.ts	7	text-blue-400	shared
+palette	lib/settings-helpers.ts	7	text-blue-700	shared
+palette	lib/settings-helpers.ts	8	bg-emerald-100	shared
+palette	lib/settings-helpers.ts	8	bg-emerald-900	shared
+palette	lib/settings-helpers.ts	8	text-emerald-400	shared
+palette	lib/settings-helpers.ts	8	text-emerald-700	shared
+palette	lib/settings-helpers.ts	9	bg-purple-100	shared
+palette	lib/settings-helpers.ts	9	bg-purple-900	shared
+palette	lib/settings-helpers.ts	9	text-purple-400	shared
+palette	lib/settings-helpers.ts	9	text-purple-700	shared
+palette	lib/settings-helpers.ts	10	bg-amber-100	shared
+palette	lib/settings-helpers.ts	10	bg-amber-900	shared
+palette	lib/settings-helpers.ts	10	text-amber-400	shared
+palette	lib/settings-helpers.ts	10	text-amber-800	shared
+palette	lib/settings-helpers.ts	11	bg-orange-100	shared
+palette	lib/settings-helpers.ts	11	bg-orange-900	shared
+palette	lib/settings-helpers.ts	11	text-orange-400	shared
+palette	lib/settings-helpers.ts	11	text-orange-800	shared
+palette	lib/settings-helpers.ts	22	bg-slate-100	shared
+palette	lib/settings-helpers.ts	22	bg-slate-800	shared
+palette	lib/settings-helpers.ts	22	text-slate-300	shared
+palette	lib/settings-helpers.ts	22	text-slate-700	shared
+palette	lib/settings-helpers.ts	43	bg-yellow-500	shared
+palette	lib/settings-helpers.ts	44	bg-green-500	shared
+palette	lib/settings-helpers.ts	49	bg-yellow-500	shared
+palette	lib/settings-helpers.ts	49	text-yellow-400	shared
+palette	lib/settings-helpers.ts	49	text-yellow-600	shared
+palette	lib/settings-helpers.ts	50	text-green-400	shared
+palette	lib/settings-helpers.ts	50	text-green-600	shared

@@ -1,0 +1,13 @@
+components/ui/**
+components/app/**
+components/brand/**
+app/globals.css
+package.json
+package-lock.json
+pnpm-lock.yaml
+.migration/**
+.design-system/**
+.storybook/**
+**/*.stories.tsx
+docs/system/**
+scripts/**
