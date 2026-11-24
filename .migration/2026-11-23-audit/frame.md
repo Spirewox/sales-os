@@ -1,6 +1,6 @@
 # Frame: Sales OS CRM (fudfarmer-crm-next) to its kit (components/app + components/ui)
 
-Mode: audit (read-only). The ask ("create a design system from the Ui update and put it on storybook") does not name the migration, so no surface is edited; the migration is offered with its size in plan.md.
+Mode: edit since 2026-11-24 00:05 (boss brief .design-system/boss/briefs/migrate-edit.1.md, clearance "Go, 4h" at 23:38; decision row 2026-11-24T00:05). Before that: audit (read-only). The ask ("create a design system from the Ui update and put it on storybook") does not name the migration, so no surface is edited; the migration is offered with its size in plan.md.
 Coordinator: design-system-boss, step 2 of the Harden route (brief .design-system/boss/briefs/migrate-audit.1.md). This step ran as one agent with no workers (standing order 8), on a host with subagents.
 
 Done when (audit): plan.md exists with counts that match inventory/counts.txt, the legacy list (legacy.txt) and the gates (gates.md), the inventory script runs twice with identical output, and every finding has a surface (unassigned 0).
@@ -22,3 +22,11 @@ Run branch: ds/2026-11-23-harden, the boss's run branch, from jeph/new-branch-fr
 May look broken mid-run: nothing (no edits)
 Platform: subagents available; none spawned by this step (agents.tsv is empty by design)
 Criteria: the visual rules in the header comment of app/globals.css, the person's earlier decisions in standing-orders.md, and the specs under docs/system/ once the harden step lands them.
+
+## Edit run (2026-11-24, from 00:05)
+Re-pinned at 97369efb07f4 (inventory/pin.txt); legacy.txt reconciled with registry.json there (SubmitButton legacy; FilterSelect canonical; HubScopeFilter and ConfirmPreviewModal compositions).
+Budget: was edits until 03:00, return by 03:10; the session stalled from 00:01 to 09:54 (machine load) and ended with no edits. Resumed on the person's "Resume migration" (2026-11-24 11:06): edits until 14:00 local, close and return by 14:10 (coordinator resume message). Stop spawning new surface workers at 13:20.
+Window cap: 3 editing workers at once, plus one independent verifier per surface (boss brief). Workers share this checkout on disjoint paths and commit only their own paths (`git add <paths>`), one commit per surface, on ds/2026-11-23-harden (decision 2026-11-24T00:10).
+Baselines: baselines/before at 97369ef, load state plus a drawer state on audit, customers, inventory, kitchen, sales and suppliers, 390 and 1280, light and dark (theme via media; next-themes defaultTheme system). Other listed states not captured: no states module reaches empty, error or loading on the mock backend.
+Predicate for this run: as above; palette in predicate yes; bypasses report-only (G-12 B).
+Blocking rule: node scripts/check-system.mjs (rule/deprecated-import and rule/arbitrary-value against scripts/check-allowlist.json, which only shrinks).

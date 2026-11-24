@@ -1,9 +1,8 @@
-# Legacy UI for the migration to components/app (kit) + components/ui (primitives), fd336f4.
-# No registry.json or migration map exists at the pin, so nothing is confirmed legacy yet
-# (inventory.md, Reconcile with the build's registry). Each duplicate the triage or this audit
-# found is a report-only candidate until its gate is decided; a decided gate turns its line into
-# "module <specifier>" and the count joins the predicate.
-candidate @/components/filter-select G-01
-candidate @/components/hub-scope-filter G-01
-candidate @/components/confirm-preview-modal G-02
-candidate @/components/submit-button G-03
+# Legacy UI for the migration to components/app (kit) + components/ui (primitives).
+# Re-pinned at 97369ef and reconciled with registry.json there (inventory.md, Reconcile with the build's registry):
+# - Button lists components/submit-button.tsx under `replaces` (H-03), so SubmitButton is legacy (G-03 done).
+# - FilterSelect is registered with source components/filter-select.tsx and exported from the barrel (G-01 done):
+#   it is the canonical member, not legacy. Its deep import path is repointed to "@/components/app" as an identical swap.
+# - HubScopeFilter and ConfirmPreviewModal are product compositions (H-G6, G-02 default A): not legacy.
+module @/components/submit-button
+path components/submit-button.tsx
