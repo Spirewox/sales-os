@@ -1,0 +1,588 @@
+{
+ "url": "/analytics?tab=suppliers",
+ "width": 390,
+ "height": 900,
+ "controls": [
+  {
+   "key": "button \"Open menu\"",
+   "role": "button",
+   "name": "Open menu",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": "false",
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 12,
+    "y": 10,
+    "w": 36,
+    "h": 36
+   }
+  },
+  {
+   "key": "button \"Notifications\"",
+   "role": "button",
+   "name": "Notifications",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": "false",
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 342,
+    "y": 10,
+    "w": 36,
+    "h": 36
+   }
+  },
+  {
+   "key": "combobox \"Analytics sections\"",
+   "role": "combobox",
+   "name": "Analytics sections",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": "false",
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 16,
+    "y": 164,
+    "w": 358,
+    "h": 40
+   }
+  },
+  {
+   "key": "textbox \"\"",
+   "role": "textbox",
+   "name": "",
+   "tag": "input",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": null,
+   "box": {
+    "x": -1,
+    "y": -1,
+    "w": 1,
+    "h": 1
+   }
+  },
+  {
+   "key": "combobox \"Location\"",
+   "role": "combobox",
+   "name": "Location",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": "false",
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 16,
+    "y": 237,
+    "w": 160,
+    "h": 36
+   }
+  },
+  {
+   "key": "textbox \"\" #2",
+   "role": "textbox",
+   "name": "",
+   "tag": "input",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": null,
+   "box": {
+    "x": -1,
+    "y": -1,
+    "w": 1,
+    "h": 1
+   }
+  },
+  {
+   "key": "button \"Period: Last 30 days\"",
+   "role": "button",
+   "name": "Period: Last 30 days",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": "false",
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 184,
+    "y": 237,
+    "w": 155,
+    "h": 36
+   }
+  },
+  {
+   "key": "link \"Suppliers used\"",
+   "role": "link",
+   "name": "Suppliers used",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/suppliers",
+   "box": {
+    "x": 17,
+    "y": 423,
+    "w": 178,
+    "h": 104
+   }
+  },
+  {
+   "key": "link \"Open issues\"",
+   "role": "link",
+   "name": "Open issues",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/suppliers?show=issues",
+   "box": {
+    "x": 196,
+    "y": 423,
+    "w": 178,
+    "h": 104
+   }
+  },
+  {
+   "key": "radio \"By day\"",
+   "role": "radio",
+   "name": "By day",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 40,
+    "y": 614,
+    "w": 58,
+    "h": 32
+   }
+  },
+  {
+   "key": "radio \"By week\"",
+   "role": "radio",
+   "name": "By week",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 98,
+    "y": 614,
+    "w": 68,
+    "h": 32
+   }
+  },
+  {
+   "key": "link \"Open suppliers\"",
+   "role": "link",
+   "name": "Open suppliers",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/suppliers",
+   "box": {
+    "x": 275,
+    "y": 2075,
+    "w": 99,
+    "h": 20
+   }
+  }
+ ],
+ "headings": [
+  {
+   "key": "heading \"Analytics\"",
+   "level": "1",
+   "text": "Analytics"
+  },
+  {
+   "key": "heading \"Spend over time\"",
+   "level": "3",
+   "text": "Spend over time"
+  },
+  {
+   "key": "heading \"Spend by supplier\"",
+   "level": "3",
+   "text": "Spend by supplier"
+  },
+  {
+   "key": "heading \"Spend by category\"",
+   "level": "3",
+   "text": "Spend by category"
+  },
+  {
+   "key": "heading \"Biggest cost changes\"",
+   "level": "3",
+   "text": "Biggest cost changes"
+  },
+  {
+   "key": "heading \"Open issues by type\"",
+   "level": "3",
+   "text": "Open issues by type"
+  },
+  {
+   "key": "heading \"Supplier scorecard\"",
+   "level": "3",
+   "text": "Supplier scorecard"
+  }
+ ],
+ "texts": [
+  {
+   "key": "p \"Analytics\"",
+   "color": "#ecefed",
+   "bg": "#050b07",
+   "ratio": 17.15,
+   "large": false,
+   "size": 16,
+   "weight": 600
+  },
+  {
+   "key": "h1 \"Analytics\"",
+   "color": "#ecefed",
+   "bg": "#050b07",
+   "ratio": 17.15,
+   "large": true,
+   "size": 24,
+   "weight": 600
+  },
+  {
+   "key": "p \"Trends in sales, products, customers, cr\"",
+   "color": "#b0bab3",
+   "bg": "#050b07",
+   "ratio": 9.95,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "span \"Suppliers\"",
+   "color": "#ecefed",
+   "bg": "#0e1510",
+   "ratio": 16.03,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "svg \"▼\"",
+   "color": "#b0bab3",
+   "bg": "#0e1510",
+   "ratio": 9.3,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"All locations\"",
+   "color": "#ecefed",
+   "bg": "#0e1510",
+   "ratio": 16.03,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "svg \"▼\" #2",
+   "color": "#b0bab3",
+   "bg": "#0e1510",
+   "ratio": 9.3,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"Last 30 days\"",
+   "color": "#ecefed",
+   "bg": "#050b07",
+   "ratio": 17.15,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"3 Dec to 1 Jan 2026\"",
+   "color": "#b0bab3",
+   "bg": "#050b07",
+   "ratio": 9.95,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"Spend\"",
+   "color": "#b0bab3",
+   "bg": "#0e1611",
+   "ratio": 9.22,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"Purchase orders\"",
+   "color": "#b0bab3",
+   "bg": "#0e1611",
+   "ratio": 9.22,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"Suppliers used\"",
+   "color": "#b0bab3",
+   "bg": "#0e1611",
+   "ratio": 9.22,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"Open issues\"",
+   "color": "#b0bab3",
+   "bg": "#0e1611",
+   "ratio": 9.22,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "h3 \"Spend over time\"",
+   "color": "#ecefed",
+   "bg": "#0e1611",
+   "ratio": 15.89,
+   "large": false,
+   "size": 14,
+   "weight": 600
+  },
+  {
+   "key": "p \"Purchases recorded in this period\"",
+   "color": "#b0bab3",
+   "bg": "#0e1611",
+   "ratio": 9.22,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "button \"By day\"",
+   "color": "#b0bab3",
+   "bg": "#121a15",
+   "ratio": 8.88,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "button \"By week\"",
+   "color": "#e0e6e1",
+   "bg": "#19281c",
+   "ratio": 12.17,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "h3 \"Spend by supplier\"",
+   "color": "#ecefed",
+   "bg": "#0e1611",
+   "ratio": 15.89,
+   "large": false,
+   "size": 14,
+   "weight": 600
+  },
+  {
+   "key": "p \"Who you bought the most from\"",
+   "color": "#b0bab3",
+   "bg": "#0e1611",
+   "ratio": 9.22,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "h3 \"Spend by category\"",
+   "color": "#ecefed",
+   "bg": "#0e1611",
+   "ratio": 15.89,
+   "large": false,
+   "size": 14,
+   "weight": 600
+  },
+  {
+   "key": "p \"What the money went on\"",
+   "color": "#b0bab3",
+   "bg": "#0e1611",
+   "ratio": 9.22,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "h3 \"Biggest cost changes\"",
+   "color": "#ecefed",
+   "bg": "#0e1611",
+   "ratio": 15.89,
+   "large": false,
+   "size": 14,
+   "weight": 600
+  },
+  {
+   "key": "p \"Unit cost at the first and last purchase\"",
+   "color": "#b0bab3",
+   "bg": "#0e1611",
+   "ratio": 9.22,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "h3 \"Open issues by type\"",
+   "color": "#ecefed",
+   "bg": "#0e1611",
+   "ratio": 15.89,
+   "large": false,
+   "size": 14,
+   "weight": 600
+  },
+  {
+   "key": "p \"Unresolved supplier issues, all time\"",
+   "color": "#b0bab3",
+   "bg": "#0e1611",
+   "ratio": 9.22,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "div \"No open issues\"",
+   "color": "#b0bab3",
+   "bg": "#0e1611",
+   "ratio": 9.22,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "h3 \"Supplier scorecard\"",
+   "color": "#ecefed",
+   "bg": "#050b07",
+   "ratio": 17.15,
+   "large": false,
+   "size": 14,
+   "weight": 600
+  },
+  {
+   "key": "a \"Open suppliers\"",
+   "color": "#03a14a",
+   "bg": "#050b07",
+   "ratio": 5.86,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"Built from purchase records for the sele\"",
+   "color": "#b0bab3",
+   "bg": "#050b07",
+   "ratio": 9.95,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  }
+ ],
+ "links": [
+  {
+   "key": "link \"Open suppliers\"",
+   "color": "#03a14a",
+   "textColor": "#ecefed",
+   "underline": false,
+   "cue": true
+  }
+ ],
+ "heightMismatch": [],
+ "wrappedButtons": [],
+ "flatSurfaces": [],
+ "clipped": [],
+ "tallOverlays": [],
+ "textMeasure": [],
+ "reducedMotion": true,
+ "motion": []
+}

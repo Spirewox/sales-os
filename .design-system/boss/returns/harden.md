@@ -1,0 +1,3 @@
+Status: partial (pilot captures not taken: dev server was down during the step)
+Commit: b6c511e
+Files: .storybook/{main.ts,preview.tsx}; stories/foundations/*, stories/app-kit/*.stories.tsx (19), stories/primitives/*.stories.tsx (7); package.json/lock (storybook 10.6.8, @storybook/nextjs, addon-docs, addon-themes, webpack 5.106.0); scripts/{check.mjs,check-system.mjs,check-spec.mjs,gen-docs.mjs,props-table.mjs,copy-check.mjs,oklch.mjs,*.json}; registry.json (27); components/app/index.ts (FilterSelect export); docs/system/ (13 specs + examples + rule-tests); public/system/*, public/llms.txt; AGENTS.md block; app/(app)/audit/{page.tsx,audit-drawer.tsx}; .design-system/{run.md,close.md}

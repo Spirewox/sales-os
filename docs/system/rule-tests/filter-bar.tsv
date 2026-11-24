@@ -1,0 +1,9 @@
+rule_id	falsify	negation	two_agent	sweep	verdict	notes
+rule/filter-bar-more-field	pass	pass	n/a: falsify and sweep cover it	pass	ship	Falsify by self-review of the Don't snippet; sweep rg <MoreFilterField across the 8 bars with more, 0 strays
+rule/filter-bar-more-count	pass	pass	n/a: falsify and sweep cover it	pass	ship	Sweep: 8 of 8 bars with more= also pass moreActiveCount
+rule/filter-bar-clear-all	pass	pass	n/a: falsify and sweep cover it	pass	ship	Sweep 8 of 11 bars with chips pass onClearAll; strays requests-tab.tsx:141, stock-tab.tsx:176, users-section.tsx:114
+rule/filter-bar-search-label	pass	pass	n/a: falsify and sweep cover it	pass	ship	Sweep: 17 of 18 set label distinct from placeholder; stray pos-filter-bar.tsx:27 reuses placeholder
+rule/filter-bar-chip-label	pass	pass	n/a: falsify and sweep cover it	pass	ship	Sweep rg label: in chips; strays audit/page.tsx:133, stock-tab.tsx:145
+rule/filter-bar-result-label	pass	pass	n/a: falsify and sweep cover it	pass	ship	Sweep rg resultLabel=: callers pass undefined while loading at jobs, ingredients, recipes, audit, stock, requests
+rule/filter-bar-no-hand-row	pass	pass	n/a: no fresh agents were run this session	pass	ship	Sweep rg type="search": one raw input at sales-filter-bar.tsx:82 inside a picker, listed as stray
+rule/filter-bar-trailing-actions	pass	pass	n/a: no fresh agents were run this session	n/a: trailing contents not swept this session	ship	Falsify by self-review

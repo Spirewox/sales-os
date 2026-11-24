@@ -1,0 +1,8 @@
+rule_id	falsify	negation	two_agent	sweep	verdict	notes
+rule/section-tabs-same-default	pass	pass	n/a: falsify and sweep cover it	pass	ship	Sweep rg useSectionTab( and <SectionTabs: 6 of 6 URL-mode bars pass the same default and param
+rule/section-tabs-nested-param	pass	pass	n/a: falsify and sweep cover it	pass	ship	Sweep: one nested bar, interactions.tsx:174, uses param view
+rule/section-tabs-local-controlled	pass	pass	n/a: falsify and sweep cover it	pass	ship	Sweep: 2 controlled bars, needs-attention.tsx:45 and pos/page.tsx:79, both fit the condition
+rule/section-tabs-hide-not-remove	pass	pass	n/a: falsify and sweep cover it	n/a: tab arrays filtered at call sites were not swept this session	ship	Falsify by self-review of the Don't snippet
+rule/section-tabs-label	pass	pass	n/a: falsify and sweep cover it	pass	ship	Sweep: 6 of 6 page header bars use {Page} sections; the card and nested bar name their group
+rule/section-tabs-count-tone	pass	pass	n/a: no fresh agents were run this session	pass	ship	Sweep rg countTone: 9 of 9 values match warning for pending or low, danger for overdue or out
+rule/section-tabs-no-hand-tablist	pass	pass	n/a: no fresh agents were run this session	pass	ship	Sweep rg role="tablist" outside components/app: one stray, kitchen/board.tsx:248

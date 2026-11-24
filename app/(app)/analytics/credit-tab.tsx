@@ -4,11 +4,11 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import type { AnalyticsOverviewData } from '@/types/api';
-import { CHART_TOOLTIP, formatAxisMoney, formatCount, formatDate, formatMoney, formatMoneyShort, plural } from '@/lib/format';
+import { CHART_TEXT, CHART_TOOLTIP, formatAxisMoney, formatCount, formatDate, formatMoney, formatMoneyShort, plural } from '@/lib/format';
 import type { Period } from '@/lib/period';
 import { DataTable, KpiStrip, StatusBadge, type Column, type KpiCell } from '@/components/app';
 import {
-  AXIS_TICK, BAR_CURSOR, ChartEmpty, LEGEND_STYLE, Panel, RankedBars, Seg, SourceNote, TabLayout, TwoCol,
+  AXIS_TICK, BAR_CURSOR, ChartEmpty, Panel, RankedBars, Seg, SourceNote, TabLayout, TwoCol,
   effectiveGrain, grainOptions, type Grain, type GrainOption,
 } from './analytics-ui';
 
@@ -83,7 +83,7 @@ export function CreditTab({ data, period }: Readonly<{ data: CreditData; period:
               <XAxis dataKey="month" axisLine={false} tickLine={false} tick={AXIS_TICK} minTickGap={16} />
               <YAxis axisLine={false} tickLine={false} tick={AXIS_TICK} width={56} tickFormatter={(v) => formatAxisMoney(Number(v))} />
               <Tooltip {...CHART_TOOLTIP} cursor={BAR_CURSOR} formatter={(v) => formatMoney(Number(v))} />
-              <Legend iconType="circle" iconSize={8} wrapperStyle={{ ...LEGEND_STYLE, paddingTop: 8 }} />
+              <Legend iconType="circle" iconSize={8} wrapperStyle={CHART_TEXT.legendBelow} />
               <Bar dataKey="issued" name="Issued" fill="var(--series-2)" radius={[4, 4, 0, 0]} maxBarSize={18} />
               <Bar dataKey="cleared" name="Cleared" fill="var(--series-1)" radius={[4, 4, 0, 0]} maxBarSize={18} />
             </BarChart>

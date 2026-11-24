@@ -246,6 +246,49 @@
 .brand-loader-petal[data-petal="10"] { animation-delay: 220ms; }
 .brand-loader-petal[data-petal="11"] { animation-delay: 260ms; }
 
+
+/* Sign-in brand panel (components/auth/auth-shell.tsx).
+   The large mark fades up and then turns very slowly; the yellow flower blooms petal by petal,
+   then turns and sways. All of it stops under reduced motion. */
+@keyframes auth-fade-up {
+  from { opacity: 0; transform: scale(0.94); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes auth-turn {
+  to { transform: rotate(360deg); }
+}
+@keyframes auth-sway {
+  from { transform: translateY(0) rotate(-6deg); }
+  to { transform: translateY(-8%) rotate(8deg); }
+}
+@keyframes auth-petal-bloom {
+  from { opacity: 0; transform: scale(0.2) rotate(-30deg); }
+  to { opacity: 1; transform: none; }
+}
+
+.auth-mark-in { animation: auth-fade-up 1.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.auth-turn-slow { animation: auth-turn 240s linear infinite; }
+.auth-turn { animation: auth-turn 90s linear infinite; }
+.auth-sway { animation: auth-sway 7s ease-in-out 1.4s infinite alternate both; }
+
+.auth-bloom path {
+  transform-box: view-box;
+  transform-origin: 50% 50%;
+  animation: auth-petal-bloom 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.auth-bloom path:nth-child(1) { animation-delay: 300ms; }
+.auth-bloom path:nth-child(2) { animation-delay: 360ms; }
+.auth-bloom path:nth-child(3) { animation-delay: 420ms; }
+.auth-bloom path:nth-child(4) { animation-delay: 480ms; }
+.auth-bloom path:nth-child(5) { animation-delay: 540ms; }
+.auth-bloom path:nth-child(6) { animation-delay: 600ms; }
+.auth-bloom path:nth-child(7) { animation-delay: 660ms; }
+.auth-bloom path:nth-child(8) { animation-delay: 720ms; }
+.auth-bloom path:nth-child(9) { animation-delay: 780ms; }
+.auth-bloom path:nth-child(10) { animation-delay: 840ms; }
+.auth-bloom path:nth-child(11) { animation-delay: 900ms; }
+.auth-bloom path:nth-child(12) { animation-delay: 960ms; }
+
 @media (prefers-reduced-motion: reduce) {
   .brand-loader-petal {
     animation: none !important;
@@ -254,6 +297,14 @@
   }
 
   .skeleton-shimmer {
+    animation: none !important;
+  }
+
+  .auth-mark-in,
+  .auth-turn-slow,
+  .auth-turn,
+  .auth-sway,
+  .auth-bloom path {
     animation: none !important;
   }
 }

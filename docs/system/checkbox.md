@@ -1,0 +1,110 @@
+# Checkbox
+
+## Description
+Checkbox lets someone turn one option on or off, or pick several options from a list, where each choice stands on its own.
+
+`import { Checkbox } from "@/components/ui/checkbox"`, source `components/ui/checkbox.tsx`, status `ready-with-gaps`.
+Foundation: `shadcn checkbox (base-nova, base)` on `@base-ui/react/checkbox`. Traps checked: `trap/color-only-status` (States: a check mark or a dash shows the value, not the fill alone), `trap/reduced-motion-ignored` n/a because only `transition-colors` runs, `trap/motion-layout-property` (Motion: colours only), `trap/live-region-double` n/a because Checkbox announces only its own state, `trap/decor-pointer` n/a because Checkbox draws no decoration over a control.
+
+### Foundation
+| Given by the foundation | Added by the team |
+|---|---|
+| base-ui `Checkbox.Root` and `Checkbox.Indicator`: a `span` with `role="checkbox"`, `aria-checked` (true, false or mixed), a hidden native `input` for forms, and the `data-checked`, `data-unchecked`, `data-indeterminate` and `data-disabled` attributes | A `MinusIcon` for the indeterminate state beside the `CheckIcon`, chosen by `group-data-indeterminate`, since base-ui shows the indicator for both states |
+| shadcn base-nova classes: `size-4` box, `border-input`, `data-checked:bg-primary`, focus ring and `aria-invalid` styles | The radius is `rounded-sm` from the scale instead of an arbitrary 4px value, and the icon size is set on each icon (`size-3.5`) |
+
+## Examples
+Default: `docs/system/examples/checkbox/default.tsx`.
+
+Real uses, 1 call site: the figure chips of the Analytics Locations head to head, `app/(app)/analytics/location-head-to-head.tsx:187`, each a Checkbox inside its own `<label>`. The app still draws 16 raw native checkboxes instead (`rg -n 'type="checkbox"' app components lib --glob '*.tsx'`), such as `components/app/data-table.tsx:159`, `app/(app)/sales/sales-filter-bar.tsx:87` and `app/(app)/kitchen/settings.tsx:130`. Moving them onto Checkbox is migration work, not part of this spec.
+
+### Example files
+| File | Covers | Caption |
+|---|---|---|
+| `docs/system/examples/checkbox/default.tsx` | default | A checkbox with a visible label joined by htmlFor, the way a filter option reads |
+| `docs/system/examples/checkbox/states.tsx` | state:checked | Checked, indeterminate, disabled and invalid checkboxes side by side, each with its own label |
+| `docs/system/examples/checkbox/states.tsx` | state:indeterminate | The same file, the "Select all on this page" row |
+| `docs/system/examples/checkbox/states.tsx` | state:disabled | The same file, the "Post sales when a job is complete" row |
+| `docs/system/examples/checkbox/states.tsx` | state:invalid | The same file, the "Confirm the stock count" row with its error line |
+| `docs/system/examples/checkbox/default.tsx` | composition:Label | The Label joined by `htmlFor`, so a click on the text toggles the box |
+
+## Variants
+Not applicable: Checkbox has no variant props. One size, `size-4`.
+
+## States
+| State | Trigger | What the user can do | Shown by, besides color | Checked by |
+|---|---|---|---|---|
+| Unchecked | Default, or `checked={false}` | Click or press Space to check it | An empty box with a border | screenshot |
+| Checked | A click, Space, `checked` or `defaultChecked` | Click or press Space to uncheck it | A check mark in the box | screenshot |
+| Indeterminate | `indeterminate` from the caller, such as a select-all box over a partial selection | Click to set every child, as the caller decides | A dash in the box, and `aria-checked="mixed"` | screenshot |
+| Focus visible | Keyboard focus | Press Space to toggle | A 3px ring round the box (`ring-3 ring-ring/50`) | screenshot |
+| Invalid | `aria-invalid` from the caller | Change the value | A red border and ring, and the caller's error text | screenshot |
+| Disabled | `disabled` | Nothing, it ignores clicks and keys | 50% opacity and a not-allowed cursor | screenshot |
+
+### State precedence
+- Indeterminate and checked: indeterminate wins. The dash shows and `aria-checked` is mixed.
+- Disabled and any other state: both show. The value stays visible at 50% opacity.
+- Invalid and checked: both show. The red ring sits round the filled box.
+
+### Motion
+| Trigger | Kind | Preset | Properties | Reduced motion |
+|---|---|---|---|---|
+| A change of value, focus or invalid state | input | `transition-colors`, Tailwind's 150ms default, no named preset | background-color, border-color, color | Not handled, a 150ms colour fade only (NEEDS REVIEW) |
+
+## Props
+gen-docs writes the table from `CheckboxPrimitive.Root.Props`. Checkbox adds no props of its own.
+- `checked`: the controlled value. Pair it with `onCheckedChange`.
+
+The base-ui `indeterminate` prop shows the dash and sets `aria-checked="mixed"`.
+
+## Usage
+
+### When to use
+- An option that someone turns on or off and that takes effect when the form is saved, such as "Include running costs".
+- A list where several options can be picked at once, such as filter options or table rows.
+
+### When not to use
+- A setting that takes effect the moment it changes. Use Switch instead.
+- One choice out of a list. Use Select instead.
+
+### Rules
+- Not applicable: Checkbox has 1 call site, too few for any rule to rest on app evidence yet. The raw-checkbox migration (G-04) brings the first ones.
+
+### Content
+- Not applicable: Checkbox renders no text. The label is the caller's Label, in sentence case, such as "Only show overdue jobs".
+
+### Anti-slop
+- Not applicable: no rule has app evidence yet. The 16 raw native checkboxes are counted under Examples.
+
+### Limits
+- Not applicable: no list length limit was measured this session.
+
+## Accessibility
+Rests on base-ui Checkbox: a `span` with `role="checkbox"` that takes focus, plus a hidden native `input` that carries the value into a form. It has no visible name of its own, so the caller joins a Label with `id` and `htmlFor`, or passes `aria-label`.
+
+### Keyboard
+| Key | Where focus is | Effect | Focus after | Checked by |
+|---|---|---|---|---|
+| Tab | Before the checkbox | Moves focus to it and draws the ring | The checkbox | by hand |
+| Space | On the checkbox | Toggles the value | The checkbox | by hand |
+
+### ARIA
+| Part | Role | Accessible name from | States and properties | Announced | Checked by |
+|---|---|---|---|---|---|
+| Root | checkbox | The joined Label, or `aria-label` | `aria-checked` true, false or mixed, `aria-invalid`, `aria-disabled` | Name, role and state, and the new state on toggle | by hand |
+| Indicator | none | None | None | Nothing | by hand |
+
+## Tokens
+| Part | State | Token |
+|---|---|---|
+| Box border | unchecked | `border-input` (`--input`) |
+| Box fill | checked, indeterminate | `bg-primary` (`--primary`) |
+| Box border | checked, indeterminate | `border-primary` (`--primary`) |
+| Mark | checked, indeterminate | `text-primary-foreground` (`--primary-foreground`) |
+| Focus ring | focus visible | `ring-ring/50` (`--ring` at 50%) |
+| Border and ring | invalid | `border-destructive`, `ring-destructive/20` (`--destructive`) |
+| Box radius | all | `rounded-sm` (`--radius-sm`) |
+
+## Related
+- Switch: for a setting that takes effect at once.
+- Label: names the checkbox through `htmlFor`.
+- DataTable: draws raw checkboxes for row selection today.

@@ -1,0 +1,1159 @@
+{
+  "app/(app)/_dashboard/category-panel.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 1
+    }
+  },
+  "app/(app)/_dashboard/dashboard-content.tsx": {
+    "rule/arbitrary-value": {
+      "max-w-[1400px]": 1
+    },
+    "trap/link-as-button": {
+      "<Link> sets a background and padding (bg-primary px-3.5)": 1,
+      "<Link> shares 4 classes with components/ui/button.tsx": 1
+    }
+  },
+  "app/(app)/_dashboard/panel.tsx": {
+    "trap/link-as-button": {
+      "<Link> shares 4 classes with components/ui/button.tsx": 1
+    }
+  },
+  "app/(app)/_dashboard/sales-panel.tsx": {
+    "rule/arbitrary-value": {
+      "h-[220px]": 1
+    }
+  },
+  "app/(app)/_dashboard/top-customers.tsx": {
+    "rule/arbitrary-value": {
+      "max-h-[260px]": 1,
+      "max-w-[220px]": 1
+    },
+    "trap/native-control": {
+      "<button> where the system has Button": 1
+    }
+  },
+  "app/(app)/analytics/analytics-ui.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 1
+    }
+  },
+  "app/(app)/analytics/credit-tab.tsx": {
+    "rule/arbitrary-value": {
+      "h-[280px]": 1
+    }
+  },
+  "app/(app)/analytics/customers-tab.tsx": {
+    "rule/arbitrary-value": {
+      "h-[280px]": 1,
+      "h-[300px]": 1
+    }
+  },
+  "app/(app)/analytics/explore-ask.tsx": {
+    "rule/arbitrary-value": {
+      "max-h-[520px]": 1
+    },
+    "trap/native-control": {
+      "<button> where the system has Button": 4,
+      "<input> where the system has Input": 1
+    }
+  },
+  "app/(app)/analytics/explore-build.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 3,
+      "<select> where the system has Select": 5
+    }
+  },
+  "app/(app)/analytics/explore-shared.tsx": {
+    "rule/arbitrary-value": {
+      "grid-cols-[minmax(280px,340px)_1fr]": 1,
+      "h-[320px]": 1
+    },
+    "trap/native-control": {
+      "<button> where the system has Button": 2
+    }
+  },
+  "app/(app)/analytics/explore-simulate.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 1,
+      "<input> where the system has Input": 1,
+      "<select> where the system has Select": 3
+    }
+  },
+  "app/(app)/analytics/inventory-tab.tsx": {
+    "rule/arbitrary-value": {
+      "h-[260px]": 1
+    }
+  },
+  "app/(app)/analytics/page.tsx": {
+    "rule/arbitrary-value": {
+      "max-w-[1400px]": 3
+    },
+    "trap/native-control": {
+      "<button> where the system has Button": 1
+    }
+  },
+  "app/(app)/analytics/products-tab.tsx": {
+    "rule/arbitrary-value": {
+      "h-[340px]": 1
+    }
+  },
+  "app/(app)/analytics/sales-tab.tsx": {
+    "rule/arbitrary-value": {
+      "h-[260px]": 2,
+      "h-[300px]": 1
+    },
+    "trap/native-control": {
+      "<button> where the system has Button": 1
+    }
+  },
+  "app/(app)/analytics/suppliers-tab.tsx": {
+    "rule/arbitrary-value": {
+      "h-[280px]": 1
+    }
+  },
+  "app/(app)/audit/audit-drawer.tsx": {
+    "rule/arbitrary-value": {
+      "max-h-[60dvh]": 2
+    }
+  },
+  "app/(app)/audit/page.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 1
+    }
+  },
+  "app/(app)/credits/page.tsx": {
+    "rule/arbitrary-value": {
+      "max-w-[1400px]": 1
+    },
+    "trap/native-control": {
+      "<button> where the system has Button": 1
+    }
+  },
+  "app/(app)/customers/customer-credit-tab.tsx": {
+    "trap/link-as-button": {
+      "<Link> sets a background and padding (bg-primary px-3)": 1
+    }
+  },
+  "app/(app)/customers/customer-form.tsx": {
+    "trap/native-control": {
+      "<input> where the system has Input": 6
+    }
+  },
+  "app/(app)/customers/customer-import-modal.tsx": {
+    "rule/arbitrary-value": {
+      "max-h-[90vh]": 1
+    },
+    "trap/native-control": {
+      "<button> where the system has Button": 4
+    }
+  },
+  "app/(app)/customers/customer-import-summary.tsx": {
+    "rule/arbitrary-value": {
+      "max-h-[90vh]": 1
+    },
+    "trap/native-control": {
+      "<button> where the system has Button": 2
+    }
+  },
+  "app/(app)/customers/customer-interactions-tab.tsx": {
+    "trap/link-as-button": {
+      "<Link> sets a background and padding (bg-background px-2.5)": 1
+    }
+  },
+  "app/(app)/customers/customer-more-filters.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 1,
+      "<input> where the system has Input": 1
+    }
+  },
+  "app/(app)/customers/customer-overview-tab.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 1
+    }
+  },
+  "app/(app)/customers/page.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 2
+    }
+  },
+  "app/(app)/engagement/churn.tsx": {
+    "rule/component-override": {
+      "<Skeleton> rounded-full": 1,
+      "<Skeleton> rounded-xl": 2
+    },
+    "trap/native-control": {
+      "<button> where the system has Button": 2
+    }
+  },
+  "app/(app)/engagement/compensation-drawer.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 1
+    }
+  },
+  "app/(app)/engagement/compensation-form.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 1,
+      "<input> where the system has Input": 3
+    }
+  },
+  "app/(app)/engagement/enquiry-drawer.tsx": {
+    "trap/loading-label-swap": {
+      "<button> label swaps on resolveEnquiry.isPending: 'Saving…' / 'Mark as closed'": 1
+    },
+    "trap/native-control": {
+      "<button> where the system has Button": 2
+    }
+  },
+  "app/(app)/engagement/enquiry-form.tsx": {
+    "trap/native-control": {
+      "<input> where the system has Input": 3
+    }
+  },
+  "app/(app)/engagement/enquiry-table.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 1
+    }
+  },
+  "app/(app)/engagement/feedback-drawer.tsx": {
+    "trap/loading-label-swap": {
+      "<button> label swaps on resolveFeedback.isPending: 'Saving…' / 'Mark resolved'": 1
+    },
+    "trap/native-control": {
+      "<button> where the system has Button": 4
+    }
+  },
+  "app/(app)/engagement/feedback-form.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 1,
+      "<input> where the system has Input": 1
+    }
+  },
+  "app/(app)/engagement/feedback-table.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 1
+    }
+  },
+  "app/(app)/engagement/interaction-insights.tsx": {
+    "rule/inline-px": {
+      "fontSize: 12": 1
+    }
+  },
+  "app/(app)/engagement/interactions.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 3
+    }
+  },
+  "app/(app)/engagement/page.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 1
+    }
+  },
+  "app/(app)/inventory/forms/adjust-form.tsx": {
+    "trap/native-control": {
+      "<input> where the system has Input": 2
+    }
+  },
+  "app/(app)/inventory/forms/batch-update-form.tsx": {
+    "trap/native-control": {
+      "<input> where the system has Input": 3
+    }
+  },
+  "app/(app)/inventory/forms/create-sku-form.tsx": {
+    "trap/native-control": {
+      "<input> where the system has Input": 9
+    }
+  },
+  "app/(app)/inventory/forms/edit-sku-form.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 1,
+      "<input> where the system has Input": 7
+    }
+  },
+  "app/(app)/inventory/forms/purchase-form.tsx": {
+    "trap/native-control": {
+      "<input> where the system has Input": 6
+    }
+  },
+  "app/(app)/inventory/forms/request-form.tsx": {
+    "trap/native-control": {
+      "<input> where the system has Input": 2
+    }
+  },
+  "app/(app)/inventory/forms/transfer-form.tsx": {
+    "trap/native-control": {
+      "<input> where the system has Input": 2
+    }
+  },
+  "app/(app)/inventory/inventory-import-modal.tsx": {
+    "rule/arbitrary-value": {
+      "max-h-[90vh]": 1,
+      "max-w-[180px]": 1
+    },
+    "trap/native-control": {
+      "<button> where the system has Button": 4
+    }
+  },
+  "app/(app)/inventory/movements-tab.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 1
+    }
+  },
+  "app/(app)/inventory/page.tsx": {
+    "rule/arbitrary-value": {
+      "min-h-[60vh]": 1
+    },
+    "trap/native-control": {
+      "<button> where the system has Button": 2
+    }
+  },
+  "app/(app)/inventory/product-drawer-panels.tsx": {
+    "rule/arbitrary-value": {
+      "text-[#06140b]": 1,
+      "text-[#1a0610]": 1
+    },
+    "rule/palette-use": {
+      "text-white": 2
+    },
+    "rule/raw-value": {
+      "#06140b": 1,
+      "#1a0610": 1
+    }
+  },
+  "app/(app)/inventory/product-drawer.tsx": {
+    "trap/loading-label-swap": {
+      "<button> label swaps on reconcileProductStock.isPending: 'Aligning…' / 'Align stock to batches'": 1
+    },
+    "trap/native-control": {
+      "<button> where the system has Button": 5,
+      "<input> where the system has Input": 1
+    },
+    "trap/button-clone": {
+      "<p> shares 4 classes with components/ui/button.tsx": 1
+    }
+  },
+  "app/(app)/inventory/request-drawer.tsx": {
+    "trap/button-clone": {
+      "<p> shares 4 classes with components/ui/button.tsx": 1
+    }
+  },
+  "app/(app)/inventory/requests-tab.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 1,
+      "<input> where the system has Input": 1
+    }
+  },
+  "app/(app)/inventory/sales-trends.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 2
+    }
+  },
+  "app/(app)/inventory/stock-summary.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 1
+    }
+  },
+  "app/(app)/inventory/stock-tab.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 2
+    }
+  },
+  "app/(app)/jobs/[id]/page.tsx": {
+    "trap/loading-label-swap": {
+      "<button> label swaps on download.isPending: 'Downloading…' / 'Download workbook'": 1
+    },
+    "trap/native-control": {
+      "<button> where the system has Button": 1
+    }
+  },
+  "app/(app)/kitchen/board.tsx": {
+    "rule/arbitrary-value": {
+      "rounded-[calc(var(--radius)-2px)]": 1
+    },
+    "trap/native-control": {
+      "<button> where the system has Button": 7
+    }
+  },
+  "app/(app)/kitchen/ingredients.tsx": {
+    "rule/arbitrary-value": {
+      "grid-cols-[1fr_6rem]": 1
+    },
+    "trap/native-control": {
+      "<button> where the system has Button": 5,
+      "<input> where the system has Input": 4,
+      "<select> where the system has Select": 1
+    },
+    "rule/deprecated-import": {
+      "@/components/submit-button": 1
+    }
+  },
+  "app/(app)/kitchen/job-form-sections.tsx": {
+    "rule/arbitrary-value": {
+      "grid-cols-[1fr_1fr_5rem_8rem_auto]": 1,
+      "grid-cols-[1fr_1fr_auto]": 1,
+      "grid-cols-[1fr_5rem_5rem_8rem_auto]": 1,
+      "grid-cols-[1fr_5rem_7rem_8rem_auto]": 1,
+      "grid-cols-[1fr_7rem_auto]": 1
+    },
+    "trap/native-control": {
+      "<button> where the system has Button": 16,
+      "<input> where the system has Input": 8,
+      "<select> where the system has Select": 4
+    }
+  },
+  "app/(app)/kitchen/job-form.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 3
+    }
+  },
+  "app/(app)/kitchen/job-panel-tabs.tsx": {
+    "rule/arbitrary-value": {
+      "-left-[26px]": 1,
+      "min-w-[28rem]": 1
+    },
+    "trap/native-control": {
+      "<button> where the system has Button": 3,
+      "<input> where the system has Input": 2
+    },
+    "rule/deprecated-import": {
+      "@/components/submit-button": 1
+    }
+  },
+  "app/(app)/kitchen/job-panel.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 2
+    },
+    "rule/deprecated-import": {
+      "@/components/submit-button": 1
+    }
+  },
+  "app/(app)/kitchen/kitchen-ui.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 1,
+      "<input> where the system has Input": 2
+    }
+  },
+  "app/(app)/kitchen/page.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 2
+    }
+  },
+  "app/(app)/kitchen/recipes.tsx": {
+    "rule/arbitrary-value": {
+      "grid-cols-[1fr_8rem_auto]": 1
+    },
+    "trap/native-control": {
+      "<button> where the system has Button": 5,
+      "<input> where the system has Input": 3,
+      "<select> where the system has Select": 1
+    }
+  },
+  "app/(app)/kitchen/settings.tsx": {
+    "rule/arbitrary-value": {
+      "grid-cols-[1fr_5rem_9rem_auto]": 1
+    },
+    "trap/native-control": {
+      "<button> where the system has Button": 6,
+      "<input> where the system has Input": 1,
+      "<select> where the system has Select": 7
+    },
+    "rule/deprecated-import": {
+      "@/components/submit-button": 1
+    }
+  },
+  "app/(app)/kitchen/yield-guide.tsx": {
+    "rule/arbitrary-value": {
+      "grid-cols-[2fr_1fr_1fr]": 1
+    },
+    "trap/native-control": {
+      "<select> where the system has Select": 1
+    }
+  },
+  "app/(app)/pos/overview.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 1
+    }
+  },
+  "app/(app)/pos/page.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 1
+    }
+  },
+  "app/(app)/pos/tills.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 1
+    }
+  },
+  "app/(app)/sales/add-sale-modal.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 2,
+      "<input> where the system has Input": 9,
+      "<select> where the system has Select": 4
+    }
+  },
+  "app/(app)/sales/page.tsx": {
+    "rule/arbitrary-value": {
+      "max-w-[1400px]": 1,
+      "max-w-[240px]": 1
+    },
+    "trap/native-control": {
+      "<button> where the system has Button": 3
+    }
+  },
+  "app/(app)/sales/product-combobox.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 1,
+      "<input> where the system has Input": 1
+    }
+  },
+  "app/(app)/sales/sale-detail-panel.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 2
+    },
+    "rule/deprecated-import": {
+      "@/components/submit-button": 1
+    }
+  },
+  "app/(app)/sales/sale-detail-tabs.tsx": {
+    "rule/arbitrary-value": {
+      "max-w-[350px]": 1
+    },
+    "trap/native-control": {
+      "<button> where the system has Button": 2,
+      "<input> where the system has Input": 7,
+      "<select> where the system has Select": 4
+    },
+    "rule/deprecated-import": {
+      "@/components/submit-button": 1
+    }
+  },
+  "app/(app)/sales/sale-receipt.ts": {
+    "rule/raw-value": {
+      "#111": 1,
+      "#555": 1,
+      "#999": 1,
+      "#b91c1c": 1
+    }
+  },
+  "app/(app)/sales/sales-filter-bar.tsx": {
+    "trap/native-control": {
+      "<input> where the system has Input": 1
+    }
+  },
+  "app/(app)/sales/sales-import-modal.tsx": {
+    "rule/arbitrary-value": {
+      "max-h-[90vh]": 1,
+      "max-w-[180px]": 1,
+      "max-w-[280px]": 1,
+      "min-w-[200px]": 1
+    },
+    "trap/native-control": {
+      "<button> where the system has Button": 5
+    }
+  },
+  "app/(app)/settings/location-form-sheet.tsx": {
+    "trap/native-control": {
+      "<input> where the system has Input": 4
+    }
+  },
+  "app/(app)/settings/locations-section.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 2
+    }
+  },
+  "app/(app)/settings/page.tsx": {
+    "rule/arbitrary-value": {
+      "grid-cols-[12rem_minmax(0,1fr)]": 1,
+      "grid-cols-[14rem_minmax(0,1fr)]": 1
+    }
+  },
+  "app/(app)/settings/password-section.tsx": {
+    "rule/arbitrary-value": {
+      "max-w-[calc(50%-0.5rem)]": 1
+    },
+    "rule/palette-use": {
+      "bg-yellow-500": 1
+    },
+    "trap/loading-label-swap": {
+      "<button> label swaps on resetPassword.isPending: 'Updating…' / 'Update password'": 1
+    },
+    "trap/motion-transition-all": {
+      "transition-all": 1
+    },
+    "trap/native-control": {
+      "<button> where the system has Button": 1,
+      "<input> where the system has Input": 4
+    }
+  },
+  "app/(app)/settings/profile-section.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 1,
+      "<input> where the system has Input": 4
+    }
+  },
+  "app/(app)/settings/role-form-sheet.tsx": {
+    "trap/native-control": {
+      "<input> where the system has Input": 1
+    }
+  },
+  "app/(app)/settings/roles-matrix.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 2
+    }
+  },
+  "app/(app)/settings/roles-section.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 1
+    }
+  },
+  "app/(app)/settings/settings-nav.tsx": {
+    "trap/link-as-button": {
+      "<Link> shares 5 classes with components/ui/button.tsx": 1,
+      "<Link> shares 6 classes with components/ui/button.tsx": 1
+    }
+  },
+  "app/(app)/settings/sheet-select.tsx": {
+    "trap/native-control": {
+      "<input> where the system has Input": 1
+    }
+  },
+  "app/(app)/settings/user-form-sheet.tsx": {
+    "trap/native-control": {
+      "<input> where the system has Input": 4
+    }
+  },
+  "app/(app)/settings/users-section.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 2
+    }
+  },
+  "app/(app)/suppliers/issue-form.tsx": {
+    "trap/native-control": {
+      "<select> where the system has Select": 3
+    }
+  },
+  "app/(app)/suppliers/page.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 2,
+      "<input> where the system has Input": 2
+    }
+  },
+  "app/(app)/suppliers/star-rating.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 1
+    }
+  },
+  "app/(app)/suppliers/supplier-details-tab.tsx": {
+    "rule/arbitrary-value": {
+      "grid-cols-[8rem_1fr]": 1
+    },
+    "trap/native-control": {
+      "<button> where the system has Button": 1
+    }
+  },
+  "app/(app)/suppliers/supplier-form.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 1,
+      "<input> where the system has Input": 7,
+      "<select> where the system has Select": 3
+    }
+  },
+  "app/(app)/suppliers/supplier-issues-tab.tsx": {
+    "trap/loading-label-swap": {
+      "<button> label swaps on updateIssue.isPending: 'Saving…' / 'Mark resolved'": 1
+    },
+    "trap/native-control": {
+      "<button> where the system has Button": 3
+    },
+    "trap/touch-autofocus": {
+      "<textarea autoFocus> in a page": 1
+    }
+  },
+  "app/(app)/suppliers/supplier-purchases-tab.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 1
+    }
+  },
+  "app/(app)/suppliers/top-suppliers.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 1
+    }
+  },
+  "app/forgot-password/page.tsx": {
+    "trap/native-control": {
+      "<input> where the system has Input": 1
+    },
+    "rule/deprecated-import": {
+      "@/components/submit-button": 1
+    }
+  },
+  "app/globals.css": {
+    "rule/raw-value": {
+      "#171717": 1,
+      "#ffffff": 1
+    },
+    "rule/token-parity": {
+      "--brand-green has a light color and no dark value": 1,
+      "--brand-lime has a light color and no dark value": 1,
+      "--brand-plum has a light color and no dark value": 1,
+      "--brand-red has a light color and no dark value": 1,
+      "--brand-teal has a light color and no dark value": 1,
+      "--brand-yellow has a light color and no dark value": 1
+    }
+  },
+  "app/kitchen-quote/[id]/page.tsx": {
+    "rule/palette-use": {
+      "bg-slate-50": 1,
+      "bg-white": 1,
+      "border-slate-900": 1,
+      "print:bg-white": 1,
+      "text-slate-500": 4,
+      "text-slate-600": 5,
+      "text-slate-900": 1
+    },
+    "trap/native-control": {
+      "<button> where the system has Button": 1
+    }
+  },
+  "app/login/page.tsx": {
+    "trap/native-control": {
+      "<input> where the system has Input": 2
+    },
+    "rule/deprecated-import": {
+      "@/components/submit-button": 1
+    }
+  },
+  "app/reset-password/reset-password-form.tsx": {
+    "trap/native-control": {
+      "<input> where the system has Input": 2
+    },
+    "rule/deprecated-import": {
+      "@/components/submit-button": 1
+    }
+  },
+  "components/analytics-compare-tab.tsx": {
+    "rule/arbitrary-value": {
+      "grid-cols-[1fr_auto_1fr]": 1,
+      "grid-cols-[1fr_auto_auto]": 1,
+      "grid-cols-[minmax(120px,1fr)_1fr_1fr]": 1,
+      "h-[360px]": 1,
+      "rounded-[calc(var(--radius)-2px)]": 5
+    },
+    "trap/native-control": {
+      "<button> where the system has Button": 6,
+      "<select> where the system has Select": 2
+    }
+  },
+  "components/app/calendar.tsx": {
+    "rule/arbitrary-value": {
+      "bg-[linear-gradient(to_left,transparent_50%,var(--accent)_50%)]": 1,
+      "bg-[linear-gradient(to_right,transparent_50%,var(--accent)_50%)]": 1,
+      "w-[17.5rem]": 1
+    }
+  },
+  "components/app/data-table.tsx": {
+    "trap/button-div": {
+      "<div onClick>": 1,
+      "<li onClick>": 1,
+      "<td onClick>": 2,
+      "<tr onClick>": 1
+    }
+  },
+  "components/app/date-field.tsx": {
+    "rule/arbitrary-value": {
+      "grid-cols-[1fr_auto]": 1,
+      "z-[60]": 1
+    }
+  },
+  "components/app/filter-bar.tsx": {
+    "rule/arbitrary-value": {
+      "w-[min(20rem,calc(100vw-2rem))]": 1,
+      "w-[min(42rem,calc(100vw-2rem))]": 1
+    },
+    "trap/overlay-conditional-render": {
+      "{cond && <Popover>}": 1
+    }
+  },
+  "components/app/kpi-strip.tsx": {
+    "rule/arbitrary-value": {
+      "shadow-[inset_0_-2px_0_var(--primary)]": 1
+    }
+  },
+  "components/app/page-header.tsx": {
+    "rule/arbitrary-value": {
+      "max-w-[65ch]": 1
+    }
+  },
+  "components/app/period-select.tsx": {
+    "rule/arbitrary-value": {
+      "max-w-[calc(100vw-1.5rem)]": 1
+    }
+  },
+  "components/app/segmented.tsx": {
+    "rule/arbitrary-value": {
+      "rounded-[calc(var(--radius)-2px)]": 1
+    }
+  },
+  "components/brand/brand-mark.tsx": {
+    "rule/arbitrary-value": {
+      "text-[#00A228]": 1
+    },
+    "rule/palette-use": {
+      "text-white": 1
+    },
+    "rule/raw-value": {
+      "#00a228": 1
+    }
+  },
+  "components/confirm-preview-modal.tsx": {
+    "rule/arbitrary-value": {
+      "max-h-[90vh]": 1
+    },
+    "trap/native-control": {
+      "<button> where the system has Button": 2
+    },
+    "rule/deprecated-import": {
+      "@/components/submit-button": 1
+    }
+  },
+  "components/credits/credit-forms.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 2,
+      "<input> where the system has Input": 2
+    }
+  },
+  "components/credits/credit-item-card.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 4
+    }
+  },
+  "components/credits/customer-credit-sheet.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 1
+    }
+  },
+  "components/hub-scope-filter.tsx": {
+    "rule/arbitrary-value": {
+      "rounded-[calc(var(--radius)-2px)]": 2
+    },
+    "trap/native-control": {
+      "<button> where the system has Button": 2
+    }
+  },
+  "components/insight-button.tsx": {
+    "trap/button-div": {
+      "<div onClick>": 1
+    },
+    "trap/native-control": {
+      "<button> where the system has Button": 2
+    }
+  },
+  "components/kitchen-analytics-tab.tsx": {
+    "rule/arbitrary-value": {
+      "h-[280px]": 1
+    }
+  },
+  "components/layout/sidebar.tsx": {
+    "rule/arbitrary-value": {
+      "text-[13px]": 3,
+      "w-[244px]": 1,
+      "w-[260px]": 1,
+      "w-[68px]": 1
+    },
+    "rule/component-override": {
+      "<LocationSelect> bg-background": 1
+    },
+    "trap/button-div": {
+      "<div onClick>": 1
+    },
+    "trap/native-control": {
+      "<button> where the system has Button": 4
+    }
+  },
+  "components/pos-payment-settings.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 1
+    }
+  },
+  "components/product-image-editor.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 4,
+      "<input> where the system has Input": 1
+    },
+    "trap/button-clone": {
+      "<label> shares 4 classes with components/ui/button.tsx": 1
+    }
+  },
+  "components/searchable-customer-select.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 2,
+      "<input> where the system has Input": 1
+    }
+  },
+  "components/sku-multi-select.tsx": {
+    "rule/arbitrary-value": {
+      "max-w-[180px]": 1,
+      "max-w-[80vw]": 1
+    },
+    "trap/native-control": {
+      "<button> where the system has Button": 4,
+      "<input> where the system has Input": 1
+    }
+  },
+  "components/submit-button.tsx": {
+    "rule/palette-use": {
+      "text-white": 1
+    },
+    "trap/native-control": {
+      "<button> where the system has Button": 1
+    }
+  },
+  "components/till-registration.tsx": {
+    "rule/arbitrary-value": {
+      "tracking-[0.25em]": 1
+    }
+  },
+  "components/ui/badge.tsx": {
+    "rule/arbitrary-value": {
+      "ring-[3px]": 1
+    },
+    "rule/unregistered-ui": {
+      "not in registry.json and not in scripts/ui-drift.tsv": 1
+    },
+    "trap/motion-transition-all": {
+      "transition-all": 1
+    }
+  },
+  "components/ui/button.tsx": {
+    "rule/arbitrary-value": {
+      "rounded-[min(var(--radius-md),10px)]": 2,
+      "rounded-[min(var(--radius-md),12px)]": 2,
+      "text-[0.8rem]": 1
+    },
+    "trap/motion-transition-all": {
+      "transition-all": 1
+    }
+  },
+  "components/ui/card.tsx": {
+    "rule/arbitrary-value": {
+      "grid-cols-[1fr_auto]": 1,
+      "grid-rows-[auto_auto]": 1
+    },
+    "rule/unregistered-ui": {
+      "not in registry.json and not in scripts/ui-drift.tsv": 1
+    }
+  },
+  "components/ui/dialog.tsx": {
+    "rule/arbitrary-value": {
+      "max-w-[calc(100%-2rem)]": 1
+    },
+    "rule/unregistered-ui": {
+      "not in registry.json and not in scripts/ui-drift.tsv": 1
+    }
+  },
+  "components/ui/input.tsx": {
+    "rule/unregistered-ui": {
+      "not in registry.json and not in scripts/ui-drift.tsv": 1
+    }
+  },
+  "components/ui/label.tsx": {
+    "rule/unregistered-ui": {
+      "not in registry.json and not in scripts/ui-drift.tsv": 1
+    }
+  },
+  "components/ui/loading-skeletons.tsx": {
+    "rule/arbitrary-value": {
+      "max-w-[180px]": 1,
+      "max-w-[64px]": 1
+    }
+  },
+  "components/ui/metric-value.tsx": {
+    "rule/unregistered-ui": {
+      "not in registry.json and not in scripts/ui-drift.tsv": 1
+    }
+  },
+  "components/ui/select.tsx": {
+    "rule/arbitrary-value": {
+      "rounded-[min(var(--radius-md),10px)]": 1
+    }
+  },
+  "components/ui/separator.tsx": {
+    "rule/unregistered-ui": {
+      "not in registry.json and not in scripts/ui-drift.tsv": 1
+    }
+  },
+  "components/ui/sheet.tsx": {
+    "rule/arbitrary-value": {
+      "translate-x-[-2.5rem]": 2,
+      "translate-x-[2.5rem]": 2,
+      "translate-y-[-2.5rem]": 2,
+      "translate-y-[2.5rem]": 2
+    },
+    "rule/unregistered-ui": {
+      "not in registry.json and not in scripts/ui-drift.tsv": 1
+    }
+  },
+  "components/ui/sonner.tsx": {
+    "rule/unregistered-ui": {
+      "not in registry.json and not in scripts/ui-drift.tsv": 1
+    }
+  },
+  "components/ui/switch.tsx": {
+    "rule/palette-use": {
+      "bg-white": 1
+    }
+  },
+  "components/ui/table.tsx": {
+    "rule/unregistered-ui": {
+      "not in registry.json and not in scripts/ui-drift.tsv": 1
+    }
+  },
+  "components/ui/tabs.tsx": {
+    "rule/arbitrary-value": {
+      "bottom-[-5px]": 1,
+      "h-[calc(100%-1px)]": 1,
+      "p-[3px]": 1,
+      "ring-[3px]": 1
+    },
+    "rule/unregistered-ui": {
+      "not in registry.json and not in scripts/ui-drift.tsv": 1
+    },
+    "trap/motion-transition-all": {
+      "transition-all": 1
+    }
+  },
+  "docs/system/examples/empty-state/filtered.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 1
+    }
+  },
+  "docs/system/examples/empty-state/first-run.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 1
+    }
+  },
+  "docs/system/examples/empty-state/in-data-table.tsx": {
+    "trap/native-control": {
+      "<button> where the system has Button": 1
+    }
+  },
+  "docs/system/examples/skeleton/avatar-and-cards.tsx": {
+    "rule/component-override": {
+      "<Skeleton> rounded-full": 1,
+      "<Skeleton> rounded-xl": 1
+    }
+  },
+  "lib/kitchen-types.ts": {
+    "rule/palette-use": {
+      "bg-amber-100": 1,
+      "bg-blue-100": 1,
+      "bg-emerald-100": 1,
+      "bg-green-100": 2,
+      "bg-orange-100": 2,
+      "bg-red-100": 1,
+      "bg-red-50": 1,
+      "bg-slate-100": 2,
+      "bg-yellow-100": 1,
+      "dark:bg-amber-900/30": 1,
+      "dark:bg-blue-900/30": 1,
+      "dark:bg-emerald-900/30": 1,
+      "dark:bg-green-900/30": 2,
+      "dark:bg-orange-900/30": 2,
+      "dark:bg-red-900/20": 1,
+      "dark:bg-red-900/30": 1,
+      "dark:bg-slate-800": 2,
+      "dark:bg-yellow-900/30": 1,
+      "dark:text-amber-400": 1,
+      "dark:text-blue-400": 1,
+      "dark:text-emerald-400": 1,
+      "dark:text-green-400": 2,
+      "dark:text-orange-400": 2,
+      "dark:text-red-400": 2,
+      "dark:text-slate-300": 2,
+      "dark:text-yellow-400": 1,
+      "text-amber-800": 1,
+      "text-blue-800": 1,
+      "text-emerald-800": 1,
+      "text-green-800": 2,
+      "text-orange-800": 2,
+      "text-red-700": 1,
+      "text-red-800": 1,
+      "text-slate-700": 2,
+      "text-yellow-800": 1
+    }
+  },
+  "lib/mock-api/data.ts": {
+    "rule/raw-value": {
+      "#4471": 1,
+      "#64748b": 1
+    }
+  },
+  "lib/mock-api/handler.ts": {
+    "rule/raw-value": {
+      "#0891b2": 1,
+      "#16a34a": 1
+    }
+  },
+  "lib/product-categories.ts": {
+    "rule/raw-value": {
+      "#0891b2": 1,
+      "#0e7490": 1,
+      "#15803d": 1,
+      "#16a34a": 1,
+      "#1d4ed8": 1,
+      "#1e40af": 1,
+      "#2563eb": 1,
+      "#3b82f6": 1,
+      "#6b7280": 1,
+      "#7c3aed": 1,
+      "#7f1d1d": 1,
+      "#991b1b": 1,
+      "#9f1239": 1,
+      "#a855f7": 1,
+      "#b91c1c": 1,
+      "#ca8a04": 1,
+      "#db2777": 1,
+      "#dc2626": 1,
+      "#ea580c": 1,
+      "#f59e0b": 1
+    }
+  },
+  "lib/settings-helpers.ts": {
+    "rule/palette-use": {
+      "bg-amber-100": 1,
+      "bg-blue-100": 1,
+      "bg-emerald-100": 1,
+      "bg-green-500": 1,
+      "bg-orange-100": 1,
+      "bg-purple-100": 1,
+      "bg-red-100": 1,
+      "bg-slate-100": 1,
+      "bg-yellow-500": 2,
+      "dark:bg-amber-900/30": 1,
+      "dark:bg-blue-900/30": 1,
+      "dark:bg-emerald-900/30": 1,
+      "dark:bg-orange-900/30": 1,
+      "dark:bg-purple-900/30": 1,
+      "dark:bg-red-900/30": 1,
+      "dark:bg-slate-800": 1,
+      "dark:text-amber-400": 1,
+      "dark:text-blue-400": 1,
+      "dark:text-emerald-400": 1,
+      "dark:text-green-400": 1,
+      "dark:text-orange-400": 1,
+      "dark:text-purple-400": 1,
+      "dark:text-red-400": 1,
+      "dark:text-slate-300": 1,
+      "dark:text-yellow-400": 1,
+      "text-amber-800": 1,
+      "text-blue-700": 1,
+      "text-emerald-700": 1,
+      "text-green-600": 1,
+      "text-orange-800": 1,
+      "text-purple-700": 1,
+      "text-red-700": 1,
+      "text-slate-700": 1,
+      "text-white": 1,
+      "text-yellow-600": 1
+    }
+  }
+}

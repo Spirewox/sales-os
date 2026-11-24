@@ -1,0 +1,19 @@
+surface	kind	paths	states	depends_on	status	stage	attempt	branch	head	brief	last_report	note
+shared	shared	app/layout.tsx,app/(app)/layout.tsx,contexts/**,providers/**,hooks/**,lib/**,types.ts,types/**,components/layout/**	default,collapsed-sidebar,notifications-open	-	doing	in-flight	1	ds/2026-11-23-harden	-	briefs/shared.1.md	-	layouts, providers, contexts, hooks, lib, sidebar
+shared-components	shared	components/*.{tsx,ts},components/credits/**,components/brand/**	per caller	shared	doing	in-flight	1	ds/2026-11-23-harden	-	briefs/shared-components.1.md	-	product components outside the kit, used by several routes
+dashboard	route	app/(app)/page.tsx,app/(app)/_dashboard/**	default,empty,loading,error	shared	todo	queued	0	-	-	-	-	/
+analytics	route	app/(app)/analytics/**	default,empty,loading,error,drill	shared	doing	verifying	1	ds/2026-11-23-harden	3b62776d7325	briefs/analytics.1.md	inbox/analytics.1.md	/analytics, pilot
+audit	route	app/(app)/audit/**	list,empty,loading,error,drawer	shared	todo	queued	0	-	-	-	-	/audit, harden pilot
+credits	route	app/(app)/credits/**	list,empty,loading,error	shared	todo	queued	0	-	-	-	-	/credits
+customers	route	app/(app)/customers/**	list,empty,loading,error,drawer,form,import	shared	todo	queued	0	-	-	-	-	/customers
+engagement	route	app/(app)/engagement/**	list,empty,loading,error,drawer	shared	todo	queued	0	-	-	-	-	/engagement
+inventory	route	app/(app)/inventory/**	list,empty,loading,error,drawer,form,import	shared	todo	queued	0	-	-	-	-	/inventory
+kitchen	route	app/(app)/kitchen/**	board,empty,loading,error,form	shared	todo	queued	0	-	-	-	-	/kitchen
+kitchen-job	route	app/(app)/jobs/**	default,not-found	shared	todo	queued	0	-	-	-	-	/jobs/[id]
+pos	route	app/(app)/pos/**	default,empty,loading,error,drawer	shared	todo	queued	0	-	-	-	-	/pos
+sales	route	app/(app)/sales/**	list,empty,loading,error,form,import,receipt	shared	doing	in-flight	1	ds/2026-11-23-harden	-	briefs/sales.1.md	-	/sales
+settings	route	app/(app)/settings/**	default,form,dirty,saving	shared	todo	queued	0	-	-	-	-	/settings
+suppliers	route	app/(app)/suppliers/**	list,empty,loading,error,drawer,form	shared	todo	queued	0	-	-	-	-	/suppliers
+redirects	route	app/(app)/{compensations,enquiries,feedback,interactions,insights}/**	redirect	shared	todo	queued	0	-	-	-	-	/compensations /enquiries /feedback /interactions /insights
+auth	route	app/{login,forgot-password,reset-password}/**	default,invalid,submitting	-	todo	queued	0	-	-	-	-	/login /forgot-password /reset-password
+kitchen-quote	route	app/kitchen-quote/**	default,not-found,print	-	todo	queued	0	-	-	-	-	/kitchen-quote/[id], public print page

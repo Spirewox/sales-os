@@ -1,0 +1,7 @@
+rule_id	falsify	negation	two_agent	sweep	verdict	notes
+rule/period-select-url-params	pass	pass	n/a: falsify and sweep cover it	pass	ship	Sweep rg periodToParams near PeriodSelect: movements-tab.tsx:117 default fallback, audit/page.tsx:183 fallback all, both matched by their parsePeriod reads
+rule/period-select-filter-slot	pass	pass	n/a: falsify and sweep cover it	pass	ship	Sweep: 6 of 8 inside FilterBar filters; analytics/page.tsx:91 and sales-trends.tsx:36 have no FilterBar, so they follow by exemption
+rule/period-select-lagos-range	pass	pass	n/a: falsify and sweep cover it	n/a: new Date arithmetic near period code not swept this session	ship	Falsify by self-review of the Don't snippet
+rule/period-select-preset-labels	pass	pass	n/a: falsify and sweep cover it	pass	ship	Sweep: all 8 call sites render the trigger, whose text is periodLabel
+rule/period-select-no-second-picker	pass	pass	n/a: no fresh agents were run this session	pass	ship	Sweep rg -c <PeriodSelect per file: 1 in each of 8 files
+rule/period-select-bounded-all	pass	pass	n/a: no fresh agents were run this session	n/a: queries that clamp from were not swept this session	ship	Falsify by self-review

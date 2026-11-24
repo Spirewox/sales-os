@@ -1,0 +1,6 @@
+id	role	surface	attempt	spawned	expect_by	last_side_effect	end
+w-02	worker	analytics	1	11:50	12:15	commit 3b62776 12:03	done (partial)
+w-01	worker	shared	1	12:16	12:45	-	-
+w-03	worker	shared-components	1	12:16	12:45	-	-
+w-05	worker	sales	1	12:16	12:45	-	-
+v-02	verifier	analytics	1	12:16	12:40	-	-

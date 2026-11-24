@@ -1,0 +1,21 @@
+{
+  "include": [
+    "app",
+    "components",
+    "lib"
+  ],
+  "tokenSources": [
+    "app/globals.css"
+  ],
+  "uiDir": "components/ui",
+  "registry": "registry.json",
+  "driftList": "scripts/ui-drift.tsv",
+  "allowlist": "scripts/check-allowlist.json",
+  "nativeControls": {
+    "button": "Button",
+    "input": "Input",
+    "select": "Select",
+    "dialog": "Dialog"
+  },
+  "buttonFile": "components/ui/button.tsx"
+}

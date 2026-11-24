@@ -1,0 +1,12 @@
+imports 10
+raw 22
+palette 84
+files 1
+unassigned 0
+# report-only, not in the predicate until their gates are decided
+candidates 0
+bypasses 404
+allowlisted 127
+allowlist_stale 0
+scanned_files 245
+palette_in_predicate yes

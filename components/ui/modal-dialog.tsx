@@ -16,6 +16,8 @@ type ModalDialogProps = {
 
 /** Open ModalDialogs, newest last; only the topmost handles Escape. */
 const openStack: object[] = [];
+/** The page's own overflow and padding, saved while any ModalDialog holds the scroll lock. */
+let scrollLock: { overflow: string; paddingRight: string } | null = null;
 
 const FOCUSABLE = 'input:not([disabled]):not([type=hidden]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]):not([tabindex="-1"]), [href], [tabindex]:not([tabindex="-1"])';
 
@@ -23,7 +25,8 @@ const FOCUSABLE = 'input:not([disabled]):not([type=hidden]), select:not([disable
  * Shared modal shell for every popup form and detail panel.
  * Native <dialog> (role=dialog) with aria-modal, Escape and backdrop-click to close,
  * focus moved into the panel on open and returned to the trigger on close.
- * Uses the `open` attribute rather than showModal() so toasts stay visible above it.
+ * Uses the `open` attribute rather than showModal() so toasts stay visible above it, so it traps
+ * Tab inside the topmost panel and locks page scroll itself while any ModalDialog is open (G-15).
  */
 export function ModalDialog({ onClose, children, align = 'center', label, labelledBy, dismissible = true }: Readonly<ModalDialogProps>) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -50,8 +53,30 @@ export function ModalDialog({ onClose, children, align = 'center', label, labell
     // reaches a sheet or menu underneath (which would close and discard this dialog's input).
     const token = {};
     openStack.push(token);
+    // Page scroll lock: the first open dialog saves the page's overflow, the last one to close restores it.
+    if (openStack.length === 1) {
+      const root = document.documentElement;
+      const gutter = window.innerWidth - root.clientWidth;
+      scrollLock = { overflow: root.style.overflow, paddingRight: root.style.paddingRight };
+      root.style.overflow = 'hidden';
+      if (gutter > 0) root.style.paddingRight = `${gutter}px`;
+    }
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape' || openStack.at(-1) !== token) return;
+      if (openStack.at(-1) !== token) return;
+      if (e.key === 'Tab') {
+        // Focus trap: wrap Tab and Shift+Tab inside the panel. Focus in a portaled popup is left to the popup.
+        const panelEl = ref.current;
+        const active = document.activeElement;
+        if (!panelEl || (active && active !== document.body && !panelEl.contains(active))) return;
+        const items = [...panelEl.querySelectorAll<HTMLElement>(FOCUSABLE)].filter((el) => el.tabIndex >= 0 && el.getClientRects().length > 0);
+        if (!items.length) return;
+        const firstItem = items[0];
+        const lastItem = items.at(-1)!;
+        if (e.shiftKey && (active === firstItem || !panelEl.contains(active))) { e.preventDefault(); lastItem.focus(); }
+        else if (!e.shiftKey && (active === lastItem || !panelEl.contains(active))) { e.preventDefault(); firstItem.focus(); }
+        return;
+      }
+      if (e.key !== 'Escape') return;
       // Let an open dropdown or combobox inside the dialog close itself first.
       const active = document.activeElement;
       if (active?.closest('[aria-expanded="true"]') && ref.current?.contains(active)) return;
@@ -65,6 +90,11 @@ export function ModalDialog({ onClose, children, align = 'center', label, labell
     return () => {
       window.removeEventListener('keydown', onKey, true);
       openStack.splice(openStack.indexOf(token), 1);
+      if (openStack.length === 0 && scrollLock) {
+        document.documentElement.style.overflow = scrollLock.overflow;
+        document.documentElement.style.paddingRight = scrollLock.paddingRight;
+        scrollLock = null;
+      }
       if (previouslyFocused?.isConnected) previouslyFocused.focus({ preventScroll: true });
     };
   }, []);

@@ -13,7 +13,7 @@ import {
   INPUT_CLS, BTN_PRIMARY,
 } from './sales-utils';
 import type { DetailTab } from './sales-utils';
-import { SubmitButton } from '@/components/submit-button';
+import { Button } from '@/components/ui/button';
 import { PRODUCT_CATEGORIES } from '@/lib/product-categories';
 
 import type { Hub } from '@/types';
@@ -57,7 +57,8 @@ function DeliveryAdvanceButton({
     );
   }
   return (
-    <SubmitButton
+    <Button
+      size="control"
       type="button"
       onClick={() => onAdvance(nextStep)}
       loading={updatingDelivery}
@@ -65,7 +66,7 @@ function DeliveryAdvanceButton({
       className={`${BTN_PRIMARY} w-full justify-center h-10`}
     >
       <ArrowUpRight size={14} aria-hidden className="mr-1.5" /> Advance to: {nextStep}
-    </SubmitButton>
+    </Button>
   );
 }
 

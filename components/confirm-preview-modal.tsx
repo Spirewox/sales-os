@@ -1,7 +1,7 @@
 'use client';
 
 import { X } from 'lucide-react';
-import { SubmitButton } from '@/components/submit-button';
+import { Button } from '@/components/ui/button';
 import { ModalDialog } from '@/components/ui/modal-dialog';
 
 export type ConfirmPreviewRow = {
@@ -91,9 +91,9 @@ export function ConfirmPreviewModal({
           >
             Back
           </button>
-          <SubmitButton onClick={onConfirm} loading={!!loading}>
+          <Button size="control" type="button" onClick={onConfirm} loading={!!loading}>
             {confirmLabel}
-          </SubmitButton>
+          </Button>
         </div>
       </div>
     </ModalDialog>

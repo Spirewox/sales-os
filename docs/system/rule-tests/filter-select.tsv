@@ -1,0 +1,6 @@
+rule_id	falsify	negation	two_agent	sweep	verdict	notes
+rule/filter-select-all-option	pass	pass	n/a: no fresh agents were run this session	pass	ship	Falsify: Base UI resolveSelectedLabel falls back to the raw value, so value '' renders an empty trigger. Sweep: 21/62 call sites carry an All option; the rest are form fields or always-set filters
+rule/filter-select-accessible-name	pass	pass	n/a: no fresh agents were run this session	pass	ship	Sweep by .design-system/tmp/D5/scan.mjs: 62/62 tags have ariaLabel (31) or id (33), 0 with neither
+rule/filter-select-compact-size	pass	pass	n/a: no fresh agents were run this session	pass	rewritten	Sweep: 0/62 pass size=compact, 45/62 set h-9 by hand. Scoped to FilterBar and toolbars after the sweep, since form fields use h-9 w-full where compact would make them w-auto
+rule/filter-select-off-label	pass	pass	n/a: no fresh agents were run this session	pass	ship	Sweep grep value: All/all label: 27/27 read All or Any plus a noun
+rule/filter-select-no-empty-fallback	pass	pass	n/a: no fresh agents were run this session	pass	ship	Sweep by scan.mjs: 4 tags use ?? '' in value, all named in the rule; falsify by the same Base UI fallback as all-option

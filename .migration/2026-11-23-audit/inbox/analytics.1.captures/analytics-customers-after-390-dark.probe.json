@@ -1,0 +1,27 @@
+{
+ "url": "/analytics?tab=customers",
+ "width": 390,
+ "height": 900,
+ "controls": [],
+ "headings": [],
+ "texts": [
+  {
+   "key": "span \"Loading\"",
+   "color": "#ecefed",
+   "bg": "#050b07",
+   "ratio": 17.15,
+   "large": false,
+   "size": 16,
+   "weight": 400
+  }
+ ],
+ "links": [],
+ "heightMismatch": [],
+ "wrappedButtons": [],
+ "flatSurfaces": [],
+ "clipped": [],
+ "tallOverlays": [],
+ "textMeasure": [],
+ "reducedMotion": true,
+ "motion": []
+}

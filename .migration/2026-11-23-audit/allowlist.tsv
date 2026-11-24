@@ -1,0 +1,106 @@
+file	match	reason	owner	remove_by
+app/(app)/_dashboard/dashboard-content.tsx	max-w-[1400px]	G-07: page width token or container missing from the system (owner gap); code kept as is	system owner	2027-03-31
+app/(app)/_dashboard/sales-panel.tsx	h-[220px]	G-07 B: chart or list height is a layout dimension	system owner	never
+app/(app)/_dashboard/top-customers.tsx	max-h-[260px]	G-07 B: chart or list height is a layout dimension	system owner	never
+app/(app)/_dashboard/top-customers.tsx	max-w-[220px]	G-17 B: layout dimension or fixed literal with no token (grid template, viewport cap, truncation width, offset, tracking)	system owner	never
+app/(app)/analytics/credit-tab.tsx	h-[280px]	G-07 B: chart or list height is a layout dimension	system owner	never
+app/(app)/analytics/customers-tab.tsx	h-[280px]	G-07 B: chart or list height is a layout dimension	system owner	never
+app/(app)/analytics/customers-tab.tsx	h-[300px]	G-07 B: chart or list height is a layout dimension	system owner	never
+app/(app)/analytics/explore-ask.tsx	max-h-[520px]	G-07 B: chart or list height is a layout dimension	system owner	never
+app/(app)/analytics/explore-shared.tsx	grid-cols-[minmax(280px,340px)_1fr]	G-17 B: layout dimension or fixed literal with no token (grid template, viewport cap, truncation width, offset, tracking)	system owner	never
+app/(app)/analytics/explore-shared.tsx	h-[320px]	G-07 B: chart or list height is a layout dimension	system owner	never
+app/(app)/analytics/inventory-tab.tsx	h-[260px]	G-07 B: chart or list height is a layout dimension	system owner	never
+app/(app)/analytics/page.tsx	max-w-[1400px]	G-07: page width token or container missing from the system (owner gap); code kept as is	system owner	2027-03-31
+app/(app)/analytics/products-tab.tsx	h-[340px]	G-07 B: chart or list height is a layout dimension	system owner	never
+app/(app)/analytics/sales-tab.tsx	h-[260px]	G-07 B: chart or list height is a layout dimension	system owner	never
+app/(app)/analytics/sales-tab.tsx	h-[300px]	G-07 B: chart or list height is a layout dimension	system owner	never
+app/(app)/analytics/suppliers-tab.tsx	h-[280px]	G-07 B: chart or list height is a layout dimension	system owner	never
+app/(app)/audit/audit-drawer.tsx	max-h-[60dvh]	G-17 B: layout dimension or fixed literal with no token (grid template, viewport cap, truncation width, offset, tracking)	system owner	never
+app/(app)/credits/page.tsx	max-w-[1400px]	G-07: page width token or container missing from the system (owner gap); code kept as is	system owner	2027-03-31
+app/(app)/customers/customer-import-modal.tsx	max-h-[90vh]	G-17 B: layout dimension or fixed literal with no token (grid template, viewport cap, truncation width, offset, tracking)	system owner	never
+app/(app)/customers/customer-import-summary.tsx	max-h-[90vh]	G-17 B: layout dimension or fixed literal with no token (grid template, viewport cap, truncation width, offset, tracking)	system owner	never
+app/(app)/inventory/inventory-import-modal.tsx	max-h-[90vh]	G-17 B: layout dimension or fixed literal with no token (grid template, viewport cap, truncation width, offset, tracking)	system owner	never
+app/(app)/inventory/inventory-import-modal.tsx	max-w-[180px]	G-17 B: layout dimension or fixed literal with no token (grid template, viewport cap, truncation width, offset, tracking)	system owner	never
+app/(app)/inventory/page.tsx	min-h-[60vh]	G-17 B: layout dimension or fixed literal with no token (grid template, viewport cap, truncation width, offset, tracking)	system owner	never
+app/(app)/inventory/product-drawer-panels.tsx	text-[#06140b]	G-07: on-series foreground tokens missing from the system (owner gap); code kept as is	system owner	2027-03-31
+app/(app)/inventory/product-drawer-panels.tsx	text-[#1a0610]	G-07: on-series foreground tokens missing from the system (owner gap); code kept as is	system owner	2027-03-31
+app/(app)/kitchen/board.tsx	rounded-[calc(var(--radius)-2px)]	G-06 B: hand-built segmented control kept until a capture proves the Segmented swap identical (it also changes roles to radio)	migration run	2027-03-31
+app/(app)/kitchen/ingredients.tsx	grid-cols-[1fr_6rem]	G-17 B: layout dimension or fixed literal with no token (grid template, viewport cap, truncation width, offset, tracking)	system owner	never
+app/(app)/kitchen/job-form-sections.tsx	grid-cols-[1fr_1fr_5rem_8rem_auto]	G-17 B: layout dimension or fixed literal with no token (grid template, viewport cap, truncation width, offset, tracking)	system owner	never
+app/(app)/kitchen/job-form-sections.tsx	grid-cols-[1fr_1fr_auto]	G-17 B: layout dimension or fixed literal with no token (grid template, viewport cap, truncation width, offset, tracking)	system owner	never
+app/(app)/kitchen/job-form-sections.tsx	grid-cols-[1fr_5rem_5rem_8rem_auto]	G-17 B: layout dimension or fixed literal with no token (grid template, viewport cap, truncation width, offset, tracking)	system owner	never
+app/(app)/kitchen/job-form-sections.tsx	grid-cols-[1fr_5rem_7rem_8rem_auto]	G-17 B: layout dimension or fixed literal with no token (grid template, viewport cap, truncation width, offset, tracking)	system owner	never
+app/(app)/kitchen/job-form-sections.tsx	grid-cols-[1fr_7rem_auto]	G-17 B: layout dimension or fixed literal with no token (grid template, viewport cap, truncation width, offset, tracking)	system owner	never
+app/(app)/kitchen/job-panel-tabs.tsx	-left-[26px]	G-17 B: layout dimension or fixed literal with no token (grid template, viewport cap, truncation width, offset, tracking)	system owner	never
+app/(app)/kitchen/job-panel-tabs.tsx	min-w-[28rem]	G-17 B: layout dimension or fixed literal with no token (grid template, viewport cap, truncation width, offset, tracking)	system owner	never
+app/(app)/kitchen/recipes.tsx	grid-cols-[1fr_8rem_auto]	G-17 B: layout dimension or fixed literal with no token (grid template, viewport cap, truncation width, offset, tracking)	system owner	never
+app/(app)/kitchen/settings.tsx	grid-cols-[1fr_5rem_9rem_auto]	G-17 B: layout dimension or fixed literal with no token (grid template, viewport cap, truncation width, offset, tracking)	system owner	never
+app/(app)/kitchen/yield-guide.tsx	grid-cols-[2fr_1fr_1fr]	G-17 B: layout dimension or fixed literal with no token (grid template, viewport cap, truncation width, offset, tracking)	system owner	never
+app/(app)/sales/page.tsx	max-w-[1400px]	G-07: page width token or container missing from the system (owner gap); code kept as is	system owner	2027-03-31
+app/(app)/sales/page.tsx	max-w-[240px]	G-17 B: layout dimension or fixed literal with no token (grid template, viewport cap, truncation width, offset, tracking)	system owner	never
+app/(app)/sales/sale-detail-tabs.tsx	max-w-[350px]	G-17 B: layout dimension or fixed literal with no token (grid template, viewport cap, truncation width, offset, tracking)	system owner	never
+app/(app)/sales/sale-receipt.ts	#111	G-11 A: printed receipt opens in a new window where app CSS variables do not load	migration run	never
+app/(app)/sales/sale-receipt.ts	#555	G-11 A: printed receipt opens in a new window where app CSS variables do not load	migration run	never
+app/(app)/sales/sale-receipt.ts	#999	G-11 A: printed receipt opens in a new window where app CSS variables do not load	migration run	never
+app/(app)/sales/sale-receipt.ts	#b91c1c	G-11 A: printed receipt opens in a new window where app CSS variables do not load	migration run	never
+app/(app)/sales/sale-receipt.ts	font-size:12px	G-11 A: printed receipt opens in a new window where app CSS variables do not load	migration run	never
+app/(app)/sales/sale-receipt.ts	font-size:18px	G-11 A: printed receipt opens in a new window where app CSS variables do not load	migration run	never
+app/(app)/sales/sale-receipt.ts	font:14px	G-11 A: printed receipt opens in a new window where app CSS variables do not load	migration run	never
+app/(app)/sales/sale-receipt.ts	margin-top:16px	G-11 A: printed receipt opens in a new window where app CSS variables do not load	migration run	never
+app/(app)/sales/sale-receipt.ts	margin:0 0 2px	G-11 A: printed receipt opens in a new window where app CSS variables do not load	migration run	never
+app/(app)/sales/sale-receipt.ts	margin:12px	G-11 A: printed receipt opens in a new window where app CSS variables do not load	migration run	never
+app/(app)/sales/sale-receipt.ts	margin:24px	G-11 A: printed receipt opens in a new window where app CSS variables do not load	migration run	never
+app/(app)/sales/sale-receipt.ts	padding:4px	G-11 A: printed receipt opens in a new window where app CSS variables do not load	migration run	never
+app/(app)/sales/sales-import-modal.tsx	max-h-[90vh]	G-17 B: layout dimension or fixed literal with no token (grid template, viewport cap, truncation width, offset, tracking)	system owner	never
+app/(app)/sales/sales-import-modal.tsx	max-w-[180px]	G-17 B: layout dimension or fixed literal with no token (grid template, viewport cap, truncation width, offset, tracking)	system owner	never
+app/(app)/sales/sales-import-modal.tsx	max-w-[280px]	G-17 B: layout dimension or fixed literal with no token (grid template, viewport cap, truncation width, offset, tracking)	system owner	never
+app/(app)/sales/sales-import-modal.tsx	min-w-[200px]	G-17 B: layout dimension or fixed literal with no token (grid template, viewport cap, truncation width, offset, tracking)	system owner	never
+app/(app)/settings/page.tsx	grid-cols-[12rem_minmax(0,1fr)]	G-17 B: layout dimension or fixed literal with no token (grid template, viewport cap, truncation width, offset, tracking)	system owner	never
+app/(app)/settings/page.tsx	grid-cols-[14rem_minmax(0,1fr)]	G-17 B: layout dimension or fixed literal with no token (grid template, viewport cap, truncation width, offset, tracking)	system owner	never
+app/(app)/settings/password-section.tsx	max-w-[calc(50%-0.5rem)]	G-17 B: layout dimension or fixed literal with no token (grid template, viewport cap, truncation width, offset, tracking)	system owner	never
+app/(app)/suppliers/supplier-details-tab.tsx	grid-cols-[8rem_1fr]	G-17 B: layout dimension or fixed literal with no token (grid template, viewport cap, truncation width, offset, tracking)	system owner	never
+app/kitchen-quote/[id]/page.tsx	bg-slate-50	G-14 B: public quote page keeps its slate palette until the person decides	the person	2027-03-31
+app/kitchen-quote/[id]/page.tsx	border-slate-900	G-14 B: public quote page keeps its slate palette until the person decides	the person	2027-03-31
+app/kitchen-quote/[id]/page.tsx	text-slate-500	G-14 B: public quote page keeps its slate palette until the person decides	the person	2027-03-31
+app/kitchen-quote/[id]/page.tsx	text-slate-600	G-14 B: public quote page keeps its slate palette until the person decides	the person	2027-03-31
+app/kitchen-quote/[id]/page.tsx	text-slate-900	G-14 B: public quote page keeps its slate palette until the person decides	the person	2027-03-31
+components/analytics-compare-tab.tsx	grid-cols-[1fr_auto_1fr]	G-17 B: layout dimension or fixed literal with no token (grid template, viewport cap, truncation width, offset, tracking)	system owner	never
+components/analytics-compare-tab.tsx	grid-cols-[1fr_auto_auto]	G-17 B: layout dimension or fixed literal with no token (grid template, viewport cap, truncation width, offset, tracking)	system owner	never
+components/analytics-compare-tab.tsx	grid-cols-[minmax(120px,1fr)_1fr_1fr]	G-17 B: layout dimension or fixed literal with no token (grid template, viewport cap, truncation width, offset, tracking)	system owner	never
+components/analytics-compare-tab.tsx	h-[360px]	G-07 B: chart or list height is a layout dimension	system owner	never
+components/analytics-compare-tab.tsx	rounded-[calc(var(--radius)-2px)]	G-06 B: hand-built segmented control kept until a capture proves the Segmented swap identical (it also changes roles to radio)	migration run	2027-03-31
+components/brand/brand-mark.tsx	text-[#00A228]	G-10 B: logo literal	the person (brand)	never
+components/confirm-preview-modal.tsx	max-h-[90vh]	G-17 B: layout dimension or fixed literal with no token (grid template, viewport cap, truncation width, offset, tracking)	system owner	never
+components/hub-scope-filter.tsx	rounded-[calc(var(--radius)-2px)]	G-06 B: hand-built segmented control kept until a capture proves the Segmented swap identical (it also changes roles to radio)	migration run	2027-03-31
+components/kitchen-analytics-tab.tsx	h-[280px]	G-07 B: chart or list height is a layout dimension	system owner	never
+components/layout/sidebar.tsx	text-[13px]	G-09 C: sidebar label size kept at 13px	the person	2027-03-31
+components/layout/sidebar.tsx	transition-[transform,visibility,width]	G-17 B: layout dimension or fixed literal with no token (grid template, viewport cap, truncation width, offset, tracking)	system owner	never
+components/layout/sidebar.tsx	w-[244px]	G-07 B: sidebar widths are layout dimensions	system owner	never
+components/layout/sidebar.tsx	w-[260px]	G-07 B: sidebar widths are layout dimensions	system owner	never
+components/layout/sidebar.tsx	w-[68px]	G-07 B: sidebar widths are layout dimensions	system owner	never
+components/sku-multi-select.tsx	max-w-[180px]	G-17 B: layout dimension or fixed literal with no token (grid template, viewport cap, truncation width, offset, tracking)	system owner	never
+components/sku-multi-select.tsx	max-w-[80vw]	G-17 B: layout dimension or fixed literal with no token (grid template, viewport cap, truncation width, offset, tracking)	system owner	never
+components/till-registration.tsx	tracking-[0.25em]	G-17 B: layout dimension or fixed literal with no token (grid template, viewport cap, truncation width, offset, tracking)	system owner	never
+contexts/crm-notifications-context.tsx	w-[min(22rem,calc(100vw-2rem))]	G-17 B: layout dimension or fixed literal with no token (grid template, viewport cap, truncation width, offset, tracking)	system owner	never
+lib/format.ts	fontSize: 12	G-17 B: the CHART_TOOLTIP and CHART_TEXT definitions themselves (H-06), the one place the chart text values live	system owner	never
+lib/format.ts	paddingTop: 8	G-17 B: the CHART_TOOLTIP and CHART_TEXT definitions themselves (H-06), the one place the chart text values live	system owner	never
+lib/product-categories.ts	#0891b2	G-05 B: per-category hues kept, a known exception to no per-feature hues	the person (brand)	2027-03-31
+lib/product-categories.ts	#0e7490	G-05 B: per-category hues kept, a known exception to no per-feature hues	the person (brand)	2027-03-31
+lib/product-categories.ts	#15803d	G-05 B: per-category hues kept, a known exception to no per-feature hues	the person (brand)	2027-03-31
+lib/product-categories.ts	#16a34a	G-05 B: per-category hues kept, a known exception to no per-feature hues	the person (brand)	2027-03-31
+lib/product-categories.ts	#1d4ed8	G-05 B: per-category hues kept, a known exception to no per-feature hues	the person (brand)	2027-03-31
+lib/product-categories.ts	#1e40af	G-05 B: per-category hues kept, a known exception to no per-feature hues	the person (brand)	2027-03-31
+lib/product-categories.ts	#2563eb	G-05 B: per-category hues kept, a known exception to no per-feature hues	the person (brand)	2027-03-31
+lib/product-categories.ts	#3b82f6	G-05 B: per-category hues kept, a known exception to no per-feature hues	the person (brand)	2027-03-31
+lib/product-categories.ts	#6b7280	G-05 B: per-category hues kept, a known exception to no per-feature hues	the person (brand)	2027-03-31
+lib/product-categories.ts	#7c3aed	G-05 B: per-category hues kept, a known exception to no per-feature hues	the person (brand)	2027-03-31
+lib/product-categories.ts	#7f1d1d	G-05 B: per-category hues kept, a known exception to no per-feature hues	the person (brand)	2027-03-31
+lib/product-categories.ts	#991b1b	G-05 B: per-category hues kept, a known exception to no per-feature hues	the person (brand)	2027-03-31
+lib/product-categories.ts	#9f1239	G-05 B: per-category hues kept, a known exception to no per-feature hues	the person (brand)	2027-03-31
+lib/product-categories.ts	#a855f7	G-05 B: per-category hues kept, a known exception to no per-feature hues	the person (brand)	2027-03-31
+lib/product-categories.ts	#b91c1c	G-05 B: per-category hues kept, a known exception to no per-feature hues	the person (brand)	2027-03-31
+lib/product-categories.ts	#ca8a04	G-05 B: per-category hues kept, a known exception to no per-feature hues	the person (brand)	2027-03-31
+lib/product-categories.ts	#db2777	G-05 B: per-category hues kept, a known exception to no per-feature hues	the person (brand)	2027-03-31
+lib/product-categories.ts	#dc2626	G-05 B: per-category hues kept, a known exception to no per-feature hues	the person (brand)	2027-03-31
+lib/product-categories.ts	#ea580c	G-05 B: per-category hues kept, a known exception to no per-feature hues	the person (brand)	2027-03-31
+lib/product-categories.ts	#f59e0b	G-05 B: per-category hues kept, a known exception to no per-feature hues	the person (brand)	2027-03-31

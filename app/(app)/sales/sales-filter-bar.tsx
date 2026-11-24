@@ -3,8 +3,7 @@
 import { useState, type ReactNode } from 'react';
 import type { HubScopeFilter } from '@/hooks/use-hub-scope';
 import { SalesChannel, type Agent, type InventoryItem } from '@/types';
-import { FilterSelect } from '@/components/filter-select';
-import { FilterBar, LocationSelect, MoreFilterField, PeriodSelect } from '@/components/app';
+import { FilterBar, FilterSelect, LocationSelect, MoreFilterField, PeriodSelect } from '@/components/app';
 import { PAYMENT_STATUS_FILTERS, type SaleDateFieldFilter } from './sales-utils';
 import { SALE_STATUSES, SALES_SORTS, type SalesFilters } from './use-sales-filters';
 

@@ -39,3 +39,15 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# design system run scratch
+.design-system/tmp/
+storybook-static/
+
+# @fudfarmer/ui package build (scripts/build-ui-package.mjs)
+packages/ui/.stage/
+packages/ui/dist/
+packages/ui/*.tgz
+
+# Migration run screenshots: large, and baselines/MANIFEST.sha256 records their hashes
+.migration/*/baselines/before/
