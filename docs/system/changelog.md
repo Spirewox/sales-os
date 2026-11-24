@@ -3,6 +3,11 @@
 
 Changes to the design system docs and tokens, newest first.
 
+## 2026-11-24
+
+- Redesign the sign-in screen with an animated brand panel (`fd62c91`)
+- Add a Locations tab to Analytics (`18705cf`)
+
 ## 2026-11-23
 
 - System prep for the migration: Button pending state, Checkbox, Textarea (`97369ef`)

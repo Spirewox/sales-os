@@ -85,7 +85,7 @@ RowAction's only axis. DataTable itself has no variant prop: its modes come from
 |---|---|---|---|---|
 | Row hover in and out | announce | `transition-colors` (Tailwind default 150ms, no app preset) | background-color | same, colour only |
 | RowAction hover in and out | announce | `transition-colors` (Tailwind default 150ms, no app preset) | background-color, border-color, color | same, colour only |
-| Skeleton rows while loading | announce | `animate-pulse` with `skeleton-shimmer` | opacity | static muted blocks: `.skeleton-shimmer { animation: none }` under `prefers-reduced-motion: reduce` in `app/globals.css:256` |
+| Skeleton rows while loading | announce | `animate-pulse` with `skeleton-shimmer` | opacity | static muted blocks: `.skeleton-shimmer { animation: none }` under `prefers-reduced-motion: reduce` in `app/globals.css:299` |
 
 ## Props
 gen-docs writes the tables for DataTable, RowAction and TableFooter from the types.

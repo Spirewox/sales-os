@@ -18,7 +18,7 @@ Not applicable: hand-rolled. A React class component in `components/app/error-bo
 Default: `docs/system/examples/section-error-boundary/default.tsx`.
 
 Real uses, 22 call sites (`rg -n "<SectionErrorBoundary\b" app components lib --glob '!components/app/**'`):
-- Analytics, around the active tab's body, reset by tab: `app/(app)/analytics/page.tsx:125`.
+- Analytics, around the active tab's body, reset by tab: `app/(app)/analytics/page.tsx:128`.
 - Credits, around the credits list: `app/(app)/credits/page.tsx:163`.
 - Kitchen, around the active section, reset by section: `app/(app)/kitchen/page.tsx:127`.
 - Dashboard, six sections each in their own boundary: `app/(app)/_dashboard/dashboard-content.tsx:120`, `app/(app)/_dashboard/dashboard-content.tsx:130`, `app/(app)/_dashboard/dashboard-content.tsx:142`, `app/(app)/_dashboard/dashboard-content.tsx:147`, `app/(app)/_dashboard/dashboard-content.tsx:159`, `app/(app)/_dashboard/dashboard-content.tsx:164`.

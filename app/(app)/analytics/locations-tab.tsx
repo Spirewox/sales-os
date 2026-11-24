@@ -11,11 +11,12 @@ import { CHART_TOOLTIP, formatAxisMoney, formatCount, formatMoney, formatMoneySh
 import { DataTable, KpiStrip, RowAction, StatusBadge, type Column, type KpiCell } from '@/components/app';
 import { Skeleton } from '@/components/ui/skeleton';
 import { stockState } from '../inventory/inventory-utils';
+import { LocationHeadToHead } from './location-head-to-head';
 import { AXIS_TICK, BAR_CURSOR, ChartEmpty, LEGEND_STYLE, Panel, RankedBars, Seg, SourceNote, TabLayout, TwoCol, pctChange, type RankedRow } from './analytics-ui';
 
 type Metric = 'revenue' | 'orders' | 'avg';
 
-type LocationRow = {
+export type LocationRow = {
   id: string;
   name: string;
   type: 'hub' | 'rsp';
@@ -263,6 +264,8 @@ export function LocationsTab({ scope, prevScope }: Readonly<{ scope: InsightScop
           <ChartEmpty text="No sales at any location in this period" />
         )}
       </Panel>
+
+      <LocationHeadToHead rows={rows} scope={scope} showProfit={isAdmin} loading={loading || creditLoading || stockLoading} />
 
       <TwoCol>
         <Panel title="Share of revenue" subtitle="Each location's part of the total">

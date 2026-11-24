@@ -10,13 +10,13 @@ Foundation: `shadcn skeleton (base-nova, base)`. Traps checked: `trap/loading-la
 | Given by the foundation | Added by the team |
 |---|---|
 | shadcn `skeleton` for style `base-nova` (`components.json`), base `base`: a `div` with `data-slot="skeleton"` and `animate-pulse rounded-md bg-muted`, forwarding every `div` prop | The fill is `bg-muted/80` instead of `bg-muted`, a lighter bar on the app's tinted surfaces. Found by diffing against `npx shadcn@latest view skeleton` this session |
-| No reduced-motion handling of its own | The `skeleton-shimmer` class, a hook that `app/globals.css:256` stops under `prefers-reduced-motion: reduce`. It carries no styles otherwise |
+| No reduced-motion handling of its own | The `skeleton-shimmer` class, a hook that `app/globals.css:299` stops under `prefers-reduced-motion: reduce`. It carries no styles otherwise |
 | The `cn` import from the registry's `cn` | Rewritten to `@/lib/utils`, single quotes and semicolons, from the project's formatting |
 
 ## Examples
 Default: `docs/system/examples/skeleton/default.tsx`.
 
-Real uses, 32 call sites (`rg -n "<Skeleton(\s|/|>|$)" app components lib --glob '*.tsx' --glob '!components/ui/**'`):
+Real uses, 34 call sites (`rg -n "<Skeleton(\s|/|>|$)" app components lib --glob '*.tsx' --glob '!components/ui/**'`):
 - Analytics, Inventory tab, chart and ranked-bar placeholders: `app/(app)/analytics/inventory-tab.tsx:132`, `app/(app)/analytics/inventory-tab.tsx:148`, `app/(app)/analytics/inventory-tab.tsx:154`, `app/(app)/analytics/inventory-tab.tsx:157`, `app/(app)/analytics/inventory-tab.tsx:163`
 - Analytics, Suppliers tab, chart and ranked-bar placeholders: `app/(app)/analytics/suppliers-tab.tsx:183`, `app/(app)/analytics/suppliers-tab.tsx:201`, `app/(app)/analytics/suppliers-tab.tsx:204`, `app/(app)/analytics/suppliers-tab.tsx:211`
 - KpiStrip, value and detail line per cell: `components/app/kpi-strip.tsx:59`, `components/app/kpi-strip.tsx:60`
@@ -27,6 +27,7 @@ Real uses, 32 call sites (`rg -n "<Skeleton(\s|/|>|$)" app components lib --glob
 - Dashboard, sales chart: `app/(app)/_dashboard/sales-panel.tsx:61`
 - Dashboard, category bars: `app/(app)/_dashboard/category-panel.tsx:23`
 - Inventory, sales trends chart: `app/(app)/inventory/sales-trends.tsx:48`
+- Analytics, Locations head to head, the section and its chart: `app/(app)/analytics/location-head-to-head.tsx:195`, `app/(app)/analytics/location-head-to-head.tsx:211`
 
 The composites in `components/ui/loading-skeletons.tsx` (TableSkeleton, CardSkeleton, ChartSkeleton, PanelSkeleton, AnalyticsPageSkeleton, CreditSheetSkeleton) build on Skeleton inside the ui folder and are specced as LoadingSkeletons.
 
@@ -36,7 +37,7 @@ The composites in `components/ui/loading-skeletons.tsx` (TableSkeleton, CardSkel
 | `docs/system/examples/skeleton/default.tsx` | default | Two text-line skeletons, a 16px title bar and a 12px meta bar, inside a status region |
 | `docs/system/examples/skeleton/avatar-and-cards.tsx` | state:shaped | Skeletons that take the radius of what they stand for: a round avatar and rounded-xl stat cards |
 | `docs/system/examples/skeleton/chart-block.tsx` | state:block | One block skeleton at the chart's own height, h-40, while ranked bars load |
-| Not applicable: the OS setting, not a prop, turns it on, so a static example would look like `default.tsx`; the rule lives at `app/globals.css:256` | state:reduced-motion | none |
+| Not applicable: the OS setting, not a prop, turns it on, so a static example would look like `default.tsx`; the rule lives at `app/globals.css:299` | state:reduced-motion | none |
 | `docs/system/examples/skeleton/in-card.tsx` | composition:Card | Skeleton rows inside a Card while a dashboard panel loads, the way the top customers panel does |
 
 ## Variants
@@ -58,7 +59,7 @@ Not applicable: Skeleton has no variant props. Size, width and radius come from 
 ### Motion
 | Trigger | Kind | Preset | Properties | Reduced motion |
 |---|---|---|---|---|
-| Mounted, loops until unmounted | announce | `animate-pulse`, Tailwind's 2s `cubic-bezier(0.4, 0, 0.6, 1)` infinite, no named preset | opacity | No animation, a still bar (`app/globals.css:256`) |
+| Mounted, loops until unmounted | announce | `animate-pulse`, Tailwind's 2s `cubic-bezier(0.4, 0, 0.6, 1)` infinite, no named preset | opacity | No animation, a still bar (`app/globals.css:299`) |
 
 ## Props
 gen-docs writes the table from `React.ComponentProps<'div'>`. Skeleton adds no props of its own.
