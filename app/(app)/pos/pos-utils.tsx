@@ -4,7 +4,7 @@ import { StatusBadge, type Tone } from '@/components/app';
 import { formatMoney } from '@/lib/format';
 
 export type PosSection = 'transactions' | 'tills' | 'shifts' | 'reviews';
-export type PosTab = 'overview' | PosSection;
+export type PosTab = 'overview' | 'reconciliation' | PosSection;
 
 /** One row from `pos/operations/{section}`; each section fills a different subset. */
 export type PosRow = {

@@ -1,10 +1,10 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useState } from 'react';
 import Link from 'next/link';
 import { Box, Banknote, User, Shield, Upload, ScrollText, Download } from 'lucide-react';
 import { useAuditLogs, useAgents } from '@/hooks/use-queries';
-import { useUrlState } from '@/hooks/use-url-state';
+import { useDebouncedUrlField, useUrlState } from '@/hooks/use-url-state';
 import type { AuditLog } from '@/types';
 import { formatAuditAction, formatAuditEntity } from '@/lib/api-mappers';
 import { formatDate } from '@/lib/format';
@@ -74,18 +74,13 @@ function AuditTrail() {
   const moduleParam = get('module');
   const moduleFilter = MODULES.some((m) => m.value === moduleParam) ? moduleParam! : 'All';
   const urlSearch = get('q') ?? '';
-  const [search, setSearch] = useState(urlSearch);
+  const [search, setSearch] = useDebouncedUrlField('q', urlSearch, set);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = usePageSize('audit', PAGE_SIZE);
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
   const { data: agents = [] } = useAgents();
 
   // Search updates the URL after typing pauses.
-  useEffect(() => {
-    if (search === urlSearch) return;
-    const t = setTimeout(() => set({ q: search.trim() || null }), 300);
-    return () => clearTimeout(t);
-  }, [search, urlSearch, set]);
 
   const tabDefs: SectionTab<AuditTab>[] = [
     { id: 'all', label: 'All activity' },

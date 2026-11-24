@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useUrlState } from '@/hooks/use-url-state';
+import { useDebouncedUrlField, useUrlState } from '@/hooks/use-url-state';
 import type { HubScopeFilter } from '@/hooks/use-hub-scope';
 import { parsePeriod, periodLabel, periodRange, periodToParams, previousRange, type Period } from '@/lib/period';
 import type { FilterChip } from '@/components/app';
@@ -46,12 +45,7 @@ export function useSalesFilters(hubScope: HubScopeFilter, validSkuIds: string[] 
   const sort = SALES_SORTS.some((s) => s.value === get('sort')) ? (get('sort') as (typeof SALES_SORTS)[number]['value']) : 'newest';
 
   // Search box is local while typing; the URL updates after a pause.
-  const [search, setSearch] = useState(urlSearch);
-  useEffect(() => {
-    if (search === urlSearch) return;
-    const t = setTimeout(() => set({ q: search.trim() || null }), 300);
-    return () => clearTimeout(t);
-  }, [search, urlSearch, set]);
+  const [search, setSearch] = useDebouncedUrlField('q', urlSearch, set);
 
   const range = periodRange(period);
   const prev = previousRange(period);

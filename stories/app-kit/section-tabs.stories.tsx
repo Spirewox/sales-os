@@ -64,7 +64,7 @@ export const HiddenTab: Story = {
   render: () => <Controlled tabs={TABS.map((t) => (t.id === 'tasks' ? { ...t, hidden: true } : t))} />,
 };
 
-/** Reads ?tab=credits from the mocked router. Clicks call router.replace, which the Storybook mock does not apply. */
+/** Reads ?tab=credits from the mocked router. Use Default to exercise tab selection in Storybook. */
 export const UrlSynced: Story = {
   parameters: { nextjs: { navigation: { pathname: '/customers', query: { tab: 'credits' } } } },
   render: () => <UrlTabs />,

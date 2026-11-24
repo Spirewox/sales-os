@@ -1,12 +1,12 @@
 'use client';
 
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { Suspense, useMemo, useState } from 'react';
 import { CircleCheck, MessageCircle, Wallet } from 'lucide-react';
 import { useCreditSummary } from '@/hooks/use-queries';
 import { buildMetricsFromSummary } from '@/lib/credit-mappers';
 import { useHubScopeFilter } from '@/hooks/use-hub-scope';
 import { usePermissions } from '@/hooks/use-permissions';
-import { useUrlState } from '@/hooks/use-url-state';
+import { useDebouncedUrlField, useUrlState } from '@/hooks/use-url-state';
 import type { CreditCustomerSummary } from '@/types/credits';
 import { formatCount, formatMoneyShort, plural } from '@/lib/format';
 import {
@@ -43,12 +43,7 @@ function Credits() {
   const toggleFilter = (f: CreditFilter) => setFilter(filter === f ? null : f);
 
   const urlSearch = get('q') ?? '';
-  const [search, setSearch] = useState(urlSearch);
-  useEffect(() => {
-    if (search === urlSearch) return;
-    const t = setTimeout(() => set({ q: search.trim() || null }), 300);
-    return () => clearTimeout(t);
-  }, [search, urlSearch, set]);
+  const [search, setSearch] = useDebouncedUrlField('q', urlSearch, set);
 
   const customerId = get('customer');
   const [repayFor, setRepayFor] = useState<CreditCustomerSummary | null>(null);

@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { ArrowRightLeft, History } from 'lucide-react';
 import { InventoryItem, StockLog, StockMovementType } from '@/types';
 import type { HubScopeFilter } from '@/hooks/use-hub-scope';
-import { useUrlState } from '@/hooks/use-url-state';
+import { useDebouncedUrlField, useUrlState } from '@/hooks/use-url-state';
 import { formatDate, formatMoney, formatCount } from '@/lib/format';
 import { inPeriod, parsePeriod, periodLabel, periodToParams } from '@/lib/period';
 import { FilterSelect } from '@/components/filter-select';
@@ -28,12 +28,7 @@ export function MovementsTab({ hubScope, items, logs, loading, onOpenProduct }: 
   const rawType = get('type');
   const type = rawType && (Object.values(StockMovementType) as string[]).includes(rawType) ? (rawType as StockMovementType) : 'All';
   const urlSearch = get('mq') ?? '';
-  const [search, setSearch] = useState(urlSearch);
-  useEffect(() => {
-    if (search === urlSearch) return;
-    const t = setTimeout(() => set({ mq: search.trim() || null }), 300);
-    return () => clearTimeout(t);
-  }, [search, urlSearch, set]);
+  const [search, setSearch] = useDebouncedUrlField('mq', urlSearch, set);
 
   const filteredLogs = useMemo(() => {
     let rows = logs;

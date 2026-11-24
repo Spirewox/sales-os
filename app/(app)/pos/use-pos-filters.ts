@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useUrlState } from '@/hooks/use-url-state';
+import { useDebouncedUrlField, useUrlState } from '@/hooks/use-url-state';
 import { useHubScopeFilter } from '@/hooks/use-hub-scope';
 import { lagosDay, parsePeriod, periodRange, periodToParams, type Period } from '@/lib/period';
 
@@ -16,20 +15,7 @@ export function usePosFilters() {
   const period = parsePeriod(params, POS_PERIOD_DEFAULT);
   const range = periodRange(period);
   const urlSearch = get('q') ?? '';
-  const [search, setSearch] = useState(urlSearch);
-  // Follow the URL when it changes elsewhere (chip removed, tab switched, back button).
-  const [seenSearch, setSeenSearch] = useState(urlSearch);
-  if (seenSearch !== urlSearch) {
-    setSeenSearch(urlSearch);
-    setSearch(urlSearch);
-  }
-
-  // Search writes to the URL once typing pauses, so results follow without an Apply button.
-  useEffect(() => {
-    if (search === urlSearch) return;
-    const t = setTimeout(() => set({ q: search.trim() || null }), 300);
-    return () => clearTimeout(t);
-  }, [search, urlSearch, set]);
+  const [search, setSearch] = useDebouncedUrlField('q', urlSearch, set);
 
   const setPeriod = (p: Period) => set(periodToParams(p, POS_PERIOD_DEFAULT));
   const hubId = scope.hubIdForApi;

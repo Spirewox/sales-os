@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useUrlState } from '@/hooks/use-url-state';
+import { useDebouncedUrlField, useUrlState } from '@/hooks/use-url-state';
 import { SupplierBusinessType } from '@/types';
 import { PRODUCT_CATEGORIES } from '@/lib/product-categories';
 import { parsePeriod, periodLabel, periodToParams, type Period } from '@/lib/period';
@@ -13,15 +12,9 @@ export type SupplierStatus = 'All' | 'Active' | 'Inactive';
 export type SupplierShow = 'all' | 'issues' | 'stale';
 
 /** A text param typed locally and written to the URL after a pause. */
-function useDebouncedParam(key: string) {
-  const { get, set } = useUrlState();
+function useDebouncedParam(key: string, get: ReturnType<typeof useUrlState>['get'], set: ReturnType<typeof useUrlState>['set']) {
   const url = get(key) ?? '';
-  const [draft, setDraft] = useState(url);
-  useEffect(() => {
-    if (draft.trim() === url) return;
-    const t = setTimeout(() => set({ [key]: draft.trim() || null }), 300);
-    return () => clearTimeout(t);
-  }, [draft, url, key, set]);
+  const [draft, setDraft] = useDebouncedUrlField(key, url, set);
   return { draft, setDraft, url };
 }
 
@@ -31,9 +24,9 @@ function useDebouncedParam(key: string) {
  */
 export function useSupplierFilters() {
   const { get, set, params } = useUrlState();
-  const search = useDebouncedParam('q');
-  const codeFrom = useDebouncedParam('code_from');
-  const codeTo = useDebouncedParam('code_to');
+  const search = useDebouncedParam('q', get, set);
+  const codeFrom = useDebouncedParam('code_from', get, set);
+  const codeTo = useDebouncedParam('code_to', get, set);
 
   const rawType = get('type');
   const type = rawType && (BUSINESS_TYPES as string[]).includes(rawType) ? (rawType as SupplierBusinessType) : 'All';
