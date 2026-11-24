@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData, useQueries } from '@tanstack/react-query';
 import { useLayoutEffect } from 'react';
 import { HAS_API, requireApi } from '@/lib/require-api';
 import { downloadBulkExport, saveSalesWorkbook, submitBulkJob, waitForBulkJob } from '@/lib/bulk-jobs';
@@ -1205,6 +1205,29 @@ export function useExportSales() {
   });
 }
 
+async function fetchSalesSummary(filters?: Omit<SalesQueryFilters, 'page' | 'limit'>): Promise<SalesListSummary> {
+  if (!HAS_API) return EMPTY_SALES_LIST.summary;
+  const hubMap = await fetchHubMap();
+  const params: Record<string, string | number | boolean | undefined> = {
+    status: filters?.status,
+    date_from: filters?.date_from,
+    date_to: filters?.date_to,
+    date_field: filters?.date_field,
+    payment_mode: filters?.payment_mode,
+    hub_id: filters?.hub_id,
+    agent_id: filters?.agent_id,
+    channel: filters?.channel,
+    categories: filters?.categories,
+    product_ids: filters?.product_ids,
+    search: filters?.search,
+    exclude_voided: filters?.exclude_voided,
+    page: 1,
+    limit: 1,
+  };
+  const raw = await axiosGet(`sales${buildQuery(params)}`, true);
+  return parseSalesListResponse(raw, hubMap).summary;
+}
+
 export function useSalesSummary(
   filters?: Omit<SalesQueryFilters, 'page' | 'limit'>,
   options?: UseQueryEnabledOptions,
@@ -1212,28 +1235,18 @@ export function useSalesSummary(
   return useQuery({
     queryKey: ['sales-summary', filters],
     enabled: options?.enabled ?? true,
-    queryFn: async (): Promise<SalesListSummary> => {
-      if (!HAS_API) return EMPTY_SALES_LIST.summary;
-      const hubMap = await fetchHubMap();
-      const params: Record<string, string | number | boolean | undefined> = {
-        status: filters?.status,
-        date_from: filters?.date_from,
-        date_to: filters?.date_to,
-        date_field: filters?.date_field,
-        payment_mode: filters?.payment_mode,
-        hub_id: filters?.hub_id,
-        agent_id: filters?.agent_id,
-        channel: filters?.channel,
-        categories: filters?.categories,
-        product_ids: filters?.product_ids,
-        search: filters?.search,
-        exclude_voided: filters?.exclude_voided,
-        page: 1,
-        limit: 1,
-      };
-      const raw = await axiosGet(`sales${buildQuery(params)}`, true);
-      return parseSalesListResponse(raw, hubMap).summary;
-    },
+    queryFn: () => fetchSalesSummary(filters),
+  });
+}
+
+/** One sales summary per filter set (e.g. one per location), sharing useSalesSummary's cache. */
+export function useSalesSummaries(filtersList: Omit<SalesQueryFilters, 'page' | 'limit'>[], options?: UseQueryEnabledOptions) {
+  return useQueries({
+    queries: filtersList.map((filters) => ({
+      queryKey: ['sales-summary', filters],
+      enabled: options?.enabled ?? true,
+      queryFn: () => fetchSalesSummary(filters),
+    })),
   });
 }
 

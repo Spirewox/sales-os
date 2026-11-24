@@ -14,7 +14,7 @@ Default: `docs/system/examples/empty-state/default.tsx`.
 
 Real uses, 53 call sites (`rg -n "<EmptyState\b" app components lib -g '!components/app/**'`). 25 of them sit in a DataTable `empty` slot, the rest in drawer panels, tabs and whole sections.
 
-- Analytics page, whole section, default size: no access `app/(app)/analytics/page.tsx:75`, needs the API `app/(app)/analytics/page.tsx:110`, load failed `app/(app)/analytics/page.tsx:141`
+- Analytics page, whole section, default size: no access `app/(app)/analytics/page.tsx:77`, needs the API `app/(app)/analytics/page.tsx:112`, load failed `app/(app)/analytics/page.tsx:145`
 - Kitchen analytics, whole tab, default size: `components/kitchen-analytics-tab.tsx:34`
 - Analytics Ask, compact first-run prompt: `app/(app)/analytics/explore-ask.tsx:81`
 - DataTable empty slots, compact, filtered or first-run: `app/(app)/customers/page.tsx:225`, `app/(app)/credits/page.tsx:185`, `app/(app)/sales/page.tsx:182`, `app/(app)/suppliers/page.tsx:232`, `app/(app)/inventory/stock-tab.tsx:218`, `app/(app)/inventory/movements-tab.tsx:143`, `app/(app)/inventory/requests-tab.tsx:169`, `app/(app)/settings/locations-section.tsx:144`, `app/(app)/settings/users-section.tsx:157`, `app/(app)/engagement/churn.tsx:176`, `app/(app)/engagement/enquiry-table.tsx:104`, `app/(app)/engagement/feedback-table.tsx:119`, `app/(app)/engagement/compensation-table.tsx:74`, `app/(app)/kitchen/jobs.tsx:232`, `app/(app)/kitchen/ingredients.tsx:135`, `app/(app)/kitchen/ingredients.tsx:137`, `app/(app)/kitchen/recipes.tsx:85`, `app/(app)/kitchen/recipes.tsx:87`, `app/(app)/pos/overview.tsx:86`, `app/(app)/pos/tills.tsx:82`, `app/(app)/pos/transactions.tsx:82`, `app/(app)/pos/shifts-reviews.tsx:67`, `app/(app)/pos/shifts-reviews.tsx:108`, `app/(app)/_dashboard/needs-attention.tsx:58`
@@ -37,7 +37,7 @@ Real uses, 53 call sites (`rg -n "<EmptyState\b" app components lib -g '!compone
 ## Variants
 
 ### size
-- `default`: a whole section or tab with nothing in it, 56px of space above and below (`py-14`). Used at 4 call sites, `app/(app)/analytics/page.tsx:75`, `app/(app)/analytics/page.tsx:110`, `app/(app)/analytics/page.tsx:141` and `components/kitchen-analytics-tab.tsx:34`.
+- `default`: a whole section or tab with nothing in it, 56px of space above and below (`py-14`). Used at 4 call sites, `app/(app)/analytics/page.tsx:77`, `app/(app)/analytics/page.tsx:112`, `app/(app)/analytics/page.tsx:145` and `components/kitchen-analytics-tab.tsx:34`.
 - `compact`: inside a DataTable, a drawer panel or a card, 32px above and below (`py-8`). Used at 49 call sites.
 
 ## States

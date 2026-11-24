@@ -22,9 +22,10 @@ import { CustomersTab } from './customers-tab';
 import { CreditTab } from './credit-tab';
 import { ExploreTab } from './explore-tab';
 import { InventoryTab } from './inventory-tab';
+import { LocationsTab } from './locations-tab';
 import { SuppliersTab } from './suppliers-tab';
 
-type AnalyticsTab = 'sales' | 'products' | 'customers' | 'credit' | 'inventory' | 'suppliers' | 'kitchen' | 'compare' | 'explore';
+type AnalyticsTab = 'sales' | 'products' | 'customers' | 'credit' | 'locations' | 'inventory' | 'suppliers' | 'kitchen' | 'compare' | 'explore';
 const OVERVIEW_TABS: AnalyticsTab[] = ['sales', 'products', 'customers', 'credit'];
 
 /** "1 Nov to 20 Nov 2026", or "All available data" for All time. */
@@ -53,6 +54,7 @@ function Analytics() {
     { id: 'products', label: 'Products' },
     { id: 'customers', label: 'Customers' },
     { id: 'credit', label: 'Credit' },
+    { id: 'locations', label: 'Locations', hidden: !hubScope.canSwitchHubs },
     { id: 'inventory', label: 'Inventory', hidden: !can('inventory.view') },
     { id: 'suppliers', label: 'Suppliers', hidden: !can('suppliers.view') },
     { id: 'kitchen', label: 'Kitchen', hidden: !can('kitchen.view') },
@@ -121,7 +123,9 @@ function Analytics() {
       {filters}
 
       <SectionErrorBoundary resetKey={tab} label="This tab">
-        {tab === 'inventory' ? (
+        {tab === 'locations' ? (
+          <LocationsTab scope={scope} prevScope={prevScope} />
+        ) : tab === 'inventory' ? (
           <InventoryTab scope={scope} />
         ) : tab === 'suppliers' ? (
           <SuppliersTab scope={scope} prevScope={prevScope} period={period} />

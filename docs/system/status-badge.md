@@ -12,7 +12,7 @@ Not applicable: hand-rolled. A `span` with five tone classes and the `STATUS_TON
 ## Examples
 Default: `docs/system/examples/status-badge/default.tsx`.
 
-Real uses, 96 call sites (`rg -n "<StatusBadge\b" app components lib -g '!components/app/**'` lists 89 lines, some holding 2 tags; the check counts tags).
+Real uses, 97 call sites (`rg -n "<StatusBadge\b" app components lib -g '!components/app/**'` lists 89 lines, some holding 2 tags; the check counts tags).
 
 - Sales list and sale panel, payment domain: `app/(app)/sales/page.tsx:63`, `app/(app)/sales/sale-detail-panel.tsx:91`, `app/(app)/customers/customer-purchases-tab.tsx:90`, `app/(app)/_dashboard/needs-attention.tsx:108`
 - Stock table and product drawer, stock domain: `app/(app)/inventory/stock-tab.tsx:80`, `app/(app)/inventory/product-drawer.tsx:82`, `app/(app)/analytics/inventory-tab.tsx:121`

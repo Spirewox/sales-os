@@ -17,7 +17,7 @@ Not applicable: hand-rolled. PageHeader is app code in `components/app/page-head
 Default: `docs/system/examples/page-header/default.tsx`.
 
 Real uses, 12 call sites (`rg -n "<PageHeader\b" app components lib --glob '!components/app/**'`):
-- Analytics, title, description and tabs: `app/(app)/analytics/page.tsx:81`.
+- Analytics, title, description and tabs: `app/(app)/analytics/page.tsx:83`.
 - Credits, title and description only: `app/(app)/credits/page.tsx:147`.
 - Kitchen, one secondary and one primary button, tabs: `app/(app)/kitchen/page.tsx:109`.
 - Dashboard, two secondary links and one primary link, two overflow menus split by width: `app/(app)/_dashboard/dashboard-content.tsx:68`.

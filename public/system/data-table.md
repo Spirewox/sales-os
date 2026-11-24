@@ -19,7 +19,7 @@ Foundation: hand-rolled on the native `table` element, with `Skeleton` from `com
 ## Examples
 Default: `docs/system/examples/data-table/default.tsx`.
 
-Real uses, 32 call sites (`rg -n "<DataTable[\s/>]" app components lib -g '!components/app/**'`, the check's own pattern). Three more tags pass a type argument, `<DataTable<OverdueRow>`, `<DataTable<StockRow>` and `<DataTable<TicketRow>` at `app/(app)/_dashboard/needs-attention.tsx:48`, `app/(app)/_dashboard/needs-attention.tsx:63` and `app/(app)/_dashboard/needs-attention.tsx:80`, which the count misses, so 35 tables render in all.
+Real uses, 33 call sites (`rg -n "<DataTable[\s/>]" app components lib -g '!components/app/**'`, the check's own pattern). Three more tags pass a type argument, `<DataTable<OverdueRow>`, `<DataTable<StockRow>` and `<DataTable<TicketRow>` at `app/(app)/_dashboard/needs-attention.tsx:48`, `app/(app)/_dashboard/needs-attention.tsx:63` and `app/(app)/_dashboard/needs-attention.tsx:80`, which the count misses, so 35 tables render in all.
 
 - Credits, customers with credit, rows open the customer, WhatsApp and Record payment actions: `app/(app)/credits/page.tsx:164`
 - Customers, server pages and server sort: `app/(app)/customers/page.tsx:211`

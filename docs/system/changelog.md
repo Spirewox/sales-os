@@ -5,6 +5,7 @@ Changes to the design system docs and tokens, newest first.
 
 ## 2026-11-23
 
+- System prep for the migration: Button pending state, Checkbox, Textarea (`97369ef`)
 - Button spec: cite the triage without an untracked path (`524ba39`)
 - Add the FilterSelect spec (`9332109`)
 - Re-read spec citations into the Audit trail after the pilot change (`bdc5ec6`)

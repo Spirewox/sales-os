@@ -18,7 +18,7 @@ Not applicable: hand-rolled.
 Default: `docs/system/examples/section-tabs/default.tsx`, kitchen sections synced to `?tab=`.
 
 Real uses, 8 call sites (`rg -n "<SectionTabs\b" app components lib --glob '*.{tsx,jsx}' --glob '!components/app/**'`):
-- Analytics header: `app/(app)/analytics/page.tsx:84`, URL mode, default "sales".
+- Analytics header: `app/(app)/analytics/page.tsx:86`, URL mode, default "sales".
 - Engagement header: `app/(app)/engagement/page.tsx:63`, URL mode, `inlineOnMobile`, a tab hidden by permission.
 - Engagement, interactions: `app/(app)/engagement/interactions.tsx:174`, URL mode on `param="view"`, warning counts.
 - Kitchen header: `app/(app)/kitchen/page.tsx:124`, URL mode, default "board".

@@ -16,7 +16,7 @@ Foundation: `shadcn skeleton (base-nova, base)`. Traps checked: `trap/loading-la
 ## Examples
 Default: `docs/system/examples/skeleton/default.tsx`.
 
-Real uses, 27 call sites (`rg -n "<Skeleton(\s|/|>|$)" app components lib --glob '*.tsx' --glob '!components/ui/**'`):
+Real uses, 32 call sites (`rg -n "<Skeleton(\s|/|>|$)" app components lib --glob '*.tsx' --glob '!components/ui/**'`):
 - Analytics, Inventory tab, chart and ranked-bar placeholders: `app/(app)/analytics/inventory-tab.tsx:132`, `app/(app)/analytics/inventory-tab.tsx:148`, `app/(app)/analytics/inventory-tab.tsx:154`, `app/(app)/analytics/inventory-tab.tsx:157`, `app/(app)/analytics/inventory-tab.tsx:163`
 - Analytics, Suppliers tab, chart and ranked-bar placeholders: `app/(app)/analytics/suppliers-tab.tsx:183`, `app/(app)/analytics/suppliers-tab.tsx:201`, `app/(app)/analytics/suppliers-tab.tsx:204`, `app/(app)/analytics/suppliers-tab.tsx:211`
 - KpiStrip, value and detail line per cell: `components/app/kpi-strip.tsx:59`, `components/app/kpi-strip.tsx:60`
