@@ -14,7 +14,7 @@ import { AnalyticsPageSkeleton } from '@/components/ui/loading-skeletons';
 import { AnalyticsCompareTab } from '@/components/analytics-compare-tab';
 import { KitchenAnalyticsTab } from '@/components/kitchen-analytics-tab';
 import {
-  EmptyState, LocationSelect, PageHeader, PeriodSelect, SectionErrorBoundary, SectionTabs, useSectionTab, type SectionTab,
+  ALL_LOCATIONS_LABEL, EmptyState, LocationSelect, PageHeader, PeriodSelect, SectionErrorBoundary, SectionTabs, useSectionTab, type SectionTab,
 } from '@/components/app';
 import { SalesTab } from './sales-tab';
 import { ProductsTab } from './products-tab';
@@ -89,7 +89,10 @@ function Analytics() {
 
   const filters = (
     <div className="flex flex-wrap items-center gap-2">
-      <LocationSelect scope={hubScope} />
+      <LocationSelect
+        scope={hubScope}
+        fixed={tab === 'locations' ? { label: ALL_LOCATIONS_LABEL, reason: 'Locations compares every location, so it is not filtered by location.' } : undefined}
+      />
       <PeriodSelect value={period} onChange={setPeriod} />
       {/* The exact days, as the old "Active range" line showed them. */}
       <span className="text-xs text-muted-foreground tabular-nums">{activeRange(period)}</span>

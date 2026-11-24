@@ -292,7 +292,6 @@ export function LocationsTab({ scope, prevScope }: Readonly<{ scope: InsightScop
           loading={loading}
           getRowId={(r) => r.id}
           defaultSort={{ id: 'revenue', dir: 'desc' }}
-          rowClassName={(r) => (hubScope.filterHub === r.name ? 'bg-accent/60' : undefined)}
           rowActions={(r) => (
             <RowAction onClick={() => openLocation(r, '/')} ariaLabel={`Open the dashboard for ${r.name}`}>Open dashboard</RowAction>
           )}
