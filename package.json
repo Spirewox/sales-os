@@ -10,7 +10,8 @@
     "lint": "eslint",
     "test": "node --import ./scripts/test-resolve.mjs --test \"lib/**/*.test.ts\"",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build -o storybook-static"
+    "build-storybook": "storybook build -o storybook-static",
+    "build:ui": "node scripts/build-ui-package.mjs --pack"
   },
   "dependencies": {
     "@base-ui/react": "^1.3.0",

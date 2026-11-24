@@ -43,3 +43,8 @@ next-env.d.ts
 # design system run scratch
 .design-system/tmp/
 storybook-static/
+
+# @fudfarmer/ui package build (scripts/build-ui-package.mjs)
+packages/ui/.stage/
+packages/ui/dist/
+packages/ui/*.tgz
