@@ -69,6 +69,21 @@ export const CHART_TOOLTIP = {
   cursor: { stroke: 'var(--border)' },
 } as const;
 
+/**
+ * Recharts text styles, the exact values the app's charts pass today (G-08).
+ * fontSize 12 is --text-xs (12px); paddingTop 8 is spacing step 2 (8px).
+ * - tick: XAxis/YAxis `tick` (fill + size)
+ * - legend: Legend `wrapperStyle`
+ * - legendBelow: Legend `wrapperStyle` under a chart, with the 8px gap
+ * - label: size only, for a Pie `style` or a `tick` that keeps Recharts' default fill
+ */
+export const CHART_TEXT = {
+  tick: { fill: 'var(--muted-foreground)', fontSize: 12 },
+  legend: { fontSize: 12, color: 'var(--muted-foreground)' },
+  legendBelow: { fontSize: 12, color: 'var(--muted-foreground)', paddingTop: 8 },
+  label: { fontSize: 12 },
+} as const;
+
 function trim(v: number): string {
   return v >= 100 ? Math.round(v).toString() : v.toFixed(1).replace(/\.0$/, '');
 }

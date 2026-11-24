@@ -1,10 +1,10 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useState } from 'react';
 import Link from 'next/link';
 import { Box, Banknote, User, Shield, Upload, ScrollText, Download } from 'lucide-react';
 import { useAuditLogs, useAgents } from '@/hooks/use-queries';
-import { useUrlState } from '@/hooks/use-url-state';
+import { useDebouncedUrlField, useUrlState } from '@/hooks/use-url-state';
 import type { AuditLog } from '@/types';
 import { formatAuditAction, formatAuditEntity } from '@/lib/api-mappers';
 import { formatDate } from '@/lib/format';
@@ -51,7 +51,7 @@ function RecordCell({ log }: Readonly<{ log: AuditLog }>) {
 
 function When({ ts }: Readonly<{ ts: string }>) {
   return (
-    <span className="whitespace-nowrap">
+    <span className="whitespace-nowrap tabular-nums">
       <span className="font-medium">{formatDate(ts, { day: 'numeric', month: 'short' })}</span>
       <span className="ml-1.5 text-xs text-muted-foreground tabular-nums">{timeOf(ts)}</span>
     </span>
@@ -74,18 +74,13 @@ function AuditTrail() {
   const moduleParam = get('module');
   const moduleFilter = MODULES.some((m) => m.value === moduleParam) ? moduleParam! : 'All';
   const urlSearch = get('q') ?? '';
-  const [search, setSearch] = useState(urlSearch);
+  const [search, setSearch] = useDebouncedUrlField('q', urlSearch, set);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = usePageSize('audit', PAGE_SIZE);
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
   const { data: agents = [] } = useAgents();
 
   // Search updates the URL after typing pauses.
-  useEffect(() => {
-    if (search === urlSearch) return;
-    const t = setTimeout(() => set({ q: search.trim() || null }), 300);
-    return () => clearTimeout(t);
-  }, [search, urlSearch, set]);
 
   const tabDefs: SectionTab<AuditTab>[] = [
     { id: 'all', label: 'All activity' },
@@ -118,10 +113,16 @@ function AuditTrail() {
     limit: pageSize,
   };
 
-  const { data: auditList, isFetching } = useAuditLogs(apiFilters);
+  const { data: fetchedList, isFetching } = useAuditLogs(apiFilters);
+  // Hold the last result on screen while the next page or filter loads, so the rows, tab counts,
+  // entry count and pagination keep their place instead of collapsing to a skeleton
+  // (trap/loading-layout-shift). Rows are held only within one tab, since tabs change the columns.
+  const [held, setHeld] = useState<{ tab: AuditTab; list: typeof fetchedList }>({ tab, list: fetchedList });
+  if (fetchedList && (fetchedList !== held.list || held.tab !== tab)) setHeld({ tab, list: fetchedList });
+  const auditList = fetchedList ?? (held.tab === tab ? held.list : undefined);
   const logs = auditList?.items;
   const meta = auditList?.meta ?? { page: 1, limit: pageSize, total: 0, totalPages: 1 };
-  const summary = auditList?.summary;
+  const summary = auditList?.summary ?? held.list?.summary;
   const tabCount: Record<AuditTab, number | undefined> = { all: summary?.total, bulk: summary?.bulk, sales: summary?.sales, inventory: summary?.inventory, customers: summary?.customers };
   const tabs = tabDefs.map((t) => ({ ...t, count: tabCount[t.id] }));
 
@@ -150,7 +151,7 @@ function AuditTrail() {
   ];
 
   const bulkColumns: Column<AuditLog>[] = [
-    { id: 'file', header: 'File', mobile: 'title', cell: (l) => <span className="block max-w-[220px] truncate" title={l.bulkUpload?.fileName}>{l.bulkUpload?.fileName ?? 'Upload'}</span> },
+    { id: 'file', header: 'File', mobile: 'title', cell: (l) => <span className="block max-w-56 truncate" title={l.bulkUpload?.fileName}>{l.bulkUpload?.fileName ?? 'Upload'}</span> },
     { id: 'type', header: 'Type', mobile: 'subtitle', cell: (l) => <span className="capitalize">{[l.bulkUpload?.domain, l.bulkUpload?.importType].filter(Boolean).join(', ') || '-'}</span> },
     { id: 'rows', header: 'Rows', align: 'right', mobile: 'meta', cell: (l) => <span className="flex flex-col items-end"><span>{summaryNumber(l, 'total')} total</span><span className="text-xs text-muted-foreground">{summaryNumber(l, 'valid')} valid, {summaryNumber(l, 'invalid')} invalid</span></span> },
     { id: 'imported', header: 'Processed', align: 'right', hideBelow: 'lg', cell: (l) => <span className="flex flex-col items-end"><span>{summaryNumber(l, 'processed')} processed</span><span className="text-xs text-muted-foreground">{summaryNumber(l, 'imported')} imported, {summaryNumber(l, 'failed')} failed</span></span> },
@@ -203,25 +204,27 @@ function AuditTrail() {
       />
 
       <SectionErrorBoundary label="Audit log" resetKey={tab}>
-        <DataTable
-          label={tab === 'bulk' ? 'Bulk uploads' : 'Audit log'}
-          columns={tab === 'bulk' ? bulkColumns : activityColumns}
-          rows={isFetching ? undefined : logs}
-          loading={isFetching}
-          getRowId={(l) => l.id}
-          onRowClick={setSelectedLog}
-          pageSize={pageSize}
-          pagination={{ page: meta.page, totalPages: meta.totalPages, onPageChange: setPage, pageSize, onPageSizeChange: (n) => { setPageSize(n); setPage(1); }, total: meta.total }}
-          empty={
-            <EmptyState
-              size="compact"
-              icon={<ScrollText />}
-              title={tab === 'bulk' ? 'No bulk uploads' : 'No activity found'}
-              description={chips.length ? 'Nothing matches these filters.' : 'Changes to sales, stock and customers will appear here.'}
-              action={chips.length ? <button type="button" onClick={clearAll} className="text-sm font-medium text-primary hover:underline">Clear filters</button> : undefined}
-            />
-          }
-        />
+        <div aria-busy={isFetching || undefined}>
+          <DataTable
+            label={tab === 'bulk' ? 'Bulk uploads' : 'Audit log'}
+            columns={tab === 'bulk' ? bulkColumns : activityColumns}
+            rows={logs}
+            loading={isFetching}
+            getRowId={(l) => l.id}
+            onRowClick={setSelectedLog}
+            pageSize={pageSize}
+            pagination={{ page: meta.page, totalPages: meta.totalPages, onPageChange: setPage, pageSize, onPageSizeChange: (n) => { setPageSize(n); setPage(1); }, total: meta.total }}
+            empty={
+              <EmptyState
+                size="compact"
+                icon={<ScrollText />}
+                title={tab === 'bulk' ? 'No bulk uploads' : 'No activity found'}
+                description={chips.length ? 'Nothing matches these filters.' : 'Changes to sales, stock and customers will appear here.'}
+                action={chips.length ? <button type="button" onClick={clearAll} className="text-sm font-medium text-primary hover:underline">Clear filters</button> : undefined}
+              />
+            }
+          />
+        </div>
       </SectionErrorBoundary>
 
 

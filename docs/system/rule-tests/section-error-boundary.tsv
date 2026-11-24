@@ -1,0 +1,6 @@
+rule_id	falsify	negation	two_agent	sweep	verdict	notes
+rule/section-error-boundary-reset-key	pass	pass	n/a: falsify and sweep cover it	pass	rewritten	first draft claimed 11/11; sweep found the paged Sales list (sales/page.tsx:167) with no resetKey, now 11/12 with the stray named
+rule/section-error-boundary-per-section	pass	pass	n/a: falsify and sweep cover it	pass	ship	sweep of 22 boundaries: each wraps one section or tab body, no route-level boundary and no app/(app)/error.tsx
+rule/section-error-boundary-label	pass	pass	n/a: falsify and sweep cover it	pass	ship	sweep: 22/22 pass label; pos/page.tsx:82 can resolve to undefined
+rule/section-error-boundary-no-hand-boundary	pass	pass	n/a: two fresh agents not run this session (time box)	pass	ship	grep getDerivedStateFromError and componentDidCatch outside components/app: 0 hits
+rule/section-error-boundary-no-raw-message	pass	pass	n/a: two fresh agents not run this session (time box)	pass	ship	the component takes no message prop; 0 call sites render error.message

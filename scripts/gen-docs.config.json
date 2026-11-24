@@ -1,0 +1,10 @@
+{
+  "src": "docs/system",
+  "out": "public/system",
+  "llms": "public/llms.txt",
+  "base": "/system",
+  "name": "Sales OS",
+  "registry": "registry.json",
+  "checkCommand": "node scripts/check.mjs",
+  "examplesDir": "docs/system/examples"
+}

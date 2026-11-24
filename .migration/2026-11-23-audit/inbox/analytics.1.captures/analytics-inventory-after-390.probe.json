@@ -1,0 +1,597 @@
+{
+ "url": "/analytics?tab=inventory",
+ "width": 390,
+ "height": 900,
+ "controls": [
+  {
+   "key": "button \"Open menu\"",
+   "role": "button",
+   "name": "Open menu",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": "false",
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 12,
+    "y": 10,
+    "w": 36,
+    "h": 36
+   }
+  },
+  {
+   "key": "button \"Notifications\"",
+   "role": "button",
+   "name": "Notifications",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": "false",
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 342,
+    "y": 10,
+    "w": 36,
+    "h": 36
+   }
+  },
+  {
+   "key": "combobox \"Analytics sections\"",
+   "role": "combobox",
+   "name": "Analytics sections",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": "false",
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 16,
+    "y": 164,
+    "w": 358,
+    "h": 40
+   }
+  },
+  {
+   "key": "textbox \"\"",
+   "role": "textbox",
+   "name": "",
+   "tag": "input",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": null,
+   "box": {
+    "x": -1,
+    "y": -1,
+    "w": 1,
+    "h": 1
+   }
+  },
+  {
+   "key": "combobox \"Location\"",
+   "role": "combobox",
+   "name": "Location",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": "false",
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 16,
+    "y": 237,
+    "w": 160,
+    "h": 36
+   }
+  },
+  {
+   "key": "textbox \"\" #2",
+   "role": "textbox",
+   "name": "",
+   "tag": "input",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": null,
+   "box": {
+    "x": -1,
+    "y": -1,
+    "w": 1,
+    "h": 1
+   }
+  },
+  {
+   "key": "button \"Period: Last 30 days\"",
+   "role": "button",
+   "name": "Period: Last 30 days",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": "false",
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 184,
+    "y": 237,
+    "w": 155,
+    "h": 36
+   }
+  },
+  {
+   "key": "link \"Active products\"",
+   "role": "link",
+   "name": "Active products",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/inventory",
+   "box": {
+    "x": 17,
+    "y": 423,
+    "w": 178,
+    "h": 104
+   }
+  },
+  {
+   "key": "link \"Low stock\"",
+   "role": "link",
+   "name": "Low stock",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/inventory?stock=low",
+   "box": {
+    "x": 196,
+    "y": 549,
+    "w": 178,
+    "h": 104
+   }
+  },
+  {
+   "key": "link \"Out of stock\"",
+   "role": "link",
+   "name": "Out of stock",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/inventory?stock=out",
+   "box": {
+    "x": 17,
+    "y": 654,
+    "w": 178,
+    "h": 104
+   }
+  },
+  {
+   "key": "link \"Expiring soon\"",
+   "role": "link",
+   "name": "Expiring soon",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/inventory?stock=expiring",
+   "box": {
+    "x": 196,
+    "y": 654,
+    "w": 178,
+    "h": 104
+   }
+  },
+  {
+   "key": "link \"Open inventory\"",
+   "role": "link",
+   "name": "Open inventory",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/inventory",
+   "box": {
+    "x": 274,
+    "y": 2192,
+    "w": 100,
+    "h": 20
+   }
+  }
+ ],
+ "headings": [
+  {
+   "key": "heading \"Analytics\"",
+   "level": "1",
+   "text": "Analytics"
+  },
+  {
+   "key": "heading \"Volume sold by unit\"",
+   "level": "3",
+   "text": "Volume sold by unit"
+  },
+  {
+   "key": "heading \"Best sellers\"",
+   "level": "3",
+   "text": "Best sellers"
+  },
+  {
+   "key": "heading \"Stock value by category\"",
+   "level": "3",
+   "text": "Stock value by category"
+  },
+  {
+   "key": "heading \"Stock status\"",
+   "level": "3",
+   "text": "Stock status"
+  },
+  {
+   "key": "heading \"Most volatile prices\"",
+   "level": "3",
+   "text": "Most volatile prices"
+  },
+  {
+   "key": "heading \"Products by stock value\"",
+   "level": "3",
+   "text": "Products by stock value"
+  }
+ ],
+ "texts": [
+  {
+   "key": "p \"Analytics\"",
+   "color": "#08120c",
+   "bg": "#f9faf9",
+   "ratio": 18.21,
+   "large": false,
+   "size": 16,
+   "weight": 600
+  },
+  {
+   "key": "h1 \"Analytics\"",
+   "color": "#08120c",
+   "bg": "#f9faf9",
+   "ratio": 18.21,
+   "large": true,
+   "size": 24,
+   "weight": 600
+  },
+  {
+   "key": "p \"Trends in sales, products, customers, cr\"",
+   "color": "#5b675e",
+   "bg": "#f9faf9",
+   "ratio": 5.66,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "span \"Inventory\"",
+   "color": "#08120c",
+   "bg": "#f9faf9",
+   "ratio": 18.21,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "svg \"▼\"",
+   "color": "#5b675e",
+   "bg": "#f9faf9",
+   "ratio": 5.66,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"All locations\"",
+   "color": "#08120c",
+   "bg": "#f9faf9",
+   "ratio": 18.21,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "svg \"▼\" #2",
+   "color": "#5b675e",
+   "bg": "#f9faf9",
+   "ratio": 5.66,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"Last 30 days\"",
+   "color": "#08120c",
+   "bg": "#f9faf9",
+   "ratio": 18.21,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"3 Dec to 1 Jan 2026\"",
+   "color": "#5b675e",
+   "bg": "#f9faf9",
+   "ratio": 5.66,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"Stock value (cost)\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"Retail value\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"Active products\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"Units on hand\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"Meals served\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"Low stock\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"Out of stock\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"Expiring soon\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "h3 \"Volume sold by unit\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 600
+  },
+  {
+   "key": "p \"Quantity sold in this period, by unit of\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "h3 \"Best sellers\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 600
+  },
+  {
+   "key": "p \"Revenue in this period\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "h3 \"Stock value by category\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 600
+  },
+  {
+   "key": "p \"On hand, at average cost\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "h3 \"Stock status\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 600
+  },
+  {
+   "key": "p \"Active products by stock level\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "h3 \"Most volatile prices\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 600
+  },
+  {
+   "key": "p \"Biggest swings between lowest and highes\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "h3 \"Products by stock value\"",
+   "color": "#08120c",
+   "bg": "#f9faf9",
+   "ratio": 18.21,
+   "large": false,
+   "size": 14,
+   "weight": 600
+  },
+  {
+   "key": "a \"Open inventory\"",
+   "color": "#00761e",
+   "bg": "#f9faf9",
+   "ratio": 5.56,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"Stock figures are as of now for the sele\"",
+   "color": "#5b675e",
+   "bg": "#f9faf9",
+   "ratio": 5.66,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  }
+ ],
+ "links": [
+  {
+   "key": "link \"Open inventory\"",
+   "color": "#00761e",
+   "textColor": "#08120c",
+   "underline": false,
+   "cue": true
+  }
+ ],
+ "heightMismatch": [],
+ "wrappedButtons": [],
+ "flatSurfaces": [],
+ "clipped": [],
+ "tallOverlays": [],
+ "textMeasure": [],
+ "reducedMotion": true,
+ "motion": []
+}

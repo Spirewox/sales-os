@@ -9,7 +9,7 @@ import { useCustomerCredits } from '@/hooks/use-queries';
 import { formatDate, formatMoney } from '@/lib/format';
 import { lagosDay } from '@/lib/period';
 import { EntityDrawer, OverflowMenu, RowAction, StatusBadge } from '@/components/app';
-import { SubmitButton } from '@/components/submit-button';
+import { Button } from '@/components/ui/button';
 import { isKitchenSale, isLockedSale, lockedSaleMessage, saleBalance, salePaymentStatus, saleRef, type DetailTab } from './sales-utils';
 import { SaleDetailTabContent } from './sale-detail-tabs';
 import { printSaleReceipt } from './sale-receipt';
@@ -71,7 +71,7 @@ export function SaleDetailPanel(props: SaleDetailPanelProps) {
 
   const actions = isEditing ? (
     <>
-      <SubmitButton type="button" onClick={onSaveEdit} loading={savingEdit} className="h-8 px-3 text-sm">Save changes</SubmitButton>
+      <Button size="control" type="button" onClick={onSaveEdit} loading={savingEdit} className="h-8 text-sm">Save changes</Button>
       <button type="button" onClick={() => setIsEditing(false)} className="h-8 rounded-md border bg-background px-3 text-sm font-medium hover:bg-muted">Cancel</button>
     </>
   ) : (
@@ -132,7 +132,7 @@ export function SaleDetailPanel(props: SaleDetailPanelProps) {
           <div role="alertdialog" aria-labelledby="void-sale-title" className="rounded-xl border border-destructive/30 bg-destructive/10 p-4">
             <p id="void-sale-title" className="mb-3 text-sm font-medium text-destructive">Void this sale? This reverses customer stats and marks the sale as voided.</p>
             <div className="flex gap-2">
-              <SubmitButton type="button" onClick={onVoidSale} loading={voidingSale} variant="destructive" className="h-8 px-3">Yes, void sale</SubmitButton>
+              <Button size="control" type="button" onClick={onVoidSale} loading={voidingSale} variant="destructive-solid" className="h-8">Yes, void sale</Button>
               <button type="button" onClick={() => setShowVoidConfirm(false)} className="h-8 rounded-md border bg-background px-3 text-sm font-medium hover:bg-muted">Keep sale</button>
             </div>
           </div>

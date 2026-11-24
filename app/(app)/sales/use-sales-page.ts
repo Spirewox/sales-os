@@ -46,12 +46,13 @@ export function useSalesPage() {
   const { data: skuInventory = [], isFetched: skuInventoryFetched } = useInventory(hubScope.hubIdForApi ? { hub_id: hubScope.hubIdForApi } : undefined);
   const { data: agents = [] } = useAgents();
   const catParam = get('cat') ?? '';
+  const { filterHub } = hubScope;
   const skuOptions = useMemo(() => {
     const cats = new Set(catParam.split(',').filter(Boolean).map((c) => c.toLowerCase()));
     return skuInventory
-      .filter((item) => !!item.sku && hubScope.matchesHub(item.location) && (cats.size === 0 || cats.has((item.category || '').toLowerCase())))
+      .filter((item) => !!item.sku && (filterHub === 'All' || item.location === filterHub) && (cats.size === 0 || cats.has((item.category || '').toLowerCase())))
       .toSorted((a, b) => a.sku.localeCompare(b.sku) || a.name.localeCompare(b.name));
-  }, [skuInventory, catParam, hubScope]);
+  }, [skuInventory, catParam, filterHub]);
 
   const filters = useSalesFilters(hubScope, skuInventoryFetched ? skuOptions.map((s) => s.id) : null, {
     agentName: (id) => agents.find((a) => a.id === id)?.name,

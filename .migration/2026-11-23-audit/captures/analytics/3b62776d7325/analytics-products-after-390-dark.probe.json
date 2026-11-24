@@ -1,0 +1,260 @@
+{
+ "url": "/analytics?tab=products",
+ "width": 390,
+ "height": 900,
+ "controls": [
+  {
+   "key": "button \"Open menu\"",
+   "role": "button",
+   "name": "Open menu",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": "false",
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 12,
+    "y": 10,
+    "w": 36,
+    "h": 36
+   }
+  },
+  {
+   "key": "button \"Notifications\"",
+   "role": "button",
+   "name": "Notifications",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": "false",
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 342,
+    "y": 10,
+    "w": 36,
+    "h": 36
+   }
+  },
+  {
+   "key": "combobox \"Analytics sections\"",
+   "role": "combobox",
+   "name": "Analytics sections",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": "false",
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 16,
+    "y": 164,
+    "w": 358,
+    "h": 40
+   }
+  },
+  {
+   "key": "textbox \"\"",
+   "role": "textbox",
+   "name": "",
+   "tag": "input",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": null,
+   "box": {
+    "x": -1,
+    "y": -1,
+    "w": 1,
+    "h": 1
+   }
+  },
+  {
+   "key": "combobox \"Location\"",
+   "role": "combobox",
+   "name": "Location",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": "false",
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 16,
+    "y": 237,
+    "w": 160,
+    "h": 36
+   }
+  },
+  {
+   "key": "textbox \"\" #2",
+   "role": "textbox",
+   "name": "",
+   "tag": "input",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": null,
+   "box": {
+    "x": -1,
+    "y": -1,
+    "w": 1,
+    "h": 1
+   }
+  },
+  {
+   "key": "button \"Period: Last 30 days\"",
+   "role": "button",
+   "name": "Period: Last 30 days",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": "false",
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 184,
+    "y": 237,
+    "w": 155,
+    "h": 36
+   }
+  }
+ ],
+ "headings": [
+  {
+   "key": "heading \"Analytics\"",
+   "level": "1",
+   "text": "Analytics"
+  }
+ ],
+ "texts": [
+  {
+   "key": "p \"Analytics\"",
+   "color": "#ecefed",
+   "bg": "#050b07",
+   "ratio": 17.15,
+   "large": false,
+   "size": 16,
+   "weight": 600
+  },
+  {
+   "key": "h1 \"Analytics\"",
+   "color": "#ecefed",
+   "bg": "#050b07",
+   "ratio": 17.15,
+   "large": true,
+   "size": 24,
+   "weight": 600
+  },
+  {
+   "key": "p \"Trends in sales, products, customers, cr\"",
+   "color": "#b0bab3",
+   "bg": "#050b07",
+   "ratio": 9.95,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "span \"Products\"",
+   "color": "#ecefed",
+   "bg": "#0e1510",
+   "ratio": 16.03,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "svg \"▼\"",
+   "color": "#b0bab3",
+   "bg": "#0e1510",
+   "ratio": 9.3,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"All locations\"",
+   "color": "#ecefed",
+   "bg": "#0e1510",
+   "ratio": 16.03,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "svg \"▼\" #2",
+   "color": "#b0bab3",
+   "bg": "#0e1510",
+   "ratio": 9.3,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"Last 30 days\"",
+   "color": "#ecefed",
+   "bg": "#050b07",
+   "ratio": 17.15,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"3 Dec to 1 Jan 2026\"",
+   "color": "#b0bab3",
+   "bg": "#050b07",
+   "ratio": 9.95,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  }
+ ],
+ "links": [],
+ "heightMismatch": [],
+ "wrappedButtons": [],
+ "flatSurfaces": [],
+ "clipped": [],
+ "tallOverlays": [],
+ "textMeasure": [],
+ "reducedMotion": true,
+ "motion": []
+}

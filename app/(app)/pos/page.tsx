@@ -6,6 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { OverflowMenu, PageHeader, SectionErrorBoundary, SectionTabs, useSectionTab, type SectionTab } from '@/components/app';
 import { usePermissions } from '@/hooks/use-permissions';
 import { useHubScopeFilter } from '@/hooks/use-hub-scope';
+import { useDataScope } from '@/hooks/use-data-scope';
 import { useUrlState } from '@/hooks/use-url-state';
 import { RegisterTillSheet } from '@/components/till-registration';
 import type { PosLocation } from '@/hooks/use-pos-overview';
@@ -15,6 +16,7 @@ import { OverviewTab } from './overview';
 import { TransactionsTab } from './transactions';
 import { TillsTab } from './tills';
 import { ShiftsTab, ReviewsTab } from './shifts-reviews';
+import { ReconciliationTab } from './reconciliation';
 
 const TABS: SectionTab<PosTab>[] = [
   { id: 'overview', label: 'Overview' },
@@ -39,10 +41,12 @@ export default function PosPage() {
 
 function PosWorkspace() {
   const { can } = usePermissions();
+  const { isAssignedScoped } = useDataScope();
   const { params, set } = useUrlState();
   const scope = useHubScopeFilter();
   const qc = useQueryClient();
-  const tab = useSectionTab(TABS, 'overview');
+  const tabs: SectionTab<PosTab>[] = [...TABS, { id: 'reconciliation', label: 'Reconciliation', hidden: isAssignedScoped }];
+  const tab = useSectionTab(tabs, 'overview');
   const [registering, setRegistering] = useState(false);
   const canRegister = can('pos.manage_tills');
 
@@ -61,6 +65,7 @@ function PosWorkspace() {
   const refresh = () => {
     void qc.invalidateQueries({ queryKey: ['pos-overview'] });
     void qc.invalidateQueries({ queryKey: ['pos-operations'] });
+    void qc.invalidateQueries({ queryKey: ['pos-reconciliation'] });
     void qc.invalidateQueries({ queryKey: ['hubs'] });
   };
 
@@ -76,15 +81,16 @@ function PosWorkspace() {
           </button>
         ) : undefined}
         overflow={<OverflowMenu items={[{ label: 'Refresh', icon: <RefreshCw />, onSelect: refresh }]} />}
-        tabs={<SectionTabs label="POS sections" tabs={TABS} value={tab} onChange={changeTab} />}
+        tabs={<SectionTabs label="POS sections" tabs={tabs} value={tab} onChange={changeTab} />}
       />
 
-      <SectionErrorBoundary label={TABS.find((t) => t.id === tab)?.label} resetKey={tab}>
+      <SectionErrorBoundary label={tabs.find((t) => t.id === tab)?.label} resetKey={tab}>
         {tab === 'overview' && <OverviewTab onViewTills={viewTills} tabHref={tabHref} />}
         {tab === 'transactions' && <TransactionsTab />}
         {tab === 'tills' && <TillsTab onRegister={canRegister ? () => setRegistering(true) : undefined} />}
         {tab === 'shifts' && <ShiftsTab />}
         {tab === 'reviews' && <ReviewsTab />}
+        {tab === 'reconciliation' && <ReconciliationTab scope={scope} canViewInventory={can('inventory.view')} />}
       </SectionErrorBoundary>
 
       {registering && (

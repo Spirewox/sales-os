@@ -1,0 +1,13 @@
+./stories/foundations/Swatches.tsx:34:      <span className="size-8 shrink-0 rounded-md border" style={{ background: value }} />
+./app/(app)/suppliers/top-suppliers.tsx:26:                <span className="block h-full rounded-full bg-chart-1" style={{ width: `${Math.max(4, (spend / max) * 100)}%` }} />
+./app/(app)/analytics/sales-tab.tsx:132:              style={{ cursor: !drill && effGrain === 'month' ? 'pointer' : 'default' }}
+./app/(app)/suppliers/supplier-performance-tab.tsx:123:          <span className="h-1.5 w-10 overflow-hidden rounded-full bg-muted max-md:hidden" aria-hidden><span className="block h-full rounded-full bg-chart-1" style={{ width: `${p.sellThrough}%` }} /></span>
+./app/(app)/analytics/analytics-ui.tsx:103:                <div className={cn('h-full rounded-full', r.barClass ?? 'bg-chart-1')} style={{ width: `${(Math.abs(r.value) / max) * 100}%` }} />
+./app/(app)/analytics/explore-ask.tsx:142:                <li key={i} className="flex items-start gap-2.5 text-sm"><span aria-hidden className="mt-1.5 h-2 w-2 shrink-0 rounded-full" style={{ background: winnerDot(ins.winner) }} /><span>{ins.text}</span></li>
+./app/(app)/analytics/products-tab.tsx:85:              style={{ cursor: 'pointer' }}
+./app/(app)/inventory/product-drawer-panels.tsx:88:            {b2bPct > 0 && <div className="flex items-center justify-center bg-series-1 text-white dark:text-[#06140b]" style={{ width: `${b2bPct}%` }}>{b2bPct >= 12 ? `B2B ${b2bPct}%` : ''}</div>}
+./app/(app)/inventory/product-drawer-panels.tsx:89:            {100 - b2bPct > 0 && <div className="flex items-center justify-center bg-series-2 text-white dark:text-[#1a0610]" style={{ width: `${100 - b2bPct}%` }}>{100 - b2bPct >= 12 ? `B2C ${100 - b2bPct}%` : ''}</div>}
+./app/(app)/inventory/product-drawer-panels.tsx:115:                  <div className="h-full rounded-full bg-chart-1" style={{ width: `${Math.max(3, (t.amount / maxTrend) * 100)}%` }} />
+./app/(app)/_dashboard/category-panel.tsx:36:                <div className="mt-1.5 h-1.5 rounded-full bg-chart-1" style={{ width: `${Math.max(2, (cat.revenue / max) * 100)}%` }} aria-hidden />
+./app/(app)/engagement/interaction-insights.tsx:42:              <Pie data={sentimentData} cx="50%" cy="50%" innerRadius={40} outerRadius={80} dataKey="value" stroke="var(--card)" label={({ name, value }) => `${name}: ${value}`} style={{ fontSize: 12 }}>
+./app/(app)/pos/overview.tsx:117:                  <div className="h-full rounded-full bg-primary" style={{ width: `${share}%` }} />

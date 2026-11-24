@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { useUrlState } from '@/hooks/use-url-state';
+import { useMemo } from 'react';
+import { useDebouncedUrlField, useUrlState } from '@/hooks/use-url-state';
 import { CustomerType } from '@/types';
 import { parsePeriod, periodLabel, periodRange, periodToParams, type Period } from '@/lib/period';
 import type { FilterChip } from '@/components/app';
@@ -27,12 +27,7 @@ const SORTS: CustomerSort[] = ['orders', 'orders_asc', 'revenue', 'revenue_asc']
 export function useCustomerFilters(segmentName: (id: string) => string | undefined) {
   const { get, set, params } = useUrlState();
   const urlSearch = get('q') ?? '';
-  const [search, setSearch] = useState(urlSearch);
-  useEffect(() => {
-    if (search.trim() === urlSearch) return;
-    const t = setTimeout(() => set({ q: search.trim() || null }), 300);
-    return () => clearTimeout(t);
-  }, [search, urlSearch, set]);
+  const [search, setSearch] = useDebouncedUrlField('q', urlSearch, set);
 
   const rawType = get('type');
   const type: CustomerType | 'All' = rawType === CustomerType.B2B || rawType === CustomerType.B2C ? rawType : 'All';

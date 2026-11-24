@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import type { InventoryItem, StockLog } from '@/types';
-import { useUrlState } from '@/hooks/use-url-state';
+import { useDebouncedUrlField, useUrlState } from '@/hooks/use-url-state';
 import { buildFifoBatches, expiringOpenBatches, stockState, type FifoBatch, type ProductCategory } from './inventory-utils';
 
 export type StockFilter = 'low' | 'out' | 'below' | 'expiring';
@@ -22,12 +22,7 @@ export function useStockView(items: InventoryItem[], logs: StockLog[]) {
   const skuIds = useMemo(() => (skuParam ? skuParam.split(',').filter(Boolean) : []), [skuParam]);
 
   // Search types locally and writes the URL after a pause.
-  const [search, setSearch] = useState(urlSearch);
-  useEffect(() => {
-    if (search === urlSearch) return;
-    const t = setTimeout(() => set({ q: search.trim() || null }), 300);
-    return () => clearTimeout(t);
-  }, [search, urlSearch, set]);
+  const [search, setSearch] = useDebouncedUrlField('q', urlSearch, set);
 
   /** Open batches per product from the hub ledger (newest 200 movements). */
   const openBatchesByItem = useMemo(() => {

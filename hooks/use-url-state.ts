@@ -1,7 +1,7 @@
 'use client';
 
-import { useCallback } from 'react';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useCallback, useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 /**
  * Read and write page state (tab, filters, open record) in the URL so views can be
@@ -9,24 +9,50 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
  */
 export function useUrlState() {
   const params = useSearchParams();
-  const router = useRouter();
-  const pathname = usePathname();
 
   const get = useCallback((key: string) => params.get(key), [params]);
 
   const set = useCallback(
     (patch: Record<string, string | null | undefined>) => {
-      // Merge with the live URL, not the last render's params, so two quick writes don't overwrite each other.
-      const next = new URLSearchParams(typeof window === 'undefined' ? params.toString() : window.location.search);
+      const url = new URL(window.location.href);
+      const next = url.searchParams;
+      const previous = next.toString();
       for (const [k, v] of Object.entries(patch)) {
         if (v == null || v === '') next.delete(k);
         else next.set(k, v);
       }
-      const s = next.toString();
-      router.replace(s ? `${pathname}?${s}` : pathname, { scroll: false });
+      if (next.toString() === previous) return;
+      // Next observes native history updates without fetching a new route.
+      window.history.replaceState(null, '', url);
     },
-    [params, router, pathname],
+    [],
   );
 
   return { params, get, set };
+}
+
+/** Keep a text field responsive while debouncing its URL-backed filter. */
+export function useDebouncedUrlField(
+  key: string,
+  value: string,
+  set: ReturnType<typeof useUrlState>['set'],
+) {
+  const [draft, setDraft] = useState(value);
+  const [previousValue, setPreviousValue] = useState(value);
+  if (previousValue !== value) {
+    setPreviousValue(value);
+    if (draft.trim() !== value) setDraft(value);
+  }
+
+  useEffect(() => {
+    const next = draft.trim();
+    if (next === value) return;
+    const timer = setTimeout(() => {
+      const current = new URLSearchParams(window.location.search).get(key) ?? '';
+      if (current === value) set({ [key]: next || null });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [draft, key, set, value]);
+
+  return [draft, setDraft] as const;
 }

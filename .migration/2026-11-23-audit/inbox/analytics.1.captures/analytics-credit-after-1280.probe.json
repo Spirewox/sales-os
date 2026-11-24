@@ -1,0 +1,27 @@
+{
+ "url": "/analytics?tab=credit",
+ "width": 1280,
+ "height": 900,
+ "controls": [],
+ "headings": [],
+ "texts": [
+  {
+   "key": "span \"Loading\"",
+   "color": "#08120c",
+   "bg": "#f9faf9",
+   "ratio": 18.21,
+   "large": false,
+   "size": 16,
+   "weight": 400
+  }
+ ],
+ "links": [],
+ "heightMismatch": [],
+ "wrappedButtons": [],
+ "flatSurfaces": [],
+ "clipped": [],
+ "tallOverlays": [],
+ "textMeasure": [],
+ "reducedMotion": true,
+ "motion": []
+}

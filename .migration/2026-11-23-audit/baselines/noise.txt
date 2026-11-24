@@ -1,0 +1,4 @@
+noise floor: pending the ready-state control capture (see below when written)
+control (ready state, base server 4952e8a, no code change):
+34 compared, 16 over 0%, tolerance 0, 202 of other surfaces skipped
+Coverage: 34 pair(s) compared pixel by pixel on every channel including alpha, every before file in /Users/jephaletan/Projects/Fudfarmer/fudfarmer-crm-next/.claude/worktrees/new-branch-from-update-71db62/.migration/2026-11-23-audit/baselines/before for dashboard, pos, analytics-sales, customers. Not compared: after files with no before file, accessibility trees, probe files, motion, and any state or width that was not captured

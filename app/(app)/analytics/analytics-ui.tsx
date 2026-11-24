@@ -6,14 +6,14 @@ import Link from 'next/link';
 import { useState, type ReactNode } from 'react';
 import { ChevronDown, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { formatCount } from '@/lib/format';
+import { CHART_TEXT, formatCount } from '@/lib/format';
 import type { Period } from '@/lib/period';
 
 /* Shared chart settings for every Analytics tab (rules: app/globals.css, docs/ui-ux-improvement-plan.md). */
-export const AXIS_TICK = { fill: 'var(--muted-foreground)', fontSize: 12 };
+export const AXIS_TICK = CHART_TEXT.tick;
 /** Bar charts highlight the hovered band; CHART_TOOLTIP's default cursor suits line charts. */
 export const BAR_CURSOR = { fill: 'var(--muted)', opacity: 0.4 };
-export const LEGEND_STYLE = { fontSize: 12, color: 'var(--muted-foreground)' };
+export const LEGEND_STYLE = CHART_TEXT.legend;
 
 export type Grain = 'day' | 'week' | 'month';
 export type GrainOption = [Grain, string];

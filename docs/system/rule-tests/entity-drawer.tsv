@@ -1,0 +1,6 @@
+rule_id	falsify	negation	two_agent	sweep	verdict	notes
+rule/entity-drawer-dismissible-dirty	n/a: review check, no reviewer was run on the Don't snippet this session	pass	n/a: falsify and sweep cover it	pass	ship	sweep: dismissible at 4 sites, sale-detail-panel.tsx:87 edit mode is the stray
+rule/entity-drawer-destructive-overflow	n/a: review check, no reviewer was run on the Don't snippet this session	pass	n/a: falsify and sweep cover it	pass	ship	sweep: rg destructive: true over the 17 call-site files found 4 items, all in OverflowMenu
+rule/entity-drawer-loading-title	n/a: review check, no reviewer was run on the Don't snippet this session	pass	n/a: falsify and sweep cover it	pass	ship	sweep: 3 of 3 loading shells use Loading {object}… and {Object} unavailable
+rule/entity-drawer-whatsapp-not-call	n/a: review check, no reviewer was run on the Don't snippet this session	pass	n/a: no fresh agents were run this session (deadline)	pass	ship	sweep: 2 customer drawers use WhatsApp; the only tel: Call in a drawer is supplier-drawer.tsx:71, a supplier, which the ban does not cover
+rule/entity-drawer-stat-tone-state	n/a: review check, no reviewer was run on the Don't snippet this session	pass	n/a: no fresh agents were run this session (deadline)	pass	ship	sweep: rg tone: over the call-site files, every stat tone is a condition on state

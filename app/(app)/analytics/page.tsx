@@ -14,7 +14,7 @@ import { AnalyticsPageSkeleton } from '@/components/ui/loading-skeletons';
 import { AnalyticsCompareTab } from '@/components/analytics-compare-tab';
 import { KitchenAnalyticsTab } from '@/components/kitchen-analytics-tab';
 import {
-  EmptyState, LocationSelect, PageHeader, PeriodSelect, SectionErrorBoundary, SectionTabs, useSectionTab, type SectionTab,
+  ALL_LOCATIONS_LABEL, EmptyState, LocationSelect, PageHeader, PeriodSelect, SectionErrorBoundary, SectionTabs, useSectionTab, type SectionTab,
 } from '@/components/app';
 import { SalesTab } from './sales-tab';
 import { ProductsTab } from './products-tab';
@@ -22,9 +22,10 @@ import { CustomersTab } from './customers-tab';
 import { CreditTab } from './credit-tab';
 import { ExploreTab } from './explore-tab';
 import { InventoryTab } from './inventory-tab';
+import { LocationsTab } from './locations-tab';
 import { SuppliersTab } from './suppliers-tab';
 
-type AnalyticsTab = 'sales' | 'products' | 'customers' | 'credit' | 'inventory' | 'suppliers' | 'kitchen' | 'compare' | 'explore';
+type AnalyticsTab = 'sales' | 'products' | 'customers' | 'credit' | 'locations' | 'inventory' | 'suppliers' | 'kitchen' | 'compare' | 'explore';
 const OVERVIEW_TABS: AnalyticsTab[] = ['sales', 'products', 'customers', 'credit'];
 
 /** "1 Nov to 20 Nov 2026", or "All available data" for All time. */
@@ -53,6 +54,7 @@ function Analytics() {
     { id: 'products', label: 'Products' },
     { id: 'customers', label: 'Customers' },
     { id: 'credit', label: 'Credit' },
+    { id: 'locations', label: 'Locations', hidden: !hubScope.canSwitchHubs },
     { id: 'inventory', label: 'Inventory', hidden: !can('inventory.view') },
     { id: 'suppliers', label: 'Suppliers', hidden: !can('suppliers.view') },
     { id: 'kitchen', label: 'Kitchen', hidden: !can('kitchen.view') },
@@ -87,7 +89,10 @@ function Analytics() {
 
   const filters = (
     <div className="flex flex-wrap items-center gap-2">
-      <LocationSelect scope={hubScope} />
+      <LocationSelect
+        scope={hubScope}
+        fixed={tab === 'locations' ? { label: ALL_LOCATIONS_LABEL, reason: 'Locations compares every location, so it is not filtered by location.' } : undefined}
+      />
       <PeriodSelect value={period} onChange={setPeriod} />
       {/* The exact days, as the old "Active range" line showed them. */}
       <span className="text-xs text-muted-foreground tabular-nums">{activeRange(period)}</span>
@@ -121,7 +126,9 @@ function Analytics() {
       {filters}
 
       <SectionErrorBoundary resetKey={tab} label="This tab">
-        {tab === 'inventory' ? (
+        {tab === 'locations' ? (
+          <LocationsTab scope={scope} prevScope={prevScope} />
+        ) : tab === 'inventory' ? (
           <InventoryTab scope={scope} />
         ) : tab === 'suppliers' ? (
           <SuppliersTab scope={scope} prevScope={prevScope} period={period} />

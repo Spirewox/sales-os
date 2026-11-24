@@ -87,12 +87,17 @@ export function SectionTabs<T extends string>(props: ControlledProps<T> | UrlPro
               tabIndex={active ? 0 : -1}
               onClick={() => select(t.id)}
               onKeyDown={(e) => {
-                if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+                if (!['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(e.key)) return;
                 e.preventDefault();
                 const i = visible.findIndex((v) => v.id === current);
-                const n = visible[(i + (e.key === 'ArrowRight' ? 1 : -1) + visible.length) % visible.length];
+                const n =
+                  e.key === 'Home' ? visible[0]
+                  : e.key === 'End' ? visible.at(-1)!
+                  : visible[(i + (e.key === 'ArrowRight' ? 1 : -1) + visible.length) % visible.length];
                 select(n.id);
-                requestAnimationFrame(() => (e.currentTarget.parentElement?.querySelector<HTMLElement>('[aria-selected="true"]'))?.focus());
+                // Keep the list now: React clears e.currentTarget once the handler returns (G-16).
+                const list = e.currentTarget.parentElement;
+                requestAnimationFrame(() => list?.querySelector<HTMLElement>('[aria-selected="true"]')?.focus());
               }}
               className={cn(
                 'inline-flex h-10 shrink-0 items-center gap-2 border-b-2 px-3 text-sm font-medium whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring',
