@@ -1,0 +1,9 @@
+TEMPLATE v2. Common fields: briefs/_common.v1.md (read it whole).
+SURFACE        shared-components, attempt 1
+OUTCOME        Product components at components/ root use Button for their submit action, CHART_TEXT for chart text and the barrel for FilterSelect, with behaviour unchanged.
+MAY EDIT       components/*.tsx, components/*.ts (root files only), components/credits/**. NOT components/submit-button.tsx (the delete-legacy unit removes it after every caller moves), NOT components/brand/**, components/app/**, components/ui/**, components/layout/**.
+TASKS          R2 in components/confirm-preview-modal.tsx. R1 in components/analytics-compare-tab.tsx (:329, :330, :340) and components/kitchen-analytics-tab.tsx (:82). R3 in components/hub-scope-filter.tsx and components/till-registration.tsx (and any other root file that deep-imports '@/components/filter-select'). The rounded-[calc(var(--radius)-2px)] segmented buttons stay (G-06 B).
+KEEP           ConfirmPreviewModal: same preview rows, subtitle, warning, Back and confirm labels; confirm sends one request and shows its pending state; Back closes without a request; Escape and focus return as before. Compare and Kitchen analytics tabs draw the same charts. HubScopeFilter and TillRegistration selects keep options, value and onChange.
+DONE WHEN      --paths "components/*.{tsx,ts}" prints 0 0 0 1 (the 1 is the legacy file submit-button.tsx, still present) and --paths "components/credits/**" prints 0 0 0 0; tsc, eslint, check.mjs, npm test exit 0.
+CAPTURE ROWS   analytics-compare, analytics-kitchen, pos (hub scope filter). The confirm preview modal is reached from /inventory batch update: no baseline capture of it exists (not captured); open it after your edit in your own tab, screenshot it into your captures folder, and list its rows, labels and buttons against the code at your base (git show <base>:components/confirm-preview-modal.tsx).
+TIME LIMIT     25 minutes.

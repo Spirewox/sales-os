@@ -48,3 +48,6 @@ storybook-static/
 packages/ui/.stage/
 packages/ui/dist/
 packages/ui/*.tgz
+
+# Migration run screenshots: large, and baselines/MANIFEST.sha256 records their hashes
+.migration/*/baselines/before/

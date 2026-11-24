@@ -23,7 +23,7 @@ Real uses, 8 call sites (`rg -n "<PeriodSelect\b" app components lib --glob '*.{
 - Inventory, movements: `app/(app)/inventory/movements-tab.tsx:117`, written to the URL with `periodToParams`.
 - Audit log: `app/(app)/audit/page.tsx:189`, URL with fallback `'all'`.
 - POS tabs: `app/(app)/pos/pos-filter-bar.tsx:30`, shown when `withPeriod` is on.
-- Sales list: `app/(app)/sales/sales-filter-bar.tsx:27`.
+- Sales list: `app/(app)/sales/sales-filter-bar.tsx:26`.
 - Suppliers: `app/(app)/suppliers/page.tsx:189`.
 - Customers: `app/(app)/customers/page.tsx:200`.
 

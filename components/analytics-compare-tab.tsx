@@ -16,7 +16,7 @@ import { useNarrateInsight } from '@/hooks/use-queries';
 import {
   EntityKind, ENTITY_KINDS, type CompareResult,
 } from '@/lib/insights';
-import { CHART_TOOLTIP } from '@/lib/format';
+import { CHART_TEXT, CHART_TOOLTIP } from '@/lib/format';
 
 type CompareScope = 'product' | 'customer' | 'general';
 type ViewMode = 'chart' | 'table';
@@ -326,8 +326,8 @@ export function AnalyticsCompareTab({
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 48 }}>
                     <CartesianGrid vertical={false} stroke="var(--border)" />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }} angle={-25} textAnchor="end" height={60} />
-                    <YAxis axisLine={false} tickLine={false} width={56} tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }} tickFormatter={fmtCompactAxis} />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={CHART_TEXT.tick} angle={-25} textAnchor="end" height={60} />
+                    <YAxis axisLine={false} tickLine={false} width={56} tick={CHART_TEXT.tick} tickFormatter={fmtCompactAxis} />
                     <Tooltip
                       {...CHART_TOOLTIP}
                       cursor={{ fill: 'var(--muted)', opacity: 0.4 }}
@@ -337,7 +337,7 @@ export function AnalyticsCompareTab({
                       }}
                       labelFormatter={(_l, items) => (items?.[0]?.payload as { full?: string })?.full ?? String(_l)}
                     />
-                    <Legend wrapperStyle={{ fontSize: 12, color: 'var(--muted-foreground)' }} />
+                    <Legend wrapperStyle={CHART_TEXT.legend} />
                     <Bar dataKey="a" name={result.aLabel} fill="var(--series-1)" radius={[4, 4, 0, 0]} />
                     <Bar dataKey="b" name={result.bLabel} fill="var(--series-2)" radius={[4, 4, 0, 0]} />
                   </BarChart>

@@ -1,0 +1,1559 @@
+{
+ "url": "/analytics?tab=inventory",
+ "width": 1280,
+ "height": 900,
+ "controls": [
+  {
+   "key": "button \"Notifications\"",
+   "role": "button",
+   "name": "Notifications",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": "false",
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 211,
+    "y": 19,
+    "w": 36,
+    "h": 36
+   }
+  },
+  {
+   "key": "combobox \"Location\"",
+   "role": "combobox",
+   "name": "Location",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": "false",
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 12,
+    "y": 97,
+    "w": 235,
+    "h": 36
+   }
+  },
+  {
+   "key": "textbox \"\"",
+   "role": "textbox",
+   "name": "",
+   "tag": "input",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": null,
+   "box": {
+    "x": -1,
+    "y": -1,
+    "w": 1,
+    "h": 1
+   }
+  },
+  {
+   "key": "link \"Dashboard\"",
+   "role": "link",
+   "name": "Dashboard",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/",
+   "box": {
+    "x": 12,
+    "y": 178,
+    "w": 235,
+    "h": 36
+   }
+  },
+  {
+   "key": "link \"Analytics\"",
+   "role": "link",
+   "name": "Analytics",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": "page",
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/analytics",
+   "box": {
+    "x": 12,
+    "y": 215,
+    "w": 235,
+    "h": 36
+   }
+  },
+  {
+   "key": "link \"Sales\"",
+   "role": "link",
+   "name": "Sales",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/sales",
+   "box": {
+    "x": 12,
+    "y": 287,
+    "w": 235,
+    "h": 36
+   }
+  },
+  {
+   "key": "link \"POS\"",
+   "role": "link",
+   "name": "POS",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/pos",
+   "box": {
+    "x": 12,
+    "y": 324,
+    "w": 235,
+    "h": 36
+   }
+  },
+  {
+   "key": "link \"Credits\"",
+   "role": "link",
+   "name": "Credits",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/credits",
+   "box": {
+    "x": 12,
+    "y": 362,
+    "w": 235,
+    "h": 36
+   }
+  },
+  {
+   "key": "link \"Customers\"",
+   "role": "link",
+   "name": "Customers",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/customers",
+   "box": {
+    "x": 12,
+    "y": 399,
+    "w": 235,
+    "h": 36
+   }
+  },
+  {
+   "key": "link \"Engagement\"",
+   "role": "link",
+   "name": "Engagement",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/engagement",
+   "box": {
+    "x": 12,
+    "y": 437,
+    "w": 235,
+    "h": 36
+   }
+  },
+  {
+   "key": "link \"Inventory\"",
+   "role": "link",
+   "name": "Inventory",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/inventory",
+   "box": {
+    "x": 12,
+    "y": 508,
+    "w": 235,
+    "h": 36
+   }
+  },
+  {
+   "key": "link \"Suppliers\"",
+   "role": "link",
+   "name": "Suppliers",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/suppliers",
+   "box": {
+    "x": 12,
+    "y": 546,
+    "w": 235,
+    "h": 36
+   }
+  },
+  {
+   "key": "link \"Kitchen\"",
+   "role": "link",
+   "name": "Kitchen",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/kitchen",
+   "box": {
+    "x": 12,
+    "y": 583,
+    "w": 235,
+    "h": 36
+   }
+  },
+  {
+   "key": "link \"Audit trail\"",
+   "role": "link",
+   "name": "Audit trail",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/audit",
+   "box": {
+    "x": 12,
+    "y": 655,
+    "w": 235,
+    "h": 36
+   }
+  },
+  {
+   "key": "link \"Settings\"",
+   "role": "link",
+   "name": "Settings",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/settings",
+   "box": {
+    "x": 12,
+    "y": 692,
+    "w": 235,
+    "h": 36
+   }
+  },
+  {
+   "key": "button \"Collapse menu\"",
+   "role": "button",
+   "name": "Collapse menu",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": "true",
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 8,
+    "y": 788,
+    "w": 243,
+    "h": 36
+   }
+  },
+  {
+   "key": "button \"D Design Preview Company Admin Account menu\"",
+   "role": "button",
+   "name": "D Design Preview Company Admin Account menu",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": "false",
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 8,
+    "y": 841,
+    "w": 243,
+    "h": 52
+   }
+  },
+  {
+   "key": "tab \"Sales\"",
+   "role": "tab",
+   "name": "Sales",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": "false",
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 300,
+    "y": 132,
+    "w": 60,
+    "h": 40
+   }
+  },
+  {
+   "key": "tab \"Products\"",
+   "role": "tab",
+   "name": "Products",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": "false",
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 364,
+    "y": 132,
+    "w": 83,
+    "h": 40
+   }
+  },
+  {
+   "key": "tab \"Customers\"",
+   "role": "tab",
+   "name": "Customers",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": "false",
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 451,
+    "y": 132,
+    "w": 95,
+    "h": 40
+   }
+  },
+  {
+   "key": "tab \"Credit\"",
+   "role": "tab",
+   "name": "Credit",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": "false",
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 551,
+    "y": 132,
+    "w": 64,
+    "h": 40
+   }
+  },
+  {
+   "key": "tab \"Inventory\"",
+   "role": "tab",
+   "name": "Inventory",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": "true",
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 618,
+    "y": 132,
+    "w": 85,
+    "h": 40
+   }
+  },
+  {
+   "key": "tab \"Suppliers\"",
+   "role": "tab",
+   "name": "Suppliers",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": "false",
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 708,
+    "y": 132,
+    "w": 86,
+    "h": 40
+   }
+  },
+  {
+   "key": "tab \"Kitchen\"",
+   "role": "tab",
+   "name": "Kitchen",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": "false",
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 798,
+    "y": 132,
+    "w": 74,
+    "h": 40
+   }
+  },
+  {
+   "key": "tab \"Compare\"",
+   "role": "tab",
+   "name": "Compare",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": "false",
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 875,
+    "y": 132,
+    "w": 84,
+    "h": 40
+   }
+  },
+  {
+   "key": "tab \"Explore\"",
+   "role": "tab",
+   "name": "Explore",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": "false",
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 963,
+    "y": 132,
+    "w": 73,
+    "h": 40
+   }
+  },
+  {
+   "key": "combobox \"Location\" #2",
+   "role": "combobox",
+   "name": "Location",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": "false",
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 300,
+    "y": 192,
+    "w": 160,
+    "h": 36
+   }
+  },
+  {
+   "key": "textbox \"\" #2",
+   "role": "textbox",
+   "name": "",
+   "tag": "input",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": null,
+   "box": {
+    "x": -1,
+    "y": -1,
+    "w": 1,
+    "h": 1
+   }
+  },
+  {
+   "key": "button \"Period: Last 30 days\"",
+   "role": "button",
+   "name": "Period: Last 30 days",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": "false",
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 468,
+    "y": 192,
+    "w": 155,
+    "h": 36
+   }
+  },
+  {
+   "key": "link \"Active products\"",
+   "role": "link",
+   "name": "Active products",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/inventory",
+   "box": {
+    "x": 771,
+    "y": 249,
+    "w": 234,
+    "h": 104
+   }
+  },
+  {
+   "key": "link \"Low stock\"",
+   "role": "link",
+   "name": "Low stock",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/inventory?stock=low",
+   "box": {
+    "x": 536,
+    "y": 375,
+    "w": 234,
+    "h": 104
+   }
+  },
+  {
+   "key": "link \"Out of stock\"",
+   "role": "link",
+   "name": "Out of stock",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/inventory?stock=out",
+   "box": {
+    "x": 771,
+    "y": 375,
+    "w": 234,
+    "h": 104
+   }
+  },
+  {
+   "key": "link \"Expiring soon\"",
+   "role": "link",
+   "name": "Expiring soon",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/inventory?stock=expiring",
+   "box": {
+    "x": 1005,
+    "y": 375,
+    "w": 234,
+    "h": 104
+   }
+  },
+  {
+   "key": "link \"Open inventory\"",
+   "role": "link",
+   "name": "Open inventory",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/inventory",
+   "box": {
+    "x": 1140,
+    "y": 1375,
+    "w": 100,
+    "h": 20
+   }
+  },
+  {
+   "key": "region \"Products by stock value\"",
+   "role": "region",
+   "name": "Products by stock value",
+   "tag": "div",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": null,
+   "box": {
+    "x": 301,
+    "y": 1408,
+    "w": 938,
+    "h": 284
+   }
+  },
+  {
+   "key": "button \"Product\"",
+   "role": "button",
+   "name": "Product",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 317,
+    "y": 1419,
+    "w": 60,
+    "h": 16
+   }
+  },
+  {
+   "key": "button \"Category\"",
+   "role": "button",
+   "name": "Category",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 491,
+    "y": 1419,
+    "w": 67,
+    "h": 16
+   }
+  },
+  {
+   "key": "button \"On hand\"",
+   "role": "button",
+   "name": "On hand",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 701,
+    "y": 1418,
+    "w": 63,
+    "h": 16
+   }
+  },
+  {
+   "key": "button \"Value (cost)\"",
+   "role": "button",
+   "name": "Value (cost)",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 837,
+    "y": 1418,
+    "w": 82,
+    "h": 16
+   }
+  },
+  {
+   "key": "button \"Margin\"",
+   "role": "button",
+   "name": "Margin",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 994,
+    "y": 1418,
+    "w": 55,
+    "h": 16
+   }
+  },
+  {
+   "key": "button \"Status\"",
+   "role": "button",
+   "name": "Status",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 1081,
+    "y": 1419,
+    "w": 53,
+    "h": 16
+   }
+  }
+ ],
+ "headings": [
+  {
+   "key": "heading \"Analytics\"",
+   "level": "1",
+   "text": "Analytics"
+  },
+  {
+   "key": "heading \"Volume sold by unit\"",
+   "level": "3",
+   "text": "Volume sold by unit"
+  },
+  {
+   "key": "heading \"Best sellers\"",
+   "level": "3",
+   "text": "Best sellers"
+  },
+  {
+   "key": "heading \"Stock value by category\"",
+   "level": "3",
+   "text": "Stock value by category"
+  },
+  {
+   "key": "heading \"Stock status\"",
+   "level": "3",
+   "text": "Stock status"
+  },
+  {
+   "key": "heading \"Most volatile prices\"",
+   "level": "3",
+   "text": "Most volatile prices"
+  },
+  {
+   "key": "heading \"Products by stock value\"",
+   "level": "3",
+   "text": "Products by stock value"
+  }
+ ],
+ "texts": [
+  {
+   "key": "p \"Location\"",
+   "color": "#101a13/0.70",
+   "bg": "#f6f9f7",
+   "ratio": 6.46,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "span \"All locations\"",
+   "color": "#08120c",
+   "bg": "#f9faf9",
+   "ratio": 18.21,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "svg \"▼\"",
+   "color": "#5b675e",
+   "bg": "#f9faf9",
+   "ratio": 5.66,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "p \"Overview\"",
+   "color": "#101a13/0.70",
+   "bg": "#f6f9f7",
+   "ratio": 6.46,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "span \"Dashboard\"",
+   "color": "#101a12/0.90",
+   "bg": "#f6f9f7",
+   "ratio": 12.9,
+   "large": false,
+   "size": 13,
+   "weight": 500
+  },
+  {
+   "key": "span \"Analytics\"",
+   "color": "#fcfcfc",
+   "bg": "#00761e",
+   "ratio": 5.67,
+   "large": false,
+   "size": 13,
+   "weight": 500
+  },
+  {
+   "key": "p \"Sell\"",
+   "color": "#101a13/0.70",
+   "bg": "#f6f9f7",
+   "ratio": 6.46,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "span \"Sales\"",
+   "color": "#101a12/0.90",
+   "bg": "#f6f9f7",
+   "ratio": 12.9,
+   "large": false,
+   "size": 13,
+   "weight": 500
+  },
+  {
+   "key": "span \"POS\"",
+   "color": "#101a12/0.90",
+   "bg": "#f6f9f7",
+   "ratio": 12.9,
+   "large": false,
+   "size": 13,
+   "weight": 500
+  },
+  {
+   "key": "span \"Credits\"",
+   "color": "#101a12/0.90",
+   "bg": "#f6f9f7",
+   "ratio": 12.9,
+   "large": false,
+   "size": 13,
+   "weight": 500
+  },
+  {
+   "key": "span \"Customers\"",
+   "color": "#101a12/0.90",
+   "bg": "#f6f9f7",
+   "ratio": 12.9,
+   "large": false,
+   "size": 13,
+   "weight": 500
+  },
+  {
+   "key": "span \"Engagement\"",
+   "color": "#101a12/0.90",
+   "bg": "#f6f9f7",
+   "ratio": 12.9,
+   "large": false,
+   "size": 13,
+   "weight": 500
+  },
+  {
+   "key": "p \"Operate\"",
+   "color": "#101a13/0.70",
+   "bg": "#f6f9f7",
+   "ratio": 6.46,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "span \"Inventory\"",
+   "color": "#101a12/0.90",
+   "bg": "#f6f9f7",
+   "ratio": 12.9,
+   "large": false,
+   "size": 13,
+   "weight": 500
+  },
+  {
+   "key": "span \"Suppliers\"",
+   "color": "#101a12/0.90",
+   "bg": "#f6f9f7",
+   "ratio": 12.9,
+   "large": false,
+   "size": 13,
+   "weight": 500
+  },
+  {
+   "key": "span \"Kitchen\"",
+   "color": "#101a12/0.90",
+   "bg": "#f6f9f7",
+   "ratio": 12.9,
+   "large": false,
+   "size": 13,
+   "weight": 500
+  },
+  {
+   "key": "p \"Admin\"",
+   "color": "#101a13/0.70",
+   "bg": "#f6f9f7",
+   "ratio": 6.46,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "span \"Audit trail\"",
+   "color": "#101a12/0.90",
+   "bg": "#f6f9f7",
+   "ratio": 12.9,
+   "large": false,
+   "size": 13,
+   "weight": 500
+  },
+  {
+   "key": "span \"Settings\"",
+   "color": "#101a12/0.90",
+   "bg": "#f6f9f7",
+   "ratio": 12.9,
+   "large": false,
+   "size": 13,
+   "weight": 500
+  },
+  {
+   "key": "span \"Collapse menu\"",
+   "color": "#0f1911/0.80",
+   "bg": "#f6f9f7",
+   "ratio": 9.25,
+   "large": false,
+   "size": 13,
+   "weight": 500
+  },
+  {
+   "key": "span \"D\"",
+   "color": "#00761e",
+   "bg": "#ddece1",
+   "ratio": 4.74,
+   "large": false,
+   "size": 12,
+   "weight": 600
+  },
+  {
+   "key": "span \"Design Preview\"",
+   "color": "#0f1912",
+   "bg": "#f6f9f7",
+   "ratio": 16.96,
+   "large": false,
+   "size": 13,
+   "weight": 500
+  },
+  {
+   "key": "span \"Company Admin\"",
+   "color": "#0f1911/0.75",
+   "bg": "#f6f9f7",
+   "ratio": 7.72,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"Account menu\"",
+   "color": "#08120c",
+   "bg": "#f6f9f7",
+   "ratio": 17.98,
+   "large": false,
+   "size": 16,
+   "weight": 400
+  },
+  {
+   "key": "h1 \"Analytics\"",
+   "color": "#08120c",
+   "bg": "#f9faf9",
+   "ratio": 18.21,
+   "large": true,
+   "size": 24,
+   "weight": 600
+  },
+  {
+   "key": "p \"Trends in sales, products, customers, cr\"",
+   "color": "#5b675e",
+   "bg": "#f9faf9",
+   "ratio": 5.66,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "button \"Sales\"",
+   "color": "#5b675e",
+   "bg": "#f9faf9",
+   "ratio": 5.66,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "button \"Products\"",
+   "color": "#5b675e",
+   "bg": "#f9faf9",
+   "ratio": 5.66,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "button \"Customers\"",
+   "color": "#5b675e",
+   "bg": "#f9faf9",
+   "ratio": 5.66,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "button \"Credit\"",
+   "color": "#5b675e",
+   "bg": "#f9faf9",
+   "ratio": 5.66,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "button \"Inventory\"",
+   "color": "#08120c",
+   "bg": "#f9faf9",
+   "ratio": 18.21,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "button \"Suppliers\"",
+   "color": "#5b675e",
+   "bg": "#f9faf9",
+   "ratio": 5.66,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "button \"Kitchen\"",
+   "color": "#5b675e",
+   "bg": "#f9faf9",
+   "ratio": 5.66,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "button \"Compare\"",
+   "color": "#5b675e",
+   "bg": "#f9faf9",
+   "ratio": 5.66,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "button \"Explore\"",
+   "color": "#5b675e",
+   "bg": "#f9faf9",
+   "ratio": 5.66,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"All locations\" #2",
+   "color": "#08120c",
+   "bg": "#f9faf9",
+   "ratio": 18.21,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "svg \"▼\" #2",
+   "color": "#5b675e",
+   "bg": "#f9faf9",
+   "ratio": 5.66,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"Last 30 days\"",
+   "color": "#08120c",
+   "bg": "#f9faf9",
+   "ratio": 18.21,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"3 Dec to 1 Jan 2026\"",
+   "color": "#5b675e",
+   "bg": "#f9faf9",
+   "ratio": 5.66,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"Stock value (cost)\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"Retail value\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"Active products\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"Units on hand\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"Meals served\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"Low stock\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"Out of stock\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"Expiring soon\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "h3 \"Volume sold by unit\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 600
+  },
+  {
+   "key": "p \"Quantity sold in this period, by unit of\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "h3 \"Best sellers\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 600
+  },
+  {
+   "key": "p \"Revenue in this period\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "h3 \"Stock value by category\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 600
+  },
+  {
+   "key": "p \"On hand, at average cost\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "h3 \"Stock status\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 600
+  },
+  {
+   "key": "p \"Active products by stock level\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "h3 \"Most volatile prices\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 600
+  },
+  {
+   "key": "p \"Biggest swings between lowest and highes\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "h3 \"Products by stock value\"",
+   "color": "#08120c",
+   "bg": "#f9faf9",
+   "ratio": 18.21,
+   "large": false,
+   "size": 14,
+   "weight": 600
+  },
+  {
+   "key": "a \"Open inventory\"",
+   "color": "#00761e",
+   "bg": "#f9faf9",
+   "ratio": 5.56,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "button \"Product\"",
+   "color": "#5b675e",
+   "bg": "#f8fbf9",
+   "ratio": 5.68,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "button \"Category\"",
+   "color": "#5b675e",
+   "bg": "#f8fbf9",
+   "ratio": 5.68,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "button \"On hand\"",
+   "color": "#5b675e",
+   "bg": "#f8fbf9",
+   "ratio": 5.68,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "button \"Value (cost)\"",
+   "color": "#08120c",
+   "bg": "#f8fbf9",
+   "ratio": 18.28,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "button \"Margin\"",
+   "color": "#5b675e",
+   "bg": "#f8fbf9",
+   "ratio": 5.68,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "button \"Status\"",
+   "color": "#5b675e",
+   "bg": "#f8fbf9",
+   "ratio": 5.68,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "span \"Stock figures are as of now for the sele\"",
+   "color": "#5b675e",
+   "bg": "#f9faf9",
+   "ratio": 5.66,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  }
+ ],
+ "links": [
+  {
+   "key": "link \"Open inventory\"",
+   "color": "#00761e",
+   "textColor": "#08120c",
+   "underline": false,
+   "cue": true
+  }
+ ],
+ "heightMismatch": [],
+ "wrappedButtons": [],
+ "flatSurfaces": [],
+ "clipped": [],
+ "tallOverlays": [],
+ "textMeasure": [],
+ "reducedMotion": true,
+ "motion": []
+}

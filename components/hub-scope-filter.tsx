@@ -3,7 +3,7 @@
 import { Layers, MapPin } from 'lucide-react';
 import type { HubScopeFilter } from '@/hooks/use-hub-scope';
 import type { LocationType } from '@/types';
-import { FilterSelect } from '@/components/filter-select';
+import { FilterSelect } from '@/components/app';
 import { hubOptionLabel } from '@/lib/api-mappers';
 
 type HubScopeFilterProps = {

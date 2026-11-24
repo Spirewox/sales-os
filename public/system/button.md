@@ -21,8 +21,12 @@ Foundation: `shadcn button (base-nova, base)`, on `@base-ui/react/button`. Traps
 ## Examples
 Default: `docs/system/examples/button/default.tsx`.
 
-Real uses, 0 call sites (`rg -n "<Button(\s|/|>|$)" app components lib --glob '*.tsx' --glob '!components/ui/**'`):
-- None on a screen. The only uses are inside the ui folder, in `components/ui/dialog.tsx:66`, `components/ui/dialog.tsx:112` and `components/ui/sheet.tsx:66`, and no screen imports Dialog or Sheet (`rg -n "components/ui/(dialog|sheet)" app components lib` finds only the files themselves).
+Real uses, 9 call sites (`rg -n "<Button(\s|/|>|$)" app components lib --glob '*.tsx' --glob '!components/ui/**'`):
+- Sales detail drawer, the migration's first screens: Save changes `app/(app)/sales/sale-detail-panel.tsx:74`, the void confirm `app/(app)/sales/sale-detail-panel.tsx:135` (`destructive-solid`) and the tab's save `app/(app)/sales/sale-detail-tabs.tsx:60`, all `size="control"` with `loading` in place of SubmitButton.
+- Confirm preview modal, its confirm action: `components/confirm-preview-modal.tsx:94`.
+- Sign-in: Sign in `app/login/page.tsx:122` (`size="control"`, `loading`) and the show or hide password toggle `app/login/page.tsx:101` (`ghost`, `icon-sm`).
+- Analytics Locations head to head: the swap button `app/(app)/analytics/location-head-to-head.tsx:164` (`outline`, `icon`) and Select all and Reset `app/(app)/analytics/location-head-to-head.tsx:177`, `app/(app)/analytics/location-head-to-head.tsx:178` (`ghost`, `xs`).
+- Inside the ui folder: `components/ui/dialog.tsx:66`, `components/ui/dialog.tsx:112` and `components/ui/sheet.tsx:66`, and no screen imports Dialog or Sheet (`rg -n "components/ui/(dialog|sheet)" app components lib` finds only the files themselves).
 - Triage counted 152 raw `<button>` copies against 2 own Button uses (the design-system triage of 2026-11-23, Button family row). A plain tag count this session, `rg -c "<button(\s|>|$)" app components lib --glob '*.tsx' --glob '!components/ui/**'`, finds 216 `<button` tags. The app's actions are raw buttons, `RowAction` (`components/app/data-table.tsx:274`) and `SubmitButton` (`components/submit-button.tsx:16`, 18 uses). No migration is part of this spec.
 
 ### Example files
@@ -127,13 +131,13 @@ export default function ButtonInEntityDrawer() {
 ## Variants
 
 ### variant
-- `default`: the one main action on a surface, filled with the green accent. Used at 0 call sites.
-- `outline`: a secondary action beside the main one, and the Dialog's footer Close (`components/ui/dialog.tsx:112`). Used at 0 call sites.
+- `default`: the one main action on a surface, filled with the green accent. Used at 4 call sites.
+- `outline`: a secondary action beside the main one, and the Dialog's footer Close (`components/ui/dialog.tsx:112`). Used at 1 call site.
 - `secondary`: a low-emphasis action on a tinted fill. Used at 0 call sites.
-- `ghost`: a quiet action in a dense row, and the Dialog and Sheet corner close (`components/ui/dialog.tsx:66`). Used at 0 call sites.
+- `ghost`: a quiet action in a dense row, and the Dialog and Sheet corner close (`components/ui/dialog.tsx:66`). Used at 3 call sites.
 - `destructive`: a step that deletes or voids, on a 10% destructive tint. Used at 0 call sites.
 - `link`: an action set inline in text. Used at 0 call sites.
-- `destructive-solid`: the solid destructive fill with `--destructive-foreground` text, for the confirm step of a void or delete, and SubmitButton's `destructive`. Used at 0 call sites.
+- `destructive-solid`: the solid destructive fill with `--destructive-foreground` text, for the confirm step of a void or delete, and SubmitButton's `destructive`. Used at 1 call site.
 
 Example: Outline button for a secondary action beside the main one, Print receipt (`docs/system/examples/button/variant-outline.tsx`)
 
@@ -201,13 +205,13 @@ export default function ButtonVariantDestructiveSolid() {
 
 ### size
 - `default`: 32px tall (`h-8`). Used at 0 call sites.
-- `xs`: 24px tall, `text-xs`. Used at 0 call sites.
+- `xs`: 24px tall, `text-xs`. Used at 2 call sites.
 - `sm`: 28px tall, `text-[0.8rem]`. Used at 0 call sites.
 - `lg`: 36px tall (`h-9`), the height of `SubmitButton` (`h-9`), the drawer close button (`size-9`) and the app's form controls. Used at 0 call sites.
-- `control`: 36px tall (`h-9`), `px-4`, `gap-2`, `rounded-md`, the app's action button and SubmitButton's replacement. Used at 0 call sites.
-- `icon`: 32px square. Used at 0 call sites.
+- `control`: 36px tall (`h-9`), `px-4`, `gap-2`, `rounded-md`, the app's action button and SubmitButton's replacement. Used at 5 call sites.
+- `icon`: 32px square. Used at 1 call site.
 - `icon-xs`: 24px square. Used at 0 call sites.
-- `icon-sm`: 28px square, the Dialog and Sheet corner close. Used at 0 call sites.
+- `icon-sm`: 28px square, the Dialog and Sheet corner close. Used at 1 call site.
 - `icon-lg`: 36px square. Used at 0 call sites.
 
 Example: Extra small 24px button in a table cell, Edit (`docs/system/examples/button/size-xs.tsx`)

@@ -1,0 +1,4279 @@
+{
+ "url": "/analytics?tab=products",
+ "width": 1280,
+ "height": 900,
+ "controls": [
+  {
+   "key": "button \"Notifications, 3 unread\"",
+   "role": "button",
+   "name": "Notifications, 3 unread",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": "false",
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 211,
+    "y": 19,
+    "w": 36,
+    "h": 36
+   }
+  },
+  {
+   "key": "combobox \"Location\"",
+   "role": "combobox",
+   "name": "Location",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": "false",
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 12,
+    "y": 97,
+    "w": 235,
+    "h": 36
+   }
+  },
+  {
+   "key": "textbox \"\"",
+   "role": "textbox",
+   "name": "",
+   "tag": "input",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": null,
+   "box": {
+    "x": -1,
+    "y": -1,
+    "w": 1,
+    "h": 1
+   }
+  },
+  {
+   "key": "link \"Dashboard\"",
+   "role": "link",
+   "name": "Dashboard",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/",
+   "box": {
+    "x": 12,
+    "y": 178,
+    "w": 235,
+    "h": 36
+   }
+  },
+  {
+   "key": "link \"Analytics\"",
+   "role": "link",
+   "name": "Analytics",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": "page",
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/analytics",
+   "box": {
+    "x": 12,
+    "y": 215,
+    "w": 235,
+    "h": 36
+   }
+  },
+  {
+   "key": "link \"Sales\"",
+   "role": "link",
+   "name": "Sales",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/sales",
+   "box": {
+    "x": 12,
+    "y": 287,
+    "w": 235,
+    "h": 36
+   }
+  },
+  {
+   "key": "link \"POS\"",
+   "role": "link",
+   "name": "POS",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/pos",
+   "box": {
+    "x": 12,
+    "y": 324,
+    "w": 235,
+    "h": 36
+   }
+  },
+  {
+   "key": "link \"Credits 10\"",
+   "role": "link",
+   "name": "Credits 10",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/credits",
+   "box": {
+    "x": 12,
+    "y": 362,
+    "w": 235,
+    "h": 36
+   }
+  },
+  {
+   "key": "link \"Customers\"",
+   "role": "link",
+   "name": "Customers",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/customers",
+   "box": {
+    "x": 12,
+    "y": 400,
+    "w": 235,
+    "h": 36
+   }
+  },
+  {
+   "key": "link \"Engagement 10\"",
+   "role": "link",
+   "name": "Engagement 10",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/engagement",
+   "box": {
+    "x": 12,
+    "y": 437,
+    "w": 235,
+    "h": 36
+   }
+  },
+  {
+   "key": "link \"Inventory 7\"",
+   "role": "link",
+   "name": "Inventory 7",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/inventory",
+   "box": {
+    "x": 12,
+    "y": 509,
+    "w": 235,
+    "h": 36
+   }
+  },
+  {
+   "key": "link \"Suppliers\"",
+   "role": "link",
+   "name": "Suppliers",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/suppliers",
+   "box": {
+    "x": 12,
+    "y": 547,
+    "w": 235,
+    "h": 36
+   }
+  },
+  {
+   "key": "link \"Kitchen 1\"",
+   "role": "link",
+   "name": "Kitchen 1",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/kitchen",
+   "box": {
+    "x": 12,
+    "y": 585,
+    "w": 235,
+    "h": 36
+   }
+  },
+  {
+   "key": "link \"Audit trail\"",
+   "role": "link",
+   "name": "Audit trail",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/audit",
+   "box": {
+    "x": 12,
+    "y": 657,
+    "w": 235,
+    "h": 36
+   }
+  },
+  {
+   "key": "link \"Settings\"",
+   "role": "link",
+   "name": "Settings",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/settings",
+   "box": {
+    "x": 12,
+    "y": 694,
+    "w": 235,
+    "h": 36
+   }
+  },
+  {
+   "key": "button \"Collapse menu\"",
+   "role": "button",
+   "name": "Collapse menu",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": "true",
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 8,
+    "y": 788,
+    "w": 243,
+    "h": 36
+   }
+  },
+  {
+   "key": "button \"D Design Preview Company Admin Account menu\"",
+   "role": "button",
+   "name": "D Design Preview Company Admin Account menu",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": "false",
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 8,
+    "y": 841,
+    "w": 243,
+    "h": 52
+   }
+  },
+  {
+   "key": "tab \"Sales\"",
+   "role": "tab",
+   "name": "Sales",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": "false",
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 300,
+    "y": 132,
+    "w": 60,
+    "h": 40
+   }
+  },
+  {
+   "key": "tab \"Products\"",
+   "role": "tab",
+   "name": "Products",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": "true",
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 364,
+    "y": 132,
+    "w": 83,
+    "h": 40
+   }
+  },
+  {
+   "key": "tab \"Customers\"",
+   "role": "tab",
+   "name": "Customers",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": "false",
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 451,
+    "y": 132,
+    "w": 95,
+    "h": 40
+   }
+  },
+  {
+   "key": "tab \"Credit\"",
+   "role": "tab",
+   "name": "Credit",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": "false",
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 551,
+    "y": 132,
+    "w": 64,
+    "h": 40
+   }
+  },
+  {
+   "key": "tab \"Inventory\"",
+   "role": "tab",
+   "name": "Inventory",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": "false",
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 618,
+    "y": 132,
+    "w": 85,
+    "h": 40
+   }
+  },
+  {
+   "key": "tab \"Suppliers\"",
+   "role": "tab",
+   "name": "Suppliers",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": "false",
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 708,
+    "y": 132,
+    "w": 86,
+    "h": 40
+   }
+  },
+  {
+   "key": "tab \"Kitchen\"",
+   "role": "tab",
+   "name": "Kitchen",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": "false",
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 798,
+    "y": 132,
+    "w": 74,
+    "h": 40
+   }
+  },
+  {
+   "key": "tab \"Compare\"",
+   "role": "tab",
+   "name": "Compare",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": "false",
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 875,
+    "y": 132,
+    "w": 84,
+    "h": 40
+   }
+  },
+  {
+   "key": "tab \"Explore\"",
+   "role": "tab",
+   "name": "Explore",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": "false",
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 963,
+    "y": 132,
+    "w": 73,
+    "h": 40
+   }
+  },
+  {
+   "key": "combobox \"Location\" #2",
+   "role": "combobox",
+   "name": "Location",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": "false",
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 300,
+    "y": 192,
+    "w": 160,
+    "h": 36
+   }
+  },
+  {
+   "key": "textbox \"\" #2",
+   "role": "textbox",
+   "name": "",
+   "tag": "input",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": null,
+   "box": {
+    "x": -1,
+    "y": -1,
+    "w": 1,
+    "h": 1
+   }
+  },
+  {
+   "key": "button \"Period: Last 30 days\"",
+   "role": "button",
+   "name": "Period: Last 30 days",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": "false",
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 468,
+    "y": 192,
+    "w": 155,
+    "h": 36
+   }
+  },
+  {
+   "key": "radio \"Revenue\"",
+   "role": "radio",
+   "name": "Revenue",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 1090,
+    "y": 395,
+    "w": 69,
+    "h": 32
+   }
+  },
+  {
+   "key": "radio \"Orders\"",
+   "role": "radio",
+   "name": "Orders",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 1158,
+    "y": 395,
+    "w": 58,
+    "h": 32
+   }
+  },
+  {
+   "key": "application \"₦0₦250k₦500k₦750k₦1MBeef SausageWhole ChickenRaw HoneyTitus \"",
+   "role": "application",
+   "name": "₦0₦250k₦500k₦750k₦1MBeef SausageWhole ChickenRaw HoneyTitus ",
+   "tag": "svg",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": null,
+   "box": {
+    "x": 321,
+    "y": 467,
+    "w": 898,
+    "h": 300
+   }
+  },
+  {
+   "key": "radio \"Revenue\" #2",
+   "role": "radio",
+   "name": "Revenue",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 610,
+    "y": 828,
+    "w": 69,
+    "h": 32
+   }
+  },
+  {
+   "key": "radio \"Orders\" #2",
+   "role": "radio",
+   "name": "Orders",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 678,
+    "y": 828,
+    "w": 58,
+    "h": 32
+   }
+  },
+  {
+   "key": "button \"Top 10 of 17. Show all\"",
+   "role": "button",
+   "name": "Top 10 of 17. Show all",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": "false",
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 321,
+    "y": 1340,
+    "w": 134,
+    "h": 24
+   }
+  },
+  {
+   "key": "radio \"Turnover\"",
+   "role": "radio",
+   "name": "Turnover",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 804,
+    "y": 874,
+    "w": 69,
+    "h": 32
+   }
+  },
+  {
+   "key": "radio \"Units\"",
+   "role": "radio",
+   "name": "Units",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 873,
+    "y": 874,
+    "w": 49,
+    "h": 32
+   }
+  },
+  {
+   "key": "link \"Tiger Prawns\"",
+   "role": "link",
+   "name": "Tiger Prawns",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/inventory?product=prod_5",
+   "box": {
+    "x": 801,
+    "y": 946,
+    "w": 85,
+    "h": 20
+   }
+  },
+  {
+   "key": "link \"Catfish (Live)\"",
+   "role": "link",
+   "name": "Catfish (Live)",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/inventory?product=prod_4",
+   "box": {
+    "x": 801,
+    "y": 990,
+    "w": 85,
+    "h": 20
+   }
+  },
+  {
+   "key": "link \"Turkey Wings\"",
+   "role": "link",
+   "name": "Turkey Wings",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/inventory?product=prod_11",
+   "box": {
+    "x": 801,
+    "y": 1034,
+    "w": 88,
+    "h": 20
+   }
+  },
+  {
+   "key": "link \"Gizzard\"",
+   "role": "link",
+   "name": "Gizzard",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/inventory?product=prod_10",
+   "box": {
+    "x": 801,
+    "y": 1078,
+    "w": 50,
+    "h": 20
+   }
+  },
+  {
+   "key": "link \"Chicken Wings\"",
+   "role": "link",
+   "name": "Chicken Wings",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/inventory?product=prod_9",
+   "box": {
+    "x": 801,
+    "y": 1122,
+    "w": 98,
+    "h": 20
+   }
+  },
+  {
+   "key": "link \"Titus Mackerel\"",
+   "role": "link",
+   "name": "Titus Mackerel",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/inventory?product=prod_1",
+   "box": {
+    "x": 801,
+    "y": 1166,
+    "w": 96,
+    "h": 20
+   }
+  },
+  {
+   "key": "link \"Whole Chicken\"",
+   "role": "link",
+   "name": "Whole Chicken",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/inventory?product=prod_7",
+   "box": {
+    "x": 801,
+    "y": 1210,
+    "w": 98,
+    "h": 20
+   }
+  },
+  {
+   "key": "link \"Croaker Fish\"",
+   "role": "link",
+   "name": "Croaker Fish",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/inventory?product=prod_2",
+   "box": {
+    "x": 801,
+    "y": 1254,
+    "w": 83,
+    "h": 20
+   }
+  },
+  {
+   "key": "link \"Hake Fish\"",
+   "role": "link",
+   "name": "Hake Fish",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/inventory?product=prod_3",
+   "box": {
+    "x": 801,
+    "y": 1298,
+    "w": 64,
+    "h": 20
+   }
+  },
+  {
+   "key": "link \"Chicken Laps\"",
+   "role": "link",
+   "name": "Chicken Laps",
+   "tag": "a",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": "/inventory?product=prod_8",
+   "box": {
+    "x": 801,
+    "y": 1342,
+    "w": 89,
+    "h": 20
+   }
+  },
+  {
+   "key": "button \"Top 10 of 12. Show all\"",
+   "role": "button",
+   "name": "Top 10 of 12. Show all",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": "false",
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 801,
+    "y": 1386,
+    "w": 137,
+    "h": 24
+   }
+  },
+  {
+   "key": "region \"Products sold\"",
+   "role": "region",
+   "name": "Products sold",
+   "tag": "div",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": null,
+   "box": {
+    "x": 301,
+    "y": 1500,
+    "w": 938,
+    "h": 728
+   }
+  },
+  {
+   "key": "button \"Product\"",
+   "role": "button",
+   "name": "Product",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 317,
+    "y": 1511,
+    "w": 60,
+    "h": 16
+   }
+  },
+  {
+   "key": "button \"Category\"",
+   "role": "button",
+   "name": "Category",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 597,
+    "y": 1511,
+    "w": 67,
+    "h": 16
+   }
+  },
+  {
+   "key": "button \"Orders\"",
+   "role": "button",
+   "name": "Orders",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 880,
+    "y": 1510,
+    "w": 54,
+    "h": 16
+   }
+  },
+  {
+   "key": "button \"Share\"",
+   "role": "button",
+   "name": "Share",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 1017,
+    "y": 1510,
+    "w": 49,
+    "h": 16
+   }
+  },
+  {
+   "key": "button \"Revenue\"",
+   "role": "button",
+   "name": "Revenue",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 1158,
+    "y": 1510,
+    "w": 65,
+    "h": 16
+   }
+  },
+  {
+   "key": "button \"Beef Sausage\"",
+   "role": "button",
+   "name": "Beef Sausage",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 317,
+    "y": 1551,
+    "w": 91,
+    "h": 20
+   }
+  },
+  {
+   "key": "button \"Whole Chicken\"",
+   "role": "button",
+   "name": "Whole Chicken",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 317,
+    "y": 1597,
+    "w": 98,
+    "h": 20
+   }
+  },
+  {
+   "key": "button \"Raw Honey\"",
+   "role": "button",
+   "name": "Raw Honey",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 317,
+    "y": 1643,
+    "w": 74,
+    "h": 20
+   }
+  },
+  {
+   "key": "button \"Titus Mackerel\"",
+   "role": "button",
+   "name": "Titus Mackerel",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 317,
+    "y": 1689,
+    "w": 96,
+    "h": 20
+   }
+  },
+  {
+   "key": "button \"Ram Meat\"",
+   "role": "button",
+   "name": "Ram Meat",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 317,
+    "y": 1735,
+    "w": 67,
+    "h": 20
+   }
+  },
+  {
+   "key": "button \"Parboiled Rice (50kg)\"",
+   "role": "button",
+   "name": "Parboiled Rice (50kg)",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 317,
+    "y": 1781,
+    "w": 140,
+    "h": 20
+   }
+  },
+  {
+   "key": "button \"Chicken Frankfurters\"",
+   "role": "button",
+   "name": "Chicken Frankfurters",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 317,
+    "y": 1827,
+    "w": 138,
+    "h": 20
+   }
+  },
+  {
+   "key": "button \"Goat Meat\"",
+   "role": "button",
+   "name": "Goat Meat",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 317,
+    "y": 1873,
+    "w": 68,
+    "h": 20
+   }
+  },
+  {
+   "key": "button \"Turkey Wings\"",
+   "role": "button",
+   "name": "Turkey Wings",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 317,
+    "y": 1919,
+    "w": 88,
+    "h": 20
+   }
+  },
+  {
+   "key": "button \"Tiger Prawns\"",
+   "role": "button",
+   "name": "Tiger Prawns",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 317,
+    "y": 1965,
+    "w": 85,
+    "h": 20
+   }
+  },
+  {
+   "key": "button \"Catfish (Live)\"",
+   "role": "button",
+   "name": "Catfish (Live)",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 317,
+    "y": 2011,
+    "w": 85,
+    "h": 20
+   }
+  },
+  {
+   "key": "button \"Gizzard\"",
+   "role": "button",
+   "name": "Gizzard",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 317,
+    "y": 2057,
+    "w": 50,
+    "h": 20
+   }
+  },
+  {
+   "key": "button \"Chicken Laps\"",
+   "role": "button",
+   "name": "Chicken Laps",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 317,
+    "y": 2103,
+    "w": 89,
+    "h": 20
+   }
+  },
+  {
+   "key": "button \"Hake Fish\"",
+   "role": "button",
+   "name": "Hake Fish",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 317,
+    "y": 2149,
+    "w": 64,
+    "h": 20
+   }
+  },
+  {
+   "key": "button \"Chicken Wings\"",
+   "role": "button",
+   "name": "Chicken Wings",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 317,
+    "y": 2195,
+    "w": 98,
+    "h": 20
+   }
+  },
+  {
+   "key": "combobox \"Rows per page\"",
+   "role": "combobox",
+   "name": "Rows per page",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": "false",
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 421,
+    "y": 2241,
+    "w": 80,
+    "h": 32
+   }
+  },
+  {
+   "key": "textbox \"Rows per page15▼\"",
+   "role": "textbox",
+   "name": "Rows per page15▼",
+   "tag": "input",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": null,
+   "box": {
+    "x": -1,
+    "y": -1,
+    "w": 1,
+    "h": 1
+   }
+  },
+  {
+   "key": "button \"Previous\"",
+   "role": "button",
+   "name": "Previous",
+   "tag": "button",
+   "disabled": true,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 993,
+    "y": 2239,
+    "w": 83,
+    "h": 36
+   }
+  },
+  {
+   "key": "button \"1\"",
+   "role": "button",
+   "name": "1",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 1082,
+    "y": 2239,
+    "w": 36,
+    "h": 36
+   }
+  },
+  {
+   "key": "button \"2\"",
+   "role": "button",
+   "name": "2",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 1124,
+    "y": 2239,
+    "w": 36,
+    "h": 36
+   }
+  },
+  {
+   "key": "button \"Next\"",
+   "role": "button",
+   "name": "Next",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 1166,
+    "y": 2239,
+    "w": 57,
+    "h": 36
+   }
+  },
+  {
+   "key": "region \"Products not selling\"",
+   "role": "region",
+   "name": "Products not selling",
+   "tag": "div",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": null,
+   "href": null,
+   "box": {
+    "x": 301,
+    "y": 2355,
+    "w": 938,
+    "h": 128
+   }
+  },
+  {
+   "key": "button \"Product\" #2",
+   "role": "button",
+   "name": "Product",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 317,
+    "y": 2366,
+    "w": 60,
+    "h": 16
+   }
+  },
+  {
+   "key": "button \"Category\" #2",
+   "role": "button",
+   "name": "Category",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 714,
+    "y": 2366,
+    "w": 67,
+    "h": 16
+   }
+  },
+  {
+   "key": "button \"In stock\"",
+   "role": "button",
+   "name": "In stock",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 1162,
+    "y": 2365,
+    "w": 61,
+    "h": 16
+   }
+  },
+  {
+   "key": "button \"Groundnut Oil\"",
+   "role": "button",
+   "name": "Groundnut Oil",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 317,
+    "y": 2406,
+    "w": 91,
+    "h": 20
+   }
+  },
+  {
+   "key": "button \"Turkey Drumsticks\"",
+   "role": "button",
+   "name": "Turkey Drumsticks",
+   "tag": "button",
+   "disabled": false,
+   "ariaDisabled": null,
+   "ariaBusy": null,
+   "ariaInvalid": null,
+   "ariaCurrent": null,
+   "ariaExpanded": null,
+   "ariaSelected": null,
+   "required": false,
+   "type": "button",
+   "href": null,
+   "box": {
+    "x": 317,
+    "y": 2451,
+    "w": 122,
+    "h": 20
+   }
+  }
+ ],
+ "headings": [
+  {
+   "key": "heading \"Analytics\"",
+   "level": "1",
+   "text": "Analytics"
+  },
+  {
+   "key": "heading \"Top products by revenue\"",
+   "level": "3",
+   "text": "Top products by revenue"
+  },
+  {
+   "key": "heading \"Categories\"",
+   "level": "3",
+   "text": "Categories"
+  },
+  {
+   "key": "heading \"Stock turnover\"",
+   "level": "3",
+   "text": "Stock turnover"
+  },
+  {
+   "key": "heading \"All products sold\"",
+   "level": "3",
+   "text": "All products sold"
+  },
+  {
+   "key": "heading \"Not selling: 2 products\"",
+   "level": "3",
+   "text": "Not selling: 2 products"
+  }
+ ],
+ "texts": [
+  {
+   "key": "span \"3\"",
+   "color": "#fcfcfc",
+   "bg": "#c8263a",
+   "ratio": 5.39,
+   "large": false,
+   "size": 12,
+   "weight": 600
+  },
+  {
+   "key": "p \"Location\"",
+   "color": "#101a13/0.70",
+   "bg": "#f6f9f7",
+   "ratio": 6.46,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "span \"All locations\"",
+   "color": "#08120c",
+   "bg": "#f9faf9",
+   "ratio": 18.21,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "svg \"▼\"",
+   "color": "#5b675e",
+   "bg": "#f9faf9",
+   "ratio": 5.66,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "p \"Overview\"",
+   "color": "#101a13/0.70",
+   "bg": "#f6f9f7",
+   "ratio": 6.46,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "span \"Dashboard\"",
+   "color": "#101a12/0.90",
+   "bg": "#f6f9f7",
+   "ratio": 12.9,
+   "large": false,
+   "size": 13,
+   "weight": 500
+  },
+  {
+   "key": "span \"Analytics\"",
+   "color": "#fcfcfc",
+   "bg": "#00761e",
+   "ratio": 5.67,
+   "large": false,
+   "size": 13,
+   "weight": 500
+  },
+  {
+   "key": "p \"Sell\"",
+   "color": "#101a13/0.70",
+   "bg": "#f6f9f7",
+   "ratio": 6.46,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "span \"Sales\"",
+   "color": "#101a12/0.90",
+   "bg": "#f6f9f7",
+   "ratio": 12.9,
+   "large": false,
+   "size": 13,
+   "weight": 500
+  },
+  {
+   "key": "span \"POS\"",
+   "color": "#101a12/0.90",
+   "bg": "#f6f9f7",
+   "ratio": 12.9,
+   "large": false,
+   "size": 13,
+   "weight": 500
+  },
+  {
+   "key": "span \"Credits\"",
+   "color": "#101a12/0.90",
+   "bg": "#f6f9f7",
+   "ratio": 12.9,
+   "large": false,
+   "size": 13,
+   "weight": 500
+  },
+  {
+   "key": "span \"10\"",
+   "color": "#fcfcfc",
+   "bg": "#c8263a",
+   "ratio": 5.39,
+   "large": false,
+   "size": 12,
+   "weight": 600
+  },
+  {
+   "key": "span \"Customers\"",
+   "color": "#101a12/0.90",
+   "bg": "#f6f9f7",
+   "ratio": 12.9,
+   "large": false,
+   "size": 13,
+   "weight": 500
+  },
+  {
+   "key": "span \"Engagement\"",
+   "color": "#101a12/0.90",
+   "bg": "#f6f9f7",
+   "ratio": 12.9,
+   "large": false,
+   "size": 13,
+   "weight": 500
+  },
+  {
+   "key": "span \"10\" #2",
+   "color": "#132717",
+   "bg": "#e0f0e3",
+   "ratio": 13.34,
+   "large": false,
+   "size": 12,
+   "weight": 600
+  },
+  {
+   "key": "p \"Operate\"",
+   "color": "#101a13/0.70",
+   "bg": "#f6f9f7",
+   "ratio": 6.46,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "span \"Inventory\"",
+   "color": "#101a12/0.90",
+   "bg": "#f6f9f7",
+   "ratio": 12.9,
+   "large": false,
+   "size": 13,
+   "weight": 500
+  },
+  {
+   "key": "span \"7\"",
+   "color": "#fcfcfc",
+   "bg": "#8a6a05",
+   "ratio": 4.94,
+   "large": false,
+   "size": 12,
+   "weight": 600
+  },
+  {
+   "key": "span \"Suppliers\"",
+   "color": "#101a12/0.90",
+   "bg": "#f6f9f7",
+   "ratio": 12.9,
+   "large": false,
+   "size": 13,
+   "weight": 500
+  },
+  {
+   "key": "span \"Kitchen\"",
+   "color": "#101a12/0.90",
+   "bg": "#f6f9f7",
+   "ratio": 12.9,
+   "large": false,
+   "size": 13,
+   "weight": 500
+  },
+  {
+   "key": "span \"1\"",
+   "color": "#132717",
+   "bg": "#e0f0e3",
+   "ratio": 13.34,
+   "large": false,
+   "size": 12,
+   "weight": 600
+  },
+  {
+   "key": "p \"Admin\"",
+   "color": "#101a13/0.70",
+   "bg": "#f6f9f7",
+   "ratio": 6.46,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "span \"Audit trail\"",
+   "color": "#101a12/0.90",
+   "bg": "#f6f9f7",
+   "ratio": 12.9,
+   "large": false,
+   "size": 13,
+   "weight": 500
+  },
+  {
+   "key": "span \"Settings\"",
+   "color": "#101a12/0.90",
+   "bg": "#f6f9f7",
+   "ratio": 12.9,
+   "large": false,
+   "size": 13,
+   "weight": 500
+  },
+  {
+   "key": "span \"Collapse menu\"",
+   "color": "#0f1911/0.80",
+   "bg": "#f6f9f7",
+   "ratio": 9.25,
+   "large": false,
+   "size": 13,
+   "weight": 500
+  },
+  {
+   "key": "span \"D\"",
+   "color": "#00761e",
+   "bg": "#ddece1",
+   "ratio": 4.74,
+   "large": false,
+   "size": 12,
+   "weight": 600
+  },
+  {
+   "key": "span \"Design Preview\"",
+   "color": "#0f1912",
+   "bg": "#f6f9f7",
+   "ratio": 16.96,
+   "large": false,
+   "size": 13,
+   "weight": 500
+  },
+  {
+   "key": "span \"Company Admin\"",
+   "color": "#0f1911/0.75",
+   "bg": "#f6f9f7",
+   "ratio": 7.72,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"Account menu\"",
+   "color": "#08120c",
+   "bg": "#f6f9f7",
+   "ratio": 17.98,
+   "large": false,
+   "size": 16,
+   "weight": 400
+  },
+  {
+   "key": "h1 \"Analytics\"",
+   "color": "#08120c",
+   "bg": "#f9faf9",
+   "ratio": 18.21,
+   "large": true,
+   "size": 24,
+   "weight": 600
+  },
+  {
+   "key": "p \"Trends in sales, products, customers, cr\"",
+   "color": "#5b675e",
+   "bg": "#f9faf9",
+   "ratio": 5.66,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "button \"Sales\"",
+   "color": "#5b675e",
+   "bg": "#f9faf9",
+   "ratio": 5.66,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "button \"Products\"",
+   "color": "#08120c",
+   "bg": "#f9faf9",
+   "ratio": 18.21,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "button \"Customers\"",
+   "color": "#5b675e",
+   "bg": "#f9faf9",
+   "ratio": 5.66,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "button \"Credit\"",
+   "color": "#5b675e",
+   "bg": "#f9faf9",
+   "ratio": 5.66,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "button \"Inventory\"",
+   "color": "#5b675e",
+   "bg": "#f9faf9",
+   "ratio": 5.66,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "button \"Suppliers\"",
+   "color": "#5b675e",
+   "bg": "#f9faf9",
+   "ratio": 5.66,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "button \"Kitchen\"",
+   "color": "#5b675e",
+   "bg": "#f9faf9",
+   "ratio": 5.66,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "button \"Compare\"",
+   "color": "#5b675e",
+   "bg": "#f9faf9",
+   "ratio": 5.66,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "button \"Explore\"",
+   "color": "#5b675e",
+   "bg": "#f9faf9",
+   "ratio": 5.66,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"All locations\" #2",
+   "color": "#08120c",
+   "bg": "#f9faf9",
+   "ratio": 18.21,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "svg \"▼\" #2",
+   "color": "#5b675e",
+   "bg": "#f9faf9",
+   "ratio": 5.66,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"Last 30 days\"",
+   "color": "#08120c",
+   "bg": "#f9faf9",
+   "ratio": 18.21,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"3 Dec to 1 Jan 2026\"",
+   "color": "#5b675e",
+   "bg": "#f9faf9",
+   "ratio": 5.66,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"Product revenue\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"₦9.9M\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": true,
+   "size": 24,
+   "weight": 600
+  },
+  {
+   "key": "span \"20 %\"",
+   "color": "#00761e",
+   "bg": "#ffffff",
+   "ratio": 5.82,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "span \"Up\"",
+   "color": "#00761e",
+   "bg": "#ffffff",
+   "ratio": 5.82,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "span \"vs previous\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"Products sold\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"28\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": true,
+   "size": 24,
+   "weight": 600
+  },
+  {
+   "key": "span \"110 order lines\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"3.7 %\"",
+   "color": "#00761e",
+   "bg": "#ffffff",
+   "ratio": 5.82,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "span \"Up\" #2",
+   "color": "#00761e",
+   "bg": "#ffffff",
+   "ratio": 5.82,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "span \"vs previous\" #2",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"Top category\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"Chicken\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": true,
+   "size": 24,
+   "weight": 600
+  },
+  {
+   "key": "span \"19% of revenue\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"Not selling\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"2\"",
+   "color": "#8a6a05",
+   "bg": "#ffffff",
+   "ratio": 5.07,
+   "large": true,
+   "size": 24,
+   "weight": 600
+  },
+  {
+   "key": "span \"In stock, no sales in period\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "h3 \"Top products by revenue\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 600
+  },
+  {
+   "key": "p \"Best sellers in the selected period\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "button \"Revenue\"",
+   "color": "#132717",
+   "bg": "#e0f0e3",
+   "ratio": 13.34,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "button \"Orders\"",
+   "color": "#5b675e",
+   "bg": "#f8fbf9",
+   "ratio": 5.68,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "tspan \"₦0\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "tspan \"₦250k\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "tspan \"₦500k\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "tspan \"₦750k\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "tspan \"₦1M\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "tspan \"Beef Sausage\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "tspan \"Whole Chicken\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "tspan \"Raw Honey\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "tspan \"Titus Mackerel\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "tspan \"Ram Meat\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "tspan \"Parboiled Rice\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "tspan \"(5…\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "tspan \"Chicken Frankfurt…\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "tspan \"Goat Meat\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "tspan \"Turkey Wings\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "tspan \"Tiger Prawns\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "h3 \"Categories\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 600
+  },
+  {
+   "key": "p \"Revenue by category\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "button \"Revenue\" #2",
+   "color": "#132717",
+   "bg": "#e0f0e3",
+   "ratio": 13.34,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "button \"Orders\" #2",
+   "color": "#5b675e",
+   "bg": "#f8fbf9",
+   "ratio": 5.68,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "span \"Chicken\" #2",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"14 orders\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"₦1.9M\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 600
+  },
+  {
+   "key": "span \"19 %\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"Sausage\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"10 orders\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"₦1.6M\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 600
+  },
+  {
+   "key": "span \"16 %\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"Fish\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"17 orders\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"₦1.4M\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 600
+  },
+  {
+   "key": "span \"15 %\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"Honey\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"7 orders\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"₦676k\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 600
+  },
+  {
+   "key": "span \"7 %\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"Ram\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"5 orders\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"₦671k\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 600
+  },
+  {
+   "key": "span \"7 %\" #2",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"Grains & Staples\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"1 order\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"₦634k\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 600
+  },
+  {
+   "key": "span \"6 %\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"Goat\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"6 orders\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"₦593k\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 600
+  },
+  {
+   "key": "span \"6 %\" #2",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"Turkey\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"3 orders\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"₦561k\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 600
+  },
+  {
+   "key": "span \"6 %\" #3",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"Seafood\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"7 orders\" #2",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"₦503k\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 600
+  },
+  {
+   "key": "span \"5 %\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"Cow\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"3 orders\" #2",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"₦296k\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 600
+  },
+  {
+   "key": "span \"3 %\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "button \"Top 10 of 17. Show all\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "h3 \"Stock turnover\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 600
+  },
+  {
+   "key": "p \"Units sold in the period divided by stoc\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "button \"Turnover\"",
+   "color": "#132717",
+   "bg": "#e0f0e3",
+   "ratio": 13.34,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "button \"Units\"",
+   "color": "#5b675e",
+   "bg": "#f8fbf9",
+   "ratio": 5.68,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "a \"Tiger Prawns\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"40 sold, 0 left\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"40x\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 600
+  },
+  {
+   "key": "a \"Catfish (Live)\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"128 sold, 20 left\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"6.4x\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 600
+  },
+  {
+   "key": "a \"Turkey Wings\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"8 sold, 2 left\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"4x\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 600
+  },
+  {
+   "key": "a \"Gizzard\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"89 sold, 41 left\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"2.2x\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 600
+  },
+  {
+   "key": "a \"Chicken Wings\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"58 sold, 66 left\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"0.9x\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 600
+  },
+  {
+   "key": "a \"Titus Mackerel\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"15 sold, 40 left\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"0.4x\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 600
+  },
+  {
+   "key": "a \"Whole Chicken\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"18 sold, 60 left\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"0.3x\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 600
+  },
+  {
+   "key": "a \"Croaker Fish\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"8 sold, 85 left\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"0.1x\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 600
+  },
+  {
+   "key": "a \"Hake Fish\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"6 sold, 44 left\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"0.1x\" #2",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 600
+  },
+  {
+   "key": "a \"Chicken Laps\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"5 sold, 49 left\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"0.1x\" #3",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 600
+  },
+  {
+   "key": "button \"Top 10 of 12. Show all\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "h3 \"All products sold\"",
+   "color": "#08120c",
+   "bg": "#f9faf9",
+   "ratio": 18.21,
+   "large": false,
+   "size": 14,
+   "weight": 600
+  },
+  {
+   "key": "p \"Select a product to open it in Inventory\"",
+   "color": "#5b675e",
+   "bg": "#f9faf9",
+   "ratio": 5.66,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "button \"Product\"",
+   "color": "#5b675e",
+   "bg": "#f8fbf9",
+   "ratio": 5.68,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "button \"Category\"",
+   "color": "#5b675e",
+   "bg": "#f8fbf9",
+   "ratio": 5.68,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "button \"Orders\" #3",
+   "color": "#5b675e",
+   "bg": "#f8fbf9",
+   "ratio": 5.68,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "button \"Share\"",
+   "color": "#5b675e",
+   "bg": "#f8fbf9",
+   "ratio": 5.68,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "button \"Revenue\" #3",
+   "color": "#08120c",
+   "bg": "#f8fbf9",
+   "ratio": 18.28,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "button \"Beef Sausage\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"Sausage\" #2",
+   "color": "#5b675e",
+   "bg": "#edf4ef",
+   "ratio": 5.3,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "td \"5 orders\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "td \"10%\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "td \"₦979,200\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "button \"Whole Chicken\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"Chicken\" #3",
+   "color": "#5b675e",
+   "bg": "#edf4ef",
+   "ratio": 5.3,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "td \"4 orders\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "td \"10%\" #2",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "td \"₦952,300\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "button \"Raw Honey\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"Honey\" #2",
+   "color": "#5b675e",
+   "bg": "#edf4ef",
+   "ratio": 5.3,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "td \"7 orders\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "td \"7%\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "td \"₦676,000\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "button \"Titus Mackerel\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"Fish\" #2",
+   "color": "#5b675e",
+   "bg": "#edf4ef",
+   "ratio": 5.3,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "td \"4 orders\" #2",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "td \"7%\" #2",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "td \"₦672,750\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "button \"Ram Meat\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"Ram\" #2",
+   "color": "#5b675e",
+   "bg": "#edf4ef",
+   "ratio": 5.3,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "td \"5 orders\" #2",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "td \"7%\" #3",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "td \"₦671,000\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "button \"Parboiled Rice (50kg)\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"Grains & Staples\" #2",
+   "color": "#5b675e",
+   "bg": "#edf4ef",
+   "ratio": 5.3,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "td \"1 order\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "td \"6%\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "td \"₦633,600\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "button \"Chicken Frankfurters\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"Sausage\" #3",
+   "color": "#5b675e",
+   "bg": "#edf4ef",
+   "ratio": 5.3,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "td \"5 orders\" #3",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "td \"6%\" #2",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "td \"₦630,000\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "button \"Goat Meat\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"Goat\" #2",
+   "color": "#5b675e",
+   "bg": "#edf4ef",
+   "ratio": 5.3,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "td \"6 orders\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "td \"6%\" #3",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "td \"₦592,900\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "button \"Turkey Wings\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"Turkey\" #2",
+   "color": "#5b675e",
+   "bg": "#edf4ef",
+   "ratio": 5.3,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "td \"3 orders\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "td \"6%\" #4",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "td \"₦561,200\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "button \"Tiger Prawns\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"Seafood\" #2",
+   "color": "#5b675e",
+   "bg": "#edf4ef",
+   "ratio": 5.3,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "td \"5 orders\" #4",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "td \"5%\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "td \"₦466,700\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "button \"Catfish (Live)\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"Fish\" #3",
+   "color": "#5b675e",
+   "bg": "#edf4ef",
+   "ratio": 5.3,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "td \"8 orders\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "td \"5%\" #2",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "td \"₦445,550\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "button \"Gizzard\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"Chicken\" #4",
+   "color": "#5b675e",
+   "bg": "#edf4ef",
+   "ratio": 5.3,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "td \"3 orders\" #2",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "td \"4%\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "td \"₦349,100\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "button \"Chicken Laps\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"Chicken\" #5",
+   "color": "#5b675e",
+   "bg": "#edf4ef",
+   "ratio": 5.3,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "td \"2 orders\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "td \"3%\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "td \"₦299,000\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "button \"Hake Fish\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"Fish\" #4",
+   "color": "#5b675e",
+   "bg": "#edf4ef",
+   "ratio": 5.3,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "td \"3 orders\" #3",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "td \"3%\" #2",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "td \"₦291,300\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "button \"Chicken Wings\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"Chicken\" #6",
+   "color": "#5b675e",
+   "bg": "#edf4ef",
+   "ratio": 5.3,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "td \"5 orders\" #5",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "td \"3%\" #3",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "td \"₦275,500\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "span \"Rows per page\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "span \"15\"",
+   "color": "#5b675e",
+   "bg": "#f9faf9",
+   "ratio": 5.66,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "svg \"▼\" #3",
+   "color": "#5b675e",
+   "bg": "#f9faf9",
+   "ratio": 5.66,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "span \"1 to 15 of 28\"",
+   "color": "#5b675e",
+   "bg": "#ffffff",
+   "ratio": 5.92,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "button \"Previous\"",
+   "color": "#08120c",
+   "bg": "#f9faf9",
+   "ratio": 18.21,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "button \"1\"",
+   "color": "#fcfcfc",
+   "bg": "#00761e",
+   "ratio": 5.67,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "button \"2\"",
+   "color": "#08120c",
+   "bg": "#f9faf9",
+   "ratio": 18.21,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "button \"Next\"",
+   "color": "#08120c",
+   "bg": "#f9faf9",
+   "ratio": 18.21,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "h3 \"Not selling: 2 products\"",
+   "color": "#08120c",
+   "bg": "#f9faf9",
+   "ratio": 18.21,
+   "large": false,
+   "size": 14,
+   "weight": 600
+  },
+  {
+   "key": "p \"Stock on hand but no sales in the select\"",
+   "color": "#5b675e",
+   "bg": "#f9faf9",
+   "ratio": 5.66,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "button \"Product\" #2",
+   "color": "#5b675e",
+   "bg": "#f8fbf9",
+   "ratio": 5.68,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "button \"Category\" #2",
+   "color": "#5b675e",
+   "bg": "#f8fbf9",
+   "ratio": 5.68,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "button \"In stock\"",
+   "color": "#08120c",
+   "bg": "#f8fbf9",
+   "ratio": 18.28,
+   "large": false,
+   "size": 12,
+   "weight": 500
+  },
+  {
+   "key": "button \"Groundnut Oil\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "td \"Oil and Spice\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "td \"114\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "button \"Turkey Drumsticks\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 500
+  },
+  {
+   "key": "td \"Turkey\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "td \"79\"",
+   "color": "#08120c",
+   "bg": "#ffffff",
+   "ratio": 19.05,
+   "large": false,
+   "size": 14,
+   "weight": 400
+  },
+  {
+   "key": "span \"Sales use the sale date. Stock levels ar\"",
+   "color": "#5b675e",
+   "bg": "#f9faf9",
+   "ratio": 5.66,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  },
+  {
+   "key": "span \"Wings\"",
+   "color": "#08120c",
+   "bg": "#f9faf9",
+   "ratio": 18.21,
+   "large": false,
+   "size": 12,
+   "weight": 400
+  }
+ ],
+ "links": [
+  {
+   "key": "link \"Tiger Prawns\"",
+   "color": "#08120c",
+   "textColor": "#08120c",
+   "underline": false,
+   "cue": false
+  },
+  {
+   "key": "link \"Catfish (Live)\"",
+   "color": "#08120c",
+   "textColor": "#08120c",
+   "underline": false,
+   "cue": false
+  },
+  {
+   "key": "link \"Turkey Wings\"",
+   "color": "#08120c",
+   "textColor": "#08120c",
+   "underline": false,
+   "cue": false
+  },
+  {
+   "key": "link \"Gizzard\"",
+   "color": "#08120c",
+   "textColor": "#08120c",
+   "underline": false,
+   "cue": false
+  },
+  {
+   "key": "link \"Chicken Wings\"",
+   "color": "#08120c",
+   "textColor": "#08120c",
+   "underline": false,
+   "cue": false
+  },
+  {
+   "key": "link \"Titus Mackerel\"",
+   "color": "#08120c",
+   "textColor": "#08120c",
+   "underline": false,
+   "cue": false
+  },
+  {
+   "key": "link \"Whole Chicken\"",
+   "color": "#08120c",
+   "textColor": "#08120c",
+   "underline": false,
+   "cue": false
+  },
+  {
+   "key": "link \"Croaker Fish\"",
+   "color": "#08120c",
+   "textColor": "#08120c",
+   "underline": false,
+   "cue": false
+  },
+  {
+   "key": "link \"Hake Fish\"",
+   "color": "#08120c",
+   "textColor": "#08120c",
+   "underline": false,
+   "cue": false
+  },
+  {
+   "key": "link \"Chicken Laps\"",
+   "color": "#08120c",
+   "textColor": "#08120c",
+   "underline": false,
+   "cue": false
+  }
+ ],
+ "heightMismatch": [],
+ "wrappedButtons": [],
+ "flatSurfaces": [],
+ "clipped": [],
+ "tallOverlays": [],
+ "textMeasure": [],
+ "reducedMotion": true,
+ "motion": []
+}

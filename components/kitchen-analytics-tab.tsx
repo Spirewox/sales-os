@@ -4,11 +4,11 @@ import Link from 'next/link';
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useKitchenAnalytics, type KitchenAnalytics } from '@/hooks/use-kitchen';
 import { pct } from '@/lib/kitchen-types';
-import { CHART_TOOLTIP, formatAxisMoney, formatMoney, formatMoneyShort, plural } from '@/lib/format';
+import { CHART_TEXT, CHART_TOOLTIP, formatAxisMoney, formatMoney, formatMoneyShort, plural } from '@/lib/format';
 import { AnalyticsPageSkeleton } from '@/components/ui/loading-skeletons';
 import { DataTable, EmptyState, KpiStrip, type Column, type KpiCell } from '@/components/app';
 import {
-  AXIS_TICK, BAR_CURSOR, LEGEND_STYLE, Panel, RankedBars, SourceNote, TabLayout, TwoCol, pctChange,
+  BAR_CURSOR, Panel, RankedBars, SourceNote, TabLayout, TwoCol, pctChange,
 } from '@/app/(app)/analytics/analytics-ui';
 
 type Scope = { hub_id?: string; period?: string; date_from?: string; date_to?: string };
@@ -76,10 +76,10 @@ export function KitchenAnalyticsTab({ scope, prevScope }: Readonly<{ scope: Scop
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={months} margin={{ top: 4, right: 8, left: 0, bottom: 0 }} barGap={2}>
               <CartesianGrid vertical={false} stroke="var(--border)" />
-              <XAxis dataKey="label" axisLine={false} tickLine={false} tick={AXIS_TICK} />
-              <YAxis axisLine={false} tickLine={false} tick={AXIS_TICK} tickFormatter={(v) => formatAxisMoney(Number(v))} width={56} />
+              <XAxis dataKey="label" axisLine={false} tickLine={false} tick={CHART_TEXT.tick} />
+              <YAxis axisLine={false} tickLine={false} tick={CHART_TEXT.tick} tickFormatter={(v) => formatAxisMoney(Number(v))} width={56} />
               <Tooltip {...CHART_TOOLTIP} cursor={BAR_CURSOR} formatter={(value, name) => [formatMoney(Number(value)), name]} />
-              {showCosts && <Legend iconType="circle" iconSize={8} wrapperStyle={{ ...LEGEND_STYLE, paddingTop: 8 }} />}
+              {showCosts && <Legend iconType="circle" iconSize={8} wrapperStyle={CHART_TEXT.legendBelow} />}
               <Bar dataKey="revenue" name="Revenue" fill="var(--series-1)" radius={[4, 4, 0, 0]} maxBarSize={32} />
               {showCosts && <Bar dataKey="profit" name="Profit" fill="var(--series-2)" radius={[4, 4, 0, 0]} maxBarSize={32} />}
             </BarChart>

@@ -1,8 +1,9 @@
-TEMPLATE v1 (verifier; the prompt names SURFACE, COMMIT, BASE, the worker's report and the capture rows)
+TEMPLATE v2 (verifier; the prompt names SURFACE, COMMIT, BASE, the worker's report and the capture rows)
 W, R, S, PW as in $R/briefs/_common.v1.md (read it: the recipes R1 to R3 and KEEP (all) are what the worker was told).
 OUTCOME        A verdict for this surface at this commit, returned as text, starting with the Verdict and Commit lines. You did not write this code and you fix nothing.
 MAY EDIT       $R/captures/<surface>/<sha12>/ only (captures, probes, behavior evidence). Scratch in $W/.design-system/tmp/<your id>/. Nothing else: no code, no git commands that change the index, HEAD or files.
 CONTEXT        Shared checkout: other workers may be editing other surfaces' files right now, uncommitted. The dev server at http://localhost:3456 renders the working tree. Your surface's files must match the commit: check `git diff --quiet <sha> -- <MAY EDIT globs>` (exit 0) before capturing, and say so. Parity mode mapped. Baselines at $R/baselines/before (97369ef), noise floor in $R/baselines/noise.txt.
+AGENTS.md (UI work) Read public/llms.txt and public/system/rules.md; the review criteria include them. Run `cd $W && node scripts/check.mjs` and report its exit code.
 RUN            1. Scope: `git show --name-only --format= <sha>`; every file must match the surface's MAY EDIT globs and none may match $R/forbidden-paths.txt. Stop with `failed (scope)` on a breach.
                2. Manifest: `cd $W && shasum -a 256 -c .migration/2026-11-23-audit/baselines/MANIFEST.sha256 --quiet` must exit 0. Stop with `blocked (manifest)` otherwise.
                3. Read the diff: `git show <sha>`. Every hunk must be one of the recipes R1 to R3 or a line the surface brief names. Anything else is an unexplained change.

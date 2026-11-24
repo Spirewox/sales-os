@@ -19,7 +19,7 @@ Default: `docs/system/examples/filter-bar/default.tsx`, search for ingredients w
 
 Real uses, 19 call sites (`rg -n "<FilterBar\b" app components lib --glob '*.{tsx,jsx}' --glob '!components/app/**'`):
 - Credits, customers owing: `app/(app)/credits/page.tsx:155`, search, filters, chips, Clear all, result count.
-- Sales list, through the sales wrapper: `app/(app)/sales/sales-filter-bar.tsx:23`, search, period, five fields in `more`.
+- Sales list, through the sales wrapper: `app/(app)/sales/sales-filter-bar.tsx:22`, search, period, five fields in `more`.
 - Kitchen jobs: `app/(app)/kitchen/jobs.tsx:199`, search, filters, chips, Clear all, count, trailing.
 - Kitchen ingredients: `app/(app)/kitchen/ingredients.tsx:96`, search, chips, count, trailing.
 - Customers: `app/(app)/customers/page.tsx:184`, search, period, `more` from `CustomerMoreFilters`, count.
@@ -348,7 +348,7 @@ export default function FilterBarLoading() {
   - Do: `<FilterBar resultLabel={list.data ? plural(rows.length, 'sale') : undefined} />`
 
 ### Anti-slop
-- `rule/filter-bar-no-hand-row`: When a list screen needs a search box beside filters, render `FilterBar` instead of a flex row with a raw `<input type="search">`, because the bar carries the `sr-only` label, the polite result line and the chip row that a hand-built row drops. Evidence: app 19/20 search boxes on list screens render through `FilterBar`, stray `app/(app)/sales/sales-filter-bar.tsx:82` inside a picker. Check: lint `rg -n 'type="search"' app components lib` outside `components/app/`.
+- `rule/filter-bar-no-hand-row`: When a list screen needs a search box beside filters, render `FilterBar` instead of a flex row with a raw `<input type="search">`, because the bar carries the `sr-only` label, the polite result line and the chip row that a hand-built row drops. Evidence: app 19/20 search boxes on list screens render through `FilterBar`, stray `app/(app)/sales/sales-filter-bar.tsx:81` inside a picker. Check: lint `rg -n 'type="search"' app components lib` outside `components/app/`.
   - Don't: `<div className="flex gap-2"><input type="search" value={q} onChange={(e) => setQ(e.target.value)} /></div>`
   - Do: `<FilterBar search={{ value: q, onChange: setQ, placeholder: 'Search recipes', label: 'Search recipes' }} />`
 - `rule/filter-bar-trailing-actions`: When an action such as Export or a view toggle sits with the filters, pass it in `trailing` instead of `filters`, because `trailing` is pushed right with `ml-auto` and keeps actions apart from the controls that narrow the list. Evidence: single use `components/app/filter-bar.tsx:76`; app 5/19 bars pass actions in `trailing`, such as `app/(app)/kitchen/jobs.tsx:199`. Check: review.

@@ -5,6 +5,7 @@ Changes to the design system docs and tokens, newest first.
 
 ## 2026-11-24
 
+- Add a Head to head comparison to Analytics > Locations (`9d36ee2`)
 - Redesign the sign-in screen with an animated brand panel (`fd62c91`)
 - Add a Locations tab to Analytics (`18705cf`)
 

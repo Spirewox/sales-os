@@ -1,0 +1,110 @@
+{
+ "sales-light": {
+  "chartsDrawn": false,
+  "url": "?tab=sales",
+  "tickCount": 0,
+  "tickStyles": {},
+  "legends": []
+ },
+ "products-light": {
+  "chartsDrawn": false,
+  "url": "?tab=products",
+  "tickCount": 0,
+  "tickStyles": {},
+  "legends": []
+ },
+ "customers-light": {
+  "chartsDrawn": false,
+  "url": "?tab=customers",
+  "tickCount": 0,
+  "tickStyles": {},
+  "legends": []
+ },
+ "credit-light": {
+  "chartsDrawn": false,
+  "url": "?tab=credit",
+  "tickCount": 0,
+  "tickStyles": {},
+  "legends": [
+   {
+    "style": "font-size: 12px; color: var(--muted-foreground); padding-top: 8px",
+    "text": "ClearedIssued"
+   }
+  ]
+ },
+ "inventory-light": {
+  "chartsDrawn": false,
+  "url": "?tab=inventory",
+  "tickCount": 0,
+  "tickStyles": {},
+  "legends": []
+ },
+ "suppliers-light": {
+  "chartsDrawn": false,
+  "url": "?tab=suppliers",
+  "tickCount": 0,
+  "tickStyles": {},
+  "legends": []
+ },
+ "explore-light": {
+  "chartsDrawn": false,
+  "url": "?tab=explore",
+  "tickCount": 0,
+  "tickStyles": {},
+  "legends": []
+ },
+ "sales-dark": {
+  "chartsDrawn": false,
+  "url": "?tab=sales",
+  "tickCount": 0,
+  "tickStyles": {},
+  "legends": []
+ },
+ "products-dark": {
+  "chartsDrawn": false,
+  "url": "?tab=products",
+  "tickCount": 0,
+  "tickStyles": {},
+  "legends": []
+ },
+ "customers-dark": {
+  "chartsDrawn": false,
+  "url": "?tab=customers",
+  "tickCount": 0,
+  "tickStyles": {},
+  "legends": []
+ },
+ "credit-dark": {
+  "chartsDrawn": false,
+  "url": "?tab=credit",
+  "tickCount": 0,
+  "tickStyles": {},
+  "legends": [
+   {
+    "style": "font-size: 12px; color: var(--muted-foreground); padding-top: 8px",
+    "text": "ClearedIssued"
+   }
+  ]
+ },
+ "inventory-dark": {
+  "chartsDrawn": false,
+  "url": "?tab=inventory",
+  "tickCount": 0,
+  "tickStyles": {},
+  "legends": []
+ },
+ "suppliers-dark": {
+  "chartsDrawn": false,
+  "url": "?tab=suppliers",
+  "tickCount": 0,
+  "tickStyles": {},
+  "legends": []
+ },
+ "explore-dark": {
+  "chartsDrawn": false,
+  "url": "?tab=explore",
+  "tickCount": 0,
+  "tickStyles": {},
+  "legends": []
+ }
+}

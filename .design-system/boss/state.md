@@ -22,7 +22,7 @@ Harden (drifting + weak + build intent), stated in the Frame. Steps copied from 
 3. Late defaults, as Build step 3.
 4. Check the system, as Build step 4.
 Branch: ds/2026-11-23-harden, from jeph/new-branch-from-update-71db62 at fd336f4. PR #2's branch gets no commits. Merging is the person's call.
-Clearance: none. Check-first: tokens, families, specs, Storybook, checks; the migration of the remaining screens is offered at handoff.
+Clearance: "Go, 4h" (the person, 2026-11-23 23:38), reply to the handoff offer. Migration of the remaining surfaces on ds/2026-11-23-harden, one commit per surface.
 
 ## Budget
 Session 2h (default), from 22:36. Workers: up to 4 docs, 2 code. Phase caps:
@@ -54,7 +54,10 @@ No new writing step after 00:00 (70%), except decided defaults.
 | 2 | Migrate audit | migrate-design-system | done | .migration/2026-11-23-audit/ | done | plan.md counts = inventory/counts.txt; pin e15bb64; --help exit 2 (returns/migrate-audit.md) |
 | 3 | Late defaults | boss | skipped (none late) | | | decided defaults landed in harden (G-01, G-08, G-12, G-14); rest gated at cap, close.md Found |
 | 4 | Check the system | boss | done | close.md | done | close.md rows 1-15 |
-| 5 | Clearance | person | default (unanswered) | | | check-first, offer in the report |
+| 5 | Clearance | person | done | | | "Go, 4h" at 23:38 |
+| 6 | System prep for migration (app button, Checkbox, Textarea, chart constant, registry replaces) | build-design-system | done | .design-system/run.md | done | check.mjs exit 0 (0 failing, 15 specs), tsc exit 0, at 97369ef (returns/system-prep.md) |
+| 7 | Re-pin migration audit to the system-prep commit and reconcile with registry.json | migrate-design-system | doing (resumed 2026-11-24 11:06) | .migration/2026-11-23-audit/ | | |
+| 8 | Migrate surfaces (edit mode) | migrate-design-system | doing (resumed 2026-11-24 11:06) | .migration/2026-11-23-audit/queue.tsv | | |
 
 ## Decisions
 | When | Decision | Why | Evidence |
@@ -66,11 +69,25 @@ No new writing step after 00:00 (70%), except decided defaults.
 | 23:2x | Audit pin e15bb64 predates harden's later commits; re-pin or redo affected rows at close | routes.md rules | .migration/2026-11-23-audit/inventory/pin.txt |
 | 23:2x | Pass audit's system-owner asks (G-01 adopt FilterSelect, G-03 app button, Checkbox/Textarea, G-08 chart text constant, registry replaces) to harden as an amendment | harden owns the system files | returns/migrate-audit.md |
 
+## Budget (migration, from 23:38, 4h)
+- system prep 30m (00:10)
+- re-pin and reconcile 15m (00:25)
+- migration edits 2h35m (03:00), rolling window, disjoint paths
+- close 38m (03:38), never cut
+
+## Budget (resumed 2026-11-24 11:06, after the session break)
+- the person said "Resume migration"; the 4h clearance is mostly unspent (no surface moved)
+- migration edits until 14:00, return by 14:10
+- close 14:10 to 14:40, never cut
+
 ## Gates
 | ID | Question | Default | Status | Commit | From |
 |---|---|---|---|---|---|
+| G-01 | Adopt FilterSelect into the kit? | yes, export from barrel | default (unanswered) | e8e79e2 | run.md G-01 |
+| G-03 | Hold Button migration until Button has the app's size, solid destructive and pending state? | add them, then migrate | default (unanswered) | 97369ef | run.md G-03 |
+| G-18 | Keep 16 new allowlist rows so Button replaces SubmitButton can land while the check exits 0? | keep; migration burns them down | default (unanswered) | 97369ef | run.md H-G1 |
 
 ## Resume
-Next action: none. Run closed; migration offered (check-first).
+Next action: wait for the resumed migration (steps 7-8); then check queue.tsv, inventory --check, check.mjs and tsc on its commits.
 
 ## Report
