@@ -242,6 +242,7 @@ function Sales() {
         preview={p.importPreview}
         phase={p.importPhase}
         validating={p.validating}
+        canConfirm={p.canConfirmImport}
         error={p.importError}
         onConfirm={p.handleImportConfirm}
       />}
