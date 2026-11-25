@@ -1,5 +1,10 @@
 import { Sale, PaymentMode, SalesChannel, DeliveryStatus } from '@/types';
 import { defaultVolumeUnit, isVolumeUom, volumeUnitPrice } from '@/lib/volume-units';
+import type { SalesImportPreviewRow } from '@/types/api';
+
+export function isSalesImportRowReady(row: SalesImportPreviewRow): boolean {
+  return row.valid && Boolean(row.resolved) && row.errors.length === 0;
+}
 
 export type DetailTab = 'overview' | 'delivery' | 'history';
 export type QuickDatePreset = 'today' | 'week' | 'month' | '30days' | 'all';

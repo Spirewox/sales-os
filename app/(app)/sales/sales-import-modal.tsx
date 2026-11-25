@@ -10,6 +10,7 @@ import { formatMoney } from '@/lib/format';
 import { enablePush, pushStatus } from '@/lib/push';
 import type { SalesImportPreviewRow } from '@/types/api';
 import { ImportRowsTable, type ImportRow } from './import-rows-table';
+import { isSalesImportRowReady } from './sales-utils';
 
 type Preview = {
   rows: SalesImportPreviewRow[];
@@ -18,32 +19,36 @@ type Preview = {
 
 const saleCount = (count: number) => count + (count === 1 ? ' sale' : ' sales');
 
-export function SalesImportModal({ fileName, onClose, preview, phase, validating, error, onConfirm }: Readonly<{
+export function SalesImportModal({ fileName, onClose, preview, phase, validating, canConfirm, error, onConfirm }: Readonly<{
   fileName: string;
   onClose: () => void;
   preview?: Preview;
   phase: 'submitting' | 'direct' | null;
   validating: boolean;
+  canConfirm: boolean;
   error?: string | null;
   onConfirm: () => void;
 }>) {
   const busy = validating || phase !== null;
-  const valid = preview?.summary.valid ?? 0;
-  const invalid = preview?.summary.invalid ?? 0;
   const title = validating ? 'Checking workbook' : phase === 'direct' ? 'Importing sales' : phase ? 'Submitting import' : 'Review sales import';
-  const total = preview?.rows.reduce((amount, row) => amount + (row.valid ? row.resolved?.amount ?? row.amount ?? 0 : 0), 0) ?? 0;
-
-  const rows: ImportRow[] = preview?.rows.map(row => ({
-    lineNo: row.lineNo,
-    product: row.product_description || row.product_name || null,
-    customer: row.customer_name,
-    hub: row.hub_name,
-    date: row.date_sold,
-    quantity: row.quantity,
-    amount: row.resolved?.amount ?? row.amount ?? null,
-    status: row.valid ? 'Ready' : 'Needs correction',
-    message: row.valid ? undefined : row.errors.join('; ') || 'Review this row in the workbook.',
-  })) ?? [];
+  const rows: ImportRow[] = preview?.rows.map(row => {
+    const ready = isSalesImportRowReady(row);
+    return {
+      lineNo: row.lineNo,
+      product: row.product_description || row.product_name || null,
+      customer: row.customer_name,
+      hub: row.hub_name,
+      date: row.date_sold,
+      quantity: row.quantity,
+      amount: row.resolved?.amount ?? row.amount ?? null,
+      status: ready ? 'Ready' : 'Needs correction',
+      message: ready ? undefined : row.errors.join('; ') || 'Review this row in the workbook.',
+    };
+  }) ?? [];
+  const readyRows = rows.filter(row => row.status === 'Ready');
+  const valid = readyRows.length;
+  const invalid = Math.max(preview?.summary.invalid ?? 0, rows.length - valid);
+  const total = readyRows.reduce((amount, row) => amount + (row.amount ?? 0), 0);
 
   return (
     <ModalDialog onClose={onClose} dismissible={!busy} labelledBy="sales-import-title">
@@ -64,14 +69,14 @@ export function SalesImportModal({ fileName, onClose, preview, phase, validating
               <p className="text-sm font-medium">{saleCount(valid)} ready to import <span className="text-muted-foreground">· {formatMoney(total)}</span></p>
               <p className="text-sm text-muted-foreground">If any submitted row fails during import, none of those sales are saved.</p>
             </>}
-            {invalid > 0 && <p className="text-sm text-destructive">{invalid} {invalid === 1 ? 'row needs' : 'rows need'} correction. Only ready rows will be submitted.</p>}
+            {invalid > 0 && <p id="sales-import-blocked" className="text-sm text-destructive">{invalid} {invalid === 1 ? 'row needs' : 'rows need'} correction. Fix the workbook and upload it again to import these sales.</p>}
             {preview.rows.length > 0 && <ImportRowsTable rows={rows} label="Sales import preview rows" />}
           </>}
           {error && <p role="alert" className="rounded-lg border border-destructive/30 px-3 py-2 text-sm text-destructive">{error}</p>}
         </div>
         {!busy && <div className="flex flex-wrap justify-end gap-2">
           <Button type="button" variant="outline" onClick={onClose}>{valid ? 'Cancel' : 'Close'}</Button>
-          {valid > 0 && <Button type="button" onClick={onConfirm}>Import {saleCount(valid)}</Button>}
+          {preview && <Button type="button" disabled={!canConfirm} aria-describedby={invalid > 0 ? 'sales-import-blocked' : undefined} onClick={onConfirm}>Import {saleCount(preview.summary.total)}</Button>}
         </div>}
       </div>
     </ModalDialog>

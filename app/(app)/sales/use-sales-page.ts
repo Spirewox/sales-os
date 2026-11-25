@@ -30,7 +30,7 @@ import {
 import type { Sale, DeliveryStatus } from '@/types';
 import { getBulkJob, salesImportHistoryKey, submitBulkJob, type BulkJob } from '@/lib/bulk-jobs';
 import { PRODUCT_CATEGORIES } from '@/lib/product-categories';
-import { isLockedSale, lockedSaleMessage, type DetailTab } from './sales-utils';
+import { isLockedSale, isSalesImportRowReady, lockedSaleMessage, type DetailTab } from './sales-utils';
 import { useSalesFilters } from './use-sales-filters';
 import { useRecordSale } from './use-record-sale';
 
@@ -258,6 +258,9 @@ export function useSalesPage() {
   };
 
   const validateImport = useValidateSalesImport();
+  const canConfirmImport = Boolean(validateImport.data?.summary.valid &&
+    validateImport.data.summary.invalid === 0 &&
+    validateImport.data.rows.every(isSalesImportRowReady));
   const importInputRef = useRef<HTMLInputElement>(null);
   const [importFile, setImportFile] = useState<string | null>(null);
   const [importPhase, setImportPhase] = useState<'submitting' | 'direct' | null>(null);
@@ -305,9 +308,8 @@ export function useSalesPage() {
   };
 
   const handleImportConfirm = async () => {
-    const preview = validateImport.data;
-    if (!preview?.summary.valid || importInFlight.current) return;
-    const auditId = preview.validate_audit_id;
+    if (!canConfirmImport || importInFlight.current) return;
+    const auditId = validateImport.data?.validate_audit_id;
     if (!auditId) {
       setImportError('Validation session expired. Please re-upload the file.');
       return;
@@ -367,6 +369,6 @@ export function useSalesPage() {
     importFile, importPreview: validateImport.data, importPhase, importError: importError ?? validateImport.error?.message,
     queuedImport, closeQueuedImport: () => setQueuedImport(null),
     showImportHistory: get('importHistory') === '1', setShowImportHistory: (open: boolean) => set({ importHistory: open ? '1' : null }),
-    validating: validateImport.isPending,
+    validating: validateImport.isPending, canConfirmImport,
   };
 }
