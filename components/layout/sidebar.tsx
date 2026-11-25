@@ -187,7 +187,7 @@ export function Sidebar({ mobileOpen, onMobileOpenChange }: Readonly<SidebarProp
           )}
 
           {/* Navigation */}
-          <nav aria-label="Primary" className={cn('flex-1 space-y-4 overflow-y-auto border-t border-sidebar-border px-3 py-3', rail('md:space-y-3 md:px-2'))}>
+          <nav aria-label="Primary" className={cn('scrollbar-none flex-1 space-y-4 overflow-y-auto border-t border-sidebar-border px-3 py-3', rail('md:space-y-3 md:px-2'))}>
             {NAV_GROUPS.map((group, gi) => {
               const items = group.items.filter(visible);
               if (items.length === 0) return null;
