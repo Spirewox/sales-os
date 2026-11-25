@@ -2,7 +2,7 @@
 
 import { Suspense } from 'react';
 import { PaymentMode, SalesChannel } from '@/types';
-import { Download, FileSpreadsheet, Plus, Receipt, Upload } from 'lucide-react';
+import { Download, FileSpreadsheet, History, Plus, Receipt, Upload } from 'lucide-react';
 import type { Sale } from '@/types';
 import { formatCount, formatDate, formatMoney, formatMoneyShort, plural } from '@/lib/format';
 import { lagosDay, periodLabel } from '@/lib/period';
@@ -14,7 +14,8 @@ import { useSalesPage } from './use-sales-page';
 import { SalesFilterBar } from './sales-filter-bar';
 import { SaleDetailPanel } from './sale-detail-panel';
 import { RecordSaleSheet } from './add-sale-modal';
-import { SalesImportModal } from './sales-import-modal';
+import { SalesImportModal, SalesImportReceipt } from './sales-import-modal';
+import { SalesImportHistory } from './sales-import-history';
 
 export default function SalesPage() {
   return (
@@ -104,6 +105,7 @@ function Sales() {
             label="More sales actions"
             items={[
               { label: 'Import sales', icon: <Upload aria-hidden />, onSelect: () => importInputRef.current?.click(), hidden: !canImport },
+              { label: 'Import history', icon: <History aria-hidden />, onSelect: () => p.setShowImportHistory(true), hidden: !canImport },
               { label: p.downloadingTemplate ? 'Preparing template…' : 'Catalog sales template', icon: <FileSpreadsheet aria-hidden />, onSelect: () => p.handleDownloadTemplate('catalog'), hidden: !canImport, disabled: p.downloadingTemplate },
               { label: 'Custom product template', icon: <FileSpreadsheet aria-hidden />, onSelect: () => p.handleDownloadTemplate('custom'), hidden: !canImport, disabled: p.downloadingTemplate },
               { label: p.exportingSales ? 'Exporting…' : 'Export sales', icon: <Download aria-hidden />, onSelect: p.handleExport, disabled: p.exportingSales },
@@ -234,21 +236,17 @@ function Sales() {
         <RecordSaleSheet form={recordSale} onClose={p.closeRecordSale} agents={p.agents} user={p.user} canCreateSale={canCreate} hubName={p.hubScope.hubName} />
       )}
 
-      <SalesImportModal
-        show={p.showImportModal}
+      {p.importFile && <SalesImportModal
+        fileName={p.importFile}
         onClose={p.closeImportModal}
-        previewRows={p.importPreview}
-        summary={p.importSummary}
-        importing={p.importing}
+        preview={p.importPreview}
+        phase={p.importPhase}
         validating={p.validating}
-        showImportConfirm={p.showImportConfirm}
-        importProgress={p.importProgress}
-        importResult={p.importResult}
-        importError={p.importError}
+        error={p.importError}
         onConfirm={p.handleImportConfirm}
-        onCancelConfirm={() => p.setShowImportConfirm(false)}
-        onDownloadTemplate={p.handleDownloadTemplate}
-      />
+      />}
+      {p.queuedImport && <SalesImportReceipt job={p.queuedImport} onClose={p.closeQueuedImport} />}
+      {canImport && p.showImportHistory && <SalesImportHistory onClose={() => p.setShowImportHistory(false)} />}
     </div>
   );
 }

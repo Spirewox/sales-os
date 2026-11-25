@@ -1363,7 +1363,7 @@ export function useVoidSale() {
   });
 }
 
-function invalidateSalesImportQueries(qc: ReturnType<typeof useQueryClient>) {
+export function invalidateSalesImportQueries(qc: ReturnType<typeof useQueryClient>) {
   qc.invalidateQueries({ queryKey: ['sales'] });
   qc.invalidateQueries({ queryKey: ['sales-summary'] });
   qc.invalidateQueries({ queryKey: ['customers'] });
@@ -1460,33 +1460,6 @@ export async function confirmSalesImportChunk(args: {
   limit?: number;
 }): Promise<SalesImportChunkResult> {
   return confirmSalesImport({ validate_audit_id: args.validate_audit_id });
-}
-
-export async function runChunkedSalesImport(
-  validateAuditId: string,
-  total: number,
-  onProgress?: (progress: { processed: number; total: number; imported: number; failed: number }) => void,
-): Promise<SalesImportChunkResult> {
-  onProgress?.({ processed: 0, total, imported: 0, failed: 0 });
-  const queued = await submitBulkJob('sales-import', { validate_audit_id: validateAuditId });
-  if (queued) {
-    const job = await waitForBulkJob(queued, progress => onProgress?.({
-      processed: progress.processed, total: progress.total ?? total,
-      imported: progress.result?.imported ?? 0, failed: progress.result?.failed ?? 0,
-    }));
-    if (!job.result) throw new Error('The import result is unavailable.');
-    const { imported, failed } = job.result;
-    return { ...job.result, offset: 0, next_offset: total, total, done: true,
-      imported_so_far: imported, failed_so_far: failed, imported_in_chunk: imported, failed_in_chunk: failed };
-  }
-  const last = await confirmSalesImport({ validate_audit_id: validateAuditId });
-  onProgress?.({
-    processed: last.total ?? total,
-    total: last.total ?? total,
-    imported: last.imported_so_far ?? last.imported,
-    failed: last.failed_so_far ?? last.failed,
-  });
-  return last;
 }
 
 function invalidateInventoryImportQueries(qc: ReturnType<typeof useQueryClient>) {

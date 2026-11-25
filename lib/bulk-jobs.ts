@@ -10,6 +10,24 @@ export type BulkJob = {
   downloadExpiresAt: string | null; createdAt: string; updatedAt: string;
 };
 
+export const salesImportHistoryKey = ['sales-import-history'] as const;
+export type SalesImportHistoryEntry = Pick<BulkJob, 'id' | 'status' | 'total' | 'createdAt'> & {
+  fileName: string | null;
+  imported: number | null;
+};
+
+export const bulkJobStatus = {
+  queued: { label: 'Queued', tone: 'neutral' },
+  running: { label: 'Processing', tone: 'info' },
+  complete: { label: 'Completed', tone: 'good' },
+  failed: { label: 'Failed', tone: 'danger' },
+} as const;
+
+export async function getSalesImportHistory() {
+  const response = await axiosGet('bulk-jobs/sales-import/history', true) as { data: SalesImportHistoryEntry[] };
+  return response.data;
+}
+
 export function bulkJobFailure(job: BulkJob) {
   const lineNo = job.failure?.lineNo;
   if (lineNo != null) return job.failure?.reason
