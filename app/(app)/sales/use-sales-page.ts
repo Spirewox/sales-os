@@ -1,8 +1,8 @@
 'use client';
 
 import { usePageSize } from '@/hooks/use-page-size';
-import { useState, useMemo, useRef } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useEffect, useState, useMemo, useRef } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/auth-context';
 import { usePermissions } from '@/hooks/use-permissions';
@@ -23,11 +23,12 @@ import {
   useDownloadSalesImportTemplate,
   useValidateSalesImport,
   useExportSales,
-  runChunkedSalesImport,
+  confirmSalesImport,
+  invalidateSalesImportQueries,
   SALES_PAGE_SIZE,
 } from '@/hooks/use-queries';
 import type { Sale, DeliveryStatus } from '@/types';
-import type { SalesImportChunkResult, SalesImportPreviewRow } from '@/types/api';
+import { getBulkJob, salesImportHistoryKey, submitBulkJob, type BulkJob } from '@/lib/bulk-jobs';
 import { PRODUCT_CATEGORIES } from '@/lib/product-categories';
 import { isLockedSale, lockedSaleMessage, type DetailTab } from './sales-utils';
 import { useSalesFilters } from './use-sales-filters';
@@ -258,103 +259,87 @@ export function useSalesPage() {
 
   const validateImport = useValidateSalesImport();
   const importInputRef = useRef<HTMLInputElement>(null);
-  const [showImportModal, setShowImportModal] = useState(false);
-  const [importPreview, setImportPreview] = useState<SalesImportPreviewRow[]>([]);
-  const [importSummary, setImportSummary] = useState<{ total: number; valid: number; invalid: number } | null>(null);
-  const [validateAuditId, setValidateAuditId] = useState<string | null>(null);
-  const [importing, setImporting] = useState(false);
-  const [importProgress, setImportProgress] = useState<{ processed: number; total: number; imported: number; failed: number } | null>(null);
-  const [importResult, setImportResult] = useState<SalesImportChunkResult | null>(null);
+  const [importFile, setImportFile] = useState<string | null>(null);
+  const [importPhase, setImportPhase] = useState<'submitting' | 'direct' | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
-  const [showImportConfirm, setShowImportConfirm] = useState(false);
+  const [queuedImport, setQueuedImport] = useState<BulkJob | null>(null);
+  const [latestImportId, setLatestImportId] = useState<string | null>(null);
+  const importInFlight = useRef(false);
 
-  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const { data: latestImport } = useQuery({
+    queryKey: ['bulkJob', user?.id, latestImportId],
+    queryFn: () => getBulkJob(latestImportId!),
+    enabled: Boolean(user && latestImportId),
+    refetchInterval: ({ state }) => {
+      const status = state.data?.status;
+      return status === 'queued' || status === 'running' ? 3000 : false;
+    },
+  });
+  useEffect(() => {
+    if (latestImport?.status !== 'complete') return;
+    invalidateSalesImportQueries(queryClient);
+    void queryClient.invalidateQueries({ queryKey: salesImportHistoryKey });
+  }, [latestImport?.id, latestImport?.status, queryClient]);
+
+  const closeImportModal = () => {
+    setImportFile(null);
+    setImportError(null);
+    validateImport.reset();
+  };
+
+  const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
     e.target.value = '';
+    if (!file || importInFlight.current) return;
     if (!file.name.toLowerCase().endsWith('.xlsx')) {
       toast.error('Please select an .xlsx Excel file.');
       return;
     }
     if (file.size === 0) {
-      toast.error('This file is empty (0 bytes). If it is from Google Drive, download it first or make it available offline, then select the local copy.');
+      toast.error('This file is empty. Download a local copy and select it again.');
       return;
     }
-    setShowImportModal(true);
-    setImportPreview([]);
-    setImportSummary(null);
-    setValidateAuditId(null);
-    setImportProgress(null);
-    setImportResult(null);
+    setImportFile(file.name);
     setImportError(null);
-    setShowImportConfirm(false);
-    validateImport.mutate(file, {
-      onSuccess: (data) => {
-        setImportPreview(data.rows);
-        setImportSummary(data.summary);
-        setValidateAuditId(data.validate_audit_id ?? null);
-        if (data.summary.total === 0) {
-          toast.error('No data rows found on the Sales sheet.');
-          setShowImportModal(false);
-        }
-      },
-      onError: (err) => {
-        toast.error(err.message || 'Validation failed.');
-        setShowImportModal(false);
-      },
-    });
+    validateImport.mutate(file);
   };
 
   const handleImportConfirm = async () => {
-    const validCount = importPreview.filter((r) => r.valid && r.resolved).length;
-    if (validCount === 0) {
-      toast.error('No valid rows to import.');
+    const preview = validateImport.data;
+    if (!preview?.summary.valid || importInFlight.current) return;
+    const auditId = preview.validate_audit_id;
+    if (!auditId) {
+      setImportError('Validation session expired. Please re-upload the file.');
       return;
     }
-    if (!validateAuditId) {
-      toast.error('Validation session expired. Please re-upload the file.');
-      return;
-    }
-    if (!showImportConfirm) {
-      setShowImportConfirm(true);
-      return;
-    }
-    setImporting(true);
-    setImportProgress({ processed: 0, total: validCount, imported: 0, failed: 0 });
-    setImportResult(null);
+    importInFlight.current = true;
+    setImportPhase('submitting');
     setImportError(null);
     try {
-      const result = await runChunkedSalesImport(validateAuditId, validCount, (progress) => setImportProgress(progress));
-      const importedCount = result.imported_so_far ?? result.imported;
-      // Close/reset before invalidateQueries so the preview + active Import
-      // button never flash while cache refreshes.
-      setShowImportModal(false);
-      setShowImportConfirm(false);
-      setImporting(false);
-      setImportPreview([]);
-      setImportSummary(null);
-      setValidateAuditId(null);
-      setImportProgress(null);
-      setImportResult(null);
-      setImportError(null);
-      toast.success(`Imported ${importedCount} sales.`);
-      await queryClient.invalidateQueries({ queryKey: ['sales'] });
-      await queryClient.invalidateQueries({ queryKey: ['customers'] });
-      await queryClient.invalidateQueries({ queryKey: ['dashboardMetrics'] });
-    } catch (err) {
-      setImporting(false);
-      setShowImportConfirm(false);
-      const message = err instanceof Error ? err.message : 'Import failed.';
-      setImportError(message);
-      toast.error(message);
-    }
-  };
+      const job = await submitBulkJob('sales-import', { validate_audit_id: auditId });
+      if (job) {
+        queryClient.setQueryData(['bulkJob', user?.id, job.id], job);
+        setLatestImportId(job.id);
+        closeImportModal();
+        setQueuedImport(job);
+        void queryClient.invalidateQueries({ queryKey: salesImportHistoryKey });
+        return;
+      }
 
-  const closeImportModal = () => {
-    setShowImportModal(false);
-    setImportPreview([]);
-    setImportSummary(null);
-    setShowImportConfirm(false);
+      setImportPhase('direct');
+      const result = await confirmSalesImport({ validate_audit_id: auditId });
+      closeImportModal();
+      const imported = result.imported_so_far ?? result.imported;
+      const failed = result.failed_so_far ?? result.failed;
+      if (failed) toast.error(`Imported ${imported} sales. ${failed} rows failed.`);
+      else toast.success(`Imported ${imported} sales.`);
+      invalidateSalesImportQueries(queryClient);
+    } catch (error) {
+      setImportError(error instanceof Error ? error.message : 'Could not confirm the import.');
+    } finally {
+      importInFlight.current = false;
+      setImportPhase(null);
+    }
   };
 
   const stockLogs = stockLogsResult?.data;
@@ -379,7 +364,9 @@ export function useSalesPage() {
     handleExport, exportingSales: exportSales.isPending,
     handleDownloadTemplate, downloadingTemplate: downloadTemplate.isPending,
     importInputRef, handleImportFile, handleImportConfirm, closeImportModal,
-    showImportModal, importPreview, importSummary, importing, importProgress, importResult, importError, showImportConfirm, setShowImportConfirm,
+    importFile, importPreview: validateImport.data, importPhase, importError: importError ?? validateImport.error?.message,
+    queuedImport, closeQueuedImport: () => setQueuedImport(null),
+    showImportHistory: get('importHistory') === '1', setShowImportHistory: (open: boolean) => set({ importHistory: open ? '1' : null }),
     validating: validateImport.isPending,
   };
 }
