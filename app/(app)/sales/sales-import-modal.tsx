@@ -2,14 +2,14 @@
 
 import Link from 'next/link';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Bell, ChevronDown, Loader2 } from 'lucide-react';
-import { useState } from 'react';
+import { Bell, Loader2 } from 'lucide-react';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { ModalDialog } from '@/components/ui/modal-dialog';
 import type { BulkJob } from '@/lib/bulk-jobs';
 import { formatMoney } from '@/lib/format';
 import { enablePush, pushStatus } from '@/lib/push';
 import type { SalesImportPreviewRow } from '@/types/api';
+import { ImportRowsTable, type ImportRow } from './import-rows-table';
 
 type Preview = {
   rows: SalesImportPreviewRow[];
@@ -27,58 +27,48 @@ export function SalesImportModal({ fileName, onClose, preview, phase, validating
   error?: string | null;
   onConfirm: () => void;
 }>) {
-  const [showRows, setShowRows] = useState(false);
   const busy = validating || phase !== null;
   const valid = preview?.summary.valid ?? 0;
   const invalid = preview?.summary.invalid ?? 0;
   const title = validating ? 'Checking workbook' : phase === 'direct' ? 'Importing sales' : phase ? 'Submitting import' : 'Review sales import';
   const total = preview?.rows.reduce((amount, row) => amount + (row.valid ? row.resolved?.amount ?? row.amount ?? 0 : 0), 0) ?? 0;
 
+  const rows: ImportRow[] = preview?.rows.map(row => ({
+    lineNo: row.lineNo,
+    product: row.product_description || row.product_name || null,
+    customer: row.customer_name,
+    hub: row.hub_name,
+    date: row.date_sold,
+    quantity: row.quantity,
+    amount: row.resolved?.amount ?? row.amount ?? null,
+    status: row.valid ? 'Ready' : 'Needs correction',
+    message: row.valid ? undefined : row.errors.join('; ') || 'Review this row in the workbook.',
+  })) ?? [];
+
   return (
     <ModalDialog onClose={onClose} dismissible={!busy} labelledBy="sales-import-title">
-      <div className="relative z-10 max-h-[85dvh] w-full max-w-lg space-y-4 overflow-y-auto rounded-xl border bg-card p-5 shadow-lg">
+      <div className={'relative z-10 flex max-h-[85dvh] w-full flex-col gap-4 rounded-xl border bg-card p-5 shadow-lg ' + (!busy && preview ? 'max-w-5xl' : 'max-w-lg')}>
         <div className="space-y-1">
           <h2 id="sales-import-title" className="text-lg font-semibold">{title}</h2>
           <p className="break-all text-sm text-muted-foreground">{fileName}</p>
         </div>
-        {busy && (
-          <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 aria-hidden className="size-4 animate-spin" />
-            {phase === 'direct' ? 'Keep this page open until the import finishes.' : phase ? 'Waiting for the server to accept your import.' : 'Validating spreadsheet rows.'}
-          </p>
-        )}
-        {!busy && preview && <>
-          {valid > 0 && <>
-            <p className="text-sm font-medium">{saleCount(valid)} ready to import <span className="text-muted-foreground">· {formatMoney(total)}</span></p>
-            <p className="text-sm text-muted-foreground">If any submitted row fails during import, none of those sales are saved.</p>
+        <div className="min-h-0 space-y-3 overflow-y-auto">
+          {busy && (
+            <p role="status" className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 aria-hidden className="size-4 animate-spin" />
+              {phase === 'direct' ? 'Keep this page open until the import finishes.' : phase ? 'Waiting for the server to accept your import.' : 'Validating spreadsheet rows.'}
+            </p>
+          )}
+          {!busy && preview && <>
+            {valid > 0 && <>
+              <p className="text-sm font-medium">{saleCount(valid)} ready to import <span className="text-muted-foreground">· {formatMoney(total)}</span></p>
+              <p className="text-sm text-muted-foreground">If any submitted row fails during import, none of those sales are saved.</p>
+            </>}
+            {invalid > 0 && <p className="text-sm text-destructive">{invalid} {invalid === 1 ? 'row needs' : 'rows need'} correction. Only ready rows will be submitted.</p>}
+            {preview.rows.length > 0 && <ImportRowsTable rows={rows} label="Sales import preview rows" />}
           </>}
-          {invalid > 0 && <section aria-label="Validation errors" className="space-y-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm">
-            <p className="font-medium text-destructive">{invalid} {invalid === 1 ? 'row has' : 'rows have'} errors and will be skipped.</p>
-            <ul className="max-h-36 space-y-1 overflow-y-auto">
-              {preview.rows.filter(row => !row.valid).map(row => (
-                <li key={row.lineNo}><span className="font-medium">Row {row.lineNo}</span> {row.errors.join('; ') || 'Invalid row'}</li>
-              ))}
-            </ul>
-          </section>}
-          {valid > 0 && <div className="rounded-lg border">
-            <Button type="button" variant="ghost" className="w-full justify-start" aria-expanded={showRows}
-              aria-controls="sales-import-rows" onClick={() => setShowRows(open => !open)}>
-              <ChevronDown aria-hidden className={showRows ? 'rotate-180' : undefined} /> {showRows ? 'Hide valid rows' : 'View valid rows'}
-            </Button>
-            <ul id="sales-import-rows" hidden={!showRows} className="max-h-48 divide-y overflow-y-auto border-t">
-              {preview.rows.filter(row => row.valid).map(row => (
-                <li key={row.lineNo} className="flex justify-between gap-3 px-3 py-2 text-sm">
-                  <div className="min-w-0">
-                    <p className="break-words font-medium">{row.product_description || row.product_name || 'Sale'}</p>
-                    <p className="break-words text-xs text-muted-foreground">Row {row.lineNo} · {row.customer_name} · {row.hub_name} · {row.date_sold}</p>
-                  </div>
-                  {typeof row.amount === 'number' && <span className="shrink-0 tabular-nums">{formatMoney(row.amount)}</span>}
-                </li>
-              ))}
-            </ul>
-          </div>}
-        </>}
-        {error && <p role="alert" className="rounded-lg border border-destructive/30 px-3 py-2 text-sm text-destructive">{error}</p>}
+          {error && <p role="alert" className="rounded-lg border border-destructive/30 px-3 py-2 text-sm text-destructive">{error}</p>}
+        </div>
         {!busy && <div className="flex flex-wrap justify-end gap-2">
           <Button type="button" variant="outline" onClick={onClose}>{valid ? 'Cancel' : 'Close'}</Button>
           {valid > 0 && <Button type="button" onClick={onConfirm}>Import {saleCount(valid)}</Button>}

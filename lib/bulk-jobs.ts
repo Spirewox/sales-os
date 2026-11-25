@@ -2,12 +2,24 @@ import { toast } from 'sonner';
 import { axiosGet, axiosGetBlob, axiosPost } from '@/lib/api';
 
 export type BulkJobKind = 'sales-import' | 'inventory-import' | 'sales-export';
+export type SalesImportJobRow = {
+  lineNo: number;
+  product: string | null;
+  customer: string | null;
+  hub: string | null;
+  date: string | null;
+  quantity: number | null;
+  amount: number | null;
+  valid: boolean;
+  errors: string[];
+};
 export type BulkJob = {
   id: string; kind: BulkJobKind; status: 'queued' | 'running' | 'complete' | 'failed';
   total: number | null; processed: number;
-  result: { imported: number; failed: number; results: { lineNo: number; success: boolean }[] } | null;
+  result: { imported: number; failed: number; results: { lineNo: number; success: boolean; error?: string }[] } | null;
   failure: { code: string; lineNo?: number; reason?: string } | null;
   downloadExpiresAt: string | null; createdAt: string; updatedAt: string;
+  salesImport?: { fileName: string | null; rows: SalesImportJobRow[] | null };
 };
 
 export const salesImportHistoryKey = ['sales-import-history'] as const;

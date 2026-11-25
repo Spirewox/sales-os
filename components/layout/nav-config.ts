@@ -50,7 +50,7 @@ export const NAV_GROUPS: NavGroup[] = [
   },
 ];
 
-const EXTRA_TITLES: Record<string, string> = { '/insights': 'Insights', '/jobs': 'Kitchen job' };
+const EXTRA_TITLES: Record<string, string> = { '/insights': 'Insights', '/jobs': 'Job status' };
 
 export function isActivePath(pathname: string, href: string): boolean {
   return pathname === href || (href !== '/' && pathname.startsWith(`${href}/`));
