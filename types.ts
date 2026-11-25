@@ -152,6 +152,8 @@ export enum StockMovementType {
   RETURN = 'RETURN',
 }
 
+export type AuditChange = { field: string; before: string | number | boolean | null; after: string | number | boolean | null };
+
 export interface AuditLog {
   id: string;
   timestamp: string;
@@ -163,6 +165,7 @@ export interface AuditLog {
   details: string;
   location: string;
   category?: string;
+  inventoryUpdate?: { sku: string; productName: string; changes: AuditChange[] };
   bulkUpload?: {
     domain?: string;
     importType?: string;
@@ -175,6 +178,7 @@ export interface AuditLog {
     resultCount?: number;
     rowsTruncated?: boolean;
     resultsTruncated?: boolean;
+    importProgress?: { imported?: number; failed?: number };
   };
 }
 

@@ -1,6 +1,7 @@
 import { downloadCsv } from '@/lib/csv';
-import type { AuditLog } from '@/types';
+import type { AuditChange, AuditLog } from '@/types';
 import { formatAuditAction, formatAuditEntity } from '@/lib/api-mappers';
+import { formatMoney } from '@/lib/format';
 
 function formatNaira(n: number): string {
   return `₦${n.toLocaleString('en-NG', {
@@ -10,7 +11,9 @@ function formatNaira(n: number): string {
 }
 
 function parseMoneyToken(text: string): number | null {
-  const n = Number(text.replace(/[₦,\s]/g, ''));
+  const value = text.replace(/[₦,\s]/g, '');
+  if (!value) return null;
+  const n = Number(value);
   return Number.isFinite(n) ? n : null;
 }
 
@@ -48,9 +51,11 @@ export function parseAuditDetailRows(details: string): DetailRow[] | null {
   for (const chunk of chunks) {
     const colon = chunk.indexOf(':');
     if (colon > 0 && chunk.includes('→')) {
+      const label = chunk.slice(0, colon).trim();
+      const text = chunk.slice(colon + 1).trim();
       rows.push({
-        label: chunk.slice(0, colon).trim(),
-        text: formatMoneyArrows(chunk.slice(colon + 1).trim()),
+        label,
+        text: /cost|price|amount/i.test(label) || text.includes('₦') ? formatMoneyArrows(text) : text,
       });
       continue;
     }
@@ -63,7 +68,7 @@ export function parseAuditDetailRows(details: string): DetailRow[] | null {
       rows.push({ label: 'List price', text: formatMoneyArrows(chunk.slice(6).trim()) });
       continue;
     }
-    rows.push({ text: formatMoneyArrows(chunk) });
+    rows.push({ text: chunk.includes('₦') ? formatMoneyArrows(chunk) : chunk });
   }
 
   return rows.length ? rows : null;
@@ -78,6 +83,25 @@ export function auditDetailsSummary(details: string): string {
 }
 
 export type ChangeRow = { field: string; before: string; after: string };
+
+const skuFieldLabels: Record<string, string> = {
+  sku: 'SKU', name: 'Product name', category: 'Category', unit_of_measure: 'Unit of measure',
+  current_stock: 'Stock on hand', min_stock_level: 'Minimum stock', base_selling_price: 'Unit selling price',
+  carton_price: 'Carton selling price', carton_cost: 'Carton cost', carton_weight: 'Carton weight',
+  supplier: 'Supplier', is_active: 'Availability', hub: 'Location', image: 'Product image',
+};
+const moneyFields = new Set(['base_selling_price', 'carton_price', 'carton_cost']);
+
+export function formatSkuChange(change: AuditChange): ChangeRow {
+  const format = (value: AuditChange['before']) => {
+    if (value == null || value === '') return 'Not set';
+    if (typeof value === 'boolean') return value ? 'Active' : 'Inactive';
+    if (typeof value === 'string') return value;
+    if (moneyFields.has(change.field)) return formatMoney(value);
+    return value.toLocaleString('en-NG', { maximumFractionDigits: 6 }) + (change.field === 'carton_weight' ? ' kg' : '');
+  };
+  return { field: skuFieldLabels[change.field] ?? 'Product detail', before: format(change.before), after: format(change.after) };
+}
 
 /** Split detail rows into "A → B" changes (for a before/after table) and the remaining notes. */
 export function splitChanges(rows: DetailRow[]): { changes: ChangeRow[]; notes: DetailRow[] } {

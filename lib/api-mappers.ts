@@ -135,7 +135,7 @@ const AUDIT_ACTION_LABELS: Record<string, string> = {
   HISTORICAL_STOCK_LOG: 'Historical stock log',
   RECONCILE_STOCK: 'Reconcile stock',
   CREATE_SKU: 'Create SKU',
-  UPDATE_SKU: 'Update SKU',
+  UPDATE_SKU: 'SKU updated',
   CREATE_SALE: 'Create sale',
   UPDATE_SALE: 'Update sale',
   VOID_SALE: 'Void sale',
@@ -583,6 +583,11 @@ export function mapAuditLog(l: ApiAuditLog, hubMap?: Record<string, string>): Au
     details: l.details,
     location,
     category: l.category,
+    inventoryUpdate: l.inventory_update && {
+      sku: l.inventory_update.sku,
+      productName: l.inventory_update.product_name,
+      changes: l.inventory_update.changes,
+    },
     bulkUpload: l.bulk_upload
       ? {
           domain: l.bulk_upload.domain,
@@ -596,6 +601,10 @@ export function mapAuditLog(l: ApiAuditLog, hubMap?: Record<string, string>): Au
           resultCount: l.bulk_upload.result_count,
           rowsTruncated: l.bulk_upload.rows_truncated,
           resultsTruncated: l.bulk_upload.results_truncated,
+          importProgress: l.bulk_upload.import_progress && {
+            imported: l.bulk_upload.import_progress.imported_so_far,
+            failed: l.bulk_upload.import_progress.failed_so_far,
+          },
         }
       : undefined,
   };

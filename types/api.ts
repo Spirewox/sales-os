@@ -472,6 +472,11 @@ export interface ApiAuditLog {
   entity_id?: string;
   details: string;
   category?: string;
+  inventory_update?: {
+    sku: string;
+    product_name: string;
+    changes: { field: string; before: string | number | boolean | null; after: string | number | boolean | null }[];
+  };
   bulk_upload?: {
     domain?: string;
     import_type?: string;
@@ -484,6 +489,7 @@ export interface ApiAuditLog {
     result_count?: number;
     rows_truncated?: boolean;
     results_truncated?: boolean;
+    import_progress?: { imported_so_far?: number; failed_so_far?: number };
   };
   hub?: string | { hub_name?: string };
 }

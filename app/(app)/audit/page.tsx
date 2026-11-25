@@ -17,6 +17,7 @@ import {
 } from '@/components/app';
 import { auditDetailsSummary, auditRecordHref, downloadAuditCsv } from './audit-details';
 import { AuditDrawer, timeOf } from './audit-drawer';
+import { uploadDomain, uploadStage, uploadTemplate } from './bulk-upload-details';
 
 type AuditTab = 'all' | 'bulk' | 'sales' | 'inventory' | 'customers';
 const ENTITIES = ['Inventory', 'Sale', 'Customer', 'System'] as const;
@@ -138,7 +139,7 @@ function AuditTrail() {
 
   const summaryNumber = (log: AuditLog, key: string) => {
     const value = log.bulkUpload?.summary?.[key];
-    return typeof value === 'number' || typeof value === 'string' ? value : '-';
+    return typeof value === 'number' || typeof value === 'string' ? value : undefined;
   };
 
   const activityColumns: Column<AuditLog>[] = [
@@ -152,10 +153,18 @@ function AuditTrail() {
 
   const bulkColumns: Column<AuditLog>[] = [
     { id: 'file', header: 'File', mobile: 'title', cell: (l) => <span className="block max-w-56 truncate" title={l.bulkUpload?.fileName}>{l.bulkUpload?.fileName ?? 'Upload'}</span> },
-    { id: 'type', header: 'Type', mobile: 'subtitle', cell: (l) => <span className="capitalize">{[l.bulkUpload?.domain, l.bulkUpload?.importType].filter(Boolean).join(', ') || '-'}</span> },
-    { id: 'rows', header: 'Rows', align: 'right', mobile: 'meta', cell: (l) => <span className="flex flex-col items-end"><span>{summaryNumber(l, 'total')} total</span><span className="text-xs text-muted-foreground">{summaryNumber(l, 'valid')} valid, {summaryNumber(l, 'invalid')} invalid</span></span> },
-    { id: 'imported', header: 'Processed', align: 'right', hideBelow: 'lg', cell: (l) => <span className="flex flex-col items-end"><span>{summaryNumber(l, 'processed')} processed</span><span className="text-xs text-muted-foreground">{summaryNumber(l, 'imported')} imported, {summaryNumber(l, 'failed')} failed</span></span> },
-    { id: 'stage', header: 'Status', mobile: 'meta', cell: (l) => <StatusBadge tone="neutral">{l.bulkUpload?.stage ?? formatAuditAction(l.action)}</StatusBadge> },
+    { id: 'type', header: 'Template', mobile: 'subtitle', cell: (l) => [uploadDomain(l.bulkUpload?.domain), uploadTemplate(l.bulkUpload?.importType)].filter(Boolean).join(' · ') },
+    { id: 'rows', header: 'Rows', align: 'right', mobile: 'meta', cell: (l) => {
+      const total = summaryNumber(l, 'total') ?? l.bulkUpload?.rowCount;
+      const invalid = summaryNumber(l, 'invalid');
+      return total === undefined ? '—' : <>{total} total{invalid !== undefined && <span className="block text-xs text-muted-foreground">{invalid} need correction</span>}</>;
+    } },
+    { id: 'imported', header: 'Outcome', align: 'right', hideBelow: 'lg', cell: (l) => {
+      const imported = l.bulkUpload?.importProgress?.imported ?? summaryNumber(l, 'imported');
+      const failed = l.bulkUpload?.importProgress?.failed ?? summaryNumber(l, 'failed');
+      return [imported !== undefined && `${imported} imported`, failed !== undefined && `${failed} failed`].filter(Boolean).join(' · ') || '—';
+    } },
+    { id: 'stage', header: 'Stage', mobile: 'meta', cell: (l) => <StatusBadge tone="neutral">{uploadStage(l.bulkUpload?.stage)}</StatusBadge> },
     { id: 'user', header: 'User', hideBelow: 'lg', cell: (l) => l.userName },
     { id: 'time', header: 'Time', mobile: 'value', cell: (l) => <When ts={l.timestamp} /> },
   ];
