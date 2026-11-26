@@ -1,11 +1,6 @@
+import { buildCsv, saveCsv, type ExportCell } from '@/lib/export';
+
 /** Download rows as a CSV file. UTF-8 with a BOM so spreadsheet apps read ₦ correctly. */
-export function downloadCsv(filename: string, headers: string[], rows: (string | number | null | undefined)[][]) {
-  const cell = (v: string | number | null | undefined) => `"${String(v ?? '').replace(/"/g, '""')}"`;
-  const csv = '﻿' + [headers, ...rows].map((r) => r.map(cell).join(',')).join('\r\n');
-  const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
+export function downloadCsv(filename: string, headers: string[], rows: ExportCell[][]) {
+  saveCsv(filename, buildCsv(headers.map((header, i) => ({ header, value: (row: ExportCell[]) => row[i] })), rows));
 }
