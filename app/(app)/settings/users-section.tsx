@@ -12,9 +12,11 @@ import { roleLabel } from '@/lib/role-permissions';
 import { formatDate } from '@/lib/format';
 import { FilterSelect } from '@/components/filter-select';
 import {
-  DataTable, EmptyState, FilterBar, LocationSelect, MoreFilterField, RowAction, StatusBadge,
+  DataTable, EmptyState, FilterBar, LocationSelect, MoreFilterField, OverflowMenu, RowAction, StatusBadge,
   type Column, type FilterChip,
 } from '@/components/app';
+import { useExport } from '@/hooks/use-export';
+import { USER_EXPORT_COLUMNS } from '@/lib/exports/users';
 import type { Agent } from '@/types';
 import { RowMenu, SectionHeading, btnPrimary } from './settings-ui';
 import { useSettingsData } from './use-settings-data';
@@ -47,6 +49,11 @@ export function UsersSection() {
     scope.matchesHub(a.location) &&
     (status === 'all' || (status === 'active' ? a.isActive !== false : a.isActive === false)),
   );
+
+  const exportUsers = useExport({
+    module: 'users', noun: { one: 'user', many: 'users' }, columns: USER_EXPORT_COLUMNS,
+    fetchPage: async () => ({ items: rows, totalPages: 1 }), disabled: agentsLoading || rows.length === 0,
+  });
 
   const handleRegeneratePin = async (id: string) => {
     try {
@@ -128,6 +135,7 @@ export function UsersSection() {
         chips={chips}
         onClearAll={clearAll}
         resultLabel={agentsLoading ? undefined : `${rows.length} ${rows.length === 1 ? 'user' : 'users'}`}
+        trailing={<OverflowMenu label="More user actions" items={[{ ...exportUsers.item, hidden: !canManageUsers }]} />}
       />
 
       <DataTable
