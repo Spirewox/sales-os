@@ -60,37 +60,50 @@ export const GUIDE = {
   ],
 } as const;
 
+export type PlannerGroup = 'rice' | 'protein' | 'other';
+
 export interface PlannerItem {
   k: string;
   label: string;
-  /** Scoops/pieces per unit bought. */
+  /** Which reference tables apply to this item. */
+  group: PlannerGroup;
+  /** What one serving is counted in: scoop, wrap, piece… */
+  piece: string;
+  /** Plural of `piece`. */
+  pieces: string;
+  /** Typical `piece`s per pack or guest, used when the item is picked. */
+  each: number;
+  /** `pieces` per `perUnit` bought (e.g. 12 scoops per kg). */
   per: number;
   /** Higher yield when cooking 10kg+ at once (jollof only). */
   bulkPer?: number;
+  /** What `per` is counted against: kg, carton, pack. */
+  perUnit: string;
   unit: string;
   pack: number;
   packLabel: string;
+  packLabels: string;
 }
 
 export const PLANNER: PlannerItem[] = [
-  { k: 'jollof', label: 'Jollof rice, long grain', per: 12, bulkPer: 14, unit: 'kg rice', pack: 50, packLabel: '50kg bag' },
-  { k: 'fried', label: 'Fried rice, long grain', per: 15, unit: 'kg rice', pack: 50, packLabel: '50kg bag' },
-  { k: 'white', label: 'Ofada / white rice', per: 15, unit: 'kg rice', pack: 50, packLabel: '50kg bag' },
-  { k: 'basmati', label: 'Basmati rice', per: 20, unit: 'kg rice', pack: 5, packLabel: '5kg bag' },
-  { k: 'softc8', label: 'Soft chicken, Cut-8', per: 40, unit: 'cartons (10kg)', pack: 1, packLabel: 'carton' },
-  { k: 'oroboc8', label: 'Orobo chicken, Cut-8', per: 50, unit: 'cartons', pack: 1, packLabel: 'carton' },
-  { k: 'croakerL', label: 'Croaker, large cuts', per: 60, unit: 'cartons (20kg)', pack: 1, packLabel: 'carton' },
-  { k: 'hakeL', label: 'Hake, large cuts', per: 40, unit: 'cartons (10kg)', pack: 1, packLabel: 'carton' },
-  { k: 'turkey305', label: 'Turkey wings 305', per: 60, unit: 'cartons (10kg)', pack: 1, packLabel: 'carton' },
-  { k: 'turkey306', label: 'Turkey wings 306', per: 36, unit: 'cartons (10kg)', pack: 1, packLabel: 'carton' },
-  { k: 'beefM', label: 'Beef, medium cuts', per: 12, unit: 'kg beef', pack: 1, packLabel: 'kg' },
-  { k: 'semo', label: 'Semo, regular wraps', per: 10, unit: 'kg semo', pack: 10, packLabel: '10kg bag' },
-  { k: 'semoXL', label: 'Semo, supersize wraps', per: 5, unit: 'kg semo', pack: 10, packLabel: '10kg bag' },
-  { k: 'moimoi', label: 'Moimoi, party size', per: 30, unit: 'kg beans', pack: 1, packLabel: 'kg' },
-  { k: 'pasta', label: 'Spaghetti (500g packs)', per: 5, unit: 'packs', pack: 1, packLabel: 'pack' },
+  { k: 'jollof', label: 'Jollof rice, long grain', group: 'rice', piece: 'scoop', pieces: 'scoops', each: 3, per: 12, bulkPer: 14, perUnit: 'kg', unit: 'kg rice', pack: 50, packLabel: '50kg bag', packLabels: '50kg bags' },
+  { k: 'fried', label: 'Fried rice, long grain', group: 'rice', piece: 'scoop', pieces: 'scoops', each: 3, per: 15, perUnit: 'kg', unit: 'kg rice', pack: 50, packLabel: '50kg bag', packLabels: '50kg bags' },
+  { k: 'white', label: 'Ofada / white rice', group: 'rice', piece: 'scoop', pieces: 'scoops', each: 3, per: 15, perUnit: 'kg', unit: 'kg rice', pack: 50, packLabel: '50kg bag', packLabels: '50kg bags' },
+  { k: 'basmati', label: 'Basmati rice', group: 'rice', piece: 'scoop', pieces: 'scoops', each: 3, per: 20, perUnit: 'kg', unit: 'kg rice', pack: 5, packLabel: '5kg bag', packLabels: '5kg bags' },
+  { k: 'softc8', label: 'Soft chicken, Cut-8', group: 'protein', piece: 'piece', pieces: 'pieces', each: 1, per: 40, perUnit: 'carton', unit: 'cartons (10kg)', pack: 1, packLabel: 'carton', packLabels: 'cartons' },
+  { k: 'oroboc8', label: 'Orobo chicken, Cut-8', group: 'protein', piece: 'piece', pieces: 'pieces', each: 1, per: 50, perUnit: 'carton', unit: 'cartons', pack: 1, packLabel: 'carton', packLabels: 'cartons' },
+  { k: 'croakerL', label: 'Croaker, large cuts', group: 'protein', piece: 'piece', pieces: 'pieces', each: 1, per: 60, perUnit: 'carton', unit: 'cartons (20kg)', pack: 1, packLabel: 'carton', packLabels: 'cartons' },
+  { k: 'hakeL', label: 'Hake, large cuts', group: 'protein', piece: 'piece', pieces: 'pieces', each: 1, per: 40, perUnit: 'carton', unit: 'cartons (10kg)', pack: 1, packLabel: 'carton', packLabels: 'cartons' },
+  { k: 'turkey305', label: 'Turkey wings 305', group: 'protein', piece: 'wing', pieces: 'wings', each: 1, per: 60, perUnit: 'carton', unit: 'cartons (10kg)', pack: 1, packLabel: 'carton', packLabels: 'cartons' },
+  { k: 'turkey306', label: 'Turkey wings 306', group: 'protein', piece: 'wing', pieces: 'wings', each: 1, per: 36, perUnit: 'carton', unit: 'cartons (10kg)', pack: 1, packLabel: 'carton', packLabels: 'cartons' },
+  { k: 'beefM', label: 'Beef, medium cuts', group: 'protein', piece: 'piece', pieces: 'pieces', each: 1, per: 12, perUnit: 'kg', unit: 'kg beef', pack: 1, packLabel: 'kg', packLabels: 'kg' },
+  { k: 'semo', label: 'Semo, regular wraps', group: 'other', piece: 'wrap', pieces: 'wraps', each: 1, per: 10, perUnit: 'kg', unit: 'kg semo', pack: 10, packLabel: '10kg bag', packLabels: '10kg bags' },
+  { k: 'semoXL', label: 'Semo, supersize wraps', group: 'other', piece: 'wrap', pieces: 'wraps', each: 1, per: 5, perUnit: 'kg', unit: 'kg semo', pack: 10, packLabel: '10kg bag', packLabels: '10kg bags' },
+  { k: 'moimoi', label: 'Moimoi, party size', group: 'other', piece: 'moimoi', pieces: 'moimoi', each: 1, per: 30, perUnit: 'kg', unit: 'kg beans', pack: 1, packLabel: 'kg', packLabels: 'kg' },
+  { k: 'pasta', label: 'Spaghetti (500g packs)', group: 'other', piece: 'serving', pieces: 'servings', each: 1, per: 5, perUnit: 'pack', unit: 'packs', pack: 1, packLabel: 'pack', packLabels: 'packs' },
 ];
 
-/** "How much should I buy?" for `portions` packs/guests at `each` scoops/pieces. */
+/** "How much should I buy?" for `portions` packs/guests at `each` pieces (scoops, wraps…) each. */
 export function planPurchase(item: PlannerItem, portions: number, each: number, bulk = false) {
   const per = item.bulkPer && bulk ? item.bulkPer : item.per;
   const units = Math.max(0, portions) * Math.max(0, each);
