@@ -10,9 +10,11 @@ import { useUrlState } from '@/hooks/use-url-state';
 import type { CreditCustomerSummary } from '@/types/credits';
 import { formatCount, formatMoneyShort, plural } from '@/lib/format';
 import {
-  DataTable, EmptyState, FilterBar, KpiStrip, LocationSelect, PageHeader, RowAction, SectionErrorBoundary,
+  DataTable, EmptyState, FilterBar, KpiStrip, LocationSelect, OverflowMenu, PageHeader, RowAction, SectionErrorBoundary,
   type FilterChip, type KpiCell,
 } from '@/components/app';
+import { useExport } from '@/hooks/use-export';
+import { creditExportColumns } from '@/lib/exports/credit';
 import { CustomerCreditSheet } from '@/components/credits/customer-credit-sheet';
 import { GeneralRepaymentForm } from '@/components/credits/credit-forms';
 import { whatsAppHref } from '@/components/credits/credit-utils';
@@ -88,6 +90,13 @@ function Credits() {
   }, [inLocation]);
 
   const loading = isFetching && !summary;
+  const exportCredit = useExport({
+    module: 'credit',
+    noun: { one: 'credit record', many: 'credit records' },
+    columns: creditExportColumns(new Date()),
+    fetchPage: async () => ({ items: rows, totalPages: 1 }),
+    disabled: loading || rows.length === 0,
+  });
   const cells: KpiCell[] = [
     {
       label: 'Outstanding',
@@ -147,6 +156,7 @@ function Credits() {
       <PageHeader
         title="Credits"
         description="Balances customers owe, most overdue first. Credits come from credit sales."
+        overflow={<OverflowMenu label="More credit actions" items={[{ ...exportCredit.item, hidden: !can('credits.view') }]} />}
       />
 
       <KpiStrip cells={cells} loading={loading} label="Credit summary" />
