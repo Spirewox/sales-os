@@ -12,10 +12,10 @@ import { DATASETS } from '@/lib/explore';
 import { formatCount, formatDate, formatMoney } from '@/lib/format';
 import {
   reportChart, reportExportColumns, reportKpiColumns, reportRowsWithTotal, savedReportMeasures, savedReportRunnable,
-  type CustomReportRow, type ReportColumn, type ReportDef, type ReportRow, type SavedReport,
+  type ReportColumn, type ReportDef, type ReportRow, type SavedReport,
 } from '@/lib/reports';
 import { InsightButton } from '@/components/insight-button';
-import { columnMeta, CustomReportResults, KpiRows } from './custom-report';
+import { CustomReportResults, KpiRows, useCustomReportExport } from './custom-report';
 import { ResultChart } from './explore-shared';
 
 type Meta = { rangeLabel: string; locationLabel: string };
@@ -123,18 +123,8 @@ export function SavedReportViewer({ report, scope, meta, onBack, onEdit }: Reado
   const data = useCustomReport({ dataset: report.dataset, groupBy: report.groupBy, filters: report.filters, measures }, scope, { enabled: runnable });
   const del = useDeleteSavedReport();
   const [confirming, setConfirming] = useState(false);
-  const cols = columnMeta(report.dataset, measures, data);
-  const groupLabel = data.groupLabel || DATASETS.find((d) => d.key === report.dataset)?.fields.find((f) => f.key === report.groupBy)?.label || 'Group';
-
-  // The export holds what the table shows: one row per group, every column, for the period on screen.
-  const exp = useExport<CustomReportRow>({
-    module: 'saved-report',
-    title: report.name,
-    noun: { one: 'row', many: 'rows' },
-    columns: [{ header: groupLabel, value: (r) => r.label }, ...cols.map((c) => ({ header: c.label, value: (r: CustomReportRow) => r.values[c.measure] ?? 0 }))],
-    filters: () => [meta.rangeLabel, meta.locationLabel],
-    fetchPage: async () => ({ items: data.rows ?? [], totalPages: 1 }),
-    disabled: !data.rows?.length || data.isFetching,
+  const exp = useCustomReportExport({
+    module: 'saved-report', title: report.name, dataset: report.dataset, groupBy: report.groupBy, measures, filters: report.filters, report: data, meta,
   });
 
   const remove = () => del.mutate(report.id, {

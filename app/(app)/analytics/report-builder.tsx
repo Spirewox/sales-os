@@ -10,7 +10,7 @@ import type { InsightScopeParams } from '@/hooks/use-insights-api';
 import { useCustomReport } from '@/hooks/use-reports';
 import { DATASETS, type Filter } from '@/lib/explore';
 import { MAX_REPORT_COLUMNS, customReportName, reportDraftError, savedReportMeasures, type SavedReport } from '@/lib/reports';
-import { CustomReportResults } from './custom-report';
+import { CustomReportResults, useCustomReportExport } from './custom-report';
 import { ReportFilters } from './report-filters';
 import { CHART_KINDS, type ChartKind } from './explore-shared';
 import { SaveReportDialog } from './save-report-dialog';
@@ -63,6 +63,10 @@ export function ReportBuilder({ scope, meta, initial, seed, onBack, onSaved }: R
   const labels = measures.map((m) => ds.measures.find((x) => x.key === m)?.label ?? m);
   const groupLabel = ds.fields.find((f) => f.key === groupBy)?.label ?? '';
   const title = initial ? `Edit ${initial.name}` : 'New report';
+  // Export what the preview shows, saved or not; the file is named after the report, or its suggested name.
+  const exp = useCustomReportExport({
+    module: 'custom-report', title: initial?.name ?? customReportName(labels, groupLabel), dataset, groupBy, measures, filters, report, meta,
+  });
 
   const controls = (
     <section aria-label="Report settings" className="space-y-4 rounded-xl border bg-card p-4">
@@ -117,7 +121,10 @@ export function ReportBuilder({ scope, meta, initial, seed, onBack, onSaved }: R
             <h2 className="text-lg font-semibold">{title}</h2>
             <p className="text-xs text-muted-foreground tabular-nums">Preview for {meta.rangeLabel} · {meta.locationLabel}</p>
           </div>
-          <Button onClick={() => setSaving(true)} disabled={!!problem}>{initial ? 'Save changes' : 'Save report'}</Button>
+          <div className="flex items-center gap-2">
+            {!problem && exp.menu}
+            <Button onClick={() => setSaving(true)} disabled={!!problem}>{initial ? 'Save changes' : 'Save report'}</Button>
+          </div>
         </div>
       </div>
 

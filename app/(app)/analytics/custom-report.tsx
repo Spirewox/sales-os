@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DataTable, EmptyState, KpiStrip, type Column, type KpiCell } from '@/components/app';
 import type { useCustomReport } from '@/hooks/use-reports';
-import { DATASETS } from '@/lib/explore';
+import { useExport } from '@/hooks/use-export';
+import { DATASETS, type Filter } from '@/lib/explore';
 import { kpiRows, type CustomReportRow, type SavedReport } from '@/lib/reports';
 import { ResultChart, fmtExact, fmtShort } from './explore-shared';
 
@@ -27,6 +28,31 @@ export function KpiRows({ cells, label }: Readonly<{ cells: KpiCell[]; label: st
       {rows.map((row, i) => <KpiStrip key={i} cells={row} label={rows.length > 1 ? `${label}, ${i + 1} of ${rows.length}` : label} />)}
     </div>
   );
+}
+
+/**
+ * Excel, CSV and PDF of a custom report as its table shows it: one row per group and every column, for
+ * the period and location on screen, with the report's own filters listed. Used before and after saving.
+ */
+export function useCustomReportExport({ module, title, dataset, groupBy, measures, filters, report, meta }: {
+  module: string; title: string; dataset: string; groupBy: string; measures: string[]; filters: Filter[];
+  report: Report; meta: { rangeLabel: string; locationLabel: string };
+}) {
+  const ds = DATASETS.find((d) => d.key === dataset);
+  const cols = columnMeta(dataset, measures, report);
+  const groupLabel = report.groupLabel || ds?.fields.find((f) => f.key === groupBy)?.label || 'Group';
+  const filterLabels = filters
+    .filter((f) => f.values.length > 0)
+    .map((f) => `${ds?.fields.find((x) => x.key === f.field)?.label ?? f.field}: ${f.values.join(', ')}`);
+  return useExport<CustomReportRow>({
+    module,
+    title,
+    noun: { one: 'row', many: 'rows' },
+    columns: [{ header: groupLabel, value: (r) => r.label }, ...cols.map((c) => ({ header: c.label, value: (r: CustomReportRow) => r.values[c.measure] ?? 0 }))],
+    filters: () => [meta.rangeLabel, meta.locationLabel, ...filterLabels],
+    fetchPage: async () => ({ items: report.rows ?? [], totalPages: 1 }),
+    disabled: !report.rows?.length || report.isFetching,
+  });
 }
 
 /** Column labels and kinds from the dataset, so headers read right before the first answer arrives. */
