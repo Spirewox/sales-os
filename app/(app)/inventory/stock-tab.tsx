@@ -18,7 +18,7 @@ import { cn } from '@/lib/utils';
 import { usePermissions } from '@/hooks/use-permissions';
 import { useExport } from '@/hooks/use-export';
 import { filterLabels } from '@/lib/export';
-import { STOCK_EXPORT_COLUMNS } from '@/lib/exports/stock';
+import { stockExportColumns } from '@/lib/exports/stock';
 import { expiryTone, getExpiryLabel, marginPct, nearMinimum, sellingPriceForMargin, stockState } from './inventory-utils';
 import type { StockView } from './use-stock-view';
 import { SalesTrendsSection } from './sales-trends';
@@ -52,7 +52,9 @@ export function StockTab({ hubScope, view, loading, pendingRequests, needsAction
   const { counts, stockFilter, filteredItems, nextExpiryByItem, expiringByItem } = view;
   const { can } = usePermissions();
   const exportStock = useExport({
-    module: 'stock', title: 'Stock', noun: { one: 'product', many: 'products' }, columns: STOCK_EXPORT_COLUMNS,
+    module: 'stock', title: 'Stock', noun: { one: 'product', many: 'products' },
+    // Archived or all: say which rows are archived, and since when.
+    columns: stockExportColumns(view.status !== 'active'),
     filters: () => filterLabels({ location: hubScope.filterHub, chips }),
     fetchPage: async () => ({ items: filteredItems, totalPages: 1 }),
     disabled: filteredItems.length === 0,
