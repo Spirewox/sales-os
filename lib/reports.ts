@@ -28,19 +28,62 @@ export const REPORTS: ReportDef[] = [
 
 export const REPORT_GROUPS: ReportGroup[] = ['Sales', 'Customers', 'Credit', 'Inventory', 'Suppliers'];
 
-/** An Explore query saved under a name, private to the person who saved it. */
+/**
+ * A report a person built (in Reports or Explore), private to them: one dataset broken down one way,
+ * with one or more columns. `measure` is the first column, kept for reports saved before `measures`.
+ */
 export type SavedReport = {
-  id: string; name: string; dataset: string; measure: string; groupBy: string; filters: Filter[];
+  id: string; name: string; dataset: string; measure: string; measures?: string[]; groupBy: string; filters: Filter[];
   chart: 'column' | 'bar' | 'line' | 'table'; createdAt: string;
 };
 
+/** A custom report shows at most this many columns. */
+export const MAX_REPORT_COLUMNS = 6;
+
+/** A saved report's columns, in order. */
+export const savedReportMeasures = (r: Pick<SavedReport, 'measure' | 'measures'>): string[] => (r.measures?.length ? r.measures : [r.measure]);
+
+/** Why a report being built cannot be saved yet, or null. */
+export function reportDraftError(d: { measures: string[] }): string | null {
+  if (d.measures.length === 0) return 'Pick at least one column.';
+  if (d.measures.length > MAX_REPORT_COLUMNS) return `Pick up to ${MAX_REPORT_COLUMNS} columns.`;
+  return null;
+}
+
+/** "Revenue, orders and units by location": the suggested name, in sentence case. */
+export function customReportName(measureLabels: string[], groupLabel: string): string {
+  const cols = measureLabels.length > 1 ? `${measureLabels.slice(0, -1).join(', ')} and ${measureLabels.at(-1)}` : (measureLabels[0] ?? '');
+  const n = `${cols} by ${groupLabel}`.toLowerCase();
+  return n.charAt(0).toUpperCase() + n.slice(1);
+}
+
+export type MeasureRows = { measure: string; rows: { key: string; label: string; value: number }[] };
+export type CustomReportRow = { key: string; label: string; values: Record<string, number> };
+
+/** One row per group with every column's value, in the first column's order; a group a column lacks reads 0. */
+export function mergeMeasureRows(results: MeasureRows[]): CustomReportRow[] {
+  const byKey = new Map<string, CustomReportRow>();
+  for (const res of results) {
+    for (const r of res.rows) {
+      if (!byKey.has(r.key)) byKey.set(r.key, { key: r.key, label: r.label, values: Object.fromEntries(results.map((x) => [x.measure, 0])) });
+      byKey.get(r.key)!.values[res.measure] = r.value;
+    }
+  }
+  return [...byKey.values()];
+}
+
 export const visibleReports = (can: (p: Permission) => boolean) => REPORTS.filter((r) => can(r.permission));
 
-/** What `?report=` opens: a ready-made report, a saved one (`saved:<id>`), the library, or a report this person may not see. */
+/** What `?report=` opens: a ready-made report, a saved one (`saved:<id>`), the builder (`new`, `edit:<id>`), the library, or a report this person may not see. */
 export function resolveReportParam(
   param: string | null, can: (p: Permission) => boolean, saved: SavedReport[],
-): { kind: 'library' } | { kind: 'builtin'; def: ReportDef } | { kind: 'saved'; report: SavedReport } | { kind: 'denied' } {
+): { kind: 'library' } | { kind: 'new' } | { kind: 'edit'; report: SavedReport } | { kind: 'builtin'; def: ReportDef } | { kind: 'saved'; report: SavedReport } | { kind: 'denied' } {
   if (!param) return { kind: 'library' };
+  if (param === 'new') return { kind: 'new' };
+  if (param.startsWith('edit:')) {
+    const report = saved.find((r) => r.id === param.slice('edit:'.length));
+    return report ? { kind: 'edit', report } : { kind: 'library' };
+  }
   if (param.startsWith('saved:')) {
     const report = saved.find((r) => r.id === param.slice('saved:'.length));
     return report ? { kind: 'saved', report } : { kind: 'library' };
@@ -57,14 +100,6 @@ export const summableColumns = (result: ReportResult) =>
 /** The KPI for each summable total, all of them (Credit aging has six), labelled "Total …" once. */
 export const reportKpiColumns = (result: ReportResult) =>
   summableColumns(result).map((c) => ({ ...c, label: /^total\b/i.test(c.label) ? c.label : `Total ${c.label.toLowerCase()}` }));
-
-/** A saved report's total: the server's, and only for a measure whose groups add up (not averages or distinct counts). */
-export const savedReportTotal = (result: { rows: { value: number }[]; total: number }, additive: boolean): number | null =>
-  additive ? result.total : null;
-
-/** A stored result, only while the scope it was fetched for is still the one on screen. */
-export const scopedResult = <T>(stored: { key: string; data: T } | null, key: string): T | null =>
-  stored && stored.key === key ? stored.data : null;
 
 const exportValue = (kind: ReportKind, v: string | number | null | undefined) =>
   kind === 'percent' && typeof v === 'number' ? Math.round(v * 10) / 10 : v;
@@ -87,10 +122,12 @@ export function reportRowsWithTotal(result: ReportResult): ReportRow[] {
 
 type DatasetShape = { key: string; measures: { key: string }[]; fields: { key: string }[] };
 
-/** Whether a saved Explore query can still run: its dataset, measure and grouping still exist. */
+/** Whether a saved report can still run: its dataset, every column, the grouping and each filter's field still exist. */
 export function savedReportRunnable(r: SavedReport, datasets: DatasetShape[]): boolean {
   const ds = datasets.find((d) => d.key === r.dataset);
-  return !!ds && ds.measures.some((m) => m.key === r.measure) && ds.fields.some((f) => f.key === r.groupBy);
+  if (!ds) return false;
+  const field = (k: string) => ds.fields.some((f) => f.key === k);
+  return savedReportMeasures(r).every((m) => ds.measures.some((x) => x.key === m)) && field(r.groupBy) && r.filters.every((f) => field(f.field));
 }
 
 export const reportQueryKey = (key: string, scope: object) => ['analytics-report', key, scope];

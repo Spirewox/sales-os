@@ -15,7 +15,7 @@ Foundation: `shadcn checkbox (base-nova, base)` on `@base-ui/react/checkbox`. Tr
 ## Examples
 Default: `docs/system/examples/checkbox/default.tsx`.
 
-Real uses, 2 call sites: the figure chips of the Analytics Locations head to head, `app/(app)/analytics/location-head-to-head.tsx:187`, each a Checkbox inside its own `<label>`, and a user's locations in Settings, `app/(app)/settings/locations-picker.tsx:41`, a Checkbox with an `id` inside a `<label htmlFor>`, disabled for a location the editor cannot change. The app still draws 16 raw native checkboxes instead (`rg -n 'type="checkbox"' app components lib --glob '*.tsx'`), such as `components/app/data-table.tsx:159`, `app/(app)/sales/sales-filter-bar.tsx:90` and `app/(app)/kitchen/settings.tsx:130`. Moving them onto Checkbox is migration work, not part of this spec.
+Real uses, 3 call sites: a custom report's columns in the Reports builder, `app/(app)/analytics/report-builder.tsx:81`, each a Checkbox inside its own `<label>`, disabled once six are picked; the figure chips of the Analytics Locations head to head, `app/(app)/analytics/location-head-to-head.tsx:187`, each a Checkbox inside its own `<label>`, and a user's locations in Settings, `app/(app)/settings/locations-picker.tsx:41`, a Checkbox with an `id` inside a `<label htmlFor>`, disabled for a location the editor cannot change. The app still draws 16 raw native checkboxes instead (`rg -n 'type="checkbox"' app components lib --glob '*.tsx'`), such as `components/app/data-table.tsx:159`, `app/(app)/sales/sales-filter-bar.tsx:90` and `app/(app)/kitchen/settings.tsx:130`. Moving them onto Checkbox is migration work, not part of this spec.
 
 ### Example files
 | File | Covers | Caption |

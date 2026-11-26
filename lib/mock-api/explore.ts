@@ -66,3 +66,10 @@ export function runMockExplore(db: Db, body: ExploreBody, ctx: ExploreContext): 
   const total = measure.additive === false ? Math.round(measure.of(list) * 100) / 100 : rows.reduce((n, r) => n + r.value, 0);
   return { rows, total, measureKind: measure.kind };
 }
+
+/** Mock answer for `POST insights/explore/field-values`: a Sales field's values among the sales in scope. */
+export function mockFieldValues(db: Db, body: { dataset: string; field: string }, ctx: ExploreContext): string[] {
+  if (body.dataset !== 'sales') return [];
+  const list = db.sales.filter((s) => s.status !== 'Voided' && ctx.inRange(s.date) && ctx.inScope(s.hub));
+  return [...new Set(list.map((s) => dim(s, body.field)).filter((v) => v !== '-'))].sort();
+}

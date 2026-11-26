@@ -54,13 +54,6 @@ export function ExploreBuild({ scope, seed }: Readonly<{ scope: InsightScopePara
   const measureKind = result?.measureKind || (ds.measures.find((m) => m.key === measure)?.kind ?? 'number');
   const top = result?.rows[0];
 
-  const addFilter = () => {
-    const used = new Set(filters.map((f) => f.field));
-    const next = ds.fields.find((f) => !used.has(f.key) && f.key !== groupBy) || ds.fields[0];
-    setFilters([...filters, { field: next.key, multi: !!next.multi, values: [] }]);
-  };
-  const updateFilter = (idx: number, patch: Partial<Filter>) => setFilters(filters.map((f, i) => (i === idx ? { ...f, ...patch } : f)));
-  const removeFilter = (idx: number) => setFilters(filters.filter((_, i) => i !== idx));
 
   const controls = (
     <section className="space-y-4 rounded-xl border bg-card p-4">
@@ -93,35 +86,7 @@ export function ExploreBuild({ scope, seed }: Readonly<{ scope: InsightScopePara
         <Bookmark aria-hidden /> Save as report
       </Button>
 
-      <div className="space-y-2 border-t pt-4">
-        <p className="text-xs font-medium text-muted-foreground">Filters</p>
-        {filters.map((f, idx) => {
-          const fDef = ds.fields.find((x) => x.key === f.field);
-          if (!fDef) return null;
-          const id = `explore-filter-${idx}`;
-          return (
-            <div key={idx} className="space-y-2 rounded-md border bg-muted/40 p-2.5">
-              <div className="flex items-center gap-2">
-                <label htmlFor={id} className="sr-only">Filter field</label>
-                <select
-                  id={id}
-                  value={f.field}
-                  onChange={(e) => { const nd = ds.fields.find((x) => x.key === e.target.value)!; updateFilter(idx, { field: nd.key, multi: !!nd.multi, values: [] }); }}
-                  className="h-8 min-w-0 flex-1 rounded-md border bg-background px-2 text-xs font-medium"
-                >
-                  {ds.fields.map((x) => <option key={x.key} value={x.key}>{x.label}</option>)}
-                </select>
-                <span className="shrink-0 text-xs text-muted-foreground tabular-nums">{f.values.length ? `${f.values.length} chosen` : 'Any'}</span>
-                <button type="button" aria-label={`Remove ${fDef.label} filter`} onClick={() => removeFilter(idx)} className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-destructive"><X size={14} aria-hidden /></button>
-              </div>
-              <FilterValues dataset={dsKey} field={f.field} label={fDef.label} selected={f.values} scope={scope} onChange={(values) => updateFilter(idx, { values })} />
-            </div>
-          );
-        })}
-        <button type="button" onClick={addFilter} className="inline-flex h-8 items-center gap-1.5 rounded-md border bg-card px-3 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground">
-          <Plus size={14} aria-hidden /> Add filter
-        </button>
-      </div>
+      <ExploreFilters dataset={dsKey} groupBy={groupBy} filters={filters} onChange={setFilters} scope={scope} />
     </section>
   );
 
@@ -160,12 +125,57 @@ export function ExploreBuild({ scope, seed }: Readonly<{ scope: InsightScopePara
       <TwoPane controls={controls} results={results} />
       {saving && (
         <SaveReportDialog
-          query={{ dataset: dsKey, measure, groupBy, filters, chart }}
+          query={{ dataset: dsKey, measure, measures: [measure], groupBy, filters, chart }}
           defaultName={reportName(ds.measures.find((m) => m.key === measure)?.label ?? measureLabel, ds.fields.find((f) => f.key === groupBy)?.label ?? groupLabel)}
           onClose={() => setSaving(false)}
         />
       )}
     </>
+  );
+}
+
+/** The filters of an Explore query: one field and its chosen values per filter, and Add filter. */
+export function ExploreFilters({ dataset, groupBy, filters, onChange, scope, idPrefix = 'explore' }: Readonly<{
+  dataset: string; groupBy: string; filters: Filter[]; onChange: (filters: Filter[]) => void; scope: InsightScopeParams; idPrefix?: string;
+}>) {
+  const ds = DATASETS.find((d) => d.key === dataset) ?? DATASETS[0];
+  const addFilter = () => {
+    const used = new Set(filters.map((f) => f.field));
+    const next = ds.fields.find((f) => !used.has(f.key) && f.key !== groupBy) || ds.fields[0];
+    onChange([...filters, { field: next.key, multi: !!next.multi, values: [] }]);
+  };
+  const updateFilter = (idx: number, patch: Partial<Filter>) => onChange(filters.map((f, i) => (i === idx ? { ...f, ...patch } : f)));
+  const removeFilter = (idx: number) => onChange(filters.filter((_, i) => i !== idx));
+  return (
+    <div className="space-y-2 border-t pt-4">
+      <p className="text-xs font-medium text-muted-foreground">Filters</p>
+      {filters.map((f, idx) => {
+        const fDef = ds.fields.find((x) => x.key === f.field);
+        if (!fDef) return null;
+        const id = `${idPrefix}-filter-${idx}`;
+        return (
+          <div key={idx} className="space-y-2 rounded-md border bg-muted/40 p-2.5">
+            <div className="flex items-center gap-2">
+              <label htmlFor={id} className="sr-only">Filter field</label>
+              <select
+                id={id}
+                value={f.field}
+                onChange={(e) => { const nd = ds.fields.find((x) => x.key === e.target.value)!; updateFilter(idx, { field: nd.key, multi: !!nd.multi, values: [] }); }}
+                className="h-8 min-w-0 flex-1 rounded-md border bg-background px-2 text-xs font-medium"
+              >
+                {ds.fields.map((x) => <option key={x.key} value={x.key}>{x.label}</option>)}
+              </select>
+              <span className="shrink-0 text-xs text-muted-foreground tabular-nums">{f.values.length ? `${f.values.length} chosen` : 'Any'}</span>
+              <button type="button" aria-label={`Remove ${fDef.label} filter`} onClick={() => removeFilter(idx)} className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-destructive"><X size={14} aria-hidden /></button>
+            </div>
+            <FilterValues dataset={dataset} field={f.field} label={fDef.label} selected={f.values} scope={scope} onChange={(values) => updateFilter(idx, { values })} />
+          </div>
+        );
+      })}
+      <button type="button" onClick={addFilter} className="inline-flex h-8 items-center gap-1.5 rounded-md border bg-card px-3 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground">
+        <Plus size={14} aria-hidden /> Add filter
+      </button>
+    </div>
   );
 }
 

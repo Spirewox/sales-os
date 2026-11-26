@@ -13,8 +13,8 @@ import { archiveProduct, filterProducts, restoreProduct } from './products';
 import { customerSearchFields, saveCustomer } from './customers';
 import { filterUsers, saveUser } from './users';
 import { buildReport } from './reports';
-import { deleteSavedReport, saveReport } from './saved-reports';
-import { runMockExplore, type ExploreBody } from './explore';
+import { deleteSavedReport, saveReport, updateSavedReport } from './saved-reports';
+import { mockFieldValues, runMockExplore, type ExploreBody } from './explore';
 import { DATASETS } from '@/lib/explore';
 import type { SavedReport } from '@/lib/reports';
 
@@ -618,9 +618,10 @@ function route(method: string, path: string, q: URLSearchParams, body: unknown):
   if (path === 'auth/login') return { status: 200, data: ok({ ...currentMockUser() }) };
   if (path === 'pos/live-ticket') return { status: 200, data: ok(null) };
   // Explore Build: the Sales dataset over the sample sales, for the period and location in the body.
-  if (method === 'post' && path === 'insights/explore/query') {
-    const b = (body ?? {}) as ExploreBody & Record<string, unknown>;
+  if (method === 'post' && (path === 'insights/explore/query' || path === 'insights/explore/field-values')) {
+    const b = (body ?? {}) as ExploreBody & { field?: string } & Record<string, unknown>;
     const scope = new URLSearchParams(['hub_id', 'period', 'date_from', 'date_to'].flatMap((k) => (typeof b[k] === 'string' ? [[k, b[k] as string]] : [])));
+    if (path === 'insights/explore/field-values') return { status: 200, data: ok({ values: mockFieldValues(db, { dataset: b.dataset, field: b.field ?? '' }, { inRange: (d) => inRange(d, scope), inScope: (h) => inScope(scope, h) }) }) };
     const res = runMockExplore(db, b, { inRange: (d) => inRange(d, scope), inScope: (h) => inScope(scope, h) });
     const ds = DATASETS.find((d) => d.key === b.dataset);
     return { status: 200, data: ok({ ...res, measureLabel: ds?.measures.find((m) => m.key === b.measure)?.label ?? '', groupLabel: ds?.fields.find((f) => f.key === b.groupBy)?.label ?? '' }) };
@@ -629,6 +630,11 @@ function route(method: string, path: string, q: URLSearchParams, body: unknown):
   if (method === 'post' && path === 'analytics/reports/saved') {
     const saved = saveReport(savedReports, (body ?? {}) as Parameters<typeof saveReport>[1], new Date().toISOString());
     return { status: saved.status, data: saved.status === 200 ? ok(saved.data) : saved.data };
+  }
+  const putReport = method === 'put' ? path.match(/^analytics\/reports\/saved\/([^/]+)$/) : null;
+  if (putReport) {
+    const res = updateSavedReport(savedReports, putReport[1], (body ?? {}) as Parameters<typeof updateSavedReport>[2]);
+    return { status: res.status, data: res.status === 200 ? ok(res.data) : res.data };
   }
   const deleteReport = method === 'delete' ? path.match(/^analytics\/reports\/saved\/([^/]+)$/) : null;
   if (deleteReport) {

@@ -1,20 +1,20 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, FileBarChart, Trash2 } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { ArrowLeft, FileBarChart, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog, DataTable, EmptyState, KpiStrip, OverflowMenu, type Column, type KpiCell } from '@/components/app';
 import { useExport } from '@/hooks/use-export';
-import { useExploreQuery, type InsightScopeParams } from '@/hooks/use-insights-api';
-import { useDeleteSavedReport, useReport } from '@/hooks/use-reports';
+import type { InsightScopeParams } from '@/hooks/use-insights-api';
+import { useCustomReport, useDeleteSavedReport, useReport } from '@/hooks/use-reports';
 import { DATASETS } from '@/lib/explore';
 import { formatCount, formatDate, formatMoney } from '@/lib/format';
 import {
-  reportExportColumns, reportKpiColumns, reportRowsWithTotal, savedReportRunnable, savedReportTotal, scopedResult,
-  type ReportColumn, type ReportDef, type ReportRow, type SavedReport,
+  reportExportColumns, reportKpiColumns, reportRowsWithTotal, savedReportMeasures, savedReportRunnable,
+  type CustomReportRow, type ReportColumn, type ReportDef, type ReportRow, type SavedReport,
 } from '@/lib/reports';
-import { ResultChart, fmtShort } from './explore-shared';
+import { columnMeta, CustomReportResults } from './custom-report';
 
 type Meta = { rangeLabel: string; locationLabel: string };
 type Row = ReportRow & { __id: string };
@@ -99,47 +99,25 @@ export function ReportViewer({ def, scope, meta, onBack }: Readonly<{ def: Repor
   );
 }
 
-/** A saved Explore query, run for the period and location in scope, with its chart and figures. */
-export function SavedReportViewer({ report, scope, meta, onBack }: Readonly<{ report: SavedReport; scope: InsightScopeParams; meta: Meta; onBack: () => void }>) {
+/** A report the person built, run for the period and location in scope, with its totals, chart and table. */
+export function SavedReportViewer({ report, scope, meta, onBack, onEdit }: Readonly<{ report: SavedReport; scope: InsightScopeParams; meta: Meta; onBack: () => void; onEdit: () => void }>) {
   const runnable = savedReportRunnable(report, DATASETS);
-  const explore = useExploreQuery();
-  type Result = { rows: { key: string; label: string; value: number }[]; total: number; measureLabel: string; groupLabel: string; measureKind: 'money' | 'number' };
-  // Kept with the scope it was run for, so a period change never shows (or exports) the last period's figures.
-  const [stored, setStored] = useState<{ key: string; data: Result } | null>(null);
+  const measures = savedReportMeasures(report);
+  const data = useCustomReport({ dataset: report.dataset, groupBy: report.groupBy, filters: report.filters, measures }, scope, { enabled: runnable });
   const del = useDeleteSavedReport();
   const [confirming, setConfirming] = useState(false);
-  const { mutate } = explore;
-  const scopeKey = JSON.stringify(scope);
+  const cols = columnMeta(report.dataset, measures, data);
+  const groupLabel = data.groupLabel || DATASETS.find((d) => d.key === report.dataset)?.fields.find((f) => f.key === report.groupBy)?.label || 'Group';
 
-  useEffect(() => {
-    if (!runnable) return;
-    mutate(
-      { dataset: report.dataset, measure: report.measure, groupBy: report.groupBy, filters: report.filters, ...JSON.parse(scopeKey) },
-      { onSuccess: (data) => setStored({ key: scopeKey, data: data as Result }) },
-    );
-  }, [runnable, mutate, report, scopeKey]);
-
-  const result = scopedResult(stored, scopeKey);
-  const ds = DATASETS.find((d) => d.key === report.dataset);
-  const measure = ds?.measures.find((m) => m.key === report.measure);
-  const measureLabel = result?.measureLabel || ds?.measures.find((m) => m.key === report.measure)?.label || 'Value';
-  const groupLabel = result?.groupLabel || ds?.fields.find((f) => f.key === report.groupBy)?.label || 'Group';
-  const kind = result?.measureKind ?? measure?.kind ?? 'number';
-  // Averages and distinct counts have no total; their strongest group stands in.
-  const total = result ? savedReportTotal(result, measure?.additive !== false) : null;
-  const top = result?.rows.reduce<Result['rows'][number] | undefined>((best, r) => (!best || r.value > best.value ? r : best), undefined);
-  const cells: KpiCell[] = total != null
-    ? [{ label: `Total ${measureLabel.toLowerCase()}`, value: fmtShort(total, kind) }]
-    : [{ label: `Top ${groupLabel.toLowerCase()}`, value: top?.label ?? '-', detail: top ? fmtShort(top.value, kind) : undefined }];
-
-  const exp = useExport<{ label: string; value: number }>({
+  // The export holds what the table shows: one row per group, every column, for the period on screen.
+  const exp = useExport<CustomReportRow>({
     module: 'saved-report',
     title: report.name,
     noun: { one: 'row', many: 'rows' },
-    columns: [{ header: groupLabel, value: (r) => r.label }, { header: measureLabel, value: (r) => r.value }],
+    columns: [{ header: groupLabel, value: (r) => r.label }, ...cols.map((c) => ({ header: c.label, value: (r: CustomReportRow) => r.values[c.measure] ?? 0 }))],
     filters: () => [meta.rangeLabel, meta.locationLabel],
-    fetchPage: async () => ({ items: result?.rows ?? [], totalPages: 1 }),
-    disabled: !result?.rows.length || explore.isPending,
+    fetchPage: async () => ({ items: data.rows ?? [], totalPages: 1 }),
+    disabled: !data.rows?.length || data.isFetching,
   });
 
   const remove = () => del.mutate(report.id, {
@@ -156,33 +134,23 @@ export function SavedReportViewer({ report, scope, meta, onBack }: Readonly<{ re
         actions={(
           <>
             {runnable && exp.menu}
-            <OverflowMenu label={`More actions for ${report.name}`} items={[{ label: 'Delete report', icon: <Trash2 />, destructive: true, onSelect: () => setConfirming(true) }]} />
+            <OverflowMenu
+              label={`More actions for ${report.name}`}
+              items={[
+                { label: 'Edit report', icon: <Pencil />, onSelect: onEdit },
+                { label: 'Delete report', icon: <Trash2 />, destructive: true, onSelect: () => setConfirming(true) },
+              ]}
+            />
           </>
         )}
       />
-      {!runnable ? (
-        <EmptyState icon={<FileBarChart />} title="This report can't run any more" description="Its data source changed. Delete it and save it again from Explore." />
-      ) : explore.isError ? (
-        <EmptyState icon={<FileBarChart />} title="This report did not load" description="Check your connection and try again." />
-      ) : !result ? (
-        <KpiStrip cells={[]} loading label={`${report.name} totals`} />
-      ) : (
-        <div className="space-y-4">
-          <KpiStrip label={`${report.name} totals`} cells={cells} />
-          <div className="rounded-xl border bg-card p-4">
-            <ResultChart rows={result.rows} chart={report.chart} measureLabel={measureLabel} measureKind={kind} groupLabel={groupLabel} />
-          </div>
-          {report.chart !== 'table' && (
-            <div className="rounded-xl border bg-card p-4">
-              <ResultChart rows={result.rows} chart="table" measureLabel={measureLabel} measureKind={kind} groupLabel={groupLabel} />
-            </div>
-          )}
-        </div>
-      )}
+      {runnable
+        ? <CustomReportResults report={data} dataset={report.dataset} groupBy={report.groupBy} measures={measures} chart={report.chart} title={report.name} />
+        : <EmptyState icon={<FileBarChart />} title="This report can't run any more" description="Its data source changed. Edit it to pick new columns, or delete it." action={<Button variant="outline" size="sm" onClick={onEdit}>Edit report</Button>} />}
       {confirming && (
         <ConfirmDialog
           title={`Delete ${report.name}?`}
-          message="It leaves your saved reports. The data it showed is not affected."
+          message="It leaves your reports. The data it showed is not affected."
           confirmLabel="Delete"
           busy={del.isPending}
           onCancel={() => setConfirming(false)}

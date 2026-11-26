@@ -8,11 +8,13 @@ import type { InsightScopeParams } from '@/hooks/use-insights-api';
 import { useSavedReports } from '@/hooks/use-reports';
 import { resolveReportParam, visibleReports } from '@/lib/reports';
 import { ReportLibrary } from './report-library';
+import { ReportBuilder } from './report-builder';
 import { ReportViewer, SavedReportViewer } from './report-viewer';
 
 /**
- * Analytics → Reports: the library of ready-made and saved reports, or one report open
- * (`?report=<key>` or `?report=saved:<id>`), for the page's period and location.
+ * Analytics → Reports: the library of ready-made reports and the person's own, one report open
+ * (`?report=<key>` or `?report=saved:<id>`), or the builder (`?report=new`, `?report=edit:<id>`),
+ * for the page's period and location.
  */
 export function ReportsTab({ scope, rangeLabel, locationLabel }: Readonly<{ scope: InsightScopeParams; rangeLabel: string; locationLabel: string }>) {
   const { can } = usePermissions();
@@ -40,8 +42,21 @@ export function ReportsTab({ scope, rangeLabel, locationLabel }: Readonly<{ scop
   const meta = { rangeLabel, locationLabel };
 
   // A saved report's link waits for the saved list before falling back to the library.
-  if (param?.startsWith('saved:') && saved.isPending) return <ReportLibrary reports={visibleReports(can)} saved={[]} savedLoading hrefFor={hrefFor} />;
+  if ((param?.startsWith('saved:') || param?.startsWith('edit:')) && saved.isPending) return <ReportLibrary reports={visibleReports(can)} saved={[]} savedLoading hrefFor={hrefFor} />;
   if (resolved.kind === 'builtin') return <ReportViewer key={resolved.def.key} def={resolved.def} scope={scope} meta={meta} onBack={back} />;
-  if (resolved.kind === 'saved') return <SavedReportViewer key={resolved.report.id} report={resolved.report} scope={scope} meta={meta} onBack={back} />;
+  if (resolved.kind === 'saved') return <SavedReportViewer key={resolved.report.id} report={resolved.report} scope={scope} meta={meta} onBack={back} onEdit={() => set({ report: `edit:${resolved.report.id}` })} />;
+  if (resolved.kind === 'new' || resolved.kind === 'edit') {
+    const initial = resolved.kind === 'edit' ? resolved.report : undefined;
+    return (
+      <ReportBuilder
+        key={initial?.id ?? 'new'}
+        scope={scope}
+        meta={meta}
+        initial={initial}
+        onBack={() => set({ report: initial ? `saved:${initial.id}` : null })}
+        onSaved={(r) => set({ report: `saved:${r.id}` })}
+      />
+    );
+  }
   return <ReportLibrary reports={visibleReports(can)} saved={saved.data ?? []} savedLoading={saved.isPending && !saved.isError} savedError={saved.isError} onRetrySaved={() => void saved.refetch()} hrefFor={hrefFor} />;
 }

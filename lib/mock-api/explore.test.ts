@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import * as db from './data';
-import { runMockExplore } from './explore';
+import { mockFieldValues, runMockExplore } from './explore';
 
 const all = { inRange: () => true, inScope: () => true };
 const live = db.sales.filter((s) => s.status !== 'Voided');
@@ -57,3 +57,13 @@ describe('runMockExplore', () => {
   });
 });
 
+
+describe('mockFieldValues', () => {
+  it('lists each payment type once, sorted', () => {
+    const values = mockFieldValues(db, { dataset: 'sales', field: 'PaymentType' }, all);
+    assert.deepEqual(values, [...new Set(live.map((s) => s.payment_type))].sort());
+  });
+  it('lists nothing for a dataset the mock does not model', () => {
+    assert.deepEqual(mockFieldValues(db, { dataset: 'inventory', field: 'Category' }, all), []);
+  });
+});

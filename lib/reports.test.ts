@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  REPORTS, reportExportColumns, reportKpiColumns, savedReportTotal, scopedResult, reportQueryKey, reportRowsWithTotal, resolveReportParam, savedReportRunnable, summableColumns, visibleReports,
+  REPORTS, MAX_REPORT_COLUMNS, customReportName, mergeMeasureRows, reportDraftError, savedReportMeasures, reportExportColumns, reportKpiColumns, reportQueryKey, reportRowsWithTotal, resolveReportParam, savedReportRunnable, summableColumns, visibleReports,
   type ReportResult, type SavedReport,
 } from './reports';
 import { buildCsv } from './export';
@@ -99,20 +99,49 @@ describe('reportKpiColumns', () => {
   });
 });
 
-describe('savedReportTotal', () => {
-  it('uses the total from the server for a measure that adds up', () => {
-    assert.equal(savedReportTotal({ rows: [{ value: 1 }, { value: 2 }], total: 3 }, true), 3);
+describe('custom reports with several columns', () => {
+  it('reads the columns, falling back to the single measure of an older report', () => {
+    assert.deepEqual(savedReportMeasures(saved('a')), ['revenue']);
+    assert.deepEqual(savedReportMeasures(saved('b', { measures: ['revenue', 'orders'] })), ['revenue', 'orders']);
   });
-  it('gives no total for averages and distinct counts', () => {
-    assert.equal(savedReportTotal({ rows: [{ value: 10 }, { value: 20 }], total: 15 }, false), null);
+
+  it('merges one result per column into rows, in the first column\'s order', () => {
+    const rows = mergeMeasureRows([
+      { measure: 'revenue', rows: [{ key: 'Lagos', label: 'Lagos', value: 300 }, { key: 'Ife', label: 'Ife', value: 100 }] },
+      { measure: 'orders', rows: [{ key: 'Ife', label: 'Ife', value: 4 }, { key: 'Kano', label: 'Kano', value: 1 }] },
+    ]);
+    assert.deepEqual(rows, [
+      { key: 'Lagos', label: 'Lagos', values: { revenue: 300, orders: 0 } },
+      { key: 'Ife', label: 'Ife', values: { revenue: 100, orders: 4 } },
+      { key: 'Kano', label: 'Kano', values: { revenue: 0, orders: 1 } },
+    ]);
+  });
+
+  it('runs only while every column, the grouping and each filter still exist', () => {
+    const ds = [{ key: 'sales', measures: [{ key: 'revenue' }, { key: 'orders' }], fields: [{ key: 'Location' }, { key: 'Product' }] }];
+    assert.equal(savedReportRunnable(saved('a', { measures: ['revenue', 'orders'] }), ds), true);
+    assert.equal(savedReportRunnable(saved('b', { measures: ['revenue', 'gone'] }), ds), false);
+    assert.equal(savedReportRunnable(saved('c', { filters: [{ field: 'Gone', multi: false, values: ['x'] }] }), ds), false);
+  });
+
+  it('needs at least one column and at most the limit', () => {
+    assert.equal(reportDraftError({ measures: [] }), 'Pick at least one column.');
+    assert.equal(reportDraftError({ measures: Array.from({ length: MAX_REPORT_COLUMNS + 1 }, (_, i) => `m${i}`) }), `Pick up to ${MAX_REPORT_COLUMNS} columns.`);
+    assert.equal(reportDraftError({ measures: ['revenue'] }), null);
+  });
+
+  it('suggests a sentence-case name from the columns and grouping', () => {
+    assert.equal(customReportName(['Revenue'], 'Location'), 'Revenue by location');
+    assert.equal(customReportName(['Revenue', 'Orders'], 'Location'), 'Revenue and orders by location');
+    assert.equal(customReportName(['Revenue', 'Orders', 'Avg Order Value'], 'Product'), 'Revenue, orders and avg order value by product');
   });
 });
 
-describe('scopedResult', () => {
-  it('shows a result only for the scope it was fetched for', () => {
-    const stored = { key: 'a', data: 1 };
-    assert.equal(scopedResult(stored, 'a'), 1);
-    assert.equal(scopedResult(stored, 'b'), null);
-    assert.equal(scopedResult(null, 'a'), null);
+describe('resolveReportParam for building', () => {
+  it('opens the builder for a new report or to edit one of theirs', () => {
+    const list = [saved('a')];
+    assert.deepEqual(resolveReportParam('new', all, list), { kind: 'new' });
+    assert.deepEqual(resolveReportParam('edit:a', all, list), { kind: 'edit', report: list[0] });
+    assert.deepEqual(resolveReportParam('edit:zz', all, list), { kind: 'library' });
   });
 });
