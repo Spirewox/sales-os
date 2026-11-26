@@ -21,13 +21,13 @@ Default: `docs/system/examples/data-table/default.tsx`.
 Real uses, 33 call sites (`rg -n "<DataTable[\s/>]" app components lib -g '!components/app/**'`, the check's own pattern). Three more tags pass a type argument, `<DataTable<OverdueRow>`, `<DataTable<StockRow>` and `<DataTable<TicketRow>` at `app/(app)/_dashboard/needs-attention.tsx:48`, `app/(app)/_dashboard/needs-attention.tsx:63` and `app/(app)/_dashboard/needs-attention.tsx:80`, which the count misses, so 35 tables render in all.
 
 - Credits, customers with credit, rows open the customer, WhatsApp and Record payment actions: `app/(app)/credits/page.tsx:177`
-- Customers, server pages and server sort: `app/(app)/customers/page.tsx:211`
+- Customers, server pages and server sort: `app/(app)/customers/page.tsx:219`
 - Sales, server pages and sort, rows open the sale: `app/(app)/sales/page.tsx:168`
 - Inventory stock, the one table with bulk selection: `app/(app)/inventory/stock-tab.tsx:207`
 - Inventory movements and requests: `app/(app)/inventory/movements-tab.tsx:155`, `app/(app)/inventory/requests-tab.tsx:168`
 - Suppliers list and a supplier's product performance (fixed 10 rows): `app/(app)/suppliers/page.tsx:234`, `app/(app)/suppliers/supplier-performance-tab.tsx:180`
 - Engagement tables with row actions: `app/(app)/engagement/feedback-table.tsx:90`, `app/(app)/engagement/enquiry-table.tsx:84`, `app/(app)/engagement/compensation-table.tsx:55`, `app/(app)/engagement/churn.tsx:143`
-- Kitchen: `app/(app)/kitchen/jobs.tsx:221` (server pages), `app/(app)/kitchen/ingredients.tsx:123`, `app/(app)/kitchen/recipes.tsx:74`, `components/kitchen-analytics-tab.tsx:124`
+- Kitchen: `app/(app)/kitchen/jobs.tsx:178` (server pages), `app/(app)/kitchen/ingredients.tsx:123`, `app/(app)/kitchen/recipes.tsx:74`, `components/kitchen-analytics-tab.tsx:124`
 - POS: `app/(app)/pos/overview.tsx:77`, `app/(app)/pos/tills.tsx:70`, `app/(app)/pos/transactions.tsx:98`, `app/(app)/pos/shifts-reviews.tsx:60`, `app/(app)/pos/shifts-reviews.tsx:100`, `components/live-pos-panel.tsx:55` (fixed page size)
 - Analytics tabs, rows from the Analytics page query: `app/(app)/analytics/customers-tab.tsx:152`, `app/(app)/analytics/sales-tab.tsx:217`, `app/(app)/analytics/credit-tab.tsx:127`, `app/(app)/analytics/inventory-tab.tsx:189`, `app/(app)/analytics/suppliers-tab.tsx:238`, `app/(app)/analytics/products-tab.tsx:132`, `app/(app)/analytics/products-tab.tsx:150`
 - Settings and audit: `app/(app)/settings/locations-section.tsx:127`, `app/(app)/settings/users-section.tsx:144`, `app/(app)/audit/page.tsx:215`

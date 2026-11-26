@@ -19,10 +19,10 @@ Default: `docs/system/examples/filter-bar/default.tsx`, search for ingredients w
 
 Real uses, 19 call sites (`rg -n "<FilterBar\b" app components lib --glob '*.{tsx,jsx}' --glob '!components/app/**'`):
 - Credits, customers owing: `app/(app)/credits/page.tsx:167`, search, filters, chips, Clear all, result count.
-- Sales list, through the sales wrapper: `app/(app)/sales/sales-filter-bar.tsx:22`, search, period, five fields in `more`.
-- Kitchen jobs: `app/(app)/kitchen/jobs.tsx:199`, search, filters, chips, Clear all, count, trailing.
+- Sales list, through the sales wrapper: `app/(app)/sales/sales-filter-bar.tsx:24`, search, period, five fields in `more`.
+- Kitchen jobs: `app/(app)/kitchen/jobs.tsx:161`, search, filters, chips, Clear all, count, trailing.
 - Kitchen ingredients: `app/(app)/kitchen/ingredients.tsx:96`, search, chips, count, trailing.
-- Customers: `app/(app)/customers/page.tsx:184`, search, period, `more` from `CustomerMoreFilters`, count.
+- Customers: `app/(app)/customers/page.tsx:191`, search, period, `more` from `CustomerMoreFilters`, count.
 - Kitchen recipes: `app/(app)/kitchen/recipes.tsx:60`, search, count, trailing.
 - Suppliers: `app/(app)/suppliers/page.tsx:183`, search, period, three fields in `more`.
 - Settings, locations: `app/(app)/settings/locations-section.tsx:119`, search, filters, chips, Clear all.
@@ -337,18 +337,18 @@ export default function FilterBarLoading() {
   - Do: `<FilterBar chips={chips} onClearAll={() => set({ till: null, cashier_id: null, q: null })} />`
 
 ### Content
-- `rule/filter-bar-search-label`: When `search` is passed, set `search.label` to "Search {records}" and the placeholder to the fields searched, because the placeholder disappears once someone types and the label is the field's only lasting name. Evidence: app 17/18 bars with search set a label apart from the placeholder, such as `app/(app)/customers/page.tsx:185`, stray `app/(app)/pos/pos-filter-bar.tsx:29`; principle wcag: 3.3.2 labels or instructions. Check: review.
+- `rule/filter-bar-search-label`: When `search` is passed, set `search.label` to "Search {records}" and the placeholder to the fields searched, because the placeholder disappears once someone types and the label is the field's only lasting name. Evidence: app 17/18 bars with search set a label apart from the placeholder, such as `app/(app)/customers/page.tsx:192`, stray `app/(app)/pos/pos-filter-bar.tsx:29`; principle wcag: 3.3.2 labels or instructions. Check: review.
   - Don't: `<FilterBar search={{ value: q, onChange: setQ }} />`
   - Do: `<FilterBar search={{ value: q, onChange: setQ, placeholder: 'Search name, phone, email, company', label: 'Search customers' }} />`
 - `rule/filter-bar-chip-label`: When a chip stands for a field filter, label it `{Field}: {value}` in sentence case, and a search chip `"{query}"` in quotes, because the chip row is the only place a filter set inside the closed panel stays visible. Evidence: app 9/11 chip builders use `{Field}: {value}` or `"{query}"`, such as `app/(app)/pos/transactions.tsx:54` and `app/(app)/credits/page.tsx:150`, strays `app/(app)/audit/page.tsx:151` ("By {name}") and `app/(app)/inventory/stock-tab.tsx:156` ("{n} SKUs"). Check: review.
   - Don't: `{ key: 'till', label: tillLabel(till), onRemove }`
   - Do: `{ key: 'till', label: \`Till: ${tillLabel(till)}\`, onRemove }`
-- `rule/filter-bar-result-label`: When `resultLabel` is passed, write `{count} {noun}` with the singular noun for 1, and pass `undefined` while the list loads, because the line is announced on every change and a stale "0 sales" during a fetch is read as a result. Evidence: single use `components/app/filter-bar.tsx:80`; app 6/6 counted callers pass `undefined` while loading, such as `app/(app)/kitchen/jobs.tsx:210` and `app/(app)/audit/page.tsx:210`. Check: review.
+- `rule/filter-bar-result-label`: When `resultLabel` is passed, write `{count} {noun}` with the singular noun for 1, and pass `undefined` while the list loads, because the line is announced on every change and a stale "0 sales" during a fetch is read as a result. Evidence: single use `components/app/filter-bar.tsx:80`; app 6/6 counted callers pass `undefined` while loading, such as `app/(app)/kitchen/jobs.tsx:172` and `app/(app)/audit/page.tsx:210`. Check: review.
   - Don't: `<FilterBar resultLabel={\`${rows.length} sales\`} />`
   - Do: `<FilterBar resultLabel={list.data ? plural(rows.length, 'sale') : undefined} />`
 
 ### Anti-slop
-- `rule/filter-bar-no-hand-row`: When a list screen needs a search box beside filters, render `FilterBar` instead of a flex row with a raw `<input type="search">`, because the bar carries the `sr-only` label, the polite result line and the chip row that a hand-built row drops. Evidence: app 19/20 search boxes on list screens render through `FilterBar`, stray `app/(app)/sales/sales-filter-bar.tsx:81` inside a picker. Check: lint `rg -n 'type="search"' app components lib` outside `components/app/`.
+- `rule/filter-bar-no-hand-row`: When a list screen needs a search box beside filters, render `FilterBar` instead of a flex row with a raw `<input type="search">`, because the bar carries the `sr-only` label, the polite result line and the chip row that a hand-built row drops. Evidence: app 19/20 search boxes on list screens render through `FilterBar`, stray `app/(app)/sales/sales-filter-bar.tsx:84` inside a picker. Check: lint `rg -n 'type="search"' app components lib` outside `components/app/`.
   - Don't: `<div className="flex gap-2"><input type="search" value={q} onChange={(e) => setQ(e.target.value)} /></div>`
   - Do: `<FilterBar search={{ value: q, onChange: setQ, placeholder: 'Search recipes', label: 'Search recipes' }} />`
 - `rule/filter-bar-trailing-actions`: When an action such as Export or a view toggle sits with the filters, pass it in `trailing` instead of `filters`, because `trailing` is pushed right with `ml-auto` and keeps actions apart from the controls that narrow the list. Evidence: single use `components/app/filter-bar.tsx:76`; app 5/19 bars pass actions in `trailing`, such as `app/(app)/kitchen/jobs.tsx:199`. Check: review.

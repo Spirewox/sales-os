@@ -24,7 +24,7 @@ Real uses, 22 call sites (`rg -n "<SectionErrorBoundary\b" app components lib --
 - Sales, around the sales list: `app/(app)/sales/page.tsx:167`.
 - Inventory, around the active tab, reset by tab: `app/(app)/inventory/page.tsx:213`.
 - Suppliers, around the list, reset by the filter key: `app/(app)/suppliers/page.tsx:233`.
-- Customers, around the list, reset by the page key: `app/(app)/customers/page.tsx:210`.
+- Customers, around the list, reset by the page key: `app/(app)/customers/page.tsx:218`.
 - Supplier drawer and customer panel, reset by record and tab: `app/(app)/suppliers/supplier-drawer.tsx:90`, `app/(app)/customers/customer-detail-panel.tsx:135`.
 - Audit trail (the pilot screen), POS, Settings and Engagement, around the active tab, reset by tab: `app/(app)/audit/page.tsx:213`, `app/(app)/pos/page.tsx:82`, `app/(app)/settings/page.tsx:59`, `app/(app)/engagement/page.tsx:65`.
 - POS overview, three sections: `app/(app)/pos/overview.tsx:50`, `app/(app)/pos/overview.tsx:53`, `app/(app)/pos/overview.tsx:56`.

@@ -19,12 +19,12 @@ Foundation: `@base-ui/react` Menu, wrapped in `components/app/overflow-menu.tsx`
 ## Examples
 Default: `docs/system/examples/overflow-menu/default.tsx`.
 
-Real uses, 24 call sites, plus one in `hooks/use-export.ts` that every list export shares (`rg -n "<OverflowMenu\b" app components lib --glob '!components/app/**'`):
-- Page headers, default size: Sales `app/(app)/sales/page.tsx:103`, Inventory `app/(app)/inventory/page.tsx:200`, Customers `app/(app)/customers/page.tsx:154`, POS `app/(app)/pos/page.tsx:78`, Dashboard phones `app/(app)/_dashboard/dashboard-content.tsx:93` and wider `app/(app)/_dashboard/dashboard-content.tsx:101`.
+Real uses, 23 call sites, plus one in `hooks/use-export.ts` that every list export shares (`rg -n "<OverflowMenu\b" app components lib --glob '!components/app/**'`):
+- Page headers, default size: Sales `app/(app)/sales/page.tsx:103`, Inventory `app/(app)/inventory/page.tsx:200`, Customers `app/(app)/customers/page.tsx:162`, POS `app/(app)/pos/page.tsx:78`, Dashboard phones `app/(app)/_dashboard/dashboard-content.tsx:93` and wider `app/(app)/_dashboard/dashboard-content.tsx:101`.
 - Drawer and panel headers: customer `app/(app)/customers/customer-detail-panel.tsx:121` (sm), sale `app/(app)/sales/sale-detail-panel.tsx:103` (sm), supplier `app/(app)/suppliers/supplier-drawer.tsx:77`, product `app/(app)/inventory/product-drawer.tsx:90`, job `app/(app)/kitchen/job-panel.tsx:102`, location `app/(app)/settings/locations-section.tsx:163`, customer credit `components/credits/customer-credit-sheet.tsx:115`.
 - Table rows, all `sm`: customers `app/(app)/customers/customer-columns.tsx:105`, suppliers `app/(app)/suppliers/supplier-columns.tsx:125`, stock `app/(app)/inventory/stock-tab.tsx:141`, requests `app/(app)/inventory/requests-tab.tsx:130`, feedback `app/(app)/engagement/feedback-table.tsx:105`, churn `app/(app)/engagement/churn.tsx:162`, tills `app/(app)/pos/tills.tsx:77`, roles matrix `app/(app)/settings/roles-matrix.tsx:54` (with `className="size-6 border-0 bg-transparent"`).
-- Export, with the worded `trigger`: `hooks/use-export.ts:94` builds one menu (Excel, CSV, PDF) that each list puts in its filter bar's `trailing`: suppliers, credits, interactions, stock, movements, requests, POS transactions, audit trail and users.
-- Section and settings menus: kitchen jobs export `app/(app)/kitchen/jobs.tsx:212`, roles reset `app/(app)/settings/roles-section.tsx:129`, the settings list wrapper `app/(app)/settings/settings-ui.tsx:25` (sm).
+- Export, with the worded `trigger`: `hooks/use-export.ts:94` builds one menu (Excel, CSV, PDF) that each list puts in its filter bar's `trailing`: customers, sales, kitchen jobs, suppliers, credits, interactions, stock, movements, requests, POS transactions, audit trail and users.
+- Section and settings menus: roles reset `app/(app)/settings/roles-section.tsx:129`, the settings list wrapper `app/(app)/settings/settings-ui.tsx:25` (sm).
 
 ### Example files
 | File | Covers | Caption |
@@ -64,7 +64,7 @@ Real uses, 24 call sites, plus one in `hooks/use-export.ts` that every list expo
 | Destructive | `destructive: true` on 14 items across 10 menus | Select it, which opens a confirm at 13 of 14 | Listed last, after a separator line | screenshot |
 | Item link | `href` set, `app/(app)/kitchen/job-panel.tsx:107` | Open it, or open it in a new tab from the browser | Renders `a`; `external` adds `target="_blank"` | by hand |
 | All hidden | Every item has `hidden: true`, such as the request row at `app/(app)/inventory/requests-tab.tsx:118` for someone else's request | Nothing | No trigger renders at all | by hand |
-| Item pending | A call site sets the label to "Exporting…" or "Preparing template…" and `disabled` while a file builds, `app/(app)/customers/page.tsx:159` | Wait | Label text changes and the item dims (`trap/loading-label-swap`, see findings) | by hand |
+| Item pending | A call site sets the label to "Exporting…" or "Preparing template…" and `disabled` while a file builds, `app/(app)/sales/page.tsx:107` | Wait | Label text changes and the item dims (`trap/loading-label-swap`, see findings) | by hand |
 
 ### State precedence
 - Open and Hover: Open wins. The trigger keeps the open fill when the pointer leaves.

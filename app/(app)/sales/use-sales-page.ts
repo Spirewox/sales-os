@@ -1,5 +1,9 @@
 'use client';
 
+import { periodLabel } from '@/lib/period';
+import { useExport } from '@/hooks/use-export';
+import { filterLabels } from '@/lib/export';
+import { SALE_EXPORT_COLUMNS } from '@/lib/exports/sales';
 import { usePageSize } from '@/hooks/use-page-size';
 import { useState, useMemo, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -22,7 +26,7 @@ import {
   useHubs,
   useDownloadSalesImportTemplate,
   useValidateSalesImport,
-  useExportSales,
+  fetchSales,
   runChunkedSalesImport,
   SALES_PAGE_SIZE,
 } from '@/hooks/use-queries';
@@ -235,16 +239,17 @@ export function useSalesPage() {
   };
 
   // ── Export, template, import
-  const exportSales = useExportSales();
-  const handleExport = () => {
-    exportSales.mutate(
-      { ...filters.summaryFilters, ...filters.sortParams },
-      {
-        onSuccess: () => toast.success('Sales export downloaded'),
-        onError: (err) => toast.error(err.message || 'Export failed'),
-      },
-    );
-  };
+  // Every sale the filters match, paged from the same list the table reads.
+  const exportSales = useExport({
+    module: 'sales', title: 'Sales', noun: { one: 'sale', many: 'sales' }, columns: SALE_EXPORT_COLUMNS,
+    filters: () => filterLabels({ location: hubScope.filterHub, period: periodLabel(filters.period), chips: filters.chips }),
+    fetchPage: async (p, l) => {
+      const res = await fetchSales({ ...filters.summaryFilters, ...filters.sortParams, page: p, limit: l });
+      return { items: res.items, totalPages: res.meta.totalPages };
+    },
+    pageSize: 100,
+    disabled: !salesList?.meta.total,
+  });
 
   const downloadTemplate = useDownloadSalesImportTemplate();
   const handleDownloadTemplate = (type: 'catalog' | 'custom' = 'catalog') => {
@@ -375,7 +380,7 @@ export function useSalesPage() {
     detailTab, setDetailTab, isEditing, setIsEditing, editForm, setEditForm, showVoidConfirm, setShowVoidConfirm,
     saleStockLogs, customerSalesHistory, handleUpdateDeliveryStatus, startEditing, saveEdit, editBatchPriceError, handleVoidSale,
     savingEdit: updateSale.isPending, voidingSale: voidSale.isPending, updatingDelivery: updateDeliveryStatusMutation.isPending,
-    handleExport, exportingSales: exportSales.isPending,
+    exportMenu: exportSales.menu,
     handleDownloadTemplate, downloadingTemplate: downloadTemplate.isPending,
     importInputRef, handleImportFile, handleImportConfirm, closeImportModal,
     showImportModal, importPreview, importSummary, importing, importProgress, importResult, importError, showImportConfirm, setShowImportConfirm,

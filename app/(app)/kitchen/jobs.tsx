@@ -2,16 +2,16 @@
 
 import { usePageSize } from '@/hooks/use-page-size';
 import { useMemo, useState } from 'react';
-import { toast } from 'sonner';
-import { Download } from 'lucide-react';
 import { FilterSelect } from '@/components/filter-select';
 import type { HubScopeFilter } from '@/hooks/use-hub-scope';
 import { useUrlState } from '@/hooks/use-url-state';
-import { DataTable, EmptyState, FilterBar, KpiStrip, LocationSelect, OverflowMenu, type Column, type FilterChip } from '@/components/app';
-import { fetchAllPages } from '@/lib/fetch-all-pages';
+import { DataTable, EmptyState, FilterBar, KpiStrip, LocationSelect, type Column, type FilterChip } from '@/components/app';
+import { useExport } from '@/hooks/use-export';
+import { filterLabels } from '@/lib/export';
+import { kitchenJobExportColumns } from '@/lib/exports/kitchen';
 import { axiosGet } from '@/lib/api';
 import { useKitchenJobs, type KitchenJobFilters } from '@/hooks/use-kitchen';
-import { dueState, formatDue, hubNameOf, MODE_LABELS, naira, pct, STAGE_LABELS, type KitchenJob, type KitchenJobList } from '@/lib/kitchen-types';
+import { dueState, formatDue, MODE_LABELS, naira, pct, type KitchenJob, type KitchenJobList } from '@/lib/kitchen-types';
 import { ErrorPanel, PaymentBadge, StageBadge } from './kitchen-ui';
 
 type Period = 'today' | '7' | '30' | 'month' | 'all';
@@ -45,11 +45,6 @@ export function periodRange(period: Period, now = new Date()): { from?: string; 
   return { from: from.toISOString() };
 }
 
-const csvCell = (v: unknown) => {
-  const s = v == null ? '' : String(v);
-  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-};
-
 export function KitchenJobs({ hubId, hubScope, dueSoonMinutes, canCosts, onOpenJob }: { hubId?: string; hubScope?: HubScopeFilter; dueSoonMinutes: number; canCosts: boolean; onOpenJob: (id: string) => void }) {
   // Period and stage live in the URL so Board > Done today can link straight to them.
   const { get, set: setUrl } = useUrlState();
@@ -59,7 +54,6 @@ export function KitchenJobs({ hubId, hubScope, dueSoonMinutes, canCosts, onOpenJ
   const [q, setQ] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = usePageSize('kitchen-jobs', 25);
-  const [exporting, setExporting] = useState(false);
   const setPeriod = (v: string) => { setUrl({ period: v === '30' ? null : v }); setPage(1); };
   const setStage = (v: string) => { setUrl({ stage: v === 'all' ? null : v }); setPage(1); };
 
@@ -77,51 +71,19 @@ export function KitchenJobs({ hubId, hubScope, dueSoonMinutes, canCosts, onOpenJ
     ...(q.trim() ? [{ key: 'q', label: `"${q.trim()}"`, onRemove: () => { setQ(''); setPage(1); } }] : []),
   ];
 
-  const exportCsv = async () => {
-    setExporting(true);
-    try {
-      const rest = { ...filters, page: undefined, limit: undefined };
-      const all = await fetchAllPages<KitchenJob>(async (p, limit) => {
-        const params = new URLSearchParams();
-        for (const [k, v] of Object.entries({ ...rest, page: p, limit })) if (v !== undefined && v !== '') params.set(k, String(v));
-        const res = (await axiosGet(`kitchen/jobs?${params}`, true)) as KitchenJobList;
-        return { items: res.data, totalPages: res.pagination.totalPages };
-      }, 200);
-      const header = ['Code', 'Created', 'Stage', 'Outlet', 'Customer', 'Phone', 'Channel', 'Service', 'Count', 'Due', 'Total', 'Paid', 'Balance', ...(canCosts ? ['Cost', 'Profit', 'Margin'] : []), 'Taken by', 'Cancel reason'];
-      const lines = all.map((j) =>
-        [
-          j.code,
-          new Date(j.createdAt).toLocaleString('en-NG', { timeZone: 'Africa/Lagos' }),
-          STAGE_LABELS[j.stage],
-          hubNameOf(j.hub),
-          j.customer_name,
-          j.phone,
-          j.channel,
-          MODE_LABELS[j.mode].label,
-          j.count,
-          j.due_at ? new Date(j.due_at).toLocaleString('en-NG', { timeZone: 'Africa/Lagos' }) : '',
-          j.total,
-          j.paid,
-          Math.max(0, j.total - j.paid),
-          ...(canCosts ? [j.costing?.cost ?? '', j.costing?.profit ?? '', j.costing?.margin != null ? (j.costing.margin * 100).toFixed(1) + '%' : ''] : []),
-          j.created_by_name,
-          j.cancel_reason,
-        ].map(csvCell).join(','),
-      );
-      const blob = new Blob([[header.join(','), ...lines].join('\n')], { type: 'text/csv;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `kitchen-jobs-${new Date().toISOString().slice(0, 10)}.csv`;
-      a.click();
-      URL.revokeObjectURL(url);
-      toast.success(`Exported ${all.length} job${all.length === 1 ? '' : 's'}`);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Export failed');
-    } finally {
-      setExporting(false);
-    }
-  };
+  // Every job the filters match, paged from the same list the table reads.
+  const exportJobs = useExport({
+    module: 'kitchen-jobs', title: 'Kitchen jobs', noun: { one: 'job', many: 'jobs' }, columns: kitchenJobExportColumns(canCosts),
+    filters: () => filterLabels({ location: hubScope?.filterHub, period: PERIODS.find((x) => x.value === period)?.label, chips }),
+    fetchPage: async (p, limit) => {
+      const params = new URLSearchParams();
+      for (const [k, v] of Object.entries({ ...filters, page: p, limit })) if (v !== undefined && v !== '') params.set(k, String(v));
+      const res = (await axiosGet(`kitchen/jobs?${params}`, true)) as KitchenJobList;
+      return { items: res.data, totalPages: res.pagination.totalPages };
+    },
+    disabled: !summary?.count,
+  });
+
 
   const columns: Column<KitchenJob>[] = [
     {
@@ -208,12 +170,7 @@ export function KitchenJobs({ hubId, hubScope, dueSoonMinutes, canCosts, onOpenJ
         chips={chips}
         onClearAll={() => { setQ(''); setStage('all'); }}
         resultLabel={meta ? `${meta.total} job${meta.total === 1 ? '' : 's'}` : undefined}
-        trailing={
-          <OverflowMenu
-            label="More job actions"
-            items={[{ label: exporting ? 'Exporting…' : 'Export CSV', icon: <Download />, onSelect: () => void exportCsv(), disabled: exporting || !summary?.count }]}
-          />
-        }
+        trailing={exportJobs.menu}
       />
 
       {jobs.isError && <ErrorPanel message={jobs.error.message} onRetry={() => void jobs.refetch()} />}

@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData, useQueries } from '@tanstack/react-query';
 import { useLayoutEffect } from 'react';
 import { HAS_API, requireApi } from '@/lib/require-api';
-import { downloadBulkExport, saveSalesWorkbook, submitBulkJob, waitForBulkJob } from '@/lib/bulk-jobs';
+import { submitBulkJob, waitForBulkJob } from '@/lib/bulk-jobs';
 import { axiosGet, axiosPost, axiosPatch, axiosDelete, axiosGetBlob, axiosPostForm } from '@/lib/api';
 import { customerTypeToApi, customerCompanyNameForApi, customerPhoneForApi } from '@/lib/customer-helpers';
 import { mapApiUser } from '@/lib/utils';
@@ -818,7 +818,7 @@ export function useUpdateProfile() {
 }
 
 // --- Customers ---
-export function useCustomers(filters?: {
+export type CustomerListFilters = {
   search?: string;
   segment_id?: string;
   segment_ids?: string[];
@@ -833,7 +833,40 @@ export function useCustomers(filters?: {
   sort_dir?: 'asc' | 'desc';
   min_orders?: number;
   max_orders?: number;
-}, options?: { enabled?: boolean }) {
+};
+
+/** One page of customers. Shared by the list and its export. */
+export async function fetchCustomers(filters?: CustomerListFilters, hubMap?: Record<string, string>): Promise<CustomerListResult> {
+  if (!HAS_API) return EMPTY_CUSTOMER_LIST;
+  const hubs = hubMap ?? await fetchHubMap();
+  const params: Record<string, string | number | undefined> = {
+    search: filters?.search,
+    customer_type: filters?.type ? customerTypeToApi(filters.type) : undefined,
+    hub_id: filters?.hub_id,
+    segment_id: filters?.segment_id,
+    segment_ids: filters?.segment_ids?.length
+      ? filters.segment_ids.join(',')
+      : undefined,
+    period: filters?.period,
+    date_from: filters?.date_from,
+    date_to: filters?.date_to,
+    page: filters?.page,
+    limit: filters?.limit,
+    sort_by: filters?.sort_by,
+    sort_dir: filters?.sort_dir,
+    min_orders: filters?.min_orders,
+    max_orders: filters?.max_orders,
+  };
+  const raw = await axiosGet(`customers${buildQuery(params)}`, true);
+  const parsed = parseCustomerListResponse(raw);
+  return {
+    items: parsed.data.map((c) => mapCustomer(c, hubs)),
+    meta: parsed.meta,
+    summary: parsed.summary,
+  };
+}
+
+export function useCustomers(filters?: CustomerListFilters, options?: { enabled?: boolean }) {
   const qc = useQueryClient();
   return useQuery({
     queryKey: ['customers', filters],
@@ -845,32 +878,7 @@ export function useCustomers(filters?: {
         queryFn: fetchHubsList,
         staleTime: HUBS_STALE_MS,
       });
-      const hubMap = buildHubMap(hubs);
-      const params: Record<string, string | number | undefined> = {
-        search: filters?.search,
-        customer_type: filters?.type ? customerTypeToApi(filters.type) : undefined,
-        hub_id: filters?.hub_id,
-        segment_id: filters?.segment_id,
-        segment_ids: filters?.segment_ids?.length
-          ? filters.segment_ids.join(',')
-          : undefined,
-        period: filters?.period,
-        date_from: filters?.date_from,
-        date_to: filters?.date_to,
-        page: filters?.page,
-        limit: filters?.limit,
-        sort_by: filters?.sort_by,
-        sort_dir: filters?.sort_dir,
-        min_orders: filters?.min_orders,
-        max_orders: filters?.max_orders,
-      };
-      const raw = await axiosGet(`customers${buildQuery(params)}`, true);
-      const parsed = parseCustomerListResponse(raw);
-      return {
-        items: parsed.data.map((c) => mapCustomer(c, hubMap)),
-        meta: parsed.meta,
-        summary: parsed.summary,
-      };
+      return fetchCustomers(filters, buildHubMap(hubs));
     },
   });
 }
@@ -929,39 +937,6 @@ export function useCustomerEngagement(filters?: {
       ) as { data?: EngagementCustomer[]; meta?: { total?: number; summaryUpdatedAt?: string; summaryStale?: boolean } };
       const items = Array.isArray(raw?.data) ? raw.data : [];
       return { items, total: raw?.meta?.total ?? items.length, summaryUpdatedAt: raw?.meta?.summaryUpdatedAt, summaryStale: raw?.meta?.summaryStale };
-    },
-  });
-}
-
-export function useExportCustomers() {
-  return useMutation({
-    mutationFn: async (filters?: CustomerExportFilters) => {
-      const params: Record<string, string | number | undefined> = {
-        search: filters?.search,
-        customer_type: filters?.type ? customerTypeToApi(filters.type) : undefined,
-        hub_id: filters?.hub_id,
-        segment_id: filters?.segment_id,
-        segment_ids: filters?.segment_ids?.length
-          ? filters.segment_ids.join(',')
-          : undefined,
-        period: filters?.period,
-        date_from: filters?.date_from,
-        date_to: filters?.date_to,
-        sort_by: filters?.sort_by,
-        sort_dir: filters?.sort_dir,
-        min_orders: filters?.min_orders,
-        max_orders: filters?.max_orders,
-      };
-      const buffer = await axiosGetBlob(`customers/export${buildQuery(params)}`, true);
-      const blob = new Blob([buffer], { type: 'text/csv;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'customers-export.csv';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
     },
   });
 }
@@ -1143,6 +1118,33 @@ type SalesQueryFilters = {
   sort_dir?: 'asc' | 'desc';
 };
 
+/** One page of sales. Shared by the list and its export. */
+export async function fetchSales(filters?: SalesQueryFilters): Promise<SalesListResult> {
+  if (!HAS_API) return EMPTY_SALES_LIST;
+  const hubMap = await fetchHubMap();
+  const params: Record<string, string | number | boolean | undefined> = {
+    status: filters?.status,
+    date_from: filters?.date_from,
+    date_to: filters?.date_to,
+    date_field: filters?.date_field,
+    payment_mode: filters?.payment_mode,
+    hub_id: filters?.hub_id,
+    agent_id: filters?.agent_id,
+    customer_id: filters?.customer_id,
+    channel: filters?.channel,
+    categories: filters?.categories,
+    product_ids: filters?.product_ids,
+    search: filters?.search,
+    exclude_voided: filters?.exclude_voided,
+    page: filters?.page,
+    limit: filters?.limit,
+    sort_by: filters?.sort_by,
+    sort_dir: filters?.sort_dir,
+  };
+  const raw = await axiosGet(`sales${buildQuery(params)}`, true);
+  return parseSalesListResponse(raw, hubMap);
+}
+
 export function useSales(
   filters?: SalesQueryFilters,
   options?: UseQueryEnabledOptions,
@@ -1151,62 +1153,11 @@ export function useSales(
     queryKey: ['sales', filters],
     enabled: options?.enabled ?? true,
     placeholderData: keepPreviousData,
-    queryFn: async (): Promise<SalesListResult> => {
-      if (!HAS_API) return EMPTY_SALES_LIST;
-      const hubMap = await fetchHubMap();
-      const params: Record<string, string | number | boolean | undefined> = {
-        status: filters?.status,
-        date_from: filters?.date_from,
-        date_to: filters?.date_to,
-        date_field: filters?.date_field,
-        payment_mode: filters?.payment_mode,
-        hub_id: filters?.hub_id,
-        agent_id: filters?.agent_id,
-        customer_id: filters?.customer_id,
-        channel: filters?.channel,
-        categories: filters?.categories,
-        product_ids: filters?.product_ids,
-        search: filters?.search,
-        exclude_voided: filters?.exclude_voided,
-        page: filters?.page,
-        limit: filters?.limit,
-        sort_by: filters?.sort_by,
-        sort_dir: filters?.sort_dir,
-      };
-      const raw = await axiosGet(`sales${buildQuery(params)}`, true);
-      return parseSalesListResponse(raw, hubMap);
-    },
+    queryFn: () => fetchSales(filters),
   });
 }
 
 /** KPI summary only — omits page so paging the table does not refetch metrics. */
-export function useExportSales() {
-  return useMutation({
-    mutationFn: async (filters?: Omit<SalesQueryFilters, 'page' | 'limit'>) => {
-      const params: Record<string, string | number | boolean | undefined> = {
-        status: filters?.status,
-        date_from: filters?.date_from,
-        date_to: filters?.date_to,
-        date_field: filters?.date_field,
-        payment_mode: filters?.payment_mode,
-        hub_id: filters?.hub_id,
-        agent_id: filters?.agent_id,
-        customer_id: filters?.customer_id,
-        channel: filters?.channel,
-        categories: filters?.categories,
-        product_ids: filters?.product_ids,
-        search: filters?.search,
-        exclude_voided: filters?.exclude_voided,
-        sort_by: filters?.sort_by,
-        sort_dir: filters?.sort_dir,
-      };
-      const job = await submitBulkJob('sales-export', { ...params, request_id: crypto.randomUUID() });
-      if (job) return downloadBulkExport(await waitForBulkJob(job));
-      saveSalesWorkbook(await axiosGetBlob(`sales/export${buildQuery(params)}`, true));
-    },
-  });
-}
-
 async function fetchSalesSummary(filters?: Omit<SalesQueryFilters, 'page' | 'limit'>): Promise<SalesListSummary> {
   if (!HAS_API) return EMPTY_SALES_LIST.summary;
   const hubMap = await fetchHubMap();

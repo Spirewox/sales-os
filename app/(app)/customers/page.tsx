@@ -2,12 +2,14 @@
 
 import { Suspense, useCallback, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
-import { Download, FileSpreadsheet, Plus, Upload, Users } from 'lucide-react';
+import { FileSpreadsheet, Plus, Upload, Users } from 'lucide-react';
 import { useOpenFromQuery } from '@/hooks/use-open-from-query';
 import { useUrlState } from '@/hooks/use-url-state';
 import { usePageSize } from '@/hooks/use-page-size';
-import { useCreditSummary, useCustomer, useCustomers, useExportCustomers, useSegments } from '@/hooks/use-queries';
+import { fetchCustomers, useCreditSummary, useCustomer, useCustomers, useSegments } from '@/hooks/use-queries';
+import { useExport } from '@/hooks/use-export';
+import { filterLabels } from '@/lib/export';
+import { customerExportColumns } from '@/lib/exports/customers';
 import { usePermissions } from '@/hooks/use-permissions';
 import { useHubScopeFilter } from '@/hooks/use-hub-scope';
 import { Customer, CustomerType } from '@/types';
@@ -69,7 +71,6 @@ function Customers() {
   const customers = list?.items;
   const meta = list?.meta ?? { page: 1, limit: pageSize, total: 0, totalPages: 1 };
   const kpis = list?.summary ?? EMPTY_SUMMARY;
-  const exportCustomers = useExportCustomers();
   const imports = useCustomerImport();
   const fileInput = useRef<HTMLInputElement>(null);
 
@@ -132,11 +133,18 @@ function Customers() {
   const columns = customerColumns(creditByCustomer, f.segmentNames);
   const filtered = f.chips.length > 0;
 
-  const runExport = () =>
-    exportCustomers.mutate(exportFilters, {
-      onError: (err) => toast.error(err instanceof Error ? err.message : 'Export failed'),
-      onSuccess: () => toast.success('Customer export downloaded'),
-    });
+  // Every customer the filters match, paged from the same list the table reads.
+  const exportCustomers = useExport({
+    module: 'customers', title: 'Customers', noun: { one: 'customer', many: 'customers' },
+    columns: customerExportColumns((id) => creditByCustomer?.get(id)?.totalOutstanding),
+    filters: () => filterLabels({ location: hubScope.filterHub, chips: f.chips }),
+    fetchPage: async (p, l) => {
+      const res = await fetchCustomers({ ...exportFilters, page: p, limit: l });
+      return { items: res.items, totalPages: res.meta.totalPages };
+    },
+    pageSize: 100,
+    disabled: !list || meta.total === 0,
+  });
 
   return (
     <div className="space-y-5">
@@ -156,7 +164,6 @@ function Customers() {
             items={[
               { label: 'Import customers', icon: <Upload />, onSelect: () => fileInput.current?.click(), hidden: !can('customers.create') },
               { label: 'Download template', icon: <FileSpreadsheet />, onSelect: imports.downloadTemplate, hidden: !can('customers.create') },
-              { label: exportCustomers.isPending ? 'Exporting…' : 'Export customers', icon: <Download />, onSelect: runExport, disabled: exportCustomers.isPending, hidden: !can('customers.view') },
             ]}
           />
         }
@@ -203,6 +210,7 @@ function Customers() {
         more={<CustomerMoreFilters filters={f} segments={segments} />}
         moreActiveCount={f.moreActiveCount}
         chips={f.chips}
+        trailing={can('customers.view') ? exportCustomers.menu : undefined}
         onClearAll={f.clearAll}
         resultLabel={list ? `${meta.total > meta.limit ? `${(meta.page - 1) * meta.limit + 1} to ${Math.min(meta.page * meta.limit, meta.total)} of ` : ''}${plural(meta.total, 'customer')}${isFetching ? ', updating…' : ''}` : undefined}
       />

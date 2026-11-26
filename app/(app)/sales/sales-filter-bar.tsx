@@ -14,10 +14,12 @@ type Props = Readonly<{
   categories: readonly string[];
   skuOptions: InventoryItem[];
   resultLabel?: ReactNode;
+  /** Actions such as Export, at the end of the bar. */
+  trailing?: ReactNode;
 }>;
 
 /** Search, one period, location and payment status inline; everything else under "More filters". */
-export function SalesFilterBar({ filters: f, hubScope, agents, categories, skuOptions, resultLabel }: Props) {
+export function SalesFilterBar({ filters: f, hubScope, agents, categories, skuOptions, resultLabel, trailing }: Props) {
   return (
     <FilterBar
       search={{ value: f.search, onChange: f.setSearch, placeholder: 'Search customer, product, notes', label: 'Search sales' }}
@@ -59,6 +61,7 @@ export function SalesFilterBar({ filters: f, hubScope, agents, categories, skuOp
       chips={f.chips}
       onClearAll={f.clearAll}
       resultLabel={resultLabel}
+      trailing={trailing}
     />
   );
 }

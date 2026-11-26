@@ -24,7 +24,7 @@ Real uses, 12 call sites (`rg -n "<PageHeader\b" app components lib --glob '!com
 - Dashboard, two secondary links and one primary link, two overflow menus split by width: `app/(app)/_dashboard/dashboard-content.tsx:68`.
 - Sales, one primary hidden below 768px, overflow with import, templates and export: `app/(app)/sales/page.tsx:98`.
 - Inventory, one primary that changes with the tab, overflow with four items gated by permissions, tabs: `app/(app)/inventory/page.tsx:195`.
-- Customers, one primary, overflow with import, template and export: `app/(app)/customers/page.tsx:143`.
+- Customers, one primary, overflow with import, template and export: `app/(app)/customers/page.tsx:151`.
 - Suppliers, one primary: `app/(app)/suppliers/page.tsx:167`.
 - Settings, title and description only: `app/(app)/settings/page.tsx:52`.
 - POS, one primary on the Tills tab, overflow with Refresh, tabs: `app/(app)/pos/page.tsx:69`.

@@ -2,7 +2,7 @@
 
 import { Suspense } from 'react';
 import { PaymentMode, SalesChannel } from '@/types';
-import { Download, FileSpreadsheet, Plus, Receipt, Upload } from 'lucide-react';
+import { FileSpreadsheet, Plus, Receipt, Upload } from 'lucide-react';
 import type { Sale } from '@/types';
 import { formatCount, formatDate, formatMoney, formatMoneyShort, plural } from '@/lib/format';
 import { lagosDay, periodLabel } from '@/lib/period';
@@ -106,7 +106,6 @@ function Sales() {
               { label: 'Import sales', icon: <Upload aria-hidden />, onSelect: () => importInputRef.current?.click(), hidden: !canImport },
               { label: p.downloadingTemplate ? 'Preparing template…' : 'Catalog sales template', icon: <FileSpreadsheet aria-hidden />, onSelect: () => p.handleDownloadTemplate('catalog'), hidden: !canImport, disabled: p.downloadingTemplate },
               { label: 'Custom product template', icon: <FileSpreadsheet aria-hidden />, onSelect: () => p.handleDownloadTemplate('custom'), hidden: !canImport, disabled: p.downloadingTemplate },
-              { label: p.exportingSales ? 'Exporting…' : 'Export sales', icon: <Download aria-hidden />, onSelect: p.handleExport, disabled: p.exportingSales },
             ]}
           />
         }
@@ -161,6 +160,7 @@ function Sales() {
         agents={p.agents}
         categories={p.productCategories}
         skuOptions={p.skuOptions}
+        trailing={p.exportMenu}
         resultLabel={tableLoading ? 'Loading sales…' : salesMeta.totalPages > 1 ? `${(salesMeta.page - 1) * salesMeta.limit + 1} to ${Math.min(salesMeta.page * salesMeta.limit, salesMeta.total)} of ${plural(salesMeta.total, 'sale')}` : plural(salesMeta.total, 'sale')}
       />
 
