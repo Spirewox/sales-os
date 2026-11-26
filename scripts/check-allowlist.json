@@ -57,12 +57,6 @@
       "<input> where the system has Input": 1
     }
   },
-  "app/(app)/analytics/explore-build.tsx": {
-    "trap/native-control": {
-      "<button> where the system has Button": 3,
-      "<select> where the system has Select": 5
-    }
-  },
   "app/(app)/analytics/explore-shared.tsx": {
     "rule/arbitrary-value": {
       "grid-cols-[minmax(280px,340px)_1fr]": 1,
@@ -70,13 +64,6 @@
     },
     "trap/native-control": {
       "<button> where the system has Button": 2
-    }
-  },
-  "app/(app)/analytics/explore-simulate.tsx": {
-    "trap/native-control": {
-      "<button> where the system has Button": 1,
-      "<input> where the system has Input": 1,
-      "<select> where the system has Select": 3
     }
   },
   "app/(app)/analytics/inventory-tab.tsx": {

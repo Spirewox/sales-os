@@ -10,7 +10,6 @@ import { parsePeriod, periodLabel, periodRange, periodToParams, previousRange, t
 import type { AskResult } from '@/lib/ask';
 import type { Filter, QueryResult } from '@/lib/explore';
 import type { CompareResult, EntityKind } from '@/lib/insights';
-import type { Levers, ScenarioKey, SimOutput } from '@/lib/simulate';
 
 /** Analytics opens on the last 30 days. */
 export const DEFAULT_PERIOD: PeriodPreset = '30d';
@@ -118,57 +117,6 @@ export function useExploreFieldValues(
       );
       const values = unwrapData<{ values?: string[] }>(res)?.values;
       return Array.isArray(values) ? values : [];
-    },
-  });
-}
-
-export function useSimulateTargets(scope: InsightScopeParams) {
-  return useQuery({
-    queryKey: ['insight-simulate-targets', scope],
-    enabled: HAS_API,
-    staleTime: 60_000,
-    queryFn: async () => {
-      const qs = new URLSearchParams();
-      Object.entries(scope).forEach(([k, v]) => {
-        if (v != null && v !== '') qs.set(k, String(v));
-      });
-      const res = await axiosGet(
-        `insights/simulate/targets?${qs.toString()}`,
-        true,
-        INSIGHTS_TIMEOUT_MS,
-      );
-      const data = unwrapData<{ targets?: { value: string; label: string }[]; segments?: string[] }>(res);
-      return {
-        targets: Array.isArray(data?.targets) ? data.targets : [],
-        segments: Array.isArray(data?.segments) ? data.segments : [],
-      };
-    },
-  });
-}
-
-export function useSimulateInterpret() {
-  return useMutation({
-    mutationFn: async (payload: InsightScopeParams & { question: string }) => {
-      requireApi();
-      const res = await axiosPost(
-        'insights/simulate/interpret',
-        payload,
-        true,
-        INSIGHTS_TIMEOUT_MS,
-      );
-      return expectShape(unwrapData<{ scenario: ScenarioKey; levers: Levers; understood: string }>(res), (r) => !!r.scenario && !!r.levers);
-    },
-  });
-}
-
-export function useSimulateRun() {
-  return useMutation({
-    mutationFn: async (
-      payload: InsightScopeParams & { scenario: ScenarioKey; levers: Levers },
-    ) => {
-      requireApi();
-      const res = await axiosPost('insights/simulate/run', payload, true, INSIGHTS_TIMEOUT_MS);
-      return expectShape(unwrapData<SimOutput>(res), (r) => Array.isArray(r.metrics) && !!r.headline && !!r.verdict);
     },
   });
 }
