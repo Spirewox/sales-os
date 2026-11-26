@@ -15,7 +15,7 @@ Default: `docs/system/examples/empty-state/default.tsx`.
 
 Real uses, 63 call sites (`rg -n "<EmptyState\b" app components lib -g '!components/app/**'`). 25 of them sit in a DataTable `empty` slot, the rest in drawer panels, tabs and whole sections.
 
-- Analytics page, whole section, default size: no access `app/(app)/analytics/page.tsx:86`, needs the API `app/(app)/analytics/page.tsx:124`, load failed `app/(app)/analytics/page.tsx:157`
+- Analytics page, whole section, default size: no access `app/(app)/analytics/page.tsx:87`, needs the API `app/(app)/analytics/page.tsx:125`, load failed `app/(app)/analytics/page.tsx:158`
 - Kitchen analytics, whole tab, default size: `components/kitchen-analytics-tab.tsx:34`
 - Analytics Ask, compact first-run prompt: `app/(app)/analytics/explore-ask.tsx:81`
 - Analytics Locations head to head, compact: fewer than two locations `app/(app)/analytics/location-head-to-head.tsx:124`, no figures picked `app/(app)/analytics/location-head-to-head.tsx:197`

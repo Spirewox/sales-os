@@ -9,22 +9,20 @@ import { useSavedReports } from '@/hooks/use-reports';
 import { resolveReportParam, visibleReports } from '@/lib/reports';
 import { Seg } from './analytics-ui';
 import { ExploreAsk } from './explore-ask';
-import { ExploreSimulate } from './explore-simulate';
 import { ReportLibrary } from './report-library';
 import { ReportBuilder, type ReportSeed } from './report-builder';
 import { ReportViewer, SavedReportViewer } from './report-viewer';
 
-type View = 'reports' | 'ask' | 'simulate';
-const VIEWS: [View, string][] = [['reports', 'Reports'], ['ask', 'Ask'], ['simulate', 'What if']];
+type View = 'reports' | 'ask';
+const VIEWS: [View, string][] = [['reports', 'Reports'], ['ask', 'Ask']];
 const VIEW_HINT: Record<View, string> = {
   reports: 'Ready-made reports, and your own: pick the data, columns and filters, then save it.',
   ask: 'Ask in plain words and get a chart, a list of records or a comparison.',
-  simulate: 'Move a lever (price, demand, cost, credit) and see the projected effect.',
 };
 
 /**
- * Analytics → Reports, which also holds what was the Explore tab. Its views are the report library,
- * Ask and What if (`?mode=ask|simulate`). A report opens with `?report=<key>` or `saved:<id>`, and the
+ * Analytics → Reports, which also holds what was the Explore tab. Its views are the report library
+ * and Ask (`?mode=ask`). A report opens with `?report=<key>` or `saved:<id>`, and the
  * builder with `?report=new` or `edit:<id>`, all for the page's period and location.
  */
 export function ReportsTab({ scope, rangeLabel, locationLabel }: Readonly<{ scope: InsightScopeParams; rangeLabel: string; locationLabel: string }>) {
@@ -52,7 +50,7 @@ export function ReportsTab({ scope, rangeLabel, locationLabel }: Readonly<{ scop
   const back = () => set({ report: null });
   const meta = { rangeLabel, locationLabel };
   const rawMode = get('mode');
-  const view: View = rawMode === 'ask' || rawMode === 'simulate' ? rawMode : 'reports';
+  const view: View = rawMode === 'ask' ? 'ask' : 'reports';
   // Ask's "build on this" opens a new report seeded with the question's data.
   const [seed, setSeed] = useState<{ key: number; value: ReportSeed } | null>(null);
 
@@ -73,7 +71,6 @@ export function ReportsTab({ scope, rangeLabel, locationLabel }: Readonly<{ scop
           }}
         />
       )}
-      {view === 'simulate' && <ExploreSimulate scope={scope} />}
     </div>
   );
 

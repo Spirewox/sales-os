@@ -5,6 +5,7 @@ Changes to the design system docs and tokens, newest first.
 
 ## 2026-11-26
 
+- Fold Explore into Reports and drop Sales by staff (`933f337`)
 - Repoint the Button docs at the custom report's Try again (`7bb9c32`)
 - Add more data points to custom reports (`b30bcfd`)
 - Build custom reports in Reports (`4c3907f`)

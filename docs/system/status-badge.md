@@ -12,7 +12,7 @@ Not applicable: hand-rolled. A `span` with five tone classes and the `STATUS_TON
 ## Examples
 Default: `docs/system/examples/status-badge/default.tsx`.
 
-Real uses, 101 call sites (`rg -n "<StatusBadge\b" app components lib -g '!components/app/**'` lists 92 lines, some holding 2 tags; the check counts tags).
+Real uses, 100 call sites (`rg -n "<StatusBadge\b" app components lib -g '!components/app/**'` lists 91 lines, some holding 2 tags; the check counts tags).
 
 - Sales list and sale panel, payment domain: `app/(app)/sales/page.tsx:63`, `app/(app)/sales/sale-detail-panel.tsx:91`, `app/(app)/customers/customer-purchases-tab.tsx:90`, `app/(app)/_dashboard/needs-attention.tsx:108`
 - Stock table and product drawer, stock domain: `app/(app)/inventory/stock-tab.tsx:100`, `app/(app)/inventory/product-drawer.tsx:90`, `app/(app)/analytics/inventory-tab.tsx:121`
@@ -22,9 +22,9 @@ Real uses, 101 call sites (`rg -n "<StatusBadge\b" app components lib -g '!compo
 - Customer grades and interaction history: `app/(app)/customers/customer-grades.tsx:29`, `app/(app)/customers/customer-interactions-tab.tsx:62`, `app/(app)/customers/customer-interactions-tab.tsx:81`, `app/(app)/customers/customer-interactions-tab.tsx:100`
 - Customer import summary rows: `app/(app)/customers/customer-import-summary.tsx:65`
 - Credit cards: `components/credits/credit-item-card.tsx:38`
-- 71 more uses with a literal `tone`, mostly neutral category labels in tables and drawers, found by the same rg command
+- 70 more uses with a literal `tone`, mostly neutral category labels in tables and drawers, found by the same rg command
 
-Tone use across the 96 tags: `domain` 16 (payment 4, stock 4, work 8), literal `tone` 55 (neutral 30, good 10, warning 12, danger 3, info 0), computed `tone` 25.
+Tone use across the 95 tags: `domain` 16 (payment 4, stock 4, work 8), literal `tone` 54 (neutral 29, good 10, warning 12, danger 3, info 0), computed `tone` 25.
 
 ### Example files
 | File | Covers | Caption |

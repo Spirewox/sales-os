@@ -50,13 +50,14 @@ function Analytics() {
   const { hubScope, period, setPeriod, scope, prevScope, periodLabel } = useInsightScope();
 
   // Explore now lives in Reports: old links land on the same view there (Build a chart is New report).
-  const legacyExplore = get('tab') === 'explore';
+  // What if was removed, so its links open the report library.
   const legacyMode = get('mode');
+  const legacy = get('tab') === 'explore' || (get('tab') === 'reports' && legacyMode === 'simulate');
   useEffect(() => {
-    if (!legacyExplore) return;
+    if (!legacy) return;
     if (legacyMode === 'build') set({ tab: 'reports', mode: null, report: 'new' });
-    else set({ tab: 'reports', mode: legacyMode === 'simulate' ? 'simulate' : 'ask' });
-  }, [legacyExplore, legacyMode, set]);
+    else set({ tab: 'reports', mode: legacyMode === 'simulate' ? null : 'ask' });
+  }, [legacy, legacyMode, set]);
 
   const tabDefs: SectionTab<AnalyticsTab>[] = [
     { id: 'sales', label: 'Sales' },

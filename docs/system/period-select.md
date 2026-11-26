@@ -17,7 +17,7 @@ Foundation: `@base-ui/react Popover`, with the app's own `Calendar` (`components
 Default: `docs/system/examples/period-select/default.tsx`, set to "Last 30 days".
 
 Real uses, 8 call sites (`rg -n "<PeriodSelect\b" app components lib --glob '*.{tsx,jsx}' --glob '!components/app/**'`), all with `value` and `onChange` only:
-- Analytics header: `app/(app)/analytics/page.tsx:105`, local state.
+- Analytics header: `app/(app)/analytics/page.tsx:106`, local state.
 - Inventory, sales trends card: `app/(app)/inventory/sales-trends.tsx:36`, local state.
 - Inventory, movements: `app/(app)/inventory/movements-tab.tsx:140`, written to the URL with `periodToParams`.
 - Audit log: `app/(app)/audit/page.tsx:190`, URL with fallback `'all'`.
@@ -92,7 +92,7 @@ Real uses, 8 call sites (`rg -n "<PeriodSelect\b" app components lib --glob '*.{
 - `rule/period-select-url-params`: When the screen's period belongs in the URL, write it with `periodToParams` and read it with `parsePeriod` using the same fallback, because the default preset is left out of the URL and a mismatched fallback turns a shared link into a different window. Evidence: app 2/2 URL call sites pair them, `app/(app)/inventory/movements-tab.tsx:133` and `app/(app)/audit/page.tsx:190` with fallback `'all'`. Check: review the fallback argument on both calls.
   - Don't: `<PeriodSelect value={parsePeriod(params, 'all')} onChange={(p) => set(periodToParams(p))} />`
   - Do: `<PeriodSelect value={parsePeriod(params, 'all')} onChange={(p) => set(periodToParams(p, 'all'))} />`
-- `rule/period-select-filter-slot`: When a screen has a FilterBar, put PeriodSelect in its `filters` slot instead of beside the bar, because the bar wraps it with search and the other filters on phones. Evidence: app 6/8 call sites sit inside a FilterBar `filters` slot, such as `app/(app)/customers/page.tsx:200`, and the other two sit on screens with no FilterBar, `app/(app)/analytics/page.tsx:103` and `app/(app)/inventory/sales-trends.tsx:36`. Check: review.
+- `rule/period-select-filter-slot`: When a screen has a FilterBar, put PeriodSelect in its `filters` slot instead of beside the bar, because the bar wraps it with search and the other filters on phones. Evidence: app 6/8 call sites sit inside a FilterBar `filters` slot, such as `app/(app)/customers/page.tsx:200`, and the other two sit on screens with no FilterBar, `app/(app)/analytics/page.tsx:104` and `app/(app)/inventory/sales-trends.tsx:36`. Check: review.
   - Don't: `<div className="flex"><FilterBar search={search} /><PeriodSelect value={period} onChange={setPeriod} /></div>`
   - Do: `<FilterBar search={search} filters={<PeriodSelect value={period} onChange={setPeriod} />} />`
 - `rule/period-select-lagos-range`: When a query or a filter needs the period's bounds, compute them with `periodRange` or `inPeriod` from `lib/period.ts` instead of `new Date()` arithmetic, because every period is counted in Lagos days and a browser in another zone shifts the window by a day. Evidence: single use `lib/period.ts:16`; principle heuristic: one source of truth for date windows. Check: review `new Date(` near period code.
