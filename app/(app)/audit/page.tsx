@@ -3,7 +3,9 @@
 import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Box, Banknote, User, Shield, Upload, ScrollText, Download } from 'lucide-react';
-import { useAuditLogs, useAgents } from '@/hooks/use-queries';
+import { fetchAuditLogs, useAuditLogs, useAgents } from '@/hooks/use-queries';
+import { useExport } from '@/hooks/use-export';
+import { auditListPage } from '@/lib/exports/audit';
 import { useUrlState } from '@/hooks/use-url-state';
 import type { AuditLog } from '@/types';
 import { formatAuditAction, formatAuditEntity } from '@/lib/api-mappers';
@@ -15,7 +17,7 @@ import {
   DataTable, EmptyState, FilterBar, MoreFilterField, OverflowMenu, PageHeader, PeriodSelect, SectionErrorBoundary,
   SectionTabs, StatusBadge, useSectionTab, type Column, type FilterChip, type SectionTab,
 } from '@/components/app';
-import { auditDetailsSummary, auditRecordHref, downloadAuditCsv } from './audit-details';
+import { AUDIT_EXPORT_COLUMNS, auditDetailsSummary, auditRecordHref, downloadAuditCsv } from './audit-details';
 import { AuditDrawer, timeOf } from './audit-drawer';
 
 type AuditTab = 'all' | 'bulk' | 'sales' | 'inventory' | 'customers';
@@ -105,7 +107,7 @@ function AuditTrail() {
   }
 
   // The query key is serialised, so a plain object is fine here.
-  const apiFilters = {
+  const matchFilters = {
     ...(urlSearch.trim() ? { search: urlSearch.trim() } : {}),
     ...(entity !== 'All' ? { entity_type: entity } : {}),
     ...(agent !== 'All' ? { user_id: agent } : {}),
@@ -114,11 +116,18 @@ function AuditTrail() {
     ...(range.from ? { date_from: range.from } : {}),
     ...(range.to ? { date_to: range.to } : {}),
     ...(tab === 'bulk' ? { category: 'bulk_upload' } : tab === 'all' ? {} : { module: tab as 'sales' | 'inventory' | 'customers' }),
-    page,
-    limit: pageSize,
   };
+  const apiFilters = { ...matchFilters, page, limit: pageSize };
 
   const { data: fetchedList, isFetching } = useAuditLogs(apiFilters);
+  // Every entry matching the tab and filters, not just this page.
+  const exportAll = useExport({
+    module: `audit-trail-${tab}`,
+    noun: { one: 'audit entry', many: 'audit entries' },
+    columns: AUDIT_EXPORT_COLUMNS,
+    fetchPage: (p, l) => auditListPage(fetchAuditLogs, matchFilters, p, l),
+    disabled: !fetchedList?.items.length,
+  });
   // Hold the last result on screen while the next page or filter loads, so the rows, tab counts,
   // entry count and pagination keep their place instead of collapsing to a skeleton
   // (trap/loading-layout-shift). Rows are held only within one tab, since tabs change the columns.
@@ -178,7 +187,7 @@ function AuditTrail() {
               icon: <Download />,
               disabled: !logs?.length,
               onSelect: () => logs && downloadAuditCsv(logs, `audit-trail-${tab}-page-${meta.page}.csv`),
-            }]}
+            }, { ...exportAll.item, label: exportAll.pending ? 'Exporting…' : 'Export all matching (CSV)' }]}
           />
         }
         tabs={<SectionTabs label="Audit sections" tabs={tabs} defaultTab="all" />}

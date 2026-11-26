@@ -2575,7 +2575,7 @@ export function useUpdateCompensationStatus() {
 }
 
 // --- Audit Logs ---
-export function useAuditLogs(filters?: {
+export type AuditLogFilters = {
   entity_type?: string;
   user_id?: string;
   module?: 'sales' | 'inventory' | 'customers' | 'system';
@@ -2587,28 +2587,33 @@ export function useAuditLogs(filters?: {
   import_type?: string;
   page?: number;
   limit?: number;
-}) {
+};
+
+/** One page of the audit trail. Shared by the list and its CSV export. */
+export async function fetchAuditLogs(filters?: AuditLogFilters): Promise<AuditLogListResult> {
+  if (!HAS_API) return EMPTY_AUDIT_LIST;
+  const hubMap = await fetchHubMap();
+  const params: Record<string, string | number | undefined> = {
+    entity_type: filters?.entity_type,
+    user_id: filters?.user_id,
+    module: filters?.module,
+    date_from: filters?.date_from,
+    date_to: filters?.date_to,
+    search: filters?.search,
+    category: filters?.category,
+    bulk_domain: filters?.bulk_domain,
+    import_type: filters?.import_type,
+    page: filters?.page,
+    limit: filters?.limit,
+  };
+  const raw = await axiosGet(`audit-trail${buildQuery(params)}`, true);
+  return parseAuditListResponse(raw, hubMap);
+}
+
+export function useAuditLogs(filters?: AuditLogFilters) {
   return useQuery({
     queryKey: ['auditLogs', filters],
-    queryFn: async (): Promise<AuditLogListResult> => {
-      if (!HAS_API) return EMPTY_AUDIT_LIST;
-      const hubMap = await fetchHubMap();
-      const params: Record<string, string | number | undefined> = {
-        entity_type: filters?.entity_type,
-        user_id: filters?.user_id,
-        module: filters?.module,
-        date_from: filters?.date_from,
-        date_to: filters?.date_to,
-        search: filters?.search,
-        category: filters?.category,
-        bulk_domain: filters?.bulk_domain,
-        import_type: filters?.import_type,
-        page: filters?.page,
-        limit: filters?.limit,
-      };
-      const raw = await axiosGet(`audit-trail${buildQuery(params)}`, true);
-      return parseAuditListResponse(raw, hubMap);
-    },
+    queryFn: () => fetchAuditLogs(filters),
   });
 }
 

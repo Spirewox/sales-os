@@ -1,4 +1,5 @@
-import { downloadCsv } from '@/lib/csv';
+import { buildCsv, saveCsv } from '@/lib/export';
+import { auditExportColumns } from '@/lib/exports/audit';
 import type { AuditLog } from '@/types';
 import { formatAuditAction, formatAuditEntity } from '@/lib/api-mappers';
 
@@ -105,22 +106,10 @@ export function auditRecordHref(log: Pick<AuditLog, 'entityType' | 'entityId'>):
   return null;
 }
 
-const csvTime = (ts: string) => {
-  const d = new Date(ts);
-  return Number.isNaN(d.getTime()) ? ts : d.toLocaleString('en-GB', { timeZone: 'Africa/Lagos', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
-};
+/** The audit CSV columns, with the screen's own record-type and action labels. */
+export const AUDIT_EXPORT_COLUMNS = auditExportColumns({ entity: formatAuditEntity, action: formatAuditAction });
 
 /** Download the given entries (the current filtered page) as CSV. */
 export function downloadAuditCsv(logs: AuditLog[], filename: string) {
-  const headers = ['Time (Lagos)', 'User', 'Location', 'Record type', 'Record ID', 'Action', 'Details'];
-  const rows = logs.map((l) => [
-    csvTime(l.timestamp),
-    l.userName,
-    l.location,
-    formatAuditEntity(l.entityType),
-    l.entityId ?? '',
-    formatAuditAction(l.action),
-    l.bulkUpload?.fileName ? `${l.bulkUpload.fileName}${l.details ? `: ${l.details}` : ''}` : l.details,
-  ]);
-  downloadCsv(filename, headers, rows);
+  saveCsv(filename, buildCsv(AUDIT_EXPORT_COLUMNS, logs));
 }
