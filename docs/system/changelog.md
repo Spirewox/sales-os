@@ -5,6 +5,7 @@ Changes to the design system docs and tokens, newest first.
 
 ## 2026-11-26
 
+- Add more data points to custom reports (`b30bcfd`)
 - Build custom reports in Reports (`4c3907f`)
 - Fix reports review findings (`6869144`)
 - Save Explore queries as reports (`a16adbe`)
