@@ -9,6 +9,7 @@ import { MOCK_USER } from '@/lib/mock-auth';
 import * as db from './data';
 import { kitchenJobList, kitchenJobs } from './kitchen-fixtures';
 import { archiveProduct, filterProducts, restoreProduct } from './products';
+import { customerSearchFields, saveCustomer } from './customers';
 
 const { NOW, DAY } = db;
 
@@ -161,7 +162,8 @@ function customerList(q: URLSearchParams) {
     (!q.get('type') || c.customer_type === q.get('type')) &&
     (!q.get('hub_id') || refId(c.customer_location) === q.get('hub_id')) &&
     (!q.get('segment_id') || (c.segments ?? []).some((s) => refId(s) === q.get('segment_id'))) &&
-    matches(q, c.customer_name, c.company_name, c.customer_phone, c.customer_email),
+    // Contacts' names and phones count too, so a business is found by anyone who works there.
+    matches(q, ...customerSearchFields(c)),
   );
   const sortBy = q.get('sort_by') as 'total_orders' | 'total_spent' | null;
   if (sortBy) {
@@ -595,6 +597,16 @@ function route(method: string, path: string, q: URLSearchParams, body: unknown):
   }
   if (path === 'auth/login') return { status: 200, data: ok({ ...MOCK_USER }) };
   if (path === 'pos/live-ticket') return { status: 200, data: ok(null) };
+  // Saving a customer keeps it, contacts included, in memory until a reload.
+  if (method === 'post' && path === 'customers') {
+    const saved = saveCustomer(db.customers, null, (body ?? {}) as Parameters<typeof saveCustomer>[2]);
+    return { status: saved.status, data: saved.status === 200 ? ok(saved.data) : saved.data };
+  }
+  const customerEdit = method === 'patch' ? path.match(/^customers\/([^/]+)$/) : null;
+  if (customerEdit) {
+    const saved = saveCustomer(db.customers, customerEdit[1], (body ?? {}) as Parameters<typeof saveCustomer>[2]);
+    return { status: saved.status, data: saved.status === 200 ? ok(saved.data) : saved.data };
+  }
   // Archive and restore change the in-memory products, so the change shows until a reload.
   const archive = method === 'patch' ? path.match(/^inventory\/([^/]+)\/(archive|restore)$/) : null;
   if (archive) {

@@ -9,6 +9,7 @@ import { customerTypeToApi, customerCompanyNameForApi, customerPhoneForApi } fro
 import { mapApiUser } from '@/lib/utils';
 import { readListMeta } from '@/lib/fetch-all-pages';
 import type { ArchiveStatus } from '@/lib/inventory-archive';
+import type { ApiCustomerContactInput } from '@/lib/customer-contacts';
 import { readWhoAmICache, writeWhoAmICache } from '@/lib/whoami-cache';
 import { MOCK_AUTH, MOCK_USER, hasMockSession } from '@/lib/mock-auth';
 import {
@@ -955,6 +956,9 @@ export function useCreateCustomer() {
       company_name?: string;
       assigned_agent?: string;
       business_category?: string;
+      /** Business customers: the full contact list, replacing the old one. */
+      contacts?: ApiCustomerContactInput[];
+      business_address?: string;
       gender?: string;
       family_type?: string;
       marital_status?: string;
@@ -970,9 +974,10 @@ export function useCreateCustomer() {
         customer_type: customerTypeToApi(customer_type),
         customer_phone: customerPhoneForApi(dto.customer_phone),
         ...customerCompanyNameForApi(customer_type, company_name),
-      }, true) as ApiCustomer;
+      }, true);
       const hubMap = await fetchHubMap();
-      return mapCustomer(res, hubMap);
+      // The API may answer with the customer or with { data: customer }.
+      return mapCustomer(unwrapApiEntity<ApiCustomer>(res), hubMap);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['customers'] });
@@ -994,6 +999,9 @@ export function useUpdateCustomer() {
       company_name?: string;
       assigned_agent?: string;
       business_category?: string;
+      /** Business customers: the full contact list, replacing the old one. */
+      contacts?: ApiCustomerContactInput[];
+      business_address?: string;
       gender?: string;
       family_type?: string;
       marital_status?: string;
@@ -1013,9 +1021,10 @@ export function useUpdateCustomer() {
               ...customerCompanyNameForApi(customer_type, company_name),
             }
           : {}),
-      }, true) as ApiCustomer;
+      }, true);
       const hubMap = await fetchHubMap();
-      return mapCustomer(res, hubMap);
+      // The API may answer with the customer or with { data: customer }.
+      return mapCustomer(unwrapApiEntity<ApiCustomer>(res), hubMap);
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['customers'] }),
   });

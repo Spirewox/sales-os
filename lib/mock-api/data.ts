@@ -229,6 +229,18 @@ for (let i = 0; i < 64; i++) {
     total_spent: 0,
   });
 }
+
+// Three businesses with several contacts; the fourth keeps none, to show how older records look.
+const CONTACT_ROLES: [string, string][] = [['Buyer', 'Bisi Lawal'], ['Accounts', 'Femi Ojo'], ['Manager', 'Halima Sani']];
+customers.slice(0, 3).forEach((c, i) => {
+  c.contacts = [
+    { _id: `ct_${c._id}_owner`, name: c.customer_name, role: 'Owner', phone: c.customer_phone, email: c.customer_email, is_primary: true },
+    ...CONTACT_ROLES.slice(0, i + 1).map(([role, name], j) => ({
+      _id: `ct_${c._id}_${j}`, name, role, phone: `0${['812', '815', '909'][j]}${int(1000000, 9999999)}`, is_primary: false,
+    })),
+  ];
+  c.business_address = ['14 Allen Avenue, Ikeja', '3 Admiralty Way, Lekki', '22 Ring Road, Ibadan'][i];
+});
 const customerLabel = (c: ApiCustomer) => c.company_name ?? c.customer_name;
 
 // ── Sales ───────────────────────────────────────────────────────────────────
