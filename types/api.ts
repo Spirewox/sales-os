@@ -403,6 +403,8 @@ export interface ApiAgentUser {
   createdAt?: string;
   role?: { label: string; name: string } | string;
   hub?: { _id: string; hub_name?: string; name?: string } | null;
+  /** Every location the user is assigned, primary first (users who manage several). */
+  hubs?: { _id: string; hub_name?: string; name?: string }[];
 }
 
 export interface ApiUsersListResponse {

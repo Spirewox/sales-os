@@ -7,7 +7,7 @@ export const USER_EXPORT_COLUMNS: ExportColumn<Agent>[] = [
   { header: 'Username', value: (a) => a.username },
   { header: 'Phone', value: (a) => a.phone },
   { header: 'Role', value: (a) => a.role },
-  { header: 'Location', value: (a) => a.location },
+  { header: 'Location', value: (a) => (a.hubNames && a.hubNames.length > 1 ? a.hubNames.join('; ') : a.location) },
   { header: 'Status', value: (a) => (a.isActive === false ? 'Inactive' : 'Active') },
   { header: 'Joined', value: (a) => a.joinedDate },
 ];

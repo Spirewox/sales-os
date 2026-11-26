@@ -485,6 +485,9 @@ export function mapAgent(u: ApiAgentUser): Agent {
     location: hubName || 'All Hubs',
     joinedDate: toDateStr(u.createdAt) || new Date().toISOString().split('T')[0],
     isActive: u.is_active !== false,
+    // Users who manage several locations carry them all; older replies only the one hub.
+    hubIds: u.hubs?.length ? u.hubs.map((h) => h._id) : u.hub?._id ? [u.hub._id] : [],
+    hubNames: u.hubs?.length ? u.hubs.map((h) => h.hub_name || h.name || '') : hubName ? [hubName] : [],
   };
 }
 

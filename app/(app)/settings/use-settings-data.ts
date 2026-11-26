@@ -4,15 +4,18 @@ import { useMemo } from 'react';
 import { useAgents, useHubs, useRoles } from '@/hooks/use-queries';
 import { useDataScope } from '@/hooks/use-data-scope';
 import { HAS_API } from '@/lib/require-api';
+import { visibleHubs } from '@/lib/hub-visibility';
 import type { ApiRole } from '@/types/api';
 import { asList } from './settings-ui';
 
 /** Users, locations and roles for the Organisation sections, with malformed responses turned into empty lists. */
 export function useSettingsData() {
-  const { canSwitchHubs, hubId: scopeHubId } = useDataScope();
+  const { canSwitchHubs, hubId: scopeHubId, visibleHubIds } = useDataScope();
+  // One location: ask for its users. Several (or all): ask for everyone; the API scopes the list.
+  const managesSeveral = visibleHubIds.length > 1;
   const agentsQuery = useMemo(
-    () => (HAS_API && !canSwitchHubs && scopeHubId ? { hub_id: scopeHubId, limit: 200 } : { limit: 200 }),
-    [canSwitchHubs, scopeHubId],
+    () => (HAS_API && !canSwitchHubs && !managesSeveral && scopeHubId ? { hub_id: scopeHubId, limit: 200 } : { limit: 200 }),
+    [canSwitchHubs, managesSeveral, scopeHubId],
   );
   const agentsResult = useAgents(agentsQuery);
   const hubsResult = useHubs();
@@ -33,6 +36,12 @@ export function useSettingsData() {
   }, [apiRoles]);
 
   const activeHubs = useMemo(() => hubs.filter((h) => h.isActive), [hubs]);
+  // What this person may assign to a user: every active location for an admin, else their own.
+  const visibleKey = visibleHubIds.join(',');
+  const editableHubIds = useMemo(
+    () => new Set(visibleHubs(hubs, { isGlobal: canSwitchHubs, hubId: scopeHubId, visibleHubIds: visibleKey ? visibleKey.split(',') : [] }).map((h) => h.id)),
+    [hubs, canSwitchHubs, scopeHubId, visibleKey],
+  );
 
   return {
     agents,
@@ -44,5 +53,6 @@ export function useSettingsData() {
     activeHubs,
     canSwitchHubs,
     scopeHubId,
+    editableHubIds,
   };
 }

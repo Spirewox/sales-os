@@ -1,8 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { useAuth } from '@/contexts/auth-context';
 import { useCreateAgent, useUpdateAgent } from '@/hooks/use-queries';
 import { HAS_API } from '@/lib/require-api';
 import { PERMISSION_GROUPS } from '@/lib/permissions';
@@ -15,6 +14,8 @@ import { FormField, FormSection, FormSheet, StatusBadge, fieldClass } from '@/co
 import type { Agent, Hub } from '@/types';
 import type { ApiRole } from '@/types/api';
 import { SheetSelect } from './sheet-select';
+import { LocationsPicker } from './locations-picker';
+import { locationsForRole, mergeAssignedHubs, nextPrimary, validateUserLocations } from '@/lib/user-locations';
 
 type Props = {
   initial: Partial<Agent>;
@@ -24,16 +25,40 @@ type Props = {
   activeHubs: Hub[];
   canSwitchHubs: boolean;
   scopeHubId: string | null | undefined;
+  /** The locations the person editing may assign: every active one for an admin, else their own. */
+  editableHubIds: Set<string>;
 };
 
 /** Add or edit a team member. Save logic is unchanged from the old modal. */
-export function UserFormSheet({ initial, onClose, apiRoles, hubs, activeHubs, canSwitchHubs, scopeHubId }: Readonly<Props>) {
-  const { user } = useAuth();
+export function UserFormSheet({ initial, onClose, apiRoles, hubs, activeHubs, canSwitchHubs, scopeHubId, editableHubIds }: Readonly<Props>) {
   const createAgent = useCreateAgent();
   const updateAgent = useUpdateAgent();
   const [editingUser, setEditingUser] = useState<Partial<Agent>>(initial);
   const patch = (p: Partial<Agent>) => setEditingUser((u) => ({ ...u, ...p }));
   const rolePerms = useMemo(() => buildRolePermissionsMap(apiRoles), [apiRoles]);
+  const formId = useId();
+
+  // Assigned locations, primary first. Older records carry only `location` (the primary's name).
+  const originalHubIds = useMemo(
+    () => initial.hubIds?.length ? initial.hubIds : hubs.filter((h) => h.name === initial.location).map((h) => h.id),
+    [initial.hubIds, initial.location, hubs],
+  );
+  const [hubIds, setHubIds] = useState<string[]>(originalHubIds);
+  const [primary, setPrimary] = useState<string | undefined>(originalHubIds[0]);
+  const [locationNote, setLocationNote] = useState<string | undefined>();
+  const changeRole = (role: string) => {
+    patch({ role });
+    // A cashier keeps one location: the primary.
+    const next = locationsForRole(isPosRoleSelection(role), hubIds, primary);
+    setHubIds(next.hubIds);
+    setPrimary(next.primary);
+    setLocationNote(next.note);
+  };
+  const changeHubs = (ids: string[]) => {
+    setHubIds(ids);
+    setLocationNote(undefined);
+    setPrimary(nextPrimary(ids, primary, editableHubIds, originalHubIds[0]));
+  };
 
   const isAdminRole = (roleLabelName: string) => isCompanyAdminSelection(apiRoles, roleLabelName);
 
@@ -41,8 +66,13 @@ export function UserFormSheet({ initial, onClose, apiRoles, hubs, activeHubs, ca
     const roleLabelName = editingUser.role ?? 'Hub Manager';
     const roleId = resolveRoleId(apiRoles, roleLabelName);
     const isPosRole = isPosRoleSelection(roleLabelName);
-    const hubId = resolveUserHubId(apiRoles, roleLabelName, editingUser.location, canSwitchHubs, scopeHubId ?? undefined, hubs);
-    const validationError = validateUserSave(editingUser, HAS_API, roleId, hubId, isAdminRole(roleLabelName));
+    const adminRole = isAdminRole(roleLabelName);
+    // Locations the editor cannot see stay as they were; the primary is hub_id.
+    const finalHubIds = adminRole ? [] : mergeAssignedHubs(originalHubIds, editableHubIds, hubIds);
+    const mainHub = finalHubIds.includes(primary ?? '') ? primary : finalHubIds[0];
+    const locationError = validateUserLocations({ isAdminRole: adminRole, isPosRole, hubIds: finalHubIds, primary: mainHub });
+    const hubId = adminRole ? undefined : mainHub ?? resolveUserHubId(apiRoles, roleLabelName, editingUser.location, canSwitchHubs, scopeHubId ?? undefined, hubs);
+    const validationError = locationError ?? validateUserSave(editingUser, HAS_API, roleId, hubId, adminRole);
     if (validationError) {
       toast.error(validationError);
       return;
@@ -60,7 +90,7 @@ export function UserFormSheet({ initial, onClose, apiRoles, hubs, activeHubs, ca
           username: editingUser.username,
           phone: editingUser.phone || '',
           ...(roleId ? { role_id: roleId } : {}),
-          ...(hubId === undefined ? {} : { hub_id: hubId }),
+          ...(hubId === undefined ? {} : { hub_id: hubId, hub_ids: finalHubIds }),
         });
         toast.success('User saved.');
       } else {
@@ -75,6 +105,7 @@ export function UserFormSheet({ initial, onClose, apiRoles, hubs, activeHubs, ca
           phone: editingUser.phone || '',
           role_id: roleId,
           hub_id: hubId,
+          ...(hubId === undefined ? {} : { hub_ids: finalHubIds }),
         });
         toast.success(
           isPosRole
@@ -93,7 +124,6 @@ export function UserFormSheet({ initial, onClose, apiRoles, hubs, activeHubs, ca
   const roleOptions = apiRoles
     .filter((r) => r.name !== 'cashier' || (!!editingUser.id && editingUser.role === roleLabel(r)))
     .map((r) => ({ value: roleLabel(r), label: roleLabel(r) }));
-  const hubChoices = canSwitchHubs ? activeHubs : hubs.filter((h) => h.id === scopeHubId || h.name === user?.hubName);
   const adminRole = isAdminRole(editingUser.role ?? '');
   const previewKey = resolveRoleId(apiRoles, editingUser.role ?? '') ?? '';
   const preview = PERMISSION_GROUPS.map((group) => {
@@ -101,7 +131,8 @@ export function UserFormSheet({ initial, onClose, apiRoles, hubs, activeHubs, ca
     const count = countGroupPermissions(groupPerms, rolePerms[previewKey] || []);
     return { label: permissionGroupDisplay(group.label).label, count, total: groupPerms.length };
   }).filter((g) => g.count > 0);
-  const missing = !editingUser.name?.trim() ? 'Enter a name' : !editingUser.email?.trim() ? 'Enter an email' : null;
+  const locationProblem = validateUserLocations({ isAdminRole: adminRole, isPosRole: isPosRoleSelection(editingUser.role), hubIds: mergeAssignedHubs(originalHubIds, editableHubIds, hubIds) });
+  const missing = !editingUser.name?.trim() ? 'Enter a name' : !editingUser.email?.trim() ? 'Enter an email' : locationProblem;
 
   return (
     <FormSheet
@@ -131,22 +162,38 @@ export function UserFormSheet({ initial, onClose, apiRoles, hubs, activeHubs, ca
       </FormSection>
 
       <FormSection title="Role and location">
-        <div className={adminRole ? 'grid grid-cols-1 gap-3' : 'grid grid-cols-1 gap-3 sm:grid-cols-2'}>
-          <FormField label="Role" htmlFor="user-role">
-            <SheetSelect id="user-role" value={editingUser.role ?? ''} onChange={(v) => patch({ role: v })} options={roleOptions} disabled={!canSwitchHubs && !!editingUser.id} />
+        <FormField label="Role" htmlFor="user-role">
+          <SheetSelect id="user-role" value={editingUser.role ?? ''} onChange={changeRole} options={roleOptions} disabled={!canSwitchHubs && !!editingUser.id} />
+        </FormField>
+        {!adminRole && (isPosRoleSelection(editingUser.role) ? (
+          <FormField label="Location" htmlFor="user-hub" required>
+            <SheetSelect
+              id="user-hub"
+              value={hubIds[0] ?? ''}
+              onChange={(v) => changeHubs(v ? [v] : [])}
+              options={activeHubs.filter((h) => editableHubIds.has(h.id) || hubIds.includes(h.id)).map((h) => ({ value: h.id, label: hubOptionLabel(h) }))}
+              disabled={editableHubIds.size <= 1}
+            />
           </FormField>
-          {!adminRole && (
-            <FormField label="Location" htmlFor="user-hub" required>
-              <SheetSelect
-                id="user-hub"
-                value={editingUser.location ?? ''}
-                onChange={(v) => patch({ location: v })}
-                options={hubChoices.map((h) => ({ value: h.name, label: hubOptionLabel(h) }))}
-                disabled={!canSwitchHubs}
-              />
+        ) : (
+          <>
+            <FormField label="Locations" htmlFor={`${formId}-locations`} required hint={locationNote}>
+              <div id={`${formId}-locations`}>
+                <LocationsPicker hubs={hubs} editableIds={editableHubIds} value={hubIds} onChange={changeHubs} idPrefix={formId} />
+              </div>
             </FormField>
-          )}
-        </div>
+            {hubIds.length >= 2 && (
+              <FormField label="Primary location" htmlFor="user-primary-hub" hint="Used for their till PIN and as the default in forms">
+                <SheetSelect
+                  id="user-primary-hub"
+                  value={primary ?? hubIds[0]}
+                  onChange={setPrimary}
+                  options={hubs.filter((h) => hubIds.includes(h.id)).map((h) => ({ value: h.id, label: hubOptionLabel(h) }))}
+                />
+              </FormField>
+            )}
+          </>
+        ))}
         {isPosRoleSelection(editingUser.role) && (
           <p className="text-xs text-muted-foreground">This person signs in on the POS till with a 4-digit PIN. The PIN is emailed and is not a Sales-OS password.</p>
         )}

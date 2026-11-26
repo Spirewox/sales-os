@@ -710,6 +710,8 @@ export function useCreateAgent() {
       phone: string;
       role_id: string;
       hub_id?: string;
+      /** Every assigned location; hub_id is the primary among them. */
+      hub_ids?: string[];
     }) => {
       requireApi();
       return axiosPost('users/create', dto, true);
@@ -729,6 +731,7 @@ export function useUpdateAgent() {
       phone,
       role_id,
       hub_id,
+      hub_ids,
       is_active,
     }: {
       id: string;
@@ -738,12 +741,13 @@ export function useUpdateAgent() {
       phone?: string;
       role_id?: string;
       hub_id?: string;
+      hub_ids?: string[];
       is_active?: boolean;
     }) => {
       requireApi();
       return axiosPatch(
         `users/${id}`,
-        { full_name, email, username, phone, role_id, hub_id, is_active },
+        { full_name, email, username, phone, role_id, hub_id, hub_ids, is_active },
         true,
       );
     },

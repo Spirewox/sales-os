@@ -316,6 +316,9 @@ export interface Agent {
   password?: string;
   /** False when the account is deactivated (API `is_active`). */
   isActive?: boolean;
+  /** Every assigned location, primary first; `location` is the primary's name. */
+  hubIds?: string[];
+  hubNames?: string[];
 }
 
 export interface Task {

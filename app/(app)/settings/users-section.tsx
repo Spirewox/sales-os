@@ -17,6 +17,7 @@ import {
 } from '@/components/app';
 import { useExport } from '@/hooks/use-export';
 import { USER_EXPORT_COLUMNS } from '@/lib/exports/users';
+import { assignedSummary } from '@/lib/hub-visibility';
 import { filterLabels } from '@/lib/export';
 import type { Agent } from '@/types';
 import { RowMenu, SectionHeading, btnPrimary } from './settings-ui';
@@ -30,7 +31,7 @@ export function UsersSection() {
   const { user } = useAuth();
   const { can } = usePermissions();
   const canManageUsers = can('settings.manage_users');
-  const { agents, agentsLoading, hubs, activeHubs, apiRoles, canSwitchHubs, scopeHubId } = useSettingsData();
+  const { agents, agentsLoading, hubs, activeHubs, apiRoles, canSwitchHubs, scopeHubId, editableHubIds } = useSettingsData();
   const scope = useHubScopeFilter();
   const regeneratePin = useRegeneratePin();
   const updateAgent = useUpdateAgent();
@@ -47,7 +48,8 @@ export function UsersSection() {
   const rows = agents.filter((a) =>
     (!q || [a.name, a.email, a.username, a.phone].some((v) => v?.toLowerCase().includes(q))) &&
     (role === 'All' || a.role === role) &&
-    scope.matchesHub(a.location) &&
+    // A user who works at several locations shows under any of them.
+    (a.hubNames?.length ? a.hubNames.some((n) => scope.matchesHub(n)) : scope.matchesHub(a.location)) &&
     (status === 'all' || (status === 'active' ? a.isActive !== false : a.isActive === false)),
   );
 
@@ -105,7 +107,10 @@ export function UsersSection() {
     },
     { id: 'email', header: 'Email', mobile: 'subtitle', className: 'hidden', cell: (a) => a.email },
     { id: 'role', header: 'Role', mobile: 'meta', sortValue: (a) => a.role, cell: (a) => <StatusBadge tone="neutral">{a.role}</StatusBadge> },
-    { id: 'location', header: 'Location', mobile: 'meta', sortValue: (a) => a.location, cell: (a) => a.location },
+    {
+      id: 'location', header: 'Location', mobile: 'meta', sortValue: (a) => a.location,
+      cell: (a) => { const s = a.hubNames && a.hubNames.length > 1 ? assignedSummary(a.hubNames) : { label: a.location, title: undefined }; return <span title={s.title}>{s.label}</span>; },
+    },
     { id: 'status', header: 'Status', mobile: 'value', sortValue: (a) => (a.isActive === false ? 1 : 0), cell: (a) => (a.isActive === false ? <StatusBadge tone="neutral">Inactive</StatusBadge> : <StatusBadge tone="good">Active</StatusBadge>) },
     { id: 'joined', header: 'Joined', hideBelow: 'lg', sortValue: (a) => a.joinedDate, cell: (a) => <span className="whitespace-nowrap text-muted-foreground">{formatDate(a.joinedDate)}</span> },
   ];
@@ -184,6 +189,7 @@ export function UsersSection() {
           activeHubs={activeHubs}
           canSwitchHubs={canSwitchHubs}
           scopeHubId={scopeHubId}
+          editableHubIds={editableHubIds}
         />
       )}
       {dialog}

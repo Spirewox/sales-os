@@ -31,7 +31,7 @@ Real uses, 33 call sites (`rg -n "<DataTable[\s/>]" app components lib -g '!comp
 - Kitchen: `app/(app)/kitchen/jobs.tsx:178` (server pages), `app/(app)/kitchen/ingredients.tsx:123`, `app/(app)/kitchen/recipes.tsx:74`, `components/kitchen-analytics-tab.tsx:124`
 - POS: `app/(app)/pos/overview.tsx:77`, `app/(app)/pos/tills.tsx:70`, `app/(app)/pos/transactions.tsx:98`, `app/(app)/pos/shifts-reviews.tsx:60`, `app/(app)/pos/shifts-reviews.tsx:100`, `components/live-pos-panel.tsx:55` (fixed page size)
 - Analytics tabs, rows from the Analytics page query: `app/(app)/analytics/customers-tab.tsx:152`, `app/(app)/analytics/sales-tab.tsx:217`, `app/(app)/analytics/credit-tab.tsx:127`, `app/(app)/analytics/inventory-tab.tsx:189`, `app/(app)/analytics/suppliers-tab.tsx:239`, `app/(app)/analytics/products-tab.tsx:132`, `app/(app)/analytics/products-tab.tsx:150`
-- Settings and audit: `app/(app)/settings/locations-section.tsx:127`, `app/(app)/settings/users-section.tsx:144`, `app/(app)/audit/page.tsx:215`
+- Settings and audit: `app/(app)/settings/locations-section.tsx:127`, `app/(app)/settings/users-section.tsx:149`, `app/(app)/audit/page.tsx:215`
 - Dashboard needs attention, the three typed tables above
 
 Prop use across the 32 counted tags, from the props of each `<DataTable` tag: `onRowClick` 24, `loading` 24, `empty` 28, `defaultSort` 22, `pageSize` 16, `rowActions` 14, `resetPageKey` 12, `pagination` 8, `manualSort` 3, `fixedPageSize` 2, `bulkActions` 1.

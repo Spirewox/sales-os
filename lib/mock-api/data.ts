@@ -97,6 +97,13 @@ export const users: ApiAgentUser[] = [
   createdAt: daysAgo(int(60, 500)),
   role: roleRef(role as string),
   hub: hub ? { _id: hub as string, hub_name: hubName(hub as string) } : null,
+  // Kunle Oyewole (user_2) manages Ife Hub and Nasarawa Hub; Zainab Musa (user_6) covers Nasarawa and
+  // Lagos, so a manager of Nasarawa sees Lagos locked as outside their locations. The rest hold one.
+  hubs: i === 1
+    ? [{ _id: 'hub_ife', hub_name: hubName('hub_ife') }, { _id: 'hub_nasarawa', hub_name: hubName('hub_nasarawa') }]
+    : i === 5
+      ? [{ _id: 'hub_nasarawa', hub_name: hubName('hub_nasarawa') }, { _id: 'hub_lagos', hub_name: hubName('hub_lagos') }]
+      : hub ? [{ _id: hub as string, hub_name: hubName(hub as string) }] : [],
 }));
 const salesAgents = users.filter((u) => ['role_hub', 'role_cs', 'role_cashier'].includes(roles.find((r) => r.label === (u.role as { label: string }).label)!._id));
 

@@ -11,6 +11,7 @@ import * as db from './data';
 import { kitchenJobList, kitchenJobs } from './kitchen-fixtures';
 import { archiveProduct, filterProducts, restoreProduct } from './products';
 import { customerSearchFields, saveCustomer } from './customers';
+import { filterUsers, saveUser } from './users';
 
 const { NOW, DAY } = db;
 
@@ -494,7 +495,7 @@ const GET_ROUTES: Route[] = [
   [/^hub\/[^/]+\/pos-devices$/, () => ({ data: [] })],
   [/^pos\/operations\/(transactions|tills|shifts|reviews)$/, (m, q) => posOperations(m[1], q)],
   [/^roles$/, () => ok(db.roles)],
-  [/^users$/, (_m, q) => ({ page: 1, limit: Number(q.get('limit') ?? 200), total: db.users.length, totalPages: 1, users: db.users })],
+  [/^users$/, (_m, q) => { const users = filterUsers(db.users, q, visibleForSession()); return { page: 1, limit: Number(q.get('limit') ?? 200), total: users.length, totalPages: 1, users }; }],
   [/^dashboard\/metrics$/, () => ({
     totalCustomers: db.customers.length,
     sales_today: db.sales.filter((s) => live(s) && new Date(s.date) >= periodStart('today')!).length,
@@ -603,6 +604,14 @@ function route(method: string, path: string, q: URLSearchParams, body: unknown):
   }
   if (path === 'auth/login') return { status: 200, data: ok({ ...currentMockUser() }) };
   if (path === 'pos/live-ticket') return { status: 200, data: ok(null) };
+  // Saving a user keeps their locations in memory until a reload; a cashier holds one location.
+  const userEdit = method === 'patch' ? path.match(/^users\/([^/]+)$/) : null;
+  if (userEdit || (method === 'post' && path === 'users/create')) {
+    const hubRefs = db.hubs.map((h) => ({ _id: h._id, hub_name: h.hub_name }));
+    const isPos = (roleId: string) => roleId === 'role_cashier';
+    const saved = saveUser(db.users, hubRefs, userEdit ? userEdit[1] : null, (body ?? {}) as Parameters<typeof saveUser>[3], isPos);
+    return { status: saved.status, data: saved.status === 200 ? ok(saved.data) : saved.data };
+  }
   // Saving a customer keeps it, contacts included, in memory until a reload.
   if (method === 'post' && path === 'customers') {
     const saved = saveCustomer(db.customers, null, (body ?? {}) as Parameters<typeof saveCustomer>[2]);

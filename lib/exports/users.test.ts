@@ -19,6 +19,10 @@ describe('USER_EXPORT_COLUMNS', () => {
       ['Kunle Oyewole', 'kunle@fudfarmer.com', 'kunle', '08031234567', 'Hub Manager', 'Ife Hub', 'Inactive', '2025-08-14'].map((v) => `"${v}"`).join(','));
   });
 
+  it('lists every location of a user who works at several', () => {
+    assert.match(buildCsv(USER_EXPORT_COLUMNS, [{ ...agent, hubNames: ['Ife Hub', 'Nasarawa Hub'] }]), /"Ife Hub; Nasarawa Hub"/);
+  });
+
   it('counts a user with no flag as active', () => {
     assert.match(buildCsv(USER_EXPORT_COLUMNS, [{ ...agent, isActive: undefined }]), /"Active"/);
   });

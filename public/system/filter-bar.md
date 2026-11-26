@@ -27,7 +27,7 @@ Real uses, 19 call sites (`rg -n "<FilterBar\b" app components lib --glob '*.{ts
 - Suppliers: `app/(app)/suppliers/page.tsx:183`, search, period, three fields in `more`.
 - Settings, locations: `app/(app)/settings/locations-section.tsx:119`, search, filters, chips, Clear all.
 - Engagement, churn: `app/(app)/engagement/churn.tsx:113`, search, filters, one field in `more`.
-- Settings, users: `app/(app)/settings/users-section.tsx:124`, search, one field in `more`, chips.
+- Settings, users: `app/(app)/settings/users-section.tsx:129`, search, one field in `more`, chips.
 - Engagement, compensation: `app/(app)/engagement/compensation-table.tsx:48`, search, chips, count, trailing.
 - Inventory, movements: `app/(app)/inventory/movements-tab.tsx:135`, search, period, type filter.
 - Dashboard: `app/(app)/_dashboard/dashboard-content.tsx:106`, filters only (location and period).
@@ -332,7 +332,7 @@ export default function FilterBarLoading() {
 - `rule/filter-bar-more-count`: When `more` is passed, pass `moreActiveCount` with the number of fields in it that differ from their default, because a closed panel otherwise hides that rows are being filtered out. Evidence: app 8/8 bars with `more` pass `moreActiveCount`, such as `app/(app)/audit/page.tsx:206`; principle heuristic: visibility of system status. Check: review that `more=` and `moreActiveCount=` appear together.
   - Don't: `<FilterBar more={tillField} />`
   - Do: `<FilterBar more={tillField} moreActiveCount={till ? 1 : 0} />`
-- `rule/filter-bar-clear-all`: When `chips` can hold 2 or more chips, pass `onClearAll` too, because "Clear all" renders only when both are set and removing chips one by one takes one press each. Evidence: app 8/11 bars with chips pass `onClearAll`, strays `app/(app)/inventory/requests-tab.tsx:144`, `app/(app)/inventory/stock-tab.tsx:186` and `app/(app)/settings/users-section.tsx:117`. Check: review.
+- `rule/filter-bar-clear-all`: When `chips` can hold 2 or more chips, pass `onClearAll` too, because "Clear all" renders only when both are set and removing chips one by one takes one press each. Evidence: app 8/11 bars with chips pass `onClearAll`, strays `app/(app)/inventory/requests-tab.tsx:144`, `app/(app)/inventory/stock-tab.tsx:186` and `app/(app)/settings/users-section.tsx:122`. Check: review.
   - Don't: `<FilterBar chips={chips} />`
   - Do: `<FilterBar chips={chips} onClearAll={() => set({ till: null, cashier_id: null, q: null })} />`
 
