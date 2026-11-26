@@ -21,6 +21,7 @@
 | `PATCH inventory/:id/archive` | Sets `is_active: false`, `archived_at: now` and `archived_by: user`. Writes an audit entry, `Archived product <name>`. Returns `{ data: ApiProduct }`. Returns 409 with a `message` when stock on hand is above 0 or when submitted or approved requests name the product. |
 | `PATCH inventory/:id/restore` | Sets `is_active: true` and clears `archived_at` and `archived_by`. Writes an audit entry. Returns `{ data: ApiProduct }`. |
 | `GET inventory?status=active\|archived\|all` | Defaults to `active`. Pickers and the sale API reject an archived product id with 409 `This product is archived.` |
+| Stock changes on an archived product | Purchases, adjustments, transfers, batch (bulk) updates and "align stock to batches" are refused with 409 `This product is archived.` The app no longer offers them for archived products, but the server is the guard. |
 | `ApiProduct` | Gains `archived_at?: string` and `archived_by?: { _id: string; full_name: string }`. |
 | Permission | `archive_sku`. On by default for Company Admin and Hub Manager. |
 
