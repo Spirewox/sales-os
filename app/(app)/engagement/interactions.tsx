@@ -2,7 +2,9 @@
 
 import { useMemo, useState } from 'react';
 import { BarChart3, Plus } from 'lucide-react';
-import { KpiStrip, SectionTabs, useSectionTab, type SectionTab } from '@/components/app';
+import { KpiStrip, OverflowMenu, SectionTabs, useSectionTab, type SectionTab } from '@/components/app';
+import { useExport } from '@/hooks/use-export';
+import { COMPENSATION_EXPORT_COLUMNS, ENQUIRY_EXPORT_COLUMNS, FEEDBACK_EXPORT_COLUMNS } from '@/lib/exports/engagement';
 import { usePermissions } from '@/hooks/use-permissions';
 import { useUrlState } from '@/hooks/use-url-state';
 import { useCompensations, useCustomers, useEnquiries, useFeedback } from '@/hooks/use-queries';
@@ -94,6 +96,25 @@ export default function Interactions({ openFeedbackSignal = 0 }: Readonly<{
   const complaintsActive = view === 'feedback' && fbFilters.status === 'Open' && fbFilters.type === FeedbackType.COMPLAINT;
 
   const canCreate = can('interactions.create');
+  // Each view exports the rows it shows, with its search and filters applied.
+  const exportFeedback = useExport({
+    module: 'feedback', noun: { one: 'feedback item', many: 'feedback items' }, columns: FEEDBACK_EXPORT_COLUMNS,
+    fetchPage: async () => ({ items: filteredFeedback, totalPages: 1 }), disabled: filteredFeedback.length === 0,
+  });
+  const exportEnquiries = useExport({
+    module: 'enquiries', noun: { one: 'enquiry', many: 'enquiries' }, columns: ENQUIRY_EXPORT_COLUMNS,
+    fetchPage: async () => ({ items: filteredEnquiries, totalPages: 1 }), disabled: filteredEnquiries.length === 0,
+  });
+  const exportComps = useExport({
+    module: 'compensations', noun: { one: 'compensation', many: 'compensations' }, columns: COMPENSATION_EXPORT_COLUMNS,
+    fetchPage: async () => ({ items: filteredComps, totalPages: 1 }), disabled: filteredComps.length === 0,
+  });
+  const viewExport = view === 'enquiries'
+    ? { label: 'More enquiry actions', item: exportEnquiries.item }
+    : view === 'compensations'
+      ? { label: 'More compensation actions', item: exportComps.item }
+      : { label: 'More feedback actions', item: exportFeedback.item };
+
   const trailing = (
     <>
       <button type="button" aria-pressed={showInsights} onClick={() => setShowInsights((s) => !s)} className={TOOL_BTN}>
@@ -105,6 +126,7 @@ export default function Interactions({ openFeedbackSignal = 0 }: Readonly<{
       {canCreate && view === 'compensations' && (
         <button type="button" onClick={() => setForm({ kind: 'compensation' })} className={TOOL_BTN}><Plus size={16} aria-hidden /> Record compensation</button>
       )}
+      <OverflowMenu label={viewExport.label} items={[viewExport.item]} />
     </>
   );
 
