@@ -15,6 +15,8 @@ import {
   DataTable, EmptyState, FilterBar, FormField, FormSheet, LocationSelect, OverflowMenu, RowAction, StatusBadge,
   fieldClass, type Column, type FilterChip,
 } from '@/components/app';
+import { useExport } from '@/hooks/use-export';
+import { REQUEST_EXPORT_COLUMNS, requestExportRows } from '@/lib/exports/inventory';
 import { REQUEST_STATUS_LABEL as STATUS_LABEL, formatRequestLine as formatLineDisplay, hubRefName, isOpenRequest, type RequestScope } from './use-request-scope';
 import { RequestDrawer } from './request-drawer';
 
@@ -50,6 +52,11 @@ export function RequestsTab({ hubScope, scope }: Readonly<{ hubScope: HubScopeFi
     if (filter === 'open') return isOpenRequest(r);
     if (filter === 'all') return true;
     return r.status === filter;
+  });
+
+  const exportRequests = useExport({
+    module: 'stock-requests', noun: { one: 'request line', many: 'request lines' }, columns: REQUEST_EXPORT_COLUMNS,
+    fetchPage: async () => ({ items: requestExportRows(rows), totalPages: 1 }), disabled: rows.length === 0,
   });
 
   const handleReject = async () => {
@@ -153,6 +160,7 @@ export function RequestsTab({ hubScope, scope }: Readonly<{ hubScope: HubScopeFi
         }
         chips={chips}
         resultLabel={scope.isLoading ? undefined : `${rows.length} ${rows.length === 1 ? 'request' : 'requests'}`}
+        trailing={<OverflowMenu label="More request actions" items={[exportRequests.item]} />}
       />
       <DataTable
         label="Inventory requests"

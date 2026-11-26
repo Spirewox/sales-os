@@ -9,8 +9,10 @@ import { formatDate, formatMoney, formatCount } from '@/lib/format';
 import { inPeriod, parsePeriod, periodLabel, periodToParams } from '@/lib/period';
 import { FilterSelect } from '@/components/filter-select';
 import {
-  DataTable, EmptyState, FilterBar, KpiStrip, LocationSelect, PeriodSelect, StatusBadge, type Column, type FilterChip,
+  DataTable, EmptyState, FilterBar, KpiStrip, LocationSelect, OverflowMenu, PeriodSelect, StatusBadge, type Column, type FilterChip,
 } from '@/components/app';
+import { useExport } from '@/hooks/use-export';
+import { MOVEMENT_EXPORT_COLUMNS } from '@/lib/exports/inventory';
 import { expiryTone } from './inventory-utils';
 
 const PAGE_SIZE = 25;
@@ -48,6 +50,11 @@ export function MovementsTab({ hubScope, items, logs, loading, onOpenProduct }: 
     if (q) rows = rows.filter((l) => l.itemName.toLowerCase().includes(q) || (l.notes || '').toLowerCase().includes(q) || (l.batchNumber || '').toLowerCase().includes(q));
     return rows;
   }, [logs, items, hubScope.filterHub, period, type, urlSearch]);
+
+  const exportMovements = useExport({
+    module: 'stock-movements', noun: { one: 'movement', many: 'movements' }, columns: MOVEMENT_EXPORT_COLUMNS,
+    fetchPage: async () => ({ items: filteredLogs, totalPages: 1 }), disabled: filteredLogs.length === 0,
+  });
 
   const stats = useMemo(() => {
     let inbound = 0;
@@ -127,6 +134,7 @@ export function MovementsTab({ hubScope, items, logs, loading, onOpenProduct }: 
         chips={chips}
         onClearAll={clearAll}
         resultLabel={loading && logs.length === 0 ? undefined : `${formatCount(filteredLogs.length)} ${filteredLogs.length === 1 ? 'movement' : 'movements'}`}
+        trailing={<OverflowMenu label="More movement actions" items={[exportMovements.item]} />}
       />
       <DataTable
         // DataTable keeps its page internally; remount on filter change so it starts at page 1.
