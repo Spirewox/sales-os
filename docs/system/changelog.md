@@ -5,6 +5,7 @@ Changes to the design system docs and tokens, newest first.
 
 ## 2026-11-26
 
+- Fix business contacts review findings (`edcea21`)
 - Show business contacts with WhatsApp on the customer profile (`2ddddcd`)
 - Edit several contacts on a business customer (`f67471e`)
 - Let products with stock be archived after a clear warning (`96f90d7`)

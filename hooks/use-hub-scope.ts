@@ -6,13 +6,18 @@ import { useHubs } from '@/hooks/use-queries';
 import { useHubContext } from '@/contexts/hub-context';
 
 import { HAS_API } from '@/lib/require-api';
+import { allLocationsLabel, resolveFilterHub, visibleHubs } from '@/lib/hub-visibility';
 
 export function useHubScopeFilter() {
-  const { canSwitchHubs: isGlobal, hubId, hubName } = useDataScope();
+  const { canSwitchHubs: isGlobal, hubId, hubName, visibleHubIds } = useDataScope();
   const { data: hubs = [] } = useHubs();
-  // The API returns permitted locations. Also constrain cached results while a session changes.
-  const activeHubs = useMemo(() => hubs.filter((h) => h.isActive &&
-    (isGlobal || h.id === hubId || h.parentHubId === hubId)), [hubs, isGlobal, hubId]);
+  // The API returns permitted locations. Also constrain cached results while a session changes:
+  // a manager of several locations sees exactly those, others their hub and its RSPs.
+  const visibleKey = visibleHubIds.join(',');
+  const activeHubs = useMemo(
+    () => visibleHubs(hubs, { isGlobal, hubId, visibleHubIds: visibleKey ? visibleKey.split(',') : [] }),
+    [hubs, isGlobal, hubId, visibleKey],
+  );
   const canSwitchHubs = isGlobal || activeHubs.length > 1;
 
   const lockedHubName = useMemo(() => {
@@ -29,7 +34,8 @@ export function useHubScopeFilter() {
   const [localHub, setLocalHub] = useState<string>('All');
   const selectedHub = shared?.selectedHub ?? localHub;
   const setFilterHub = shared?.setSelectedHub ?? setLocalHub;
-  const filterHub = activeHubs.some((h) => h.name === selectedHub) ? selectedHub : 'All';
+  // A location this user cannot see (a link from an admin, say) falls back to all of theirs.
+  const filterHub = resolveFilterHub(selectedHub, activeHubs);
 
   const hubIdForApi = useMemo(() => {
     if (!HAS_API || !canSwitchHubs || filterHub === 'All') return undefined;
@@ -67,6 +73,8 @@ export function useHubScopeFilter() {
 
   return {
     canSwitchHubs,
+    /** "All locations" for an admin, "All my locations" for a manager of several. */
+    allLabel: allLocationsLabel(isGlobal),
     hubName: lockedHubName,
     filterHub,
     setFilterHub,

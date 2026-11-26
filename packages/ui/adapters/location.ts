@@ -13,6 +13,8 @@ export type HubScopeFilter = {
   filterHub: string;
   setFilterHub: (name: string) => void;
   hubOptionsDetailed: LocationOption[];
+  /** Words for the "All" option, such as "All my locations". Defaults to "All locations". */
+  allLabel?: string;
 };
 
 /** "Lagos Hub (Hub · LG1)": the label LocationSelect shows for each option. Copied from lib/api-mappers.ts. */

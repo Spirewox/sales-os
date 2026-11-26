@@ -13,7 +13,10 @@ export const ALL_LOCATIONS_LABEL = 'All locations';
  * users limited to one location see it as a read-only label.
  */
 export function LocationSelect({ scope, fixed, className }: Readonly<{
-  scope: Pick<HubScopeFilter, 'canSwitchHubs' | 'hubName' | 'filterHub' | 'setFilterHub' | 'hubOptionsDetailed'>;
+  scope: Pick<HubScopeFilter, 'canSwitchHubs' | 'hubName' | 'filterHub' | 'setFilterHub' | 'hubOptionsDetailed'> & {
+    /** The "All" option's words: "All my locations" for someone limited to some. Defaults to "All locations". */
+    allLabel?: string;
+  };
   /**
    * Show this label read-only instead of the picker, for a view that always covers a set span of
    * locations (Analytics, Locations covers all of them). The app-wide location is left as it is.
@@ -33,7 +36,7 @@ export function LocationSelect({ scope, fixed, className }: Readonly<{
       onChange={scope.setFilterHub}
       className={cn('h-9 w-auto min-w-40 data-[size=default]:h-9', className)}
       icon={<MapPin size={14} className="text-muted-foreground" aria-hidden />}
-      options={[{ value: 'All', label: ALL_LOCATIONS_LABEL }, ...scope.hubOptionsDetailed.map((h) => ({ value: h.name, label: hubOptionLabel(h) }))]}
+      options={[{ value: 'All', label: scope.allLabel ?? ALL_LOCATIONS_LABEL }, ...scope.hubOptionsDetailed.map((h) => ({ value: h.name, label: hubOptionLabel(h) }))]}
     />
   );
 }

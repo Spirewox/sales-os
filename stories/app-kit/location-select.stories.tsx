@@ -14,11 +14,11 @@ const HUBS: HubOption[] = [
 ] as HubOption[];
 
 /** A switchable scope with local state, the shape useHubScopeFilter returns. */
-function Switchable({ hubs = HUBS, start = 'All' }: Readonly<{ hubs?: HubOption[]; start?: string }>) {
+function Switchable({ hubs = HUBS, start = 'All', allLabel }: Readonly<{ hubs?: HubOption[]; start?: string; allLabel?: string }>) {
   const [filterHub, setFilterHub] = useState(start);
   return (
     <div className="space-y-3">
-      <LocationSelect scope={{ canSwitchHubs: true, hubName: '', filterHub, setFilterHub, hubOptionsDetailed: hubs }} />
+      <LocationSelect scope={{ canSwitchHubs: true, hubName: '', filterHub, setFilterHub, hubOptionsDetailed: hubs, allLabel }} />
       <p className="text-xs text-muted-foreground">Filtering by: {filterHub}</p>
     </div>
   );
@@ -38,6 +38,9 @@ type Story = StoryObj<typeof LocationSelect>;
 export const Default: Story = { render: () => <Switchable /> };
 
 export const OneSelected: Story = { render: () => <Switchable start="Lekki" /> };
+
+/** A manager of several locations: their locations only, and "All my locations" for them together. */
+export const AllMyLocations: Story = { render: () => <Switchable hubs={HUBS.slice(0, 3)} allLabel="All my locations" /> };
 
 /** Users limited to one location see it as a read-only label. */
 export const Locked: Story = {
