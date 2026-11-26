@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
 import { BarChart3, RotateCcw } from 'lucide-react';
 import { useAnalyticsOverview } from '@/hooks/use-queries';
 import { DEFAULT_PERIOD, useInsightScope } from '@/hooks/use-insights-api';
@@ -20,13 +20,12 @@ import { SalesTab } from './sales-tab';
 import { ProductsTab } from './products-tab';
 import { CustomersTab } from './customers-tab';
 import { CreditTab } from './credit-tab';
-import { ExploreTab } from './explore-tab';
 import { ReportsTab } from './reports-tab';
 import { InventoryTab } from './inventory-tab';
 import { LocationsTab } from './locations-tab';
 import { SuppliersTab } from './suppliers-tab';
 
-type AnalyticsTab = 'sales' | 'products' | 'customers' | 'credit' | 'locations' | 'inventory' | 'suppliers' | 'kitchen' | 'compare' | 'explore' | 'reports';
+type AnalyticsTab = 'sales' | 'products' | 'customers' | 'credit' | 'locations' | 'inventory' | 'suppliers' | 'kitchen' | 'compare' | 'reports';
 const OVERVIEW_TABS: AnalyticsTab[] = ['sales', 'products', 'customers', 'credit'];
 
 /** "1 Nov to 20 Nov 2026", or "All available data" for All time. */
@@ -47,8 +46,17 @@ export default function AnalyticsPage() {
 
 function Analytics() {
   const { can, user } = usePermissions();
-  const { get } = useUrlState();
+  const { get, set } = useUrlState();
   const { hubScope, period, setPeriod, scope, prevScope, periodLabel } = useInsightScope();
+
+  // Explore now lives in Reports: old links land on the same view there (Build a chart is New report).
+  const legacyExplore = get('tab') === 'explore';
+  const legacyMode = get('mode');
+  useEffect(() => {
+    if (!legacyExplore) return;
+    if (legacyMode === 'build') set({ tab: 'reports', mode: null, report: 'new' });
+    else set({ tab: 'reports', mode: legacyMode === 'simulate' ? 'simulate' : 'ask' });
+  }, [legacyExplore, legacyMode, set]);
 
   const tabDefs: SectionTab<AnalyticsTab>[] = [
     { id: 'sales', label: 'Sales' },
@@ -60,7 +68,6 @@ function Analytics() {
     { id: 'suppliers', label: 'Suppliers', hidden: !can('suppliers.view') },
     { id: 'kitchen', label: 'Kitchen', hidden: !can('kitchen.view') },
     { id: 'compare', label: 'Compare' },
-    { id: 'explore', label: 'Explore' },
     { id: 'reports', label: 'Reports' },
   ];
   const tab = useSectionTab(tabDefs, 'sales');
@@ -144,8 +151,6 @@ function Analytics() {
             initialA={get('a') ?? undefined}
             initialB={get('b') ?? undefined}
           />
-        ) : tab === 'explore' ? (
-          <ExploreTab scope={scope} periodLabel={periodLabel} />
         ) : tab === 'reports' ? (
           <ReportsTab scope={scope} rangeLabel={activeRange(period)} locationLabel={hubScope.filterHub === 'All' ? hubScope.allLabel : hubScope.filterHub} />
         ) : overview.isError ? (

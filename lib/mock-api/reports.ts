@@ -87,10 +87,6 @@ const BUILDERS: Record<string, (db: Db, ctx: ReportContext) => ReportResult> = {
     const r = salesBy(db, ctx, 'Location', (s) => s.hub_name ?? 'Unknown');
     return { ...r, columns: r.columns.map((c) => (c.key === 'name' ? { ...c, key: 'location' } : c)), rows: r.rows.map(({ name, ...rest }) => ({ location: name, ...rest })) };
   },
-  'sales-by-agent': (db, ctx) => {
-    const r = salesBy(db, ctx, 'Staff', (s) => s.agent_name || 'Unknown');
-    return { ...r, columns: r.columns.filter((c) => c.key !== 'share').map((c) => (c.key === 'name' ? { ...c, key: 'staff' } : c)), rows: r.rows.map((x) => ({ staff: x.name, orders: x.orders, revenue: x.revenue, avg: x.avg })) };
-  },
   'payment-methods': (db, ctx) => {
     const r = salesBy(db, ctx, 'Method', (s) => s.payment_mode || 'Not recorded');
     return { ...r, columns: r.columns.filter((c) => c.key !== 'avg').map((c) => (c.key === 'name' ? { ...c, key: 'method' } : c)), rows: r.rows.map((x) => ({ method: x.name, orders: x.orders, revenue: x.revenue, share: x.share })) };

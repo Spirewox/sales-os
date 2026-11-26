@@ -1,6 +1,7 @@
 'use client';
 
 import { FileBarChart } from 'lucide-react';
+import { InsightButton } from '@/components/insight-button';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { DataTable, EmptyState, KpiStrip, type Column, type KpiCell } from '@/components/app';
@@ -73,7 +74,17 @@ export function CustomReportResults({ report, dataset, groupBy, measures, chart,
       <KpiStrip label={`${title} totals`} cells={rows ? cells : []} loading={!rows} />
       {chart !== 'table' && (
         <div className="rounded-xl border bg-card p-4">
-          <p className="mb-3 text-sm font-medium">{first.label} by {groupLabel.toLowerCase()}</p>
+          <div className="mb-3 flex items-start justify-between gap-3">
+            <p className="text-sm font-medium">{first.label} by {groupLabel.toLowerCase()}</p>
+            {rows && (
+              <InsightButton
+                title={`${first.label} by ${groupLabel}`}
+                kind={first.kind}
+                time={!!ds?.fields.find((f) => f.key === groupBy)?.time}
+                series={rows.map((r) => ({ label: r.label, value: r.values[first.measure] ?? 0 }))}
+              />
+            )}
+          </div>
           {rows
             ? <ResultChart rows={rows.map((r) => ({ key: r.key, label: r.label, value: r.values[first.measure] ?? 0 }))} chart={chart} measureLabel={first.label} measureKind={first.kind} groupLabel={groupLabel} />
             : <Skeleton className="h-80 w-full" />}

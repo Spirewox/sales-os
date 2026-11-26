@@ -1,10 +1,11 @@
 import { redirect } from 'next/navigation';
 
 /**
- * Insights now lives in Analytics: Ask, the chart builder and what-if scenarios are the Explore tab,
- * and Compare is Analytics' Compare tab. Old links keep working:
- *   /insights?ask=…                       -> /analytics?tab=explore&ask=…
- *   /insights?mode=explore|simulate       -> /analytics?tab=explore&mode=build|simulate
+ * Insights now lives in Analytics: Ask and what-if scenarios are views of the Reports tab, the chart
+ * builder is Reports' New report, and Compare is Analytics' Compare tab. Old links keep working:
+ *   /insights?ask=…                       -> /analytics?tab=reports&mode=ask&ask=…
+ *   /insights?mode=explore                -> /analytics?tab=reports&report=new
+ *   /insights?mode=simulate               -> /analytics?tab=reports&mode=simulate
  *   /insights?mode=compare&kind=&a=&b=    -> /analytics?tab=compare&kind=&a=&b=
  */
 export default async function InsightsRedirect({ searchParams }: Readonly<{ searchParams: Promise<Record<string, string | string[] | undefined>> }>) {
@@ -20,9 +21,9 @@ export default async function InsightsRedirect({ searchParams }: Readonly<{ sear
       if (v) next.set(k, v);
     }
   } else {
-    next.set('tab', 'explore');
-    if (mode === 'explore') next.set('mode', 'build');
-    else if (mode === 'simulate') next.set('mode', 'simulate');
+    next.set('tab', 'reports');
+    if (mode === 'explore') next.set('report', 'new');
+    else next.set('mode', mode === 'simulate' ? 'simulate' : 'ask');
     const ask = one('ask');
     if (ask) next.set('ask', ask);
   }

@@ -116,7 +116,7 @@ function AskAnswer({ result, cmp, comparing, onRefine }: Readonly<{ result: AskR
           </div>
           {!result.compare && result.mode === 'aggregate' && result.rows.length > 0 && (
             <button type="button" onClick={() => onRefine({ dataset: result.dataset, measure: result.measure, groupBy: result.groupBy, filters: result.filters })} className="inline-flex shrink-0 items-center gap-1 rounded-md border bg-card px-2.5 py-1.5 text-xs font-medium hover:bg-muted">
-              <ArrowUpRight size={14} aria-hidden /> Refine in builder
+              <ArrowUpRight size={14} aria-hidden /> Open as a report
             </button>
           )}
         </div>

@@ -15,7 +15,7 @@ Default: `docs/system/examples/empty-state/default.tsx`.
 
 Real uses, 63 call sites (`rg -n "<EmptyState\b" app components lib -g '!components/app/**'`). 25 of them sit in a DataTable `empty` slot, the rest in drawer panels, tabs and whole sections.
 
-- Analytics page, whole section, default size: no access `app/(app)/analytics/page.tsx:79`, needs the API `app/(app)/analytics/page.tsx:114`, load failed `app/(app)/analytics/page.tsx:147`
+- Analytics page, whole section, default size: no access `app/(app)/analytics/page.tsx:86`, needs the API `app/(app)/analytics/page.tsx:124`, load failed `app/(app)/analytics/page.tsx:157`
 - Kitchen analytics, whole tab, default size: `components/kitchen-analytics-tab.tsx:34`
 - Analytics Ask, compact first-run prompt: `app/(app)/analytics/explore-ask.tsx:81`
 - Analytics Locations head to head, compact: fewer than two locations `app/(app)/analytics/location-head-to-head.tsx:124`, no figures picked `app/(app)/analytics/location-head-to-head.tsx:197`
@@ -86,7 +86,7 @@ export default function Example() {
 ## Variants
 
 ### size
-- `default`: a whole section or tab with nothing in it, 56px of space above and below (`py-14`). Used at 4 call sites, `app/(app)/analytics/page.tsx:77`, `app/(app)/analytics/page.tsx:112`, `app/(app)/analytics/page.tsx:145` and `components/kitchen-analytics-tab.tsx:34`.
+- `default`: a whole section or tab with nothing in it, 56px of space above and below (`py-14`). Used at 4 call sites, `app/(app)/analytics/page.tsx:86`, `app/(app)/analytics/page.tsx:124`, `app/(app)/analytics/page.tsx:157` and `components/kitchen-analytics-tab.tsx:34`.
 - `compact`: inside a DataTable, a drawer panel or a card, 32px above and below (`py-8`). Used at 49 call sites.
 
 Example: Compact, inside a drawer panel: a supplier with no purchases yet (`docs/system/examples/empty-state/size-compact.tsx`)

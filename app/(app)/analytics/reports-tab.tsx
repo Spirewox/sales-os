@@ -1,20 +1,31 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { usePermissions } from '@/hooks/use-permissions';
 import { useUrlState } from '@/hooks/use-url-state';
 import type { InsightScopeParams } from '@/hooks/use-insights-api';
 import { useSavedReports } from '@/hooks/use-reports';
 import { resolveReportParam, visibleReports } from '@/lib/reports';
+import { Seg } from './analytics-ui';
+import { ExploreAsk } from './explore-ask';
+import { ExploreSimulate } from './explore-simulate';
 import { ReportLibrary } from './report-library';
-import { ReportBuilder } from './report-builder';
+import { ReportBuilder, type ReportSeed } from './report-builder';
 import { ReportViewer, SavedReportViewer } from './report-viewer';
 
+type View = 'reports' | 'ask' | 'simulate';
+const VIEWS: [View, string][] = [['reports', 'Reports'], ['ask', 'Ask'], ['simulate', 'What if']];
+const VIEW_HINT: Record<View, string> = {
+  reports: 'Ready-made reports, and your own: pick the data, columns and filters, then save it.',
+  ask: 'Ask in plain words and get a chart, a list of records or a comparison.',
+  simulate: 'Move a lever (price, demand, cost, credit) and see the projected effect.',
+};
+
 /**
- * Analytics → Reports: the library of ready-made reports and the person's own, one report open
- * (`?report=<key>` or `?report=saved:<id>`), or the builder (`?report=new`, `?report=edit:<id>`),
- * for the page's period and location.
+ * Analytics → Reports, which also holds what was the Explore tab. Its views are the report library,
+ * Ask and What if (`?mode=ask|simulate`). A report opens with `?report=<key>` or `saved:<id>`, and the
+ * builder with `?report=new` or `edit:<id>`, all for the page's period and location.
  */
 export function ReportsTab({ scope, rangeLabel, locationLabel }: Readonly<{ scope: InsightScopeParams; rangeLabel: string; locationLabel: string }>) {
   const { can } = usePermissions();
@@ -40,23 +51,49 @@ export function ReportsTab({ scope, rangeLabel, locationLabel }: Readonly<{ scop
   };
   const back = () => set({ report: null });
   const meta = { rangeLabel, locationLabel };
+  const rawMode = get('mode');
+  const view: View = rawMode === 'ask' || rawMode === 'simulate' ? rawMode : 'reports';
+  // Ask's "build on this" opens a new report seeded with the question's data.
+  const [seed, setSeed] = useState<{ key: number; value: ReportSeed } | null>(null);
+
+  const home = (library: React.ReactNode) => (
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-muted-foreground">{VIEW_HINT[view]}</p>
+        <Seg label="Reports view" value={view} onChange={(v) => set({ mode: v === 'reports' ? null : v, ask: null })} options={VIEWS} />
+      </div>
+      {view === 'reports' && library}
+      {view === 'ask' && (
+        <ExploreAsk
+          scope={scope}
+          initialQ={get('ask') ?? undefined}
+          onRefine={(q) => {
+            setSeed((prev) => ({ key: (prev?.key ?? 0) + 1, value: { dataset: q.dataset, groupBy: q.groupBy, measures: [q.measure], filters: q.filters } }));
+            set({ mode: null, ask: null, report: 'new' });
+          }}
+        />
+      )}
+      {view === 'simulate' && <ExploreSimulate scope={scope} />}
+    </div>
+  );
 
   // A saved report's link waits for the saved list before falling back to the library.
-  if ((param?.startsWith('saved:') || param?.startsWith('edit:')) && saved.isPending) return <ReportLibrary reports={visibleReports(can)} saved={[]} savedLoading hrefFor={hrefFor} />;
+  if ((param?.startsWith('saved:') || param?.startsWith('edit:')) && saved.isPending) return home(<ReportLibrary reports={visibleReports(can)} saved={[]} savedLoading hrefFor={hrefFor} />);
   if (resolved.kind === 'builtin') return <ReportViewer key={resolved.def.key} def={resolved.def} scope={scope} meta={meta} onBack={back} />;
   if (resolved.kind === 'saved') return <SavedReportViewer key={resolved.report.id} report={resolved.report} scope={scope} meta={meta} onBack={back} onEdit={() => set({ report: `edit:${resolved.report.id}` })} />;
   if (resolved.kind === 'new' || resolved.kind === 'edit') {
     const initial = resolved.kind === 'edit' ? resolved.report : undefined;
     return (
       <ReportBuilder
-        key={initial?.id ?? 'new'}
+        key={initial?.id ?? `new-${seed?.key ?? 0}`}
         scope={scope}
         meta={meta}
         initial={initial}
-        onBack={() => set({ report: initial ? `saved:${initial.id}` : null })}
-        onSaved={(r) => set({ report: `saved:${r.id}` })}
+        seed={initial ? undefined : seed?.value}
+        onBack={() => { setSeed(null); set({ report: initial ? `saved:${initial.id}` : null }); }}
+        onSaved={(r) => { setSeed(null); set({ report: `saved:${r.id}` }); }}
       />
     );
   }
-  return <ReportLibrary reports={visibleReports(can)} saved={saved.data ?? []} savedLoading={saved.isPending && !saved.isError} savedError={saved.isError} onRetrySaved={() => void saved.refetch()} hrefFor={hrefFor} />;
+  return home(<ReportLibrary reports={visibleReports(can)} saved={saved.data ?? []} savedLoading={saved.isPending && !saved.isError} savedError={saved.isError} onRetrySaved={() => void saved.refetch()} hrefFor={hrefFor} />);
 }

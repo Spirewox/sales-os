@@ -11,33 +11,41 @@ import { useCustomReport } from '@/hooks/use-reports';
 import { DATASETS, type Filter } from '@/lib/explore';
 import { MAX_REPORT_COLUMNS, customReportName, reportDraftError, savedReportMeasures, type SavedReport } from '@/lib/reports';
 import { CustomReportResults } from './custom-report';
-import { ExploreFilters } from './explore-build';
+import { ReportFilters } from './report-filters';
 import { CHART_KINDS, type ChartKind } from './explore-shared';
 import { SaveReportDialog } from './save-report-dialog';
 
 type Meta = { rangeLabel: string; locationLabel: string };
+export type ReportSeed = { dataset: string; groupBy: string; measures: string[]; filters: Filter[] };
 
 /**
  * Build a report of your own: pick the data, how to break it down, up to eight columns, filters and a
  * chart, with a live preview for the period and location in scope. With `initial`, it edits that report.
  */
-export function ReportBuilder({ scope, meta, initial, onBack, onSaved }: Readonly<{
-  scope: InsightScopeParams; meta: Meta; initial?: SavedReport; onBack: () => void; onSaved: (report: SavedReport) => void;
+export function ReportBuilder({ scope, meta, initial, seed, onBack, onSaved }: Readonly<{
+  scope: InsightScopeParams; meta: Meta; initial?: SavedReport;
+  /** A starting point for a new report, such as the question just answered in Ask. */
+  seed?: ReportSeed;
+  onBack: () => void; onSaved: (report: SavedReport) => void;
 }>) {
+  // Where a new report starts: the seed, else Revenue and Orders by location.
+  const start = initial
+    ? { dataset: initial.dataset, groupBy: initial.groupBy, measures: savedReportMeasures(initial), filters: initial.filters, chart: initial.chart }
+    : seed
+      ? { dataset: seed.dataset, groupBy: seed.groupBy, measures: seed.measures, filters: seed.filters, chart: 'column' as ChartKind }
+      : { dataset: 'sales', groupBy: DATASETS[0].fields.find((f) => f.key === 'Location')?.key ?? DATASETS[0].fields[0].key, measures: DATASETS[0].measures.slice(0, 2).map((m) => m.key), filters: [] as Filter[], chart: 'column' as ChartKind };
   const ids = { data: useId(), group: useId(), chart: useId(), cols: useId() };
-  const [dataset, setDataset] = useState(initial?.dataset ?? 'sales');
+  const [dataset, setDataset] = useState(start.dataset);
   const ds = useMemo(() => DATASETS.find((d) => d.key === dataset) ?? DATASETS[0], [dataset]);
-  const [groupBy, setGroupBy] = useState(initial?.groupBy ?? ds.fields.find((f) => f.key === 'Location')?.key ?? ds.fields[0].key);
-  const [measures, setMeasures] = useState<string[]>(initial ? savedReportMeasures(initial) : ds.measures.slice(0, 2).map((m) => m.key));
-  const [filters, setFilters] = useState<Filter[]>(initial?.filters ?? []);
-  const [chart, setChart] = useState<ChartKind>(initial?.chart ?? 'column');
+  const [groupBy, setGroupBy] = useState(start.groupBy);
+  const [measures, setMeasures] = useState<string[]>(start.measures);
+  const [filters, setFilters] = useState<Filter[]>(start.filters);
+  const [chart, setChart] = useState<ChartKind>(start.chart);
   const [saving, setSaving] = useState(false);
   const [leaving, setLeaving] = useState(false);
 
   const draft = { dataset, groupBy, measures, filters, chart };
-  const dirty = JSON.stringify(draft) !== JSON.stringify(initial
-    ? { dataset: initial.dataset, groupBy: initial.groupBy, measures: savedReportMeasures(initial), filters: initial.filters, chart: initial.chart }
-    : { dataset: 'sales', groupBy: DATASETS[0].fields.find((f) => f.key === 'Location')?.key ?? DATASETS[0].fields[0].key, measures: DATASETS[0].measures.slice(0, 2).map((m) => m.key), filters: [], chart: 'column' });
+  const dirty = JSON.stringify(draft) !== JSON.stringify(start);
   const problem = reportDraftError(draft);
   const report = useCustomReport({ dataset, groupBy, filters, measures }, scope, { enabled: !problem });
 
@@ -90,7 +98,7 @@ export function ReportBuilder({ scope, meta, initial, onBack, onSaved }: Readonl
         <label htmlFor={ids.chart} className="text-xs text-muted-foreground">Show as</label>
         <FilterSelect id={ids.chart} value={chart} onChange={(v) => setChart(v as ChartKind)} options={CHART_KINDS.map(([value, label]) => ({ value, label }))} />
       </div>
-      <ExploreFilters dataset={dataset} groupBy={groupBy} filters={filters} onChange={setFilters} scope={scope} idPrefix="report" />
+      <ReportFilters dataset={dataset} groupBy={groupBy} filters={filters} onChange={setFilters} scope={scope} />
     </section>
   );
 

@@ -22,9 +22,10 @@ const RESULT: ReportResult = {
 };
 
 describe('REPORTS', () => {
-  it('has the ten reports of the first set, each with a unique key', () => {
-    assert.equal(REPORTS.length, 10);
-    assert.equal(new Set(REPORTS.map((r) => r.key)).size, 10);
+  it('has nine ready-made reports, each with a unique key, and no Sales by staff', () => {
+    assert.equal(REPORTS.length, 9);
+    assert.equal(new Set(REPORTS.map((r) => r.key)).size, 9);
+    assert.ok(!REPORTS.some((r) => r.key === 'sales-by-agent'));
     assert.deepEqual(REPORTS.filter((r) => !r.usesPeriod).map((r) => r.key), ['credit-aging', 'stock-valuation']);
   });
 });

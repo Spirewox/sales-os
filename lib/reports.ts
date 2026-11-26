@@ -17,7 +17,6 @@ export const REPORTS: ReportDef[] = [
   { key: 'sales-daily', group: 'Sales', title: 'Daily sales', description: 'Revenue, orders and average order for each day.', permission: 'sales.view', usesPeriod: true },
   { key: 'sales-by-product', group: 'Sales', title: 'Sales by product', description: 'What sold, how much, and what it earned.', permission: 'sales.view', usesPeriod: true },
   { key: 'sales-by-location', group: 'Sales', title: 'Sales by location', description: 'Revenue and orders at each location.', permission: 'sales.view', usesPeriod: true },
-  { key: 'sales-by-agent', group: 'Sales', title: 'Sales by staff', description: 'Who recorded which sales.', permission: 'sales.view', usesPeriod: true },
   { key: 'payment-methods', group: 'Sales', title: 'Payment methods', description: 'How customers paid.', permission: 'sales.view', usesPeriod: true },
   { key: 'top-customers', group: 'Customers', title: 'Top customers', description: 'Customers ranked by what they spent.', permission: 'customers.view', usesPeriod: true },
   { key: 'credit-aging', group: 'Credit', title: 'Credit aging', description: 'What is owed, by how long it has been due.', permission: 'credits.view', usesPeriod: false },
