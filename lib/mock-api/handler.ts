@@ -12,6 +12,12 @@ import { kitchenJobList, kitchenJobs } from './kitchen-fixtures';
 import { archiveProduct, filterProducts, restoreProduct } from './products';
 import { customerSearchFields, saveCustomer } from './customers';
 import { filterUsers, saveUser } from './users';
+import { buildReport } from './reports';
+import { deleteSavedReport, saveReport } from './saved-reports';
+import type { SavedReport } from '@/lib/reports';
+
+/** Saved reports for this browser session (the signed-in persona's own). */
+const savedReports: SavedReport[] = [];
 
 const { NOW, DAY } = db;
 
@@ -507,6 +513,8 @@ const GET_ROUTES: Route[] = [
   [/^dashboard\/sales-summary$/, (_m, q) => dashboardSalesSummary(q)],
   [/^dashboard\/revenue-by-category$/, (_m, q) => revenueByCategory(q)],
   [/^analytics\/overview$/, (_m, q) => ok(analyticsOverview(q))],
+  [/^analytics\/reports\/saved$/, () => ok(savedReports)],
+  [/^analytics\/reports\/([^/]+)$/, (m, q) => ok(buildReport(m[1], db, { inRange: (d) => inRange(d, q), inScope: (h) => inScope(q, h), now: NOW }))],
   [/^customers$/, (_m, q) => customerList(q)],
   [/^customers\/segments$/, () => ok(db.segments)],
   [/^customers\/engagement$/, (_m, q) => engagement(q)],
@@ -604,6 +612,16 @@ function route(method: string, path: string, q: URLSearchParams, body: unknown):
   }
   if (path === 'auth/login') return { status: 200, data: ok({ ...currentMockUser() }) };
   if (path === 'pos/live-ticket') return { status: 200, data: ok(null) };
+  // Saved reports: one person's Explore queries, kept by name until a reload.
+  if (method === 'post' && path === 'analytics/reports/saved') {
+    const saved = saveReport(savedReports, (body ?? {}) as Parameters<typeof saveReport>[1], new Date().toISOString());
+    return { status: saved.status, data: saved.status === 200 ? ok(saved.data) : saved.data };
+  }
+  const deleteReport = method === 'delete' ? path.match(/^analytics\/reports\/saved\/([^/]+)$/) : null;
+  if (deleteReport) {
+    const res = deleteSavedReport(savedReports, deleteReport[1]);
+    return { status: res.status, data: res.status === 200 ? ok(res.data) : res.data };
+  }
   // Saving a user keeps their locations in memory until a reload; a cashier holds one location.
   const userEdit = method === 'patch' ? path.match(/^users\/([^/]+)$/) : null;
   if (userEdit || (method === 'post' && path === 'users/create')) {
