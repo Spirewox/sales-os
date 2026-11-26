@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
 import Link from 'next/link';
 import { Menu } from '@base-ui/react/menu';
 import { MoreHorizontal } from 'lucide-react';
@@ -65,8 +65,10 @@ export function OverflowMenu({ items, label = 'More actions', className, size = 
 }
 
 function Item({ item }: Readonly<{ item: OverflowItem }>) {
+  const descriptionId = useId();
   return (
     <Menu.Item
+      aria-describedby={item.description ? descriptionId : undefined}
       disabled={item.disabled}
       onClick={item.onSelect}
       render={item.href ? (item.external || !item.href.startsWith('/') ? <a href={item.href} {...(item.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})} /> : <Link href={item.href} />) : undefined}
@@ -79,7 +81,8 @@ function Item({ item }: Readonly<{ item: OverflowItem }>) {
       {item.description ? (
         <span className="flex min-w-0 flex-col">
           <span>{item.label}</span>
-          <span className="max-w-60 text-xs text-muted-foreground">{item.description}</span>
+          {/* Read after the name, not as part of it. */}
+          <span id={descriptionId} aria-hidden className="max-w-60 text-xs text-muted-foreground">{item.description}</span>
         </span>
       ) : item.label}
     </Menu.Item>

@@ -33,3 +33,8 @@ export function parseArchiveStatus(value: string | null | undefined): ArchiveSta
 export function isArchivedProductError(message: string | null | undefined): boolean {
   return /\barchived\b/i.test(message ?? '');
 }
+
+/** The products whose stock may change: archived ones take no purchases, adjustments or bulk updates. */
+export function stockEditable<T extends Pick<InventoryItem, 'isActive'>>(items: T[]): T[] {
+  return items.filter((i) => !isArchived(i));
+}

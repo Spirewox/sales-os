@@ -1542,6 +1542,8 @@ function useProductStatusChange(action: 'archive' | 'restore') {
       qc.invalidateQueries({ queryKey: ['inventory'] });
       qc.invalidateQueries({ queryKey: ['inventory-sales-metrics'] });
     },
+    // A 409 means the stock or requests changed: refresh so the hint matches the server.
+    onError: () => qc.invalidateQueries({ queryKey: ['inventory'] }),
   });
 }
 

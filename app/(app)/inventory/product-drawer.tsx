@@ -101,7 +101,8 @@ export function ProductDrawer({ item, onClose, actions, requestConfirm }: Readon
         <OverflowMenu
           label="More product actions"
           items={[
-            { label: 'Edit product', icon: <Pencil />, onSelect: () => actions.edit?.(), hidden: !actions.edit },
+            // Restore first: editing leads on to stock adjustments.
+            { label: 'Edit product', icon: <Pencil />, onSelect: () => actions.edit?.(), hidden: archived || !actions.edit },
             {
               label: 'Archive product', icon: <Archive />, destructive: true, onSelect: () => actions.archive?.(),
               description: actions.archiveBlocker ?? undefined, hidden: archived || !actions.archive,
@@ -118,7 +119,7 @@ export function ProductDrawer({ item, onClose, actions, requestConfirm }: Readon
       tabs={{ items: tabs, value: tab, onChange: setTab }}
     >
       {tab === 'batches' && (
-        <BatchesPanel item={item} batches={batches} loaded={batchesLoaded} loading={batchesLoading} requestConfirm={requestConfirm} onPurchase={actions.purchase} />
+        <BatchesPanel item={item} batches={batches} loaded={batchesLoaded} loading={batchesLoading} requestConfirm={requestConfirm} onPurchase={archived ? undefined : actions.purchase} archived={archived} />
       )}
       {tab === 'overview' && <OverviewPanel item={item} margin={margin} />}
       {tab === 'suppliers' && <SuppliersPanel item={item} suppliers={itemSuppliers} />}
@@ -129,13 +130,15 @@ export function ProductDrawer({ item, onClose, actions, requestConfirm }: Readon
   );
 }
 
-function BatchesPanel({ item, batches, loaded, loading, requestConfirm, onPurchase }: Readonly<{
+function BatchesPanel({ item, batches, loaded, loading, requestConfirm, onPurchase, archived }: Readonly<{
   item: InventoryItem;
   batches: FifoBatch[];
   loaded: boolean;
   loading: boolean;
   requestConfirm: RequestConfirm;
   onPurchase?: () => void;
+  /** Archived: show the batches, offer nothing that changes stock. */
+  archived?: boolean;
 }>) {
   const { can } = usePermissions();
   const updatePurchaseBatch = useUpdatePurchaseBatch();
@@ -163,7 +166,7 @@ function BatchesPanel({ item, batches, loaded, loading, requestConfirm, onPurcha
             Stock on hand ({mismatch.stock} {item.unitOfMeasure}) does not match open batches ({mismatch.batches} {item.unitOfMeasure}).
           </p>
           <p className="mt-1 text-xs text-muted-foreground">Align stock to the FEFO batch ledger so the stock table matches these batches.</p>
-          {can('inventory.adjust_stock') && (
+          {can('inventory.adjust_stock') && !archived && (
             <button
               type="button"
               disabled={reconcileProductStock.isPending}

@@ -246,7 +246,7 @@ function InventoryWorkspace() {
             actions={itemActions}
           />
         )}
-        {tab === 'movements' && <MovementsTab hubScope={hubScope} items={scopedItems} logs={logs} loading={logsFetching} onOpenProduct={openProduct} />}
+        {tab === 'movements' && <MovementsTab hubScope={hubScope} items={locationItems} logs={logs} loading={logsFetching} onOpenProduct={openProduct} />}
         {tab === 'requests' && <RequestsTab hubScope={hubScope} scope={requestScope} />}
       </SectionErrorBoundary>
 

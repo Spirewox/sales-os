@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { archiveBlocker, filterByArchiveStatus, isArchived, isArchivedProductError, parseArchiveStatus } from './inventory-archive';
+import { archiveBlocker, filterByArchiveStatus, isArchived, isArchivedProductError, parseArchiveStatus, stockEditable } from './inventory-archive';
 import type { InventoryItem } from '@/types';
 
 const item = (p: Partial<InventoryItem>) => ({ id: 'p', name: 'Wings', currentStock: 0, unitOfMeasure: 'Units', isActive: true, ...p }) as InventoryItem;
@@ -53,5 +53,12 @@ describe('isArchivedProductError', () => {
   it('ignores other errors', () => {
     assert.equal(isArchivedProductError('Insufficient stock'), false);
     assert.equal(isArchivedProductError(undefined), false);
+  });
+});
+
+describe('stockEditable', () => {
+  it('keeps only products whose stock may change', () => {
+    const rows = [item({ id: 'a' }), item({ id: 'b', isActive: false }), item({ id: 'c' })];
+    assert.deepEqual(stockEditable(rows).map((r) => r.id), ['a', 'c']);
   });
 });

@@ -1,7 +1,7 @@
 'use client';
 
 import { Archive, ArchiveRestore, ArrowRightLeft, ArrowUpRight, Package, RefreshCw, SlidersHorizontal, Pencil } from 'lucide-react';
-import { isArchived } from '@/lib/inventory-archive';
+import { isArchived, stockEditable } from '@/lib/inventory-archive';
 import type { InventoryItem } from '@/types';
 import type { HubScopeFilter } from '@/hooks/use-hub-scope';
 import { formatCount, formatDate, formatMoney } from '@/lib/format';
@@ -67,7 +67,7 @@ export function StockTab({ hubScope, view, loading, pendingRequests, needsAction
         <span className="flex items-center gap-2.5">
           <SkuPhoto url={i.imageUrl} className="hidden h-8 w-8 md:inline-grid" />
           <span className="min-w-0">
-            <span className="flex items-center gap-1.5">{i.name}{isArchived(i) && <StatusBadge tone="neutral">Archived</StatusBadge>}</span>
+            <span className="block">{i.name}</span>
             <span className="block text-xs font-normal text-muted-foreground">
               <span className="font-mono">{i.sku}</span>
               {i.supplier && <span className="hidden md:inline">, via {i.supplier}</span>}
@@ -85,7 +85,7 @@ export function StockTab({ hubScope, view, loading, pendingRequests, needsAction
         const s = stockState(i);
         return (
           <span className="inline-flex flex-col items-end">
-            <span className={cn('font-medium', s === 'Out' ? 'text-destructive' : s === 'Low' ? 'text-warning' : '')}>{formatInventoryStockDisplay(i)}</span>
+            <span className={cn('font-medium', isArchived(i) ? '' : s === 'Out' ? 'text-destructive' : s === 'Low' ? 'text-warning' : '')}>{formatInventoryStockDisplay(i)}</span>
             <span className={cn('text-xs font-normal', nearMinimum(i) ? 'text-warning' : 'text-muted-foreground')}>
               min {formatStockQuantity(i.minStockLevel, i.unitOfMeasure)}{nearMinimum(i) ? ', near minimum' : ''}
             </span>
@@ -96,8 +96,9 @@ export function StockTab({ hubScope, view, loading, pendingRequests, needsAction
     },
     {
       id: 'status', header: 'Status', mobile: 'meta',
-      cell: (i) => <StatusBadge domain="stock" status={stockState(i)} />,
-      sortValue: (i) => ['Out', 'Low', 'In stock'].indexOf(stockState(i)),
+      // An archived product's zero stock is not a problem to act on: say Archived, not Out.
+      cell: (i) => (isArchived(i) ? <StatusBadge tone="neutral">Archived</StatusBadge> : <StatusBadge domain="stock" status={stockState(i)} />),
+      sortValue: (i) => (isArchived(i) ? 3 : ['Out', 'Low', 'In stock'].indexOf(stockState(i))),
     },
     {
       id: 'expiry', header: 'Next expiry', mobile: 'meta',
@@ -228,7 +229,7 @@ export function StockTab({ hubScope, view, loading, pendingRequests, needsAction
       />
 
       <DataTable
-        key={[hubScope.filterHub, stockFilter, view.category, view.urlSearch, view.skuIds.join(',')].join('|')}
+        key={[hubScope.filterHub, stockFilter, view.category, view.urlSearch, view.skuIds.join(','), view.status].join('|')}
         label="Stock"
         // Kit gap: the sr-only "Actions" header is absolute; a positioned table keeps it clipped (no page scroll).
         className="relative"
@@ -239,11 +240,12 @@ export function StockTab({ hubScope, view, loading, pendingRequests, needsAction
         onRowClick={actions.open}
         rowActions={rowActions}
         pageSize={20}
-        rowClassName={(i) => (stockState(i) === 'Out' ? 'bg-destructive/[0.03]' : undefined)}
-        bulkActions={actions.bulkUpdate ? (selected, clear) => (
+        rowClassName={(i) => (!isArchived(i) && stockState(i) === 'Out' ? 'bg-destructive/[0.03]' : undefined)}
+        // Archived rows can be selected but never take a bulk stock update.
+        bulkActions={actions.bulkUpdate ? (selected, clear) => stockEditable(selected).length === 0 ? null : (
           <button
             type="button"
-            onClick={() => { actions.bulkUpdate!(selected); clear(); }}
+            onClick={() => { actions.bulkUpdate!(stockEditable(selected)); clear(); }}
             className="inline-flex h-8 items-center gap-1.5 rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground hover:bg-primary/90"
           >
             <RefreshCw size={14} aria-hidden /> Update stock
