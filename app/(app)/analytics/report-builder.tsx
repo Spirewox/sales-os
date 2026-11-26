@@ -75,29 +75,35 @@ export function ReportBuilder({ scope, meta, initial, seed, onBack, onSaved }: R
         <label htmlFor={ids.group} className="text-xs text-muted-foreground">One row per</label>
         <FilterSelect id={ids.group} value={groupBy} onChange={setGroupBy} options={ds.fields.map((f) => ({ value: f.key, label: f.label }))} />
       </div>
-      <fieldset className="space-y-1" aria-describedby={ids.cols}>
-        <legend className="text-xs text-muted-foreground">Columns</legend>
+      <div className="space-y-1">
+        <label htmlFor={ids.chart} className="text-xs text-muted-foreground">Show as</label>
+        <FilterSelect id={ids.chart} value={chart} onChange={(v) => setChart(v as ChartKind)} options={CHART_KINDS.map(([value, label]) => ({ value, label }))} />
+      </div>
+      <fieldset className="space-y-2 border-t pt-4" aria-describedby={ids.cols}>
+        <div className="flex items-baseline justify-between gap-2">
+          <legend className="text-xs font-medium text-muted-foreground">Columns</legend>
+          <span className="text-xs text-muted-foreground tabular-nums">{measures.length} of {MAX_REPORT_COLUMNS}</span>
+        </div>
         <p id={ids.cols} className={problem ? 'text-xs text-destructive' : 'text-xs text-muted-foreground'}>
-          {problem ?? `Up to ${MAX_REPORT_COLUMNS}, in the order you pick them. The first one is charted.`}
+          {problem ?? 'In the order you pick them. The first one is charted.'}
         </p>
-        <div className="grid grid-cols-1 gap-0.5 pt-1">
+        <div className="flex flex-wrap gap-1.5">
           {ds.measures.map((m) => {
             const on = measures.includes(m.key);
             const full = !on && measures.length >= MAX_REPORT_COLUMNS;
             return (
-              <label key={m.key} className="flex min-h-9 cursor-pointer items-center gap-2 rounded-md px-2 text-sm hover:bg-muted has-data-disabled:cursor-not-allowed has-data-disabled:text-muted-foreground">
+              <label
+                key={m.key}
+                className="flex min-h-8 cursor-pointer select-none items-center gap-1.5 rounded-full border py-1 pr-3 pl-2 text-sm hover:bg-muted has-data-checked:border-primary/50 has-data-checked:bg-primary/5 has-data-disabled:cursor-not-allowed has-data-disabled:opacity-50"
+              >
                 <Checkbox aria-label={m.label} checked={on} disabled={full} onCheckedChange={(v) => toggle(m.key, v === true)} />
-                <span className="min-w-0 flex-1">{m.label}</span>
-                {on && <span className="text-xs text-muted-foreground tabular-nums">{measures.indexOf(m.key) + 1}</span>}
+                {m.label}
+                {on && <span className="text-xs text-muted-foreground tabular-nums" aria-hidden>{measures.indexOf(m.key) + 1}</span>}
               </label>
             );
           })}
         </div>
       </fieldset>
-      <div className="space-y-1">
-        <label htmlFor={ids.chart} className="text-xs text-muted-foreground">Show as</label>
-        <FilterSelect id={ids.chart} value={chart} onChange={(v) => setChart(v as ChartKind)} options={CHART_KINDS.map(([value, label]) => ({ value, label }))} />
-      </div>
       <ReportFilters dataset={dataset} groupBy={groupBy} filters={filters} onChange={setFilters} scope={scope} />
     </section>
   );

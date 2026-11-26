@@ -26,7 +26,9 @@ export function ResultChart({ rows, chart, measureLabel, measureKind, groupLabel
   if (rows.length === 0) return <p className="py-10 text-center text-sm text-muted-foreground">Nothing matches. Try fewer filters or a longer period.</p>;
   if (chart === 'table') return <ResultTable rows={rows} kind={measureKind} label={groupLabel} />;
   if (chart === 'bar') return <RankedBars rows={rows} format={(n) => fmtShort(n, measureKind)} limit={12} />;
-  const data = rows.slice(0, 12);
+  // A line is a timeline: every point stays. Columns show the top 12.
+  const capped = chart !== 'line' && rows.length > 12;
+  const data = chart === 'line' ? rows : rows.slice(0, 12);
   const tooltipFormat = (v: unknown) => fmtExact(Number(v), measureKind);
   return (
     <>
@@ -51,7 +53,7 @@ export function ResultChart({ rows, chart, measureLabel, measureKind, groupLabel
           )}
         </ResponsiveContainer>
       </div>
-      {rows.length > 12 && <p className="mt-2 text-center text-xs text-muted-foreground tabular-nums">Showing the top 12 of {rows.length}</p>}
+      {capped && <p className="mt-2 text-center text-xs text-muted-foreground tabular-nums">Showing the top 12 of {rows.length}</p>}
     </>
   );
 }

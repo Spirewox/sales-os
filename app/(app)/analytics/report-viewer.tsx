@@ -11,10 +11,12 @@ import { useCustomReport, useDeleteSavedReport, useReport } from '@/hooks/use-re
 import { DATASETS } from '@/lib/explore';
 import { formatCount, formatDate, formatMoney } from '@/lib/format';
 import {
-  reportExportColumns, reportKpiColumns, reportRowsWithTotal, savedReportMeasures, savedReportRunnable,
+  reportChart, reportExportColumns, reportKpiColumns, reportRowsWithTotal, savedReportMeasures, savedReportRunnable,
   type CustomReportRow, type ReportColumn, type ReportDef, type ReportRow, type SavedReport,
 } from '@/lib/reports';
-import { columnMeta, CustomReportResults } from './custom-report';
+import { InsightButton } from '@/components/insight-button';
+import { columnMeta, CustomReportResults, KpiRows } from './custom-report';
+import { ResultChart } from './explore-shared';
 
 type Meta = { rangeLabel: string; locationLabel: string };
 type Row = ReportRow & { __id: string };
@@ -30,14 +32,15 @@ const showValue = (kind: ReportColumn['kind'], v: string | number | null | undef
 const numeric = (kind: ReportColumn['kind']) => kind === 'money' || kind === 'number' || kind === 'percent';
 
 /** Back, the title, what it covers, and the Export button: the top of every report. */
-function ReportHeader({ title, coverage, onBack, actions }: Readonly<{ title: string; coverage: string; onBack: () => void; actions: React.ReactNode }>) {
+function ReportHeader({ title, description, coverage, onBack, actions }: Readonly<{ title: string; description?: string; coverage: string; onBack: () => void; actions: React.ReactNode }>) {
   return (
     <div className="space-y-2">
       <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft aria-hidden /> Back to reports</Button>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="text-lg font-semibold">{title}</h2>
-          <p className="text-xs text-muted-foreground tabular-nums">{coverage}</p>
+          {description && <p className="text-sm text-muted-foreground">{description}</p>}
+          <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">{coverage}</p>
         </div>
         <div className="flex items-center gap-2">{actions}</div>
       </div>
@@ -71,20 +74,34 @@ export function ReportViewer({ def, scope, meta, onBack }: Readonly<{ def: Repor
     sortValue: (r) => r[c.key],
     mobile: i === 0 ? 'title' : c.key === firstValue ? 'value' : i <= 2 ? 'subtitle' : 'meta',
   }));
+  // Days read as "25 Nov" on the chart.
+  const chart = useMemo(() => {
+    const c = result ? reportChart(result) : null;
+    return c && c.kind === 'line' ? { ...c, rows: c.rows.map((r) => ({ ...r, label: formatDate(r.key, { day: 'numeric', month: 'short' }) })) } : c;
+  }, [result]);
   const cells: KpiCell[] = result
     ? reportKpiColumns(result).map((c) => ({ label: c.label, value: showValue(c.kind, result.totals[c.key]) }))
     : [];
 
   return (
     <div className="space-y-4">
-      <ReportHeader title={def.title} coverage={coverage} onBack={onBack} actions={exp.menu} />
+      <ReportHeader title={def.title} description={def.description} coverage={coverage} onBack={onBack} actions={exp.menu} />
       {!def.usesPeriod && <p className="text-xs text-muted-foreground">This report shows today&apos;s position, so the period does not change it.</p>}
       {report.isError ? (
         <EmptyState icon={<FileBarChart />} title="This report did not load" description="Check your connection and try again." action={<Button variant="outline" size="sm" onClick={() => void report.refetch()}>Try again</Button>} />
       ) : (
         <>
           {result?.capped && <p className="text-xs text-warning">Showing the first 10,000 rows. Narrow the period or location to see the rest.</p>}
-          {(report.isPending || cells.length > 0) && <KpiStrip cells={cells} loading={report.isPending} label={`${def.title} totals`} />}
+          {report.isPending ? <KpiStrip cells={[]} loading label={`${def.title} totals`} /> : <KpiRows cells={cells} label={`${def.title} totals`} />}
+          {chart && (
+            <div className="rounded-xl border bg-card p-4">
+              <div className="mb-3 flex items-start justify-between gap-3">
+                <p className="text-sm font-medium">{chart.valueLabel} by {chart.labelLabel.toLowerCase()}</p>
+                <InsightButton title={`${chart.valueLabel} by ${chart.labelLabel}`} kind="money" time={chart.kind === 'line'} series={chart.rows} />
+              </div>
+              <ResultChart rows={chart.rows} chart={chart.kind} measureLabel={chart.valueLabel} measureKind="money" groupLabel={chart.labelLabel} />
+            </div>
+          )}
           <DataTable
             label={def.title}
             columns={columns}

@@ -16,7 +16,7 @@ import { ReportViewer, SavedReportViewer } from './report-viewer';
 type View = 'reports' | 'ask';
 const VIEWS: [View, string][] = [['reports', 'Reports'], ['ask', 'Ask']];
 const VIEW_HINT: Record<View, string> = {
-  reports: 'Ready-made reports, and your own: pick the data, columns and filters, then save it.',
+  reports: 'Open a ready-made report, or build one of your own.',
   ask: 'Ask in plain words and get a chart, a list of records or a comparison.',
 };
 

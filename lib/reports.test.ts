@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  REPORTS, MAX_REPORT_COLUMNS, customReportName, mergeMeasureRows, reportDraftError, savedReportMeasures, reportExportColumns, reportKpiColumns, reportQueryKey, reportRowsWithTotal, resolveReportParam, savedReportRunnable, summableColumns, visibleReports,
+  REPORTS, MAX_REPORT_COLUMNS, kpiRows, reportChart, customReportName, mergeMeasureRows, reportDraftError, savedReportMeasures, reportExportColumns, reportKpiColumns, reportQueryKey, reportRowsWithTotal, resolveReportParam, savedReportRunnable, summableColumns, visibleReports,
   type ReportResult, type SavedReport,
 } from './reports';
 import { buildCsv } from './export';
@@ -152,5 +152,42 @@ describe('resolveReportParam for building', () => {
     assert.deepEqual(resolveReportParam('new', all, list), { kind: 'new' });
     assert.deepEqual(resolveReportParam('edit:a', all, list), { kind: 'edit', report: list[0] });
     assert.deepEqual(resolveReportParam('edit:zz', all, list), { kind: 'library' });
+  });
+});
+
+describe('reportChart', () => {
+  it('charts a daily report as a line of its first money column, oldest first', () => {
+    const chart = reportChart(RESULT)!;
+    assert.equal(chart.kind, 'line');
+    assert.equal(chart.valueLabel, 'Revenue');
+    assert.deepEqual(chart.rows.map((r) => [r.key, r.value]), [['2026-11-25', 120000], ['2026-11-26', 80000]]);
+  });
+
+  it('ranks the rows of a breakdown by that column, largest first', () => {
+    const byProduct: ReportResult = {
+      ...RESULT,
+      columns: [{ key: 'product', label: 'Product', kind: 'text' }, { key: 'quantity', label: 'Quantity', kind: 'number' }, { key: 'revenue', label: 'Revenue', kind: 'money' }],
+      rows: [{ product: 'Yam', quantity: 3, revenue: 100 }, { product: 'Rice', quantity: 1, revenue: 900 }],
+    };
+    const chart = reportChart(byProduct)!;
+    assert.equal(chart.kind, 'bar');
+    assert.deepEqual(chart.rows.map((r) => r.label), ['Rice', 'Yam']);
+  });
+
+  it('draws nothing without a money column or without rows', () => {
+    assert.equal(reportChart({ ...RESULT, rows: [] }), null);
+    assert.equal(reportChart({ ...RESULT, columns: RESULT.columns.filter((c) => c.kind !== 'money') }), null);
+  });
+});
+
+describe('kpiRows', () => {
+  it('keeps up to four figures in one strip and balances more across strips', () => {
+    const sizes = (n: number) => kpiRows(Array.from({ length: n }, (_, i) => i)).map((r) => r.length);
+    assert.deepEqual(sizes(0), []);
+    assert.deepEqual(sizes(4), [4]);
+    assert.deepEqual(sizes(5), [3, 2]);
+    assert.deepEqual(sizes(6), [3, 3]);
+    assert.deepEqual(sizes(7), [4, 3]);
+    assert.deepEqual(sizes(8), [4, 4]);
   });
 });

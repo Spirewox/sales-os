@@ -141,3 +141,26 @@ export function savedReportRunnable(r: SavedReport, datasets: DatasetShape[]): b
 }
 
 export const reportQueryKey = (key: string, scope: object) => ['analytics-report', key, scope];
+
+/**
+ * The chart above a ready-made report: its first money column against its first column, as a line
+ * when the rows are days (oldest first), else as ranked bars (largest first). Null when there is
+ * nothing to draw.
+ */
+export function reportChart(result: ReportResult): { kind: 'line' | 'bar'; labelLabel: string; valueLabel: string; rows: { key: string; label: string; value: number }[] } | null {
+  const label = result.columns[0];
+  const value = result.columns.find((c) => c.kind === 'money');
+  if (!label || !value || result.rows.length === 0) return null;
+  const rows = result.rows.map((r) => ({ key: String(r[label.key] ?? ''), label: String(r[label.key] ?? '-'), value: Number(r[value.key]) || 0 }));
+  const time = label.kind === 'date';
+  rows.sort(time ? (a, b) => a.key.localeCompare(b.key) : (a, b) => b.value - a.value);
+  return { kind: time ? 'line' : 'bar', labelLabel: label.label, valueLabel: value.label, rows };
+}
+
+/** A KpiStrip holds up to four figures: more are split into balanced strips (6 as 3 and 3, 7 as 4 and 3). */
+export function kpiRows<T>(cells: T[]): T[][] {
+  if (cells.length === 0) return [];
+  const rows = Math.ceil(cells.length / 4);
+  const size = Math.ceil(cells.length / rows);
+  return Array.from({ length: rows }, (_, i) => cells.slice(i * size, (i + 1) * size)).filter((r) => r.length > 0);
+}

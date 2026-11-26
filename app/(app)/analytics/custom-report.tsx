@@ -7,7 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { DataTable, EmptyState, KpiStrip, type Column, type KpiCell } from '@/components/app';
 import type { useCustomReport } from '@/hooks/use-reports';
 import { DATASETS } from '@/lib/explore';
-import type { CustomReportRow, SavedReport } from '@/lib/reports';
+import { kpiRows, type CustomReportRow, type SavedReport } from '@/lib/reports';
 import { ResultChart, fmtExact, fmtShort } from './explore-shared';
 
 type Report = ReturnType<typeof useCustomReport>;
@@ -17,6 +17,17 @@ const isPercent = (label: string) => label.trim().endsWith('%');
 const showExact = (v: number, c: { label: string; kind: 'money' | 'number' }) => (isPercent(c.label) ? `${v.toFixed(1)}%` : fmtExact(v, c.kind));
 const showShort = (v: number, c: { label: string; kind: 'money' | 'number' }) => (isPercent(c.label) ? `${v.toFixed(1)}%` : fmtShort(v, c.kind));
 type Row = CustomReportRow & { __id: string };
+
+/** Totals in strips of up to four, so six aging buckets read as two even rows. */
+export function KpiRows({ cells, label }: Readonly<{ cells: KpiCell[]; label: string }>) {
+  const rows = kpiRows(cells);
+  if (rows.length === 0) return null;
+  return (
+    <div className="space-y-3">
+      {rows.map((row, i) => <KpiStrip key={i} cells={row} label={rows.length > 1 ? `${label}, ${i + 1} of ${rows.length}` : label} />)}
+    </div>
+  );
+}
 
 /** Column labels and kinds from the dataset, so headers read right before the first answer arrives. */
 export function columnMeta(dataset: string, measures: string[], report?: Report) {
@@ -71,7 +82,7 @@ export function CustomReportResults({ report, dataset, groupBy, measures, chart,
 
   return (
     <div className="space-y-4">
-      <KpiStrip label={`${title} totals`} cells={rows ? cells : []} loading={!rows} />
+      {rows ? <KpiRows label={`${title} totals`} cells={cells} /> : <KpiStrip label={`${title} totals`} cells={[]} loading />}
       {chart !== 'table' && (
         <div className="rounded-xl border bg-card p-4">
           <div className="mb-3 flex items-start justify-between gap-3">
