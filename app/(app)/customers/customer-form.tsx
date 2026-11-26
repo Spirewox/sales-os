@@ -19,7 +19,7 @@ import { Input } from '@/components/ui/input';
 import { SegmentChips } from './customer-segments';
 import { ContactsEditor } from './contacts-editor';
 import {
-  contactsOf, contactsToIndividual, primaryContact, restoreBusinessContacts, toApiContacts, validateContacts, type CustomerContact,
+  contactsOf, contactsToIndividual, otherContacts, primaryContact, toApiContacts, validateContacts, validateOtherContacts, withPerson, type CustomerContact,
 } from '@/lib/customer-contacts';
 
 /** Display label for the stored B2B / B2C type. */
@@ -124,34 +124,29 @@ export function CustomerFormSheet({ customer, onClose, onSaved, existingCustomer
   );
   const patch = (p: Partial<Customer>) => setForm((f) => ({ ...f, ...p }));
   const isB2b = isB2bCustomerType(form.type);
-  // A business's people. Its primary contact is saved as the customer's own name, phone and email.
+  // A customer's people. A business's primary contact is saved as the customer's own name, phone and
+  // email; an individual is their own primary, and the rest are their other contacts.
   const [contacts, setContacts] = useState<CustomerContact[]>(() => (customer ? contactsOf(customer) : []));
   const wasBusiness = isB2bCustomerType(customer?.type);
   // The list row may not carry contacts: load the customer itself and take its contacts, unless
   // the person has already started editing them.
   const [contactsTouched, setContactsTouched] = useState(false);
-  const { data: fresh } = useCustomer(isEdit && wasBusiness ? customer.id : null);
+  const { data: fresh } = useCustomer(isEdit ? customer.id : null);
   const [syncedFrom, setSyncedFrom] = useState<Customer | null>(null);
   if (fresh && fresh !== syncedFrom && !contactsTouched) {
     setSyncedFrom(fresh);
     setContacts(contactsOf(fresh));
   }
   const editContacts = (next: CustomerContact[]) => { setContactsTouched(true); setContacts(next); };
-  // Contacts set aside while the type reads Individual, so switching back loses nobody.
-  const [parked, setParked] = useState<CustomerContact[]>([]);
   const primary = primaryContact(contacts);
+  const others = otherContacts(contacts);
+  const person = { name: form.name ?? '', phone: form.phone === 'N/A' ? '' : form.phone ?? '', email: form.email };
   // Older businesses saved without a phone stay editable, as older individuals do.
-  const contactsProblem = isB2b ? validateContacts(contacts, { legacyMayLackPhone: isEdit }) : null;
+  const contactsProblem = isB2b ? validateContacts(contacts, { legacyMayLackPhone: isEdit }) : validateOtherContacts(others, person.phone);
+  // Switching type keeps everyone: the individual becomes the business's primary contact, and back.
   const changeType = (type: CustomerType) => {
-    if (type === CustomerType.B2B && !isB2b) {
-      // Bring back the business's people, or start from whoever was entered as the individual.
-      editContacts(restoreBusinessContacts(parked, { name: form.name ?? '', phone: form.phone === 'N/A' ? '' : form.phone ?? '', email: form.email }));
-    }
-    if (type === CustomerType.B2C && isB2b) {
-      patch(contactsToIndividual(contacts));
-      setParked(contacts);
-      editContacts([]);
-    }
+    if (type === CustomerType.B2B && !isB2b) editContacts(withPerson(contacts, person));
+    if (type === CustomerType.B2C && isB2b) patch(contactsToIndividual(contacts));
     patch({ type, companyName: type === CustomerType.B2C ? '' : form.companyName, ...clearOppositeProfileFields(type) });
   };
   /** Name, phone, email and contacts as the API takes them: from the primary contact for a business. */
@@ -168,8 +163,10 @@ export function CustomerFormSheet({ customer, onClose, onSaved, existingCustomer
       customer_name: form.name ?? '',
       customer_phone: customerPhoneForApi(form.phone),
       customer_email: customerEmailForApi(form.email) ?? '',
-      // A business switched to an individual drops its contacts.
-      ...(wasBusiness ? { contacts: [] } : {}),
+      // The individual first, as primary, then their other contacts. With none, an empty list clears any saved.
+      ...(others.length
+        ? { contacts: toApiContacts(withPerson(contacts, person)) }
+        : wasBusiness || (customer?.contacts?.length ?? 0) > 0 ? { contacts: [] } : {}),
     });
   // Hubs may load after the form opens: fall back to a real option rather than a stale default.
   const hubNames = activeHubs.map((h) => h.name);
@@ -314,9 +311,18 @@ export function CustomerFormSheet({ customer, onClose, onSaved, existingCustomer
         )}
       </FormSection>
 
-      {isB2b && (
+      {isB2b ? (
         <FormSection title="Contacts" description="The people you deal with. The primary contact is who the business is listed under.">
           <ContactsEditor contacts={contacts} onChange={editContacts} idPrefix={id} />
+        </FormSection>
+      ) : (
+        <FormSection title="Other contacts" description="People you can also reach about this customer, such as a spouse or a driver." optional defaultOpen={others.length > 0}>
+          <ContactsEditor
+            mode="others"
+            contacts={others}
+            onChange={(next) => editContacts([...contacts.filter((c) => c.isPrimary), ...next])}
+            idPrefix={id}
+          />
         </FormSection>
       )}
 

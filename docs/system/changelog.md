@@ -3,6 +3,10 @@
 
 Changes to the design system docs and tokens, newest first.
 
+## 2026-11-27
+
+- Document the November features (`6350bf2`)
+
 ## 2026-11-26
 
 - Export a report while building it (`485d571`)

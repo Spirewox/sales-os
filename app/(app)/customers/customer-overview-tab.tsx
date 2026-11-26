@@ -5,7 +5,7 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveCo
 import { Check, Copy, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/app';
-import { contactsOf } from '@/lib/customer-contacts';
+import { contactsOf, otherContacts } from '@/lib/customer-contacts';
 import { Customer, CustomerType } from '@/types';
 import { CHART_TOOLTIP, formatAxisMoney, formatDate, formatMoney, plural } from '@/lib/format';
 import { hasPhone, whatsappHref } from './customer-links';
@@ -45,8 +45,10 @@ export function CustomerOverviewTab({ customer, segments, analytics, trend }: Re
   trend: { month: string; amount: number }[];
 }>) {
   const isBusiness = customer.type === CustomerType.B2B;
-  // Primary first; an older business shows its own name and phone as its one contact.
+  // Primary first; an older business shows its own name and phone as its one contact. An individual
+  // is their own primary, so only their other contacts are listed.
   const contacts = contactsOf(customer);
+  const shownContacts = isBusiness ? contacts : otherContacts(contacts);
   const profile = isBusiness
     ? [{ label: 'Category', value: customer.businessCategory }, { label: 'Business address', value: customer.businessAddress }]
     : [
@@ -128,11 +130,11 @@ export function CustomerOverviewTab({ customer, segments, analytics, trend }: Re
         )}
       </section>
 
-      {isBusiness && (
+      {shownContacts.length > 0 && (
         <section>
-          <h3 className={sectionTitle}>Contacts</h3>
+          <h3 className={sectionTitle}>{isBusiness ? 'Contacts' : 'Other contacts'}</h3>
           <ul className="divide-y">
-            {contacts.map((c) => (
+            {shownContacts.map((c) => (
               <li key={c.id} className="flex items-center justify-between gap-3 py-2">
                 <div className="min-w-0">
                   <p className="flex items-center gap-1.5 text-sm font-medium">

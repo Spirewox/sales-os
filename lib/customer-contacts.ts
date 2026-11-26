@@ -21,11 +21,12 @@ export const primaryFirst = (list: CustomerContact[]) => [...list].sort((a, b) =
 
 /**
  * A customer's contacts, primary first. A business saved before contacts existed gets one primary
- * built from its own name, phone and email; it becomes a real contact on the next save.
+ * built from its own name, phone and email; it becomes a real contact on the next save. An individual
+ * has none until other contacts are added; their primary is always the individual themself.
  */
 export function contactsOf(c: Pick<Customer, 'type' | 'name' | 'phone' | 'email' | 'contacts'>): CustomerContact[] {
-  if (!isBusiness(c.type)) return [];
   if (c.contacts?.length) return primaryFirst(c.contacts);
+  if (!isBusiness(c.type)) return [];
   // Older records store a missing phone as a placeholder such as N/A: show an empty field instead.
   const phone = isPlaceholderPhone(c.phone) ? '' : c.phone;
   return [{ id: LEGACY_ID, name: c.name, phone, ...(c.email ? { email: c.email } : {}), isPrimary: true }];
@@ -65,10 +66,28 @@ export function removeContact(list: CustomerContact[], id: string): CustomerCont
 }
 
 let seq = 0;
-/** Append an empty contact; it is the primary when the list was empty. */
-export function addContact(list: CustomerContact[]): CustomerContact[] {
+/** Append an empty contact; it is the primary when the list was empty, unless `primary: false` (an individual's others). */
+export function addContact(list: CustomerContact[], opts: { primary?: boolean } = {}): CustomerContact[] {
   seq += 1;
-  return [...list, { id: `new-${Date.now().toString(36)}-${seq}`, name: '', phone: '', isPrimary: list.length === 0 }];
+  return [...list, { id: `new-${Date.now().toString(36)}-${seq}`, name: '', phone: '', isPrimary: opts.primary ?? list.length === 0 }];
+}
+
+/** Everyone but the primary: an individual's other contacts, such as a spouse or a driver. */
+export const otherContacts = (list: CustomerContact[]) => list.filter((x) => !x.isPrimary);
+
+/**
+ * The first problem with an individual's other contacts, or null: each needs a name and a WhatsApp
+ * number, and no number may repeat, the individual's own included.
+ */
+export function validateOtherContacts(others: CustomerContact[], personPhone: string | undefined): string | null {
+  if (others.some((x) => !x.name.trim() || !isRealPhone(x.phone))) return 'Each contact needs a name and a WhatsApp number.';
+  const seen = new Set<string>(personPhone && isRealPhone(personPhone) ? [normalisePhone(personPhone)] : []);
+  for (const x of others) {
+    const key = normalisePhone(x.phone);
+    if (seen.has(key)) return `${x.phone.trim()} is listed twice.`;
+    seen.add(key);
+  }
+  return null;
 }
 
 export const primaryContact = (list: CustomerContact[]) => list.find((x) => x.isPrimary);
@@ -93,10 +112,13 @@ export function contactsToIndividual(list: CustomerContact[]): { name: string; p
 }
 
 /**
- * Switching an individual back to a business in the same form: bring back the contacts set aside
- * on the way to individual, with the primary taking the individual's edited name, phone and email.
+ * The list with the person in the primary place: an individual's own name, phone and email, or the
+ * details typed as the individual before switching to a business. The others stay, never primary.
  */
-export function restoreBusinessContacts(parked: CustomerContact[], individual: { name: string; phone: string; email?: string }): CustomerContact[] {
-  if (!parked.length) return contactsOf({ type: 'B2B' as Customer['type'], ...individual });
-  return parked.map((x) => (x.isPrimary ? { ...x, name: individual.name, phone: individual.phone, email: individual.email } : x));
+export function withPerson(list: CustomerContact[], person: { name: string; phone: string; email?: string }): CustomerContact[] {
+  const others = otherContacts(list).map((x) => ({ ...x, isPrimary: false }));
+  const current = primaryContact(list);
+  const primary: CustomerContact = { ...(current ?? { id: LEGACY_ID }), name: person.name, phone: person.phone, email: person.email, isPrimary: true };
+  if (!primary.email) delete primary.email;
+  return [primary, ...others];
 }

@@ -21,7 +21,7 @@ export function customerExportColumns(outstanding: (customerId: string) => numbe
     { header: 'Joined', value: (c) => c.joinedDate },
     { header: 'Added by', value: (c) => c.addedByAgentName },
     { header: 'Business address', value: (c) => c.businessAddress },
-    // "Name (Role) phone [primary]; …", primary first, for a business's saved contacts.
+    // "Name (Role) phone [primary]; …", primary first: a business's contacts, or an individual and their other contacts.
     {
       header: 'Contacts',
       value: (c) => primaryFirst(c.contacts ?? [])
