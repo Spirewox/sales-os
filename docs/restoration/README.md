@@ -14,11 +14,11 @@ Each item is one of:
 | Inventory | 74 | 1 | 12 | 2 | [inventory.md](inventory.md) |
 | Customers and Engagement | 71 | 9 | 26 | 3 | [customers-engagement.md](customers-engagement.md) |
 | Sales and Credits | 76 | 8 | 13 | 1 | [sales-credits.md](sales-credits.md) |
-| Dashboard, Analytics and Insights | 86 | 9 | 26 | 3 | [dashboard-analytics.md](dashboard-analytics.md) |
+| Dashboard, Analytics and Insights | 77 | 15 | 25 | 7 | [dashboard-analytics.md](dashboard-analytics.md) |
 | Kitchen, POS, Settings and Audit | 81 | 22 | 11 | 0 | [kitchen-pos-settings-audit.md](kitchen-pos-settings-audit.md) |
-| **Total** | **453** | **55** | **107** | **11** | |
+| **Total** | **444** | **61** | **106** | **15** | |
 
-## The 11 items left out, and why
+## The 15 items left out, and why
 
 | Item | Why |
 |---|---|
@@ -32,11 +32,14 @@ Each item is one of:
 | Supplier order history: "Orders" count | Same number is in the drawer stats and on the tab badge on the same screen. |
 | Dashboard greeting and "Live" badge | Not information. |
 | Dashboard credit book "Total owed" | Same figure as the "Owed to you" KPI on the same screen. |
+| Analytics > Reports: What if (the what-if box, scenarios and levers; its examples; the projected outcome, tiles and chart; the recommendation, narrative and assumptions). Four items | Removed at the user's request on 27 Nov 2026. No other screen projects what-if outcomes. |
 | Dashboard "Stock value by category" and "Credit book" panels | Removed at the user's request on 21 Nov 2026. The same information is in Analytics > Inventory (stock value by category) and on the Credits page (owing, overdue, pending, balances). |
 
 ## New since the old UI (not removals)
 
-Analytics now has Inventory and Suppliers tabs, Requests have a detail drawer, POS shows average sale, Audit trail exports CSV, and every list has rows-per-page.
+Analytics now has Inventory and Suppliers tabs, Requests have a detail drawer, POS shows average sale, and every list has rows-per-page.
+
+Since 26 Nov 2026 (see [docs/features](../features/README.md)): every list has an Export button (Excel, CSV, PDF), products can be archived and restored, business customers have several contacts, users can manage several locations, and Analytics has a Reports tab with ready-made and custom reports, which also holds Ask (Explore's Build a chart is its report builder).
 
 ## Data notes
 

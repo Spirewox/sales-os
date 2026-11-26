@@ -1,36 +1,59 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Sales OS (FudFarmer CRM)
 
-## Getting Started
+The web app for FudFarmer's sales, customers, credit, inventory, suppliers, kitchen, POS and analytics. Next.js 16
+(App Router), React 19, TanStack Query and Tailwind v4, talking to a separate Nest API.
 
-First, run the development server:
+## Run it
+
+```bash
+npm install
+```
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000 (the in-app preview runs it on 3456: `npm run dev -- -p 3456`).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **With an API:** set `NEXT_PUBLIC_API_URL` to the Nest API.
+- **Without one (mock mode):** leave it unset. `next dev` then answers every call from sample data in
+  `lib/mock-api/`, so the whole app can be used and designed without a backend. Sign in with any email and password
+  (the Company Admin), or an email starting `multi@` (a Hub Manager of three locations). Data resets on a full reload.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Check it
 
-## Learn More
+```bash
+npm test
+```
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+node scripts/check.mjs
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run lint
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `npm test` runs `node --test` over `lib/**/*.test.ts`. Feature rules live in pure `lib/` modules so they can be
+  tested without a browser.
+- `node scripts/check.mjs` is the design-system check (components, tokens, copy rules and the docs in `docs/system`).
+  It must exit 0. `node scripts/check-system.mjs --explain <rule-id>` explains a finding.
+- `npm run storybook` shows the component kit on port 6006.
 
-## Deploy on Vercel
+## Docs
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| | |
+|---|---|
+| [docs/features](docs/features/README.md) | Features added in November 2026: data export, inventory archiving, business contacts, multi-location managers, reports. Each page has what a person sees, the rules and the backend API contract. |
+| [docs/restoration](docs/restoration/README.md) | Every KPI, chart, column and field of the old UI, and where it is now |
+| [docs/system](docs/system) and [public/system](public/system) | The design system: one page per component, and the rules |
+| [docs/superpowers/plans](docs/superpowers/plans/2026-11-26-README.md) | The implementation plans the November features were built from |
+| [AGENTS.md](AGENTS.md) | Rules for anyone (or any agent) changing the UI |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Conventions
+
+- Use the kit in `@/components/app` and the primitives in `@/components/ui`, with the tokens in `app/globals.css`.
+- UI copy is in sentence case with no em-dashes. Customers are contacted by WhatsApp only: no Call buttons.
+- Never remove a KPI, chart, section, column or field unless the same information is visible elsewhere; record moves in
+  `docs/restoration`.
+- This is Next.js 16: read the relevant guide in `node_modules/next/dist/docs/` before changing routing or data code.

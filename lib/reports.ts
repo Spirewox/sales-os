@@ -164,3 +164,18 @@ export function kpiRows<T>(cells: T[]): T[][] {
   const size = Math.ceil(cells.length / rows);
   return Array.from({ length: rows }, (_, i) => cells.slice(i * size, (i + 1) * size)).filter((r) => r.length > 0);
 }
+
+/**
+ * What a custom report's summary says about its rows: how many groups, the top one by the first
+ * column, and that group's share of the total when the column adds up (never for an average).
+ */
+export function customReportSummary(rows: CustomReportRow[], measure: string, additive: boolean): { groups: number; top: CustomReportRow | null; share: number | null } {
+  if (rows.length === 0) return { groups: 0, top: null, share: null };
+  const top = rows.reduce((best, r) => ((r.values[measure] ?? 0) > (best.values[measure] ?? 0) ? r : best));
+  const total = rows.reduce((n, r) => n + (r.values[measure] ?? 0), 0);
+  const share = additive && total > 0 ? Math.round(((top.values[measure] ?? 0) / total) * 1000) / 10 : null;
+  return { groups: rows.length, top, share };
+}
+
+/** A row's share of a column's total, as a percentage with one decimal. */
+export const shareOfTotal = (value: number, total: number) => (total > 0 ? Math.round((value / total) * 1000) / 10 : 0);

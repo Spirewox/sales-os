@@ -8,7 +8,8 @@ import { DataTable, EmptyState, KpiStrip, type Column, type KpiCell } from '@/co
 import type { useCustomReport } from '@/hooks/use-reports';
 import { useExport } from '@/hooks/use-export';
 import { DATASETS, type Filter } from '@/lib/explore';
-import { kpiRows, type CustomReportRow, type SavedReport } from '@/lib/reports';
+import { customReportSummary, kpiRows, shareOfTotal, type CustomReportRow, type SavedReport } from '@/lib/reports';
+import { formatCount } from '@/lib/format';
 import { ResultChart, fmtExact, fmtShort } from './explore-shared';
 
 type Report = ReturnType<typeof useCustomReport>;
@@ -41,6 +42,7 @@ export function useCustomReportExport({ module, title, dataset, groupBy, measure
   const ds = DATASETS.find((d) => d.key === dataset);
   const cols = columnMeta(dataset, measures, report);
   const groupLabel = report.groupLabel || ds?.fields.find((f) => f.key === groupBy)?.label || 'Group';
+  const firstTotal = (report.rows ?? []).reduce((n, r) => n + (r.values[cols[0]?.measure] ?? 0), 0);
   const filterLabels = filters
     .filter((f) => f.values.length > 0)
     .map((f) => `${ds?.fields.find((x) => x.key === f.field)?.label ?? f.field}: ${f.values.join(', ')}`);
@@ -48,7 +50,12 @@ export function useCustomReportExport({ module, title, dataset, groupBy, measure
     module,
     title,
     noun: { one: 'row', many: 'rows' },
-    columns: [{ header: groupLabel, value: (r) => r.label }, ...cols.map((c) => ({ header: c.label, value: (r: CustomReportRow) => r.values[c.measure] ?? 0 }))],
+    columns: [
+      { header: groupLabel, value: (r) => r.label },
+      ...cols.map((c) => ({ header: c.label, value: (r: CustomReportRow) => r.values[c.measure] ?? 0 })),
+      // The same Share column as the table, for a first column that adds up.
+      ...(cols[0]?.additive ? [{ header: 'Share %', value: (r: CustomReportRow) => shareOfTotal(r.values[cols[0].measure] ?? 0, firstTotal) }] : []),
+    ],
     filters: () => [meta.rangeLabel, meta.locationLabel, ...filterLabels],
     fetchPage: async () => ({ items: report.rows ?? [], totalPages: 1 }),
     disabled: !report.rows?.length || report.isFetching,
@@ -86,13 +93,22 @@ export function CustomReportResults({ report, dataset, groupBy, measures, chart,
   }
 
   const rows: Row[] | undefined = report.rows?.map((r) => ({ ...r, __id: r.key }));
-  // Averages and distinct counts do not add up across groups; when no column does, the strongest group stands in.
+  // Totals only for columns that add up (averages and distinct counts do not), then the top group by the
+  // first column with its share, and how many groups there are: what Explore's summary strip showed.
   const totals = cols.filter((c) => c.additive);
   const first = cols[0];
-  const top = rows?.reduce<Row | undefined>((best, r) => (!best || r.values[first.measure] > best.values[first.measure] ? r : best), undefined);
-  const cells: KpiCell[] = totals.length
-    ? totals.map((c) => ({ label: `Total ${c.label.toLowerCase()}`, value: showShort(c.total, c) }))
-    : [{ label: `Top ${groupLabel.toLowerCase()}`, value: top?.label ?? '-', detail: top ? `${first.label} ${showShort(top.values[first.measure], first)}` : undefined }];
+  const summary = customReportSummary(rows ?? [], first.measure, first.additive);
+  const groupNoun = groupLabel.toLowerCase();
+  const cells: KpiCell[] = [
+    ...totals.map((c) => ({ label: `Total ${c.label.toLowerCase()}`, value: showShort(c.total, c) })),
+    {
+      label: `Top ${groupNoun}`,
+      value: summary.top?.label ?? '-',
+      detail: summary.top ? `${first.label} ${showShort(summary.top.values[first.measure], first)}${summary.share != null ? `, ${summary.share}%` : ''}` : undefined,
+    },
+    { label: `${groupLabel} groups`, value: formatCount(summary.groups) },
+  ];
+  const firstTotal = (rows ?? []).reduce((n, r) => n + (r.values[first.measure] ?? 0), 0);
 
   const columns: Column<Row>[] = [
     { id: 'group', header: groupLabel, cell: (r) => r.label, sortValue: (r) => r.label, mobile: 'title' },
@@ -104,6 +120,13 @@ export function CustomReportResults({ report, dataset, groupBy, measures, chart,
       sortValue: (r) => r.values[c.measure] ?? 0,
       mobile: i === 0 ? 'value' : 'meta',
     })),
+    // Each group's share of the first column, when that column adds up.
+    ...(first.additive ? [{
+      id: '__share', header: 'Share', align: 'right' as const,
+      cell: (r: Row) => <span className="tabular-nums">{shareOfTotal(r.values[first.measure] ?? 0, firstTotal).toFixed(1)}%</span>,
+      sortValue: (r: Row) => r.values[first.measure] ?? 0,
+      mobile: 'meta' as const,
+    }] : []),
   ];
 
   return (

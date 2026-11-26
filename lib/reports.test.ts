@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  REPORTS, MAX_REPORT_COLUMNS, kpiRows, reportChart, customReportName, mergeMeasureRows, reportDraftError, savedReportMeasures, reportExportColumns, reportKpiColumns, reportQueryKey, reportRowsWithTotal, resolveReportParam, savedReportRunnable, summableColumns, visibleReports,
+  REPORTS, MAX_REPORT_COLUMNS, customReportSummary, kpiRows, reportChart, customReportName, mergeMeasureRows, reportDraftError, savedReportMeasures, reportExportColumns, reportKpiColumns, reportQueryKey, reportRowsWithTotal, resolveReportParam, savedReportRunnable, summableColumns, visibleReports,
   type ReportResult, type SavedReport,
 } from './reports';
 import { buildCsv } from './export';
@@ -189,5 +189,21 @@ describe('kpiRows', () => {
     assert.deepEqual(sizes(6), [3, 3]);
     assert.deepEqual(sizes(7), [4, 3]);
     assert.deepEqual(sizes(8), [4, 4]);
+  });
+});
+
+describe('customReportSummary', () => {
+  const rows = [
+    { key: 'Lagos', label: 'Lagos', values: { revenue: 300, aov: 50 } },
+    { key: 'Ife', label: 'Ife', values: { revenue: 100, aov: 80 } },
+  ];
+  it('names the top group by the first column, with its share when that column adds up', () => {
+    assert.deepEqual(customReportSummary(rows, 'revenue', true), { groups: 2, top: rows[0], share: 75 });
+  });
+  it('gives no share for an average', () => {
+    assert.deepEqual(customReportSummary(rows, 'aov', false), { groups: 2, top: rows[1], share: null });
+  });
+  it('handles no rows', () => {
+    assert.deepEqual(customReportSummary([], 'revenue', true), { groups: 0, top: null, share: null });
   });
 });

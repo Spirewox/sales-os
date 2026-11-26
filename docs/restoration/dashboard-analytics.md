@@ -5,7 +5,9 @@ Baseline: commit `03f1417` (before the redesign): `app/(app)/page.tsx`, `app/(ap
 `components/metrics-period-bar.tsx`, `components/insight-button.tsx`, `hooks/use-insights-api.ts`,
 `hooks/use-insight-data-bundle.ts`.
 
-Totals: 124 items. Kept 86, moved 9, restored 26, left out 3 (the greeting, the "Live" badge and the credit book's Total owed, which repeats a KPI on the same screen).
+Totals: 124 items. Kept 77, moved 15, restored 25, left out 7 (the greeting, the "Live" badge, the credit book's Total owed, which repeats a KPI on the same screen, and the four What if items, removed at the user's request on 27 Nov 2026).
+
+Update 27 Nov 2026: Explore was folded into Analytics > Reports. Ask is a view of Reports, and Build a chart is the report builder (New report), so its six items moved there. What if was removed. See [docs/features/reports.md](../features/reports.md).
 
 ## Dashboard
 
@@ -117,30 +119,30 @@ Totals: 124 items. Kept 86, moved 9, restored 26, left out 3 (the greeting, the 
 | Tab: Compare | Tabs | Kept |
 | Inventory and Suppliers tabs | (new) | Owned by other agents; not in this ledger |
 
-## Insights (now Analytics > Explore and Compare)
+## Insights (now Analytics > Reports and Compare)
 
 | Item | Old location | Status |
 |---|---|---|
-| Insights page with Ask / Explore / Simulate / Compare modes | /insights | Moved to Analytics > Explore (Ask, Build a chart, What if) and Analytics > Compare. /insights redirects, keeping ?ask=, ?mode= and kind/a/b |
+| Insights page with Ask / Explore / Simulate / Compare modes | /insights | Moved to Analytics > Reports (Ask is a view of Reports, Explore is the report builder, New report) and Analytics > Compare. Simulate (What if) was left out on 27 Nov, see below. /insights redirects, keeping ?ask= and kind/a/b |
 | Hub and period filters | Insights header | Moved to the Analytics filter row (same scope for every tab) |
 | Ask box | Ask | Kept |
 | Ask examples (10) | Ask | Restored: 4 shown, the other 6 behind "More examples" |
 | Answer narrative and "Understood as" chips | Ask | Kept |
-| Refine into the builder | Ask | Kept |
+| Refine into the builder | Ask | Kept: "Open as a report" opens Reports > New report with the question's data, breakdown and filters |
 | Find records list (count, sort, total, dates, tags, links) | Ask | Kept (tags fold into the subtitle line) |
 | Ask comparison result | Ask | Kept, with "Open in Compare" |
 | Ask chart and AI insight button | Ask | Kept |
 | Recent questions | (new) | Kept |
-| Explore datasets with descriptions | Explore | Kept (dataset select with its description) |
-| Measure, break down by, chart type | Explore | Kept; Pie is shown as ranked bars with shares (same numbers) |
-| Filters with value chips | Explore | Kept |
-| Total, number of groups, top group with share | Explore | Kept: query summary strip |
-| Result table with share and total | Explore | Kept |
-| "Showing top 12 of N" | Explore | Kept; ranked bars now also offer "Show all" |
-| Simulate: what-if box, scenarios, levers | Simulate | Kept |
-| Simulate examples (6) | Simulate | Restored: 4 shown, 2 behind "More examples" |
-| Projected outcome, metric tiles, baseline vs projected chart | Simulate | Kept |
-| Recommendation, narrative, assumptions | Simulate | Kept |
+| Explore datasets with descriptions | Explore | Moved to Reports > New report: "Data" select with its description (27 Nov) |
+| Measure, break down by, chart type | Explore | Moved to Reports > New report: "Columns" (one or up to 8), "One row per" and "Show as". Pie is shown as ranked bars with shares (same numbers) |
+| Filters with value chips | Explore | Moved to Reports > New report: Filters, values as checkbox chips |
+| Total, number of groups, top group with share | Explore | Moved to the report summary: a total for each column that adds up, "Top <group>" with its share, and "<group> groups" |
+| Result table with share and total | Explore | Moved to the report table, with a Share column for the first column; the total is in the summary |
+| "Showing top 12 of N" | Explore | Moved to the report chart (same note; ranked bars offer "Show all"; a line shows every point). The table lists every row |
+| Simulate: what-if box, scenarios, levers | Simulate | Left out: What if was removed at the user's request on 27 Nov 2026 |
+| Simulate examples (6) | Simulate | Left out: removed with What if (27 Nov 2026) |
+| Projected outcome, metric tiles, baseline vs projected chart | Simulate | Left out: removed with What if (27 Nov 2026) |
+| Recommendation, narrative, assumptions | Simulate | Left out: removed with What if (27 Nov 2026) |
 | Insights Compare (all 7 entity kinds) | Compare | Moved to Analytics > Compare: the duplicate was merged; every kind is under Products, Customers or General |
 | Compare: score, leader, metric wins | Compare | Kept |
 | Compare: per-metric winner and its lead % | Compare | Restored at Analytics > Compare > Table view ("N% ahead" next to the winning value) |

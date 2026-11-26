@@ -5,6 +5,7 @@ Changes to the design system docs and tokens, newest first.
 
 ## 2026-11-26
 
+- Export a report while building it (`485d571`)
 - Tidy the Reports screens (`864c5f0`)
 - Remove What if from Reports (`420699a`)
 - Fold Explore into Reports and drop Sales by staff (`933f337`)
