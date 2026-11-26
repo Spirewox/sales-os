@@ -330,6 +330,16 @@ export interface Task {
   createdBy: string;
 }
 
+/** One person at a business customer, reached on WhatsApp. One contact per business is primary. */
+export interface CustomerContact {
+  id: string;
+  name: string;
+  role?: string;
+  phone: string;
+  email?: string;
+  isPrimary: boolean;
+}
+
 export interface Customer {
   id: string;
   name: string;
@@ -347,6 +357,9 @@ export interface Customer {
   addedByAgentId?: string;
   addedByAgentName?: string;
   businessCategory?: string;
+  /** Business customers: their people, primary first. The primary is also `name`, `phone` and `email`. */
+  contacts?: CustomerContact[];
+  businessAddress?: string;
   gender?: string;
   familyType?: string;
   maritalStatus?: string;

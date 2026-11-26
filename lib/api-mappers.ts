@@ -233,6 +233,8 @@ export function mapCustomer(c: ApiCustomer, hubMap?: Record<string, string>): Cu
     addedByAgentId: assigned?._id || refId(c.assigned_agent) || undefined,
     addedByAgentName: assigned?.full_name || addedBy?.full_name || undefined,
     businessCategory: c.business_category,
+    contacts: c.contacts?.map((x) => ({ id: x._id, name: x.name, role: x.role, phone: x.phone, email: x.email, isPrimary: x.is_primary === true })),
+    businessAddress: c.business_address,
     gender: c.gender,
     familyType: c.family_type,
     maritalStatus: c.marital_status,

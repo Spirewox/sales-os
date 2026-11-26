@@ -212,6 +212,8 @@ export interface ApiCustomer {
   assigned_agent?: string | { _id?: string; full_name?: string };
   added_by?: string | { _id?: string; full_name?: string };
   business_category?: string;
+  contacts?: { _id: string; name: string; role?: string; phone: string; email?: string; is_primary: boolean }[];
+  business_address?: string;
   gender?: string;
   family_type?: string;
   marital_status?: string;
