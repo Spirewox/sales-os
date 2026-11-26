@@ -3,11 +3,12 @@
  * Installed by lib/api.ts when MOCK_API is on (next dev + no NEXT_PUBLIC_API_URL).
  * Writes succeed but are not persisted, reloads show the original sample data.
  */
-import type { AxiosAdapter, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
+import { AxiosError, type AxiosAdapter, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
 import type { ApiSale, AnalyticsOverviewData, ApiCustomer } from '@/types/api';
 import { MOCK_USER } from '@/lib/mock-auth';
 import * as db from './data';
 import { kitchenJobList, kitchenJobs } from './kitchen-fixtures';
+import { archiveProduct, filterProducts, restoreProduct } from './products';
 
 const { NOW, DAY } = db;
 
@@ -503,11 +504,7 @@ const GET_ROUTES: Route[] = [
   [/^customers\/([^/]+)$/, (m) => ok(db.customers.find((c) => c._id === m[1]) ?? db.customers[0])],
   [/^sales$/, (_m, q) => salesList(q)],
   [/^sales\/([^/]+)$/, (m) => ok(db.sales.find((s) => s._id === m[1]) ?? null)],
-  [/^inventory$/, (_m, q) => ok(db.products.filter((p) =>
-    (!q.get('category') || p.category === q.get('category')) &&
-    (!q.get('hub_id') || refId(p.hub) === q.get('hub_id')) &&
-    (q.get('low_stock') !== 'true' || p.current_stock <= p.min_stock_level) &&
-    matches(q, p.name, p.sku)))],
+  [/^inventory$/, (_m, q) => ok(filterProducts(db.products, q))],
   [/^inventory\/sales-metrics$/, (_m, q) => inventorySalesMetrics(q)],
   [/^inventory\/stock-logs$/, (_m, q) => {
     // The API takes `type=PURCHASE`; mock rows say "Purchase", so compare case-insensitively.
@@ -598,6 +595,13 @@ function route(method: string, path: string, q: URLSearchParams, body: unknown):
   }
   if (path === 'auth/login') return { status: 200, data: ok({ ...MOCK_USER }) };
   if (path === 'pos/live-ticket') return { status: 200, data: ok(null) };
+  // Archive and restore change the in-memory products, so the change shows until a reload.
+  const archive = method === 'patch' ? path.match(/^inventory\/([^/]+)\/(archive|restore)$/) : null;
+  if (archive) {
+    return archive[2] === 'archive'
+      ? archiveProduct(db.products, db.inventoryRequests, archive[1], { _id: MOCK_USER.id, full_name: MOCK_USER.name }, new Date().toISOString())
+      : restoreProduct(db.products, archive[1]);
+  }
   if (/^hub\/[^/]+\/pos-enrollment-codes$/.test(path)) return { status: 200, data: ok({ code: '482913', expiresAt: new Date(NOW.getTime() + 15 * 60_000).toISOString(), hubId: path.split('/')[1], hubName: '' }) };
   if (path === 'notifications/preferences') {
     Object.assign(alertPrefs, body && typeof body === 'object' ? body : {});
@@ -625,5 +629,8 @@ export const mockAdapter: AxiosAdapter = async (config: InternalAxiosRequestConf
     res.data = new Blob(['Mock export, no backend connected.'], { type: 'text/plain' });
   }
   if (process.env.NODE_ENV === 'development') console.debug(`[mock-api] ${method.toUpperCase()} /${raw}`);
-  return { data: res.data, status: res.status, statusText: 'OK', headers: {}, config, request: {} } as AxiosResponse;
+  const response = { data: res.data, status: res.status, statusText: res.status < 400 ? 'OK' : 'Error', headers: {}, config, request: {} } as AxiosResponse;
+  // Like a real server, an error status rejects, so callers read the message from the body.
+  if (res.status >= 400) throw new AxiosError(`Request failed with status code ${res.status}`, AxiosError.ERR_BAD_REQUEST, config, {}, response);
+  return response;
 };

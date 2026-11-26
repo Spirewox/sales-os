@@ -8,6 +8,7 @@ import { axiosGet, axiosPost, axiosPatch, axiosDelete, axiosGetBlob, axiosPostFo
 import { customerTypeToApi, customerCompanyNameForApi, customerPhoneForApi } from '@/lib/customer-helpers';
 import { mapApiUser } from '@/lib/utils';
 import { readListMeta } from '@/lib/fetch-all-pages';
+import type { ArchiveStatus } from '@/lib/inventory-archive';
 import { readWhoAmICache, writeWhoAmICache } from '@/lib/whoami-cache';
 import { MOCK_AUTH, MOCK_USER, hasMockSession } from '@/lib/mock-auth';
 import {
@@ -98,6 +99,7 @@ import {
   Enquiry,
   Feedback,
   Hub,
+  InventoryItem,
   FeedbackType,
   FeedbackPriority,
   CustomerListResult,
@@ -1506,7 +1508,7 @@ export function useImportInventory() {
 }
 
 // --- Inventory ---
-export function useInventory(filters?: { hub_id?: string; category?: string; low_stock?: boolean; search?: string }, options?: { enabled?: boolean }) {
+export function useInventory(filters?: { hub_id?: string; category?: string; low_stock?: boolean; search?: string; status?: ArchiveStatus }, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['inventory', filters],
     enabled: options?.enabled ?? true,
@@ -1518,12 +1520,35 @@ export function useInventory(filters?: { hub_id?: string; category?: string; low
         category: filters?.category,
         search: filters?.search,
         low_stock: filters?.low_stock ? 'true' : undefined,
+        // Active is the API's default; pickers and live stock leave it out.
+        status: filters?.status && filters.status !== 'active' ? filters.status : undefined,
       };
       const res = await axiosGet(`inventory${buildQuery(params)}`, true) as ApiListResponse<ApiProduct[]>;
       return (res.data ?? []).map((p) => mapInventoryItem(p, hubMap));
     },
   });
 }
+
+function useProductStatusChange(action: 'archive' | 'restore') {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id }: { id: string }): Promise<InventoryItem> => {
+      requireApi();
+      const hubMap = await fetchHubMap();
+      const res = await axiosPatch(`inventory/${encodeURIComponent(id)}/${action}`, {}, true) as { data: ApiProduct };
+      return mapInventoryItem(res.data, hubMap);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['inventory'] });
+      qc.invalidateQueries({ queryKey: ['inventory-sales-metrics'] });
+    },
+  });
+}
+
+/** Archive a product: it leaves the stock list and pickers; its history stays. 409 while stock or open requests remain. */
+export const useArchiveProduct = () => useProductStatusChange('archive');
+/** Bring an archived product back to the stock list and pickers. */
+export const useRestoreProduct = () => useProductStatusChange('restore');
 
 export function useInventorySalesMetrics(filters?: {
   hub_id?: string;
