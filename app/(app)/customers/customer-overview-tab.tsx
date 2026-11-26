@@ -2,10 +2,13 @@
 
 import { useState } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
-import { Check, Copy } from 'lucide-react';
+import { Check, Copy, MessageCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { StatusBadge } from '@/components/app';
+import { contactsOf } from '@/lib/customer-contacts';
 import { Customer, CustomerType } from '@/types';
 import { CHART_TOOLTIP, formatAxisMoney, formatDate, formatMoney, plural } from '@/lib/format';
-import { hasPhone } from './customer-links';
+import { hasPhone, whatsappHref } from './customer-links';
 import { SegmentChips } from './customer-segments';
 import type { PurchaseAnalytics } from './customer-analytics';
 import { customerTypeLabel } from './customer-form';
@@ -41,8 +44,11 @@ export function CustomerOverviewTab({ customer, segments, analytics, trend }: Re
   analytics: PurchaseAnalytics | null;
   trend: { month: string; amount: number }[];
 }>) {
-  const profile = customer.type === CustomerType.B2B
-    ? [{ label: 'Category', value: customer.businessCategory }]
+  const isBusiness = customer.type === CustomerType.B2B;
+  // Primary first; an older business shows its own name and phone as its one contact.
+  const contacts = contactsOf(customer);
+  const profile = isBusiness
+    ? [{ label: 'Category', value: customer.businessCategory }, { label: 'Business address', value: customer.businessAddress }]
     : [
         { label: 'Gender', value: customer.gender },
         { label: 'Family type', value: customer.familyType },
@@ -121,6 +127,37 @@ export function CustomerOverviewTab({ customer, segments, analytics, trend }: Re
           <dl className="divide-y">{filled.map((r) => <Row key={r.label} label={r.label}>{r.value}</Row>)}</dl>
         )}
       </section>
+
+      {isBusiness && (
+        <section>
+          <h3 className={sectionTitle}>Contacts</h3>
+          <ul className="divide-y">
+            {contacts.map((c) => (
+              <li key={c.id} className="flex items-center justify-between gap-3 py-2">
+                <div className="min-w-0">
+                  <p className="flex items-center gap-1.5 text-sm font-medium">
+                    <span className="truncate">{c.name || 'Unnamed contact'}</span>
+                    {c.isPrimary && <StatusBadge tone="good">Primary</StatusBadge>}
+                  </p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {[c.role, hasPhone(c.phone) ? c.phone : null, c.email].filter(Boolean).join(', ')}
+                  </p>
+                </div>
+                {hasPhone(c.phone) && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    nativeButton={false}
+                    render={<a href={whatsappHref(c.phone)} target="_blank" rel="noopener noreferrer" aria-label={`WhatsApp ${c.name || c.phone}`} />}
+                  >
+                    <MessageCircle aria-hidden /> WhatsApp
+                  </Button>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section>
         <h3 className={sectionTitle}>Segments</h3>
