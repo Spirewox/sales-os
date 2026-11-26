@@ -14,6 +14,8 @@ import { customerSearchFields, saveCustomer } from './customers';
 import { filterUsers, saveUser } from './users';
 import { buildReport } from './reports';
 import { deleteSavedReport, saveReport } from './saved-reports';
+import { runMockExplore, type ExploreBody } from './explore';
+import { DATASETS } from '@/lib/explore';
 import type { SavedReport } from '@/lib/reports';
 
 /** Saved reports for this browser session (the signed-in persona's own). */
@@ -612,6 +614,14 @@ function route(method: string, path: string, q: URLSearchParams, body: unknown):
   }
   if (path === 'auth/login') return { status: 200, data: ok({ ...currentMockUser() }) };
   if (path === 'pos/live-ticket') return { status: 200, data: ok(null) };
+  // Explore Build: the Sales dataset over the sample sales, for the period and location in the body.
+  if (method === 'post' && path === 'insights/explore/query') {
+    const b = (body ?? {}) as ExploreBody & Record<string, unknown>;
+    const scope = new URLSearchParams(['hub_id', 'period', 'date_from', 'date_to'].flatMap((k) => (typeof b[k] === 'string' ? [[k, b[k] as string]] : [])));
+    const res = runMockExplore(db, b, { inRange: (d) => inRange(d, scope), inScope: (h) => inScope(scope, h) });
+    const ds = DATASETS.find((d) => d.key === b.dataset);
+    return { status: 200, data: ok({ ...res, measureLabel: ds?.measures.find((m) => m.key === b.measure)?.label ?? '', groupLabel: ds?.fields.find((f) => f.key === b.groupBy)?.label ?? '' }) };
+  }
   // Saved reports: one person's Explore queries, kept by name until a reload.
   if (method === 'post' && path === 'analytics/reports/saved') {
     const saved = saveReport(savedReports, (body ?? {}) as Parameters<typeof saveReport>[1], new Date().toISOString());

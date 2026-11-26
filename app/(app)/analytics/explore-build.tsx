@@ -1,15 +1,17 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, Plus, X } from 'lucide-react';
+import { Bookmark, Loader2, Plus, X } from 'lucide-react';
 import { useExploreFieldValues, useExploreQuery, type InsightScopeParams } from '@/hooks/use-insights-api';
 import { DATASETS, type Filter, type QueryResult } from '@/lib/explore';
 import { cn } from '@/lib/utils';
 import { InsightButton } from '@/components/insight-button';
 import { KpiStrip } from '@/components/app';
+import { Button } from '@/components/ui/button';
 import { Panel } from './analytics-ui';
 import { CHART_KINDS, Pending, ResultChart, TwoPane, fmtShort, selectClass, type ChartKind } from './explore-shared';
 import type { SeedQuery } from './explore-ask';
+import { SaveReportDialog } from './save-report-dialog';
 
 type ExploreApiResult = QueryResult & { measureLabel: string; groupLabel: string; measureKind: 'money' | 'number' };
 
@@ -22,6 +24,7 @@ export function ExploreBuild({ scope, seed }: Readonly<{ scope: InsightScopePara
   const [chart, setChart] = useState<ChartKind>('column');
   const [result, setResult] = useState<ExploreApiResult | null>(null);
   const exploreMut = useExploreQuery();
+  const [saving, setSaving] = useState(false);
 
   // New dataset: start again from its first measure and field.
   const pickDataset = (key: string) => {
@@ -81,6 +84,9 @@ export function ExploreBuild({ scope, seed }: Readonly<{ scope: InsightScopePara
           {CHART_KINDS.map(([k, label]) => <option key={k} value={k}>{label}</option>)}
         </select>
       </div>
+      <Button variant="outline" onClick={() => setSaving(true)} disabled={!result || exploreMut.isPending}>
+        <Bookmark aria-hidden /> Save as report
+      </Button>
 
       <div className="space-y-2 border-t pt-4">
         <p className="text-xs font-medium text-muted-foreground">Filters</p>
@@ -144,7 +150,18 @@ export function ExploreBuild({ scope, seed }: Readonly<{ scope: InsightScopePara
     </>
   );
 
-  return <TwoPane controls={controls} results={results} />;
+  return (
+    <>
+      <TwoPane controls={controls} results={results} />
+      {saving && (
+        <SaveReportDialog
+          query={{ dataset: dsKey, measure, groupBy, filters, chart }}
+          defaultName={`${measureLabel} by ${groupLabel.toLowerCase()}`}
+          onClose={() => setSaving(false)}
+        />
+      )}
+    </>
+  );
 }
 
 function FilterValues({ dataset, field, label, selected, onChange, scope }: Readonly<{ dataset: string; field: string; label: string; selected: string[]; onChange: (values: string[]) => void; scope: InsightScopeParams }>) {

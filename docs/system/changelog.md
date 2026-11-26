@@ -5,6 +5,7 @@ Changes to the design system docs and tokens, newest first.
 
 ## 2026-11-26
 
+- Add the Reports tab to Analytics (`2882bc2`)
 - Fix multi-location review findings (`aa05a9a`)
 - Assign several locations to a user (`b7d8e74`)
 - Fix business contacts review findings (`edcea21`)
