@@ -17,7 +17,7 @@ Foundation: `@base-ui/react Popover`, with the app's own `Calendar` (`components
 Default: `docs/system/examples/period-select/default.tsx`, set to "Last 30 days".
 
 Real uses, 8 call sites (`rg -n "<PeriodSelect\b" app components lib --glob '*.{tsx,jsx}' --glob '!components/app/**'`), all with `value` and `onChange` only:
-- Analytics header: `app/(app)/analytics/page.tsx:96`, local state.
+- Analytics header: `app/(app)/analytics/page.tsx:98`, local state.
 - Inventory, sales trends card: `app/(app)/inventory/sales-trends.tsx:36`, local state.
 - Inventory, movements: `app/(app)/inventory/movements-tab.tsx:140`, written to the URL with `periodToParams`.
 - Audit log: `app/(app)/audit/page.tsx:190`, URL with fallback `'all'`.

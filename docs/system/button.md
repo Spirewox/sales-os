@@ -20,7 +20,7 @@ Foundation: `shadcn button (base-nova, base)`, on `@base-ui/react/button`. Traps
 ## Examples
 Default: `docs/system/examples/button/default.tsx`.
 
-Real uses, 13 call sites (`rg -n "<Button(\s|/|>|$)" app components lib --glob '*.tsx' --glob '!components/ui/**'`):
+Real uses, 15 call sites (`rg -n "<Button(\s|/|>|$)" app components lib --glob '*.tsx' --glob '!components/ui/**'`):
 - Sales detail drawer, the migration's first screens: Save changes `app/(app)/sales/sale-detail-panel.tsx:74`, the void confirm `app/(app)/sales/sale-detail-panel.tsx:135` (`destructive-solid`) and the tab's save `app/(app)/sales/sale-detail-tabs.tsx:60`, all `size="control"` with `loading` in place of SubmitButton.
 - Customer profile, a contact's WhatsApp: `app/(app)/customers/customer-overview-tab.tsx:147` (`outline`, `sm`, rendered as a link with `nativeButton={false}`).
 - Customer contacts editor: Make primary `app/(app)/customers/contacts-editor.tsx:40` (`ghost`, `xs`), remove a contact `app/(app)/customers/contacts-editor.tsx:43` (`ghost`, `icon-sm`) and Add contact `app/(app)/customers/contacts-editor.tsx:71` (`ghost`, `sm`).

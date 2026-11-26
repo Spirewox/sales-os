@@ -5,6 +5,7 @@ Changes to the design system docs and tokens, newest first.
 
 ## 2026-11-26
 
+- Fix multi-location review findings (`aa05a9a`)
 - Assign several locations to a user (`b7d8e74`)
 - Fix business contacts review findings (`edcea21`)
 - Show business contacts with WhatsApp on the customer profile (`2ddddcd`)

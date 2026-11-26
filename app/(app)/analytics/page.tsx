@@ -21,11 +21,12 @@ import { ProductsTab } from './products-tab';
 import { CustomersTab } from './customers-tab';
 import { CreditTab } from './credit-tab';
 import { ExploreTab } from './explore-tab';
+import { ReportsTab } from './reports-tab';
 import { InventoryTab } from './inventory-tab';
 import { LocationsTab } from './locations-tab';
 import { SuppliersTab } from './suppliers-tab';
 
-type AnalyticsTab = 'sales' | 'products' | 'customers' | 'credit' | 'locations' | 'inventory' | 'suppliers' | 'kitchen' | 'compare' | 'explore';
+type AnalyticsTab = 'sales' | 'products' | 'customers' | 'credit' | 'locations' | 'inventory' | 'suppliers' | 'kitchen' | 'compare' | 'explore' | 'reports';
 const OVERVIEW_TABS: AnalyticsTab[] = ['sales', 'products', 'customers', 'credit'];
 
 /** "1 Nov to 20 Nov 2026", or "All available data" for All time. */
@@ -60,6 +61,7 @@ function Analytics() {
     { id: 'kitchen', label: 'Kitchen', hidden: !can('kitchen.view') },
     { id: 'compare', label: 'Compare' },
     { id: 'explore', label: 'Explore' },
+    { id: 'reports', label: 'Reports' },
   ];
   const tab = useSectionTab(tabDefs, 'sales');
 
@@ -144,6 +146,8 @@ function Analytics() {
           />
         ) : tab === 'explore' ? (
           <ExploreTab scope={scope} periodLabel={periodLabel} />
+        ) : tab === 'reports' ? (
+          <ReportsTab scope={scope} rangeLabel={activeRange(period)} locationLabel={hubScope.filterHub === 'All' ? hubScope.allLabel : hubScope.filterHub} />
         ) : overview.isError ? (
           <EmptyState title="Could not load analytics" description="Check your connection and try again." />
         ) : loadingOverview || !data ? (
