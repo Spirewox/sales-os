@@ -11,7 +11,7 @@ import { readListMeta } from '@/lib/fetch-all-pages';
 import type { ArchiveStatus } from '@/lib/inventory-archive';
 import type { ApiCustomerContactInput } from '@/lib/customer-contacts';
 import { readWhoAmICache, writeWhoAmICache } from '@/lib/whoami-cache';
-import { MOCK_AUTH, MOCK_USER, hasMockSession } from '@/lib/mock-auth';
+import { MOCK_AUTH, currentMockUser, hasMockSession } from '@/lib/mock-auth';
 import {
   ApiUser,
   ApiResponse,
@@ -381,7 +381,7 @@ export function useWhoAmI() {
     queryFn: async () => {
       if (MOCK_AUTH) {
         if (!hasMockSession()) throw new Error('Not signed in (mock)');
-        return MOCK_USER;
+        return currentMockUser();
       }
       const res = await axiosGet('auth/whoami', true) as ApiResponse<ApiUser>;
       const user = mapApiUser(res.data);

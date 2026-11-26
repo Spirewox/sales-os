@@ -130,7 +130,7 @@ export default function LoginPage() {
 
       {MOCK_AUTH && (
         <p className="mt-6 rounded-md border border-dashed px-3 py-2 text-xs text-muted-foreground">
-          Local demo: any email and password signs you in with sample data.
+          Local demo: any email and password signs you in with sample data. Use multi@fudfarmer.local to see a manager with three locations.
         </p>
       )}
     </AuthShell>

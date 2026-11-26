@@ -5,7 +5,8 @@
  */
 import { AxiosError, type AxiosAdapter, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
 import type { ApiSale, AnalyticsOverviewData, ApiCustomer } from '@/types/api';
-import { MOCK_USER } from '@/lib/mock-auth';
+import { currentMockUser } from '@/lib/mock-auth';
+import { hubInScope } from './scope';
 import * as db from './data';
 import { kitchenJobList, kitchenJobs } from './kitchen-fixtures';
 import { archiveProduct, filterProducts, restoreProduct } from './products';
@@ -75,12 +76,17 @@ function groupBy<T>(rows: T[], key: (r: T) => string) {
   return [...m.entries()].sort(([a], [b]) => a.localeCompare(b));
 }
 
+/** The signed-in persona's visible locations, or null for the admin (everything). */
+const visibleForSession = () => (currentMockUser().dataScope === 'all' ? null : currentMockUser().visibleHubIds ?? null);
+/** A row's location against the request's hub_id and the persona's locations, as the API scopes lists. */
+const inScope = (q: URLSearchParams, rowHub: string | null | undefined) => hubInScope(q.get('hub_id'), rowHub, visibleForSession());
+
 // ── sales ───────────────────────────────────────────────────────────────────
 function filterSales(q: URLSearchParams) {
   return db.sales.filter((s) =>
     inRange(s.date, q) &&
     (!q.get('status') || s.status === q.get('status')) &&
-    (!q.get('hub_id') || s.hub === q.get('hub_id')) &&
+    inScope(q, s.hub) &&
     (!q.get('customer_id') || s.customer === q.get('customer_id')) &&
     (!q.get('agent_id') || s.agent === q.get('agent_id')) &&
     (!q.get('payment_mode') || s.payment_mode === q.get('payment_mode')) &&
@@ -125,7 +131,7 @@ function dashboardSalesSummary(q: URLSearchParams) {
   const g = q.get('granularity') ?? 'all';
   const windowStart = g === 'day' ? periodStart('today') : g === 'week' ? periodStart('week') : g === 'month' ? periodStart('month') : null;
   const exact = q.has('date_from') || q.has('date_to');
-  const rows = db.sales.filter((s) => live(s) && (exact ? inRange(s.date, q) : !windowStart || new Date(s.date) >= windowStart) && (!q.get('hub_id') || s.hub === q.get('hub_id')));
+  const rows = db.sales.filter((s) => live(s) && (exact ? inRange(s.date, q) : !windowStart || new Date(s.date) >= windowStart) && inScope(q, s.hub));
   const revenue = sum(rows.map((s) => s.amount));
   const unit = g === 'day' || g === 'week' ? 'day' : g === 'month' ? 'day' : 'month';
   const trend = groupBy(rows, (s) => (unit === 'month' ? monthKey(s.date) : s.date.slice(0, 10)))
@@ -145,7 +151,7 @@ function dashboardSalesSummary(q: URLSearchParams) {
 }
 
 function revenueByCategory(q: URLSearchParams) {
-  const rows = db.sales.filter((s) => live(s) && inRange(s.date, q) && (!q.get('hub_id') || s.hub === q.get('hub_id')));
+  const rows = db.sales.filter((s) => live(s) && inRange(s.date, q) && inScope(q, s.hub));
   const total = sum(rows.map((s) => s.amount));
   const categories = groupBy(rows, (s) => s.item?.category ?? 'Other')
     .map(([name, list]) => {
@@ -160,7 +166,7 @@ function revenueByCategory(q: URLSearchParams) {
 function customerList(q: URLSearchParams) {
   let rows = db.customers.filter((c) =>
     (!q.get('type') || c.customer_type === q.get('type')) &&
-    (!q.get('hub_id') || refId(c.customer_location) === q.get('hub_id')) &&
+    inScope(q, refId(c.customer_location)) &&
     (!q.get('segment_id') || (c.segments ?? []).some((s) => refId(s) === q.get('segment_id'))) &&
     // Contacts' names and phones count too, so a business is found by anyone who works there.
     matches(q, ...customerSearchFields(c)),
@@ -263,7 +269,7 @@ function creditSummary(q: URLSearchParams) {
     };
   })
     .filter((r) => matches(q, r.customer_name) && (q.get('flagged') !== 'true' || r.flagged_count > 0))
-    .filter((r) => !q.get('hub_id') || r.hub_id === q.get('hub_id'))
+    .filter((r) => inScope(q, r.hub_id))
     .sort((a, b) => b.total_outstanding - a.total_outstanding);
   return ok(rows);
 }
@@ -464,7 +470,7 @@ function posOperations(section: string, q: URLSearchParams) {
   const day = (r: Record<string, unknown>) => String(r.createdAt ?? r.opened_at ?? r.last_seen ?? '');
   const text = (r: Record<string, unknown>) => JSON.stringify(r).toLowerCase();
   const filtered = rows.filter((r) =>
-    (!q.get('hub_id') || r.hub === q.get('hub_id')) &&
+    inScope(q, String(r.hub ?? '')) &&
     (section === 'tills' || !day(r) || inRange(day(r), q)) &&
     (!q.get('q') || text(r).includes(lc(q.get('q')))) &&
     (!q.get('reference') || text(r).includes(lc(q.get('reference')))) &&
@@ -482,7 +488,7 @@ function posOperations(section: string, q: URLSearchParams) {
 type Route = [RegExp, (m: RegExpMatchArray, q: URLSearchParams) => unknown];
 
 const GET_ROUTES: Route[] = [
-  [/^auth\/whoami$/, () => ok({ ...MOCK_USER })],
+  [/^auth\/whoami$/, () => ok({ ...currentMockUser() })],
   [/^hub$/, () => ok(db.hubs)],
   [/^hub\/([^/]+)$/, (m) => ok(db.hubs.find((h) => h._id === m[1]) ?? null)],
   [/^hub\/[^/]+\/pos-devices$/, () => ({ data: [] })],
@@ -506,7 +512,7 @@ const GET_ROUTES: Route[] = [
   [/^customers\/([^/]+)$/, (m) => ok(db.customers.find((c) => c._id === m[1]) ?? db.customers[0])],
   [/^sales$/, (_m, q) => salesList(q)],
   [/^sales\/([^/]+)$/, (m) => ok(db.sales.find((s) => s._id === m[1]) ?? null)],
-  [/^inventory$/, (_m, q) => ok(filterProducts(db.products, q))],
+  [/^inventory$/, (_m, q) => ok(filterProducts(db.products, q).filter((p) => inScope(q, refId(p.hub))))],
   [/^inventory\/sales-metrics$/, (_m, q) => inventorySalesMetrics(q)],
   [/^inventory\/stock-logs$/, (_m, q) => {
     // The API takes `type=PURCHASE`; mock rows say "Purchase", so compare case-insensitively.
@@ -595,7 +601,7 @@ function route(method: string, path: string, q: URLSearchParams, body: unknown):
     // Unmapped list endpoints (kitchen, POS, insights…) come back empty.
     return { status: 200, data: ok([], { meta: { page: 1, limit: 20, total: 0, totalPages: 1, hasMore: false } }) };
   }
-  if (path === 'auth/login') return { status: 200, data: ok({ ...MOCK_USER }) };
+  if (path === 'auth/login') return { status: 200, data: ok({ ...currentMockUser() }) };
   if (path === 'pos/live-ticket') return { status: 200, data: ok(null) };
   // Saving a customer keeps it, contacts included, in memory until a reload.
   if (method === 'post' && path === 'customers') {
@@ -611,7 +617,7 @@ function route(method: string, path: string, q: URLSearchParams, body: unknown):
   const archive = method === 'patch' ? path.match(/^inventory\/([^/]+)\/(archive|restore)$/) : null;
   if (archive) {
     return archive[2] === 'archive'
-      ? archiveProduct(db.products, db.inventoryRequests, archive[1], { _id: MOCK_USER.id, full_name: MOCK_USER.name }, new Date().toISOString())
+      ? archiveProduct(db.products, db.inventoryRequests, archive[1], { _id: currentMockUser().id, full_name: currentMockUser().name }, new Date().toISOString())
       : restoreProduct(db.products, archive[1]);
   }
   if (/^hub\/[^/]+\/pos-enrollment-codes$/.test(path)) return { status: 200, data: ok({ code: '482913', expiresAt: new Date(NOW.getTime() + 15 * 60_000).toISOString(), hubId: path.split('/')[1], hubName: '' }) };
