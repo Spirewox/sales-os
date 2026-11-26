@@ -176,8 +176,8 @@ export function Sidebar({ mobileOpen, onMobileOpenChange }: Readonly<SidebarProp
               </div>
               {collapsed && (
                 <div className="hidden justify-center pb-3 md:flex">
-                  <RailTip show label={`Location: ${hubScope.filterHub === 'All' ? (hubScope.canSwitchHubs ? 'All locations' : hubScope.hubName) : hubScope.filterHub}. Expand to change`}>
-                    <button type="button" onClick={toggle} aria-label={`Location: ${hubScope.filterHub === 'All' ? (hubScope.canSwitchHubs ? 'All locations' : hubScope.hubName) : hubScope.filterHub}. Expand the menu to change it`} className="inline-flex size-10 items-center justify-center rounded-md border bg-background text-muted-foreground hover:bg-sidebar-accent hover:text-foreground">
+                  <RailTip show label={`Location: ${hubScope.filterHub === 'All' ? (hubScope.canSwitchHubs ? hubScope.allLabel : hubScope.hubName) : hubScope.filterHub}. Expand to change`}>
+                    <button type="button" onClick={toggle} aria-label={`Location: ${hubScope.filterHub === 'All' ? (hubScope.canSwitchHubs ? hubScope.allLabel : hubScope.hubName) : hubScope.filterHub}. Expand the menu to change it`} className="inline-flex size-10 items-center justify-center rounded-md border bg-background text-muted-foreground hover:bg-sidebar-accent hover:text-foreground">
                       <MapPin size={16} aria-hidden />
                     </button>
                   </RailTip>

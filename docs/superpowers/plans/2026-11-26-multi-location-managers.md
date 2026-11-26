@@ -20,7 +20,7 @@
 | Item | Shape and behaviour |
 |------|---------------------|
 | User record | `hub_ids: string[]` (assigned locations, at least 1 for non-admin roles) and `hub_id` (primary, one of `hub_ids`). |
-| `POST users`, `PATCH users/:id` | Accept `hub_ids` and `hub_id`. Answer 400 `Choose at least one location.` when empty, and 400 `The primary location must be one of the chosen locations.` A POS (cashier) role is answered 400 `A cashier works at one location.` when `hub_ids.length > 1`. A caller can only assign locations in their own visible set (403). |
+| `POST users`, `PATCH users/:id` | Accept `hub_ids` and `hub_id`. Answer 400 `Choose at least one location.` when empty, and 400 `The primary location must be one of the chosen locations.` A POS (cashier) role is answered 400 `A cashier works at one location.` when `hub_ids.length > 1`. A caller can only add or remove locations in their own visible set (403); a user's locations outside it that the save leaves unchanged must be accepted, since the form keeps them. A single-hub manager's own RSPs do not make them a manager of several: the app still asks `GET users?hub_id=<their hub>` for them. |
 | `GET users` | Each user gains `hubs: { _id: string; hub_name: string }[]`. `hub_id=` matches users assigned to that hub. |
 | `GET auth/whoami` | `visible_hub_ids` = assigned hubs plus their child RSPs. `data_scope` stays `hub`. |
 | Every scoped list and metric | With no `hub_id`, the server limits to `visible_hub_ids`. With a `hub_id` outside it, the server answers 403. This is the existing rule for one hub, applied to a set. |

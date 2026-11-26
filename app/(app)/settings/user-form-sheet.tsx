@@ -15,7 +15,7 @@ import type { Agent, Hub } from '@/types';
 import type { ApiRole } from '@/types/api';
 import { SheetSelect } from './sheet-select';
 import { LocationsPicker } from './locations-picker';
-import { locationsForRole, mergeAssignedHubs, nextPrimary, validateUserLocations } from '@/lib/user-locations';
+import { finalAssignment, locationsForRole, nextPrimary, startingAssignment, validateUserLocations } from '@/lib/user-locations';
 
 type Props = {
   initial: Partial<Agent>;
@@ -38,13 +38,21 @@ export function UserFormSheet({ initial, onClose, apiRoles, hubs, activeHubs, ca
   const rolePerms = useMemo(() => buildRolePermissionsMap(apiRoles), [apiRoles]);
   const formId = useId();
 
-  // Assigned locations, primary first. Older records carry only `location` (the primary's name).
-  const originalHubIds = useMemo(
-    () => initial.hubIds?.length ? initial.hubIds : hubs.filter((h) => h.name === initial.location).map((h) => h.id),
-    [initial.hubIds, initial.location, hubs],
+  // Assigned locations, primary first. A new user starts at the editor's own hub with nothing kept;
+  // an edit starts from the user's locations (older records: the hub named in `location`).
+  const start = useMemo(
+    () => startingAssignment(
+      { isNew: !initial.id, hubIds: initial.hubIds, location: initial.location },
+      hubs,
+      scopeHubId && editableHubIds.has(scopeHubId) ? scopeHubId : canSwitchHubs ? activeHubs[0]?.id : [...editableHubIds][0],
+    ),
+    // The form starts once, from the record it opened with.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
   );
-  const [hubIds, setHubIds] = useState<string[]>(originalHubIds);
-  const [primary, setPrimary] = useState<string | undefined>(originalHubIds[0]);
+  const originalHubIds = start.original;
+  const [hubIds, setHubIds] = useState<string[]>(start.chosen);
+  const [primary, setPrimary] = useState<string | undefined>(start.primary);
   const [locationNote, setLocationNote] = useState<string | undefined>();
   const changeRole = (role: string) => {
     patch({ role });
@@ -67,9 +75,8 @@ export function UserFormSheet({ initial, onClose, apiRoles, hubs, activeHubs, ca
     const roleId = resolveRoleId(apiRoles, roleLabelName);
     const isPosRole = isPosRoleSelection(roleLabelName);
     const adminRole = isAdminRole(roleLabelName);
-    // Locations the editor cannot see stay as they were; the primary is hub_id.
-    const finalHubIds = adminRole ? [] : mergeAssignedHubs(originalHubIds, editableHubIds, hubIds);
-    const mainHub = finalHubIds.includes(primary ?? '') ? primary : finalHubIds[0];
+    // Locations the editor cannot see stay as they were (a cashier moves to the one picked); the primary is hub_id.
+    const { hubIds: finalHubIds, primary: mainHub } = finalAssignment({ adminRole, isPosRole, original: originalHubIds, chosen: hubIds, editable: editableHubIds, primary });
     const locationError = validateUserLocations({ isAdminRole: adminRole, isPosRole, hubIds: finalHubIds, primary: mainHub });
     const hubId = adminRole ? undefined : mainHub ?? resolveUserHubId(apiRoles, roleLabelName, editingUser.location, canSwitchHubs, scopeHubId ?? undefined, hubs);
     const validationError = locationError ?? validateUserSave(editingUser, HAS_API, roleId, hubId, adminRole);
@@ -131,7 +138,8 @@ export function UserFormSheet({ initial, onClose, apiRoles, hubs, activeHubs, ca
     const count = countGroupPermissions(groupPerms, rolePerms[previewKey] || []);
     return { label: permissionGroupDisplay(group.label).label, count, total: groupPerms.length };
   }).filter((g) => g.count > 0);
-  const locationProblem = validateUserLocations({ isAdminRole: adminRole, isPosRole: isPosRoleSelection(editingUser.role), hubIds: mergeAssignedHubs(originalHubIds, editableHubIds, hubIds) });
+  const draft = finalAssignment({ adminRole, isPosRole: isPosRoleSelection(editingUser.role), original: originalHubIds, chosen: hubIds, editable: editableHubIds, primary });
+  const locationProblem = validateUserLocations({ isAdminRole: adminRole, isPosRole: isPosRoleSelection(editingUser.role), hubIds: draft.hubIds, primary: draft.primary });
   const missing = !editingUser.name?.trim() ? 'Enter a name' : !editingUser.email?.trim() ? 'Enter an email' : locationProblem;
 
   return (
@@ -166,7 +174,7 @@ export function UserFormSheet({ initial, onClose, apiRoles, hubs, activeHubs, ca
           <SheetSelect id="user-role" value={editingUser.role ?? ''} onChange={changeRole} options={roleOptions} disabled={!canSwitchHubs && !!editingUser.id} />
         </FormField>
         {!adminRole && (isPosRoleSelection(editingUser.role) ? (
-          <FormField label="Location" htmlFor="user-hub" required>
+          <FormField label="Location" htmlFor="user-hub" required hint={locationNote}>
             <SheetSelect
               id="user-hub"
               value={hubIds[0] ?? ''}

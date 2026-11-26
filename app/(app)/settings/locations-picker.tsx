@@ -26,10 +26,10 @@ export function LocationsPicker({ hubs, editableIds, value, onChange, idPrefix }
   const toggle = (id: string, on: boolean) => onChange(on ? [...value, id] : value.filter((x) => x !== id));
 
   return (
-    <ul className="max-h-64 space-y-1 overflow-y-auto overscroll-contain rounded-md border p-2" aria-label="Locations">
+    <ul role="group" className="max-h-64 space-y-1 overflow-y-auto overscroll-contain rounded-md border p-2" aria-label="Locations, choose at least one">
       {ordered.map((h) => {
         const locked = !h.isActive || !editableIds.has(h.id);
-        const reason = !editableIds.has(h.id) ? 'Outside your locations' : !h.isActive ? 'Inactive' : null;
+        const reason = !h.isActive ? 'Inactive' : !editableIds.has(h.id) ? 'Outside your locations' : null;
         const isChild = !!h.parentHubId && shown.some((p) => p.id === h.parentHubId);
         const inputId = `${idPrefix}-loc-${h.id}`;
         return (

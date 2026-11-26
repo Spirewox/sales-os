@@ -108,7 +108,7 @@ export function UsersSection() {
     { id: 'email', header: 'Email', mobile: 'subtitle', className: 'hidden', cell: (a) => a.email },
     { id: 'role', header: 'Role', mobile: 'meta', sortValue: (a) => a.role, cell: (a) => <StatusBadge tone="neutral">{a.role}</StatusBadge> },
     {
-      id: 'location', header: 'Location', mobile: 'meta', sortValue: (a) => a.location,
+      id: 'location', header: 'Location', mobile: 'meta', sortValue: (a) => a.hubNames?.[0] ?? a.location,
       cell: (a) => { const s = a.hubNames && a.hubNames.length > 1 ? assignedSummary(a.hubNames) : { label: a.location, title: undefined }; return <span title={s.title}>{s.label}</span>; },
     },
     { id: 'status', header: 'Status', mobile: 'value', sortValue: (a) => (a.isActive === false ? 1 : 0), cell: (a) => (a.isActive === false ? <StatusBadge tone="neutral">Inactive</StatusBadge> : <StatusBadge tone="good">Active</StatusBadge>) },

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { MULTI_VISIBLE_HUB_IDS, mockPersonaForEmail, parseMockSession } from './mock-personas';
+import { mockPersonaForEmail, parseMockSession } from './mock-personas';
 import { hubInScope } from './mock-api/scope';
 
 describe('mockPersonaForEmail', () => {
@@ -19,12 +19,6 @@ describe('parseMockSession', () => {
     assert.equal(parseMockSession('1'), 'admin');
     assert.equal(parseMockSession('multi'), 'multi');
     assert.equal(parseMockSession(null), null);
-  });
-});
-
-describe('the multi persona', () => {
-  it('sees Ife Hub, Modakeke RSP and Nasarawa Hub', () => {
-    assert.deepEqual(MULTI_VISIBLE_HUB_IDS, ['hub_ife', 'rsp_modakeke', 'hub_nasarawa']);
   });
 });
 

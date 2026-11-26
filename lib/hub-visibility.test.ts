@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { allLocationsLabel, assignedSummary, resolveFilterHub, visibleHubs } from './hub-visibility';
+import { allLocationsLabel, assignedSummary, canActAt, resolveFilterHub, visibleHubs } from './hub-visibility';
+import { MULTI_VISIBLE_HUB_IDS } from './mock-personas';
 import type { Hub } from '@/types';
 
 const hub = (id: string, name: string, parent: string | null = null, isActive = true) =>
@@ -46,4 +47,21 @@ describe('assignedSummary', () => {
     assert.deepEqual(assignedSummary(['Lagos Hub', 'Ife Hub', 'Yaba RSP']), { label: 'Lagos Hub +2', title: 'Lagos Hub, Ife Hub, Yaba RSP' });
   });
   it('handles none', () => { assert.deepEqual(assignedSummary([]), { label: '-' }); });
+});
+
+describe('canActAt', () => {
+  it('lets a manager of several act at any of their locations', () => {
+    assert.equal(canActAt(['hub_ife', 'hub_nasarawa'], 'hub_ife', 'hub_nasarawa'), true);
+    assert.equal(canActAt(['hub_ife', 'hub_nasarawa'], 'hub_ife', 'hub_lagos'), false);
+  });
+  it('falls back to the one hub for older sessions', () => {
+    assert.equal(canActAt([], 'hub_lagos', 'hub_lagos'), true);
+    assert.equal(canActAt([], 'hub_lagos', 'rsp_lekki'), false);
+  });
+});
+
+describe('the mock multi persona', () => {
+  it('sees Ife Hub, Modakeke RSP and Nasarawa Hub of the sample locations', () => {
+    assert.deepEqual(ids(visibleHubs(HUBS, { isGlobal: false, hubId: 'hub_ife', visibleHubIds: MULTI_VISIBLE_HUB_IDS })), ['hub_ife', 'rsp_modakeke', 'hub_nasarawa']);
+  });
 });

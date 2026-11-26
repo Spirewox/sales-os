@@ -33,3 +33,8 @@ export function assignedSummary(names: string[]): { label: string; title?: strin
   if (names.length === 1) return { label: names[0] };
   return { label: `${names[0]} +${names.length - 1}`, title: names.join(', ') };
 }
+
+/** Whether a user may act at a location (approve or fulfil its requests): any visible one, or their hub. */
+export function canActAt(visibleIds: string[], hubId: string | null | undefined, locationId: string): boolean {
+  return visibleIds.length ? visibleIds.includes(locationId) : !!hubId && hubId === locationId;
+}

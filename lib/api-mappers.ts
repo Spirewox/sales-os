@@ -50,6 +50,7 @@ import {
   DeliveryStatus,
 } from '@/types';
 import { mapCreditCustomerSummary } from '@/lib/credit-mappers';
+import { primaryFirstIds } from '@/lib/user-locations';
 
 export function toDateStr(value: string | Date | undefined | null): string {
   if (!value) return '';
@@ -470,6 +471,14 @@ export function mapProductSalesPerformance(
   };
 }
 
+function assignedLocations(u: ApiAgentUser): { hubIds: string[]; hubNames: string[] } {
+  const pairs = new Map<string, string>();
+  if (u.hub?._id) pairs.set(u.hub._id, u.hub.hub_name || u.hub.name || '');
+  for (const h of u.hubs ?? []) if (!pairs.has(h._id)) pairs.set(h._id, h.hub_name || h.name || '');
+  const ids = primaryFirstIds(u.hub?._id, [...pairs.keys()]);
+  return { hubIds: ids, hubNames: ids.map((id) => pairs.get(id) ?? '') };
+}
+
 export function mapAgent(u: ApiAgentUser): Agent {
   const roleLabel =
     typeof u.role === 'object' && u.role ? u.role.label : 'Hub Manager';
@@ -485,9 +494,9 @@ export function mapAgent(u: ApiAgentUser): Agent {
     location: hubName || 'All Hubs',
     joinedDate: toDateStr(u.createdAt) || new Date().toISOString().split('T')[0],
     isActive: u.is_active !== false,
-    // Users who manage several locations carry them all; older replies only the one hub.
-    hubIds: u.hubs?.length ? u.hubs.map((h) => h._id) : u.hub?._id ? [u.hub._id] : [],
-    hubNames: u.hubs?.length ? u.hubs.map((h) => h.hub_name || h.name || '') : hubName ? [hubName] : [],
+    // Users who manage several locations carry them all, primary (the API's hub) first whatever
+    // order the list came in; older replies only the one hub.
+    ...assignedLocations(u),
   };
 }
 

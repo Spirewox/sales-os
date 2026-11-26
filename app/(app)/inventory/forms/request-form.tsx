@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { useDataScope } from '@/hooks/use-data-scope';
+import { useHubScopeFilter } from '@/hooks/use-hub-scope';
 import { useCreateInventoryRequest, useHubs, useInventory } from '@/hooks/use-queries';
 import { hubOptionLabel } from '@/lib/api-mappers';
 import { isVolumeUom, volumeConversionPreview, volumeUnitOptions } from '@/lib/volume-units';
@@ -17,8 +18,12 @@ export function RequestForm({ onClose }: Readonly<{ onClose: () => void }>) {
   const { data: hubs = [] } = useHubs();
   const createRequest = useCreateInventoryRequest();
   const activeHubs = useMemo(() => hubs.filter((h) => h.isActive), [hubs]);
+  // Request for one of your own locations, starting at the one you are looking at.
+  const hubScope = useHubScopeFilter();
+  const ownLocations = hubScope.activeHubs.length ? hubScope.activeHubs : activeHubs;
+  const viewingId = hubScope.filterHub !== 'All' ? ownLocations.find((h) => h.name === hubScope.filterHub)?.id : undefined;
 
-  const [requestingLocation, setRequestingLocation] = useState(() => scopeHubId ?? activeHubs[0]?.id ?? '');
+  const [requestingLocation, setRequestingLocation] = useState(() => viewingId ?? scopeHubId ?? ownLocations[0]?.id ?? '');
   const effectiveRequesting = requestingLocation || scopeHubId || activeHubs[0]?.id || '';
   const suggestedHub = useMemo(() => {
     const loc = hubs.find((h) => h.id === effectiveRequesting);
@@ -164,7 +169,7 @@ export function RequestForm({ onClose }: Readonly<{ onClose: () => void }>) {
               const loc = hubs.find((h) => h.id === v);
               if (loc?.parentHubId) setPickedFulfilling(loc.parentHubId);
             }}
-            options={activeHubs.map((h) => ({ value: h.id, label: hubOptionLabel(h) }))}
+            options={ownLocations.map((h) => ({ value: h.id, label: hubOptionLabel(h) }))}
           />
         </FormField>
         <FormField label="Notes (optional)" htmlFor="req-notes">

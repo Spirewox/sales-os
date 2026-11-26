@@ -1,3 +1,5 @@
+import type { Hub } from '@/types';
+
 /** The rules for which locations a user is assigned, shared by Settings → Users and its tests. */
 const CASHIER_NOTE = 'A cashier works at one location.';
 
@@ -33,4 +35,51 @@ export function nextPrimary(hubIds: string[], current: string | undefined, edita
   const editorsOwn = hubIds.find((id) => editable.has(id));
   if (current && hubIds.includes(current) && (editable.has(current) || current === original || !editorsOwn)) return current;
   return editorsOwn ?? hubIds[0];
+}
+
+/**
+ * Where the form starts. A new user has nothing to keep and starts at the editor's own hub (none
+ * for an admin, who picks); an edit starts from the user's locations, or, on older records, the hub
+ * named in `location`.
+ */
+export function startingAssignment(
+  user: { isNew: boolean; hubIds?: string[]; location?: string },
+  hubs: Hub[],
+  defaultHubId: string | undefined,
+): { original: string[]; chosen: string[]; primary: string | undefined } {
+  if (user.isNew) return { original: [], chosen: defaultHubId ? [defaultHubId] : [], primary: defaultHubId };
+  const original = user.hubIds?.length ? user.hubIds : hubs.filter((h) => h.name === user.location).map((h) => h.id);
+  return { original, chosen: original, primary: original[0] };
+}
+
+/**
+ * What a save sends. An admin role holds no locations. A cashier holds the one location picked,
+ * which may move them off a location the editor cannot change (a closed hub, say). Anyone else keeps
+ * the locations the editor cannot see, plus the editor's choice, with the primary among them.
+ */
+export function finalAssignment(input: {
+  adminRole: boolean; isPosRole: boolean; original: string[]; chosen: string[]; editable: Set<string>; primary: string | undefined;
+}): { hubIds: string[]; primary: string | undefined } {
+  if (input.adminRole) return { hubIds: [], primary: undefined };
+  if (input.isPosRole) {
+    const one = input.chosen[0] ?? input.original[0];
+    return { hubIds: one ? [one] : [], primary: one };
+  }
+  const hubIds = mergeAssignedHubs(input.original, input.editable, input.chosen);
+  const primary = input.primary && hubIds.includes(input.primary) ? input.primary : hubIds.find((id) => input.editable.has(id)) ?? hubIds[0];
+  return { hubIds, primary };
+}
+
+/** A user's locations with their primary (the API's `hub`) first, whatever order the list came in. */
+export function primaryFirstIds(primary: string | undefined, ids: string[]): string[] {
+  if (!primary) return ids;
+  return [primary, ...ids.filter((id) => id !== primary)];
+}
+
+/**
+ * Whether a manager's visible locations reach beyond their own hub and its RSPs, that is whether
+ * they manage several locations rather than one hub as today.
+ */
+export function managesOtherHubs(visibleIds: string[], hubId: string | null | undefined, hubs: Hub[]): boolean {
+  return visibleIds.some((id) => id !== hubId && hubs.find((h) => h.id === id)?.parentHubId !== hubId);
 }

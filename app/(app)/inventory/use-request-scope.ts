@@ -7,6 +7,7 @@ import { usePermissions } from '@/hooks/use-permissions';
 import { useInventoryRequests } from '@/hooks/use-queries';
 import type { ApiInventoryRequest } from '@/types/api';
 import { REQUEST_STATUS_LABEL, hubRefName, type HubRef } from '@/lib/inventory-requests';
+import { canActAt } from '@/lib/hub-visibility';
 
 export { REQUEST_STATUS_LABEL, hubRefName };
 
@@ -32,7 +33,7 @@ export const isOpenRequest = (r: ApiInventoryRequest) => r.status === 'submitted
 export function useRequestScope(filterHub: string) {
   const { user } = useAuth();
   const { can } = usePermissions();
-  const { hubId: scopeHubId } = useDataScope();
+  const { hubId: scopeHubId, visibleHubIds } = useDataScope();
   const query = useInventoryRequests();
   const canFulfill = can('inventory.fulfill_requests');
 
@@ -42,9 +43,10 @@ export function useRequestScope(filterHub: string) {
     return all.filter((r) => hubRefName(r.requesting_location) === filterHub || hubRefName(r.fulfilling_hub) === filterHub);
   }, [query.data, filterHub]);
 
+  // A manager of several locations acts for all of them, not only their primary.
   const isFulfillingHub = (req: ApiInventoryRequest) =>
-    canFulfill && (user?.roleName === 'company_admin' || scopeHubId === hubRefId(req.fulfilling_hub));
-  const isRequester = (req: ApiInventoryRequest) => hubRefId(req.requesting_location) === scopeHubId;
+    canFulfill && (user?.roleName === 'company_admin' || canActAt(visibleHubIds, scopeHubId, hubRefId(req.fulfilling_hub)));
+  const isRequester = (req: ApiInventoryRequest) => canActAt(visibleHubIds, scopeHubId, hubRefId(req.requesting_location));
   const needsMyAction = (req: ApiInventoryRequest) => isOpenRequest(req) && isFulfillingHub(req);
 
   const pendingCount = scoped.filter(isOpenRequest).length;
