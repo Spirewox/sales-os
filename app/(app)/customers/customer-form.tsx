@@ -15,7 +15,12 @@ import { hubOptionLabel } from '@/lib/api-mappers';
 import { deriveSegments } from '@/lib/segmentation';
 import { FilterSelect } from '@/components/filter-select';
 import { FormField, FormSection, FormSheet, fieldClass } from '@/components/app';
+import { Input } from '@/components/ui/input';
 import { SegmentChips } from './customer-segments';
+import { ContactsEditor } from './contacts-editor';
+import {
+  contactsOf, contactsToIndividual, primaryContact, toApiContacts, validateContacts, type CustomerContact,
+} from '@/lib/customer-contacts';
 
 /** Display label for the stored B2B / B2C type. */
 export const customerTypeLabel = (type?: string) => (isB2bCustomerType(type) ? 'Business' : 'Individual');
@@ -119,17 +124,49 @@ export function CustomerFormSheet({ customer, onClose, onSaved, existingCustomer
   );
   const patch = (p: Partial<Customer>) => setForm((f) => ({ ...f, ...p }));
   const isB2b = isB2bCustomerType(form.type);
+  // A business's people. Its primary contact is saved as the customer's own name, phone and email.
+  const [contacts, setContacts] = useState<CustomerContact[]>(() => (customer ? contactsOf(customer) : []));
+  const wasBusiness = isB2bCustomerType(customer?.type);
+  const primary = primaryContact(contacts);
+  const contactsProblem = isB2b ? validateContacts(contacts) : null;
+  const changeType = (type: CustomerType) => {
+    if (type === CustomerType.B2B && !isB2b) {
+      // Start the list from whoever was entered as the individual.
+      setContacts(contactsOf({ type, name: form.name ?? '', phone: form.phone === 'N/A' ? '' : form.phone ?? '', email: form.email }));
+    }
+    if (type === CustomerType.B2C && isB2b) {
+      patch(contactsToIndividual(contacts));
+      setContacts([]);
+    }
+    patch({ type, companyName: type === CustomerType.B2C ? '' : form.companyName, ...clearOppositeProfileFields(type) });
+  };
+  /** Name, phone, email and contacts as the API takes them: from the primary contact for a business. */
+  const identityPayload = () => (isB2b
+    ? {
+      customer_name: primary?.name.trim() ?? '',
+      customer_phone: customerPhoneForApi(primary?.phone),
+      customer_email: customerEmailForApi(primary?.email) ?? '',
+      contacts: toApiContacts(contacts),
+      business_address: optionalStringForApi(form.businessAddress),
+    }
+    : {
+      customer_name: form.name ?? '',
+      customer_phone: customerPhoneForApi(form.phone),
+      customer_email: customerEmailForApi(form.email) ?? '',
+      // A business switched to an individual drops its contacts.
+      ...(wasBusiness ? { contacts: [] } : {}),
+    });
   // Hubs may load after the form opens: fall back to a real option rather than a stale default.
   const hubNames = activeHubs.map((h) => h.name);
   const hubValue = [form.location, hubScope.hubName, hubScope.defaultHubName, hubNames[0]].find((n) => n && (hubNames.length === 0 || hubNames.includes(n))) ?? '';
 
   // Phone is required for new customers; older records imported without one stay editable.
-  const disabledReason = !form.name?.trim()
-    ? 'Enter a name'
-    : !isEdit && isPlaceholderPhone(form.phone)
-      ? 'Enter a phone number'
-      : isB2b && !form.companyName?.trim()
-        ? 'Enter the company name'
+  const disabledReason = isB2b
+    ? (!form.companyName?.trim() ? 'Enter the company name' : contactsProblem)
+    : !form.name?.trim()
+      ? 'Enter a name'
+      : !isEdit && isPlaceholderPhone(form.phone)
+        ? 'Enter a phone number'
         : null;
 
   const profilePayload = () => ({
@@ -145,18 +182,19 @@ export function CustomerFormSheet({ customer, onClose, onSaved, existingCustomer
   });
 
   const handleCreate = () => {
-    if (!form.name?.trim()) { toast.error('Please enter a name.'); return; }
     if (isB2b && !form.companyName?.trim()) { toast.error('Company name is required for B2B customers.'); return; }
-    const email = customerEmailForApi(form.email);
+    if (contactsProblem) { toast.error(contactsProblem); return; }
+    if (!isB2b && !form.name?.trim()) { toast.error('Please enter a name.'); return; }
+    const email = customerEmailForApi(isB2b ? primary?.email : form.email);
     if (email) {
       const dup = existingCustomers.find((c) => c.email && c.email.toLowerCase() === email);
       if (dup) { toast.error(`A customer with email "${email}" already exists.`); return; }
     }
     const hub = activeHubs.find((h) => h.name === hubValue);
     createCustomer.mutate({
-      customer_name: form.name!,
-      ...(email ? { customer_email: email } : {}),
-      customer_phone: customerPhoneForApi(form.phone),
+      ...identityPayload(),
+      // A new customer with no email sends none, not an empty one.
+      customer_email: email,
       customer_type: form.type as CustomerType,
       customer_location: hub?.id || activeHubs[0]?.id || '',
       company_name: form.companyName,
@@ -174,14 +212,13 @@ export function CustomerFormSheet({ customer, onClose, onSaved, existingCustomer
 
   const handleUpdate = () => {
     if (!customer) return;
-    if (!form.name?.trim()) { toast.error('Name is required.'); return; }
     if (isB2b && !form.companyName?.trim()) { toast.error('Company name is required for B2B customers.'); return; }
+    if (contactsProblem) { toast.error(contactsProblem); return; }
+    if (!isB2b && !form.name?.trim()) { toast.error('Name is required.'); return; }
     const hub = activeHubs.find((h) => h.name === hubValue);
     updateCustomer.mutate({
       id: customer.id,
-      customer_name: form.name,
-      customer_email: customerEmailForApi(form.email) ?? '',
-      customer_phone: customerPhoneForApi(form.phone),
+      ...identityPayload(),
       customer_type: form.type,
       customer_location: hub?.id,
       company_name: form.companyName,
@@ -208,17 +245,21 @@ export function CustomerFormSheet({ customer, onClose, onSaved, existingCustomer
       submitting={createCustomer.isPending || updateCustomer.isPending}
     >
       <FormSection title="Customer">
-        <FormField label="Full name" htmlFor={`${id}-name`} required>
-          <input id={`${id}-name`} type="text" autoComplete="off" value={form.name || ''} onChange={(e) => patch({ name: e.target.value })} className={fieldClass} />
-        </FormField>
-        <FormField label="Phone" htmlFor={`${id}-phone`} required={!isEdit}>
-          <input id={`${id}-phone`} type="tel" inputMode="tel" autoComplete="off" value={form.phone === 'N/A' ? '' : form.phone || ''} onChange={(e) => patch({ phone: e.target.value })} placeholder="e.g. 0803 123 4567" className={fieldClass} />
-        </FormField>
+        {!isB2b && (
+          <>
+            <FormField label="Full name" htmlFor={`${id}-name`} required>
+              <input id={`${id}-name`} type="text" autoComplete="off" value={form.name || ''} onChange={(e) => patch({ name: e.target.value })} className={fieldClass} />
+            </FormField>
+            <FormField label="Phone" htmlFor={`${id}-phone`} required={!isEdit}>
+              <input id={`${id}-phone`} type="tel" inputMode="tel" autoComplete="off" value={form.phone === 'N/A' ? '' : form.phone || ''} onChange={(e) => patch({ phone: e.target.value })} placeholder="e.g. 0803 123 4567" className={fieldClass} />
+            </FormField>
+          </>
+        )}
         <FormField label="Type" htmlFor={`${id}-type`}>
           <FilterSelect
             id={`${id}-type`}
             value={form.type || CustomerType.B2C}
-            onChange={(v) => { const type = v as CustomerType; patch({ type, companyName: type === CustomerType.B2C ? '' : form.companyName, ...clearOppositeProfileFields(type) }); }}
+            onChange={(v) => changeType(v as CustomerType)}
             className={selectCls}
             options={[{ value: CustomerType.B2C, label: 'Individual' }, { value: CustomerType.B2B, label: 'Business' }]}
           />
@@ -228,6 +269,11 @@ export function CustomerFormSheet({ customer, onClose, onSaved, existingCustomer
             <input id={`${id}-company`} type="text" value={form.companyName || ''} onChange={(e) => patch({ companyName: e.target.value })} className={fieldClass} />
           </FormField>
         )}
+        {isB2b && (
+          <FormField label="Business address" htmlFor={`${id}-address`} hint="Optional">
+            <Input id={`${id}-address`} type="text" autoComplete="off" value={form.businessAddress || ''} onChange={(e) => patch({ businessAddress: e.target.value })} />
+          </FormField>
+        )}
         <FormField label="Hub" htmlFor={`${id}-hub`}>
           {activeHubs.length > 0 ? (
             <FilterSelect id={`${id}-hub`} value={hubValue} onChange={(v) => patch({ location: v })} className={selectCls} options={activeHubs.map((h) => ({ value: h.name, label: hubOptionLabel(h) }))} />
@@ -235,9 +281,11 @@ export function CustomerFormSheet({ customer, onClose, onSaved, existingCustomer
             <input id={`${id}-hub`} type="text" value={hubValue} disabled className={fieldClass} />
           )}
         </FormField>
-        <FormField label="Email" htmlFor={`${id}-email`} hint="Optional">
-          <input id={`${id}-email`} type="email" autoComplete="off" value={form.email || ''} onChange={(e) => patch({ email: e.target.value })} className={fieldClass} />
-        </FormField>
+        {!isB2b && (
+          <FormField label="Email" htmlFor={`${id}-email`} hint="Optional">
+            <input id={`${id}-email`} type="email" autoComplete="off" value={form.email || ''} onChange={(e) => patch({ email: e.target.value })} className={fieldClass} />
+          </FormField>
+        )}
         {!isEdit && isAdmin && (
           <FormField label="Assigned agent" htmlFor={`${id}-agent`}>
             <FilterSelect
@@ -250,6 +298,12 @@ export function CustomerFormSheet({ customer, onClose, onSaved, existingCustomer
           </FormField>
         )}
       </FormSection>
+
+      {isB2b && (
+        <FormSection title="Contacts" description="The people you deal with. The primary contact is who the business is listed under.">
+          <ContactsEditor contacts={contacts} onChange={setContacts} idPrefix={id} />
+        </FormSection>
+      )}
 
       <FormSection title="Profile" description={isB2b ? 'Business category, used for segments.' : 'Answers used to build segments.'} optional>
         <ProfileFields type={(form.type as CustomerType) || CustomerType.B2C} data={form} onChange={patch} />

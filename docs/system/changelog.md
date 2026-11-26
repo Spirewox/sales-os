@@ -5,6 +5,7 @@ Changes to the design system docs and tokens, newest first.
 
 ## 2026-11-26
 
+- Let products with stock be archived after a clear warning (`96f90d7`)
 - Fix archiving review findings (`8b14282`)
 - Archive and restore products from the stock list (`1578ca1`)
 - Move the Customers, Sales and Kitchen jobs exports onto the Export button (`e82a905`)

@@ -21,7 +21,7 @@ Real uses, 65 call sites (`<FilterSelect` tags in app, components and lib outsid
 - Sales filter bar, 7 filters, all with `ariaLabel` and an All option: `app/(app)/sales/sales-filter-bar.tsx:30` to `app/(app)/sales/sales-filter-bar.tsx:56`.
 - Audit log filters, record type, module and user: `app/(app)/audit/page.tsx:194`, `app/(app)/audit/page.tsx:198`, `app/(app)/audit/page.tsx:202`.
 - Other list filters: customers `app/(app)/customers/page.tsx:196`, suppliers `app/(app)/suppliers/page.tsx:188`, stock `app/(app)/inventory/stock-tab.tsx:208`, movements `app/(app)/inventory/movements-tab.tsx:141`, requests `app/(app)/inventory/requests-tab.tsx:155`, POS `app/(app)/pos/pos-filter-bar.tsx:50`, kitchen `app/(app)/kitchen/jobs.tsx:166`, engagement `app/(app)/engagement/feedback-table.tsx:77`, users `app/(app)/settings/users-section.tsx:128`, locations `app/(app)/settings/locations-section.tsx:121`.
-- Form fields tied to a label by `id`: inventory forms such as `app/(app)/inventory/forms/create-sku-form.tsx:228` and `app/(app)/inventory/forms/request-form.tsx:112`, customer form `app/(app)/customers/customer-form.tsx:233`, engagement forms `app/(app)/engagement/feedback-form.tsx:107`, settings sheets `app/(app)/settings/sheet-select.tsx:18`.
+- Form fields tied to a label by `id`: inventory forms such as `app/(app)/inventory/forms/create-sku-form.tsx:228` and `app/(app)/inventory/forms/request-form.tsx:112`, customer form `app/(app)/customers/customer-form.tsx:279`, engagement forms `app/(app)/engagement/feedback-form.tsx:107`, settings sheets `app/(app)/settings/sheet-select.tsx:18`.
 - Mobile section switcher: `app/(app)/settings/settings-nav.tsx:41`.
 
 ### Example files
