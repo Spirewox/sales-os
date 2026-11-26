@@ -10,6 +10,11 @@ import type { CustomReportRow, SavedReport } from '@/lib/reports';
 import { ResultChart, fmtExact, fmtShort } from './explore-shared';
 
 type Report = ReturnType<typeof useCustomReport>;
+
+/** Percentage measures ("Gross Margin %") read as 14.2%, everything else as an amount or a count. */
+const isPercent = (label: string) => label.trim().endsWith('%');
+const showExact = (v: number, c: { label: string; kind: 'money' | 'number' }) => (isPercent(c.label) ? `${v.toFixed(1)}%` : fmtExact(v, c.kind));
+const showShort = (v: number, c: { label: string; kind: 'money' | 'number' }) => (isPercent(c.label) ? `${v.toFixed(1)}%` : fmtShort(v, c.kind));
 type Row = CustomReportRow & { __id: string };
 
 /** Column labels and kinds from the dataset, so headers read right before the first answer arrives. */
@@ -48,8 +53,8 @@ export function CustomReportResults({ report, dataset, groupBy, measures, chart,
   const first = cols[0];
   const top = rows?.reduce<Row | undefined>((best, r) => (!best || r.values[first.measure] > best.values[first.measure] ? r : best), undefined);
   const cells: KpiCell[] = totals.length
-    ? totals.map((c) => ({ label: `Total ${c.label.toLowerCase()}`, value: fmtShort(c.total, c.kind) }))
-    : [{ label: `Top ${groupLabel.toLowerCase()}`, value: top?.label ?? '-', detail: top ? `${first.label} ${fmtShort(top.values[first.measure], first.kind)}` : undefined }];
+    ? totals.map((c) => ({ label: `Total ${c.label.toLowerCase()}`, value: showShort(c.total, c) }))
+    : [{ label: `Top ${groupLabel.toLowerCase()}`, value: top?.label ?? '-', detail: top ? `${first.label} ${showShort(top.values[first.measure], first)}` : undefined }];
 
   const columns: Column<Row>[] = [
     { id: 'group', header: groupLabel, cell: (r) => r.label, sortValue: (r) => r.label, mobile: 'title' },
@@ -57,7 +62,7 @@ export function CustomReportResults({ report, dataset, groupBy, measures, chart,
       id: c.measure,
       header: c.label,
       align: 'right',
-      cell: (r) => <span className="tabular-nums">{fmtExact(r.values[c.measure] ?? 0, c.kind)}</span>,
+      cell: (r) => <span className="tabular-nums">{showExact(r.values[c.measure] ?? 0, c)}</span>,
       sortValue: (r) => r.values[c.measure] ?? 0,
       mobile: i === 0 ? 'value' : 'meta',
     })),

@@ -60,6 +60,8 @@ const mCount = (key: string, label: string): MeasureDef => ({ key, label, kind: 
 const mSum = (key: string, label: string, field: string, kind: 'money' | 'number' = 'money'): MeasureDef => ({ key, label, kind, resolve: (a) => a.sums[field] || 0 });
 const mDistinct = (key: string, label: string, id: string): MeasureDef => ({ key, label, kind: 'number', additive: false, resolve: (a) => a.distinct[id]?.size || 0 });
 const mAvg = (key: string, label: string, field: string, kind: 'money' | 'number' = 'money'): MeasureDef => ({ key, label, kind, additive: false, resolve: (a) => (a.count ? (a.sums[field] || 0) / a.count : 0) });
+/** One sum over another (times `scale`), worked out per group: a ratio, so it never adds up across groups. */
+const mRatioSums = (key: string, label: string, num: string, den: string, kind: 'money' | 'number' = 'number', scale = 1): MeasureDef => ({ key, label, kind, additive: false, resolve: (a) => { const d = a.sums[den] || 0; return d ? ((a.sums[num] || 0) / d) * scale : 0; } });
 const mRatioDistinct = (key: string, label: string, field: string, id: string, kind: 'money' | 'number' = 'money'): MeasureDef => ({ key, label, kind, additive: false, resolve: (a) => { const dn = a.distinct[id]?.size || 0; return dn ? (a.sums[field] || 0) / dn : 0; } });
 
 export const DATASETS: Dataset[] = [
@@ -79,6 +81,10 @@ export const DATASETS: Dataset[] = [
     measures: [
       mSum('revenue', 'Revenue', 'revenue'), mDistinct('orders', 'Orders', 'sale'), mSum('units', 'Units Sold', 'units', 'number'),
       mSum('profit', 'Gross Profit', 'profit'), mRatioDistinct('aov', 'Avg Order Value', 'revenue', 'sale'), mDistinct('customers', 'Distinct Customers', 'customer'),
+      mSum('cost', 'Cost of Goods', 'cost'), mRatioSums('marginPct', 'Gross Margin %', 'profit', 'revenue', 'number', 100),
+      mRatioSums('avgPrice', 'Avg Selling Price', 'revenue', 'units', 'money'), mRatioDistinct('unitsPerOrder', 'Avg Units per Order', 'units', 'sale', 'number'),
+      mRatioDistinct('revPerCustomer', 'Revenue per Customer', 'revenue', 'customer'), mSum('creditSales', 'Credit Sales', 'creditSales'),
+      mSum('cashSales', 'Cash Sales', 'cashSales'), mDistinct('products', 'Distinct Products', 'product'),
     ],
     build: (d) => {
       const saleById = Object.fromEntries(d.sales.map((s) => [s.id, s]));
@@ -96,8 +102,11 @@ export const DATASETS: Dataset[] = [
             date: dateStr, amount: qty * price, amountKind: 'money', link: `/sales?open=${saleId}`,
             tags: [chan, pm, st].filter(Boolean) as string[], rollup: true,
           },
-          sums: { revenue: qty * price, units: qty, profit: qty * (price - cost) },
-          ids: { sale: saleId, customer: cust?.id || sale?.customerId || 'unknown' },
+          sums: {
+            revenue: qty * price, units: qty, profit: qty * (price - cost), cost: qty * cost,
+            creditSales: sale?.isCredit ? qty * price : 0, cashSales: sale?.isCredit ? 0 : qty * price,
+          },
+          ids: { sale: saleId, customer: cust?.id || sale?.customerId || 'unknown', product: item?.id || item?.name || '-' },
           multi: { Segment: cust ? deriveSegments(cust) : [] },
           dims: {
             DayOfWeek: DOW[dt.getDay()], Month: dateStr.slice(0, 7), WeekPart: (dt.getDay() === 0 || dt.getDay() === 6) ? 'Weekend' : 'Weekday',
@@ -140,6 +149,8 @@ export const DATASETS: Dataset[] = [
     measures: [
       mCount('count', 'Customers'), mSum('spent', 'Total Spend', 'spent'), mSum('orders', 'Total Orders', 'orders', 'number'),
       mAvg('ltv', 'Avg Lifetime Value', 'spent'), mSum('owed', 'Credit Owed', 'owed'),
+      mRatioSums('aov', 'Avg Order Value', 'spent', 'orders', 'money'), mAvg('ordersEach', 'Avg Orders per Customer', 'orders', 'number'),
+      mSum('owing', 'Customers Owing', 'owing', 'number'), mSum('overdue', 'Customers Overdue', 'overdue', 'number'), mAvg('owedEach', 'Avg Credit Owed', 'owed'),
     ],
     build: (d) => d.customers.map((c) => {
       const cr = d.credits.filter((x) => x.customerId === c.id);
@@ -152,7 +163,7 @@ export const DATASETS: Dataset[] = [
           date: c.joinedDate, amount: c.totalSpent, amountKind: 'money', link: `/customers?open=${c.id}`,
           tags: [status !== 'None' ? status : '', ...deriveSegments(c).slice(0, 2)].filter(Boolean) as string[],
         },
-        sums: { spent: c.totalSpent, orders: c.totalOrders, owed },
+        sums: { spent: c.totalSpent, orders: c.totalOrders, owed, owing: owed > 0 ? 1 : 0, overdue: status === 'Overdue' ? 1 : 0 },
         ids: { customer: c.id },
         multi: { Segment: deriveSegments(c) },
         dims: {
@@ -173,6 +184,8 @@ export const DATASETS: Dataset[] = [
     measures: [
       mCount('count', 'SKUs'), mSum('value', 'Stock Value', 'value'), mSum('units', 'Stock Units', 'units', 'number'),
       mAvg('price', 'Avg Selling Price', 'price'), mAvg('margin', 'Avg Margin %', 'margin', 'number'),
+      mSum('retail', 'Retail Value', 'retail'), mSum('potentialProfit', 'Potential Profit', 'potentialProfit'), mAvg('unitCost', 'Avg Unit Cost', 'unitCost'),
+      mSum('low', 'Low Stock SKUs', 'low', 'number'), mSum('out', 'Out of Stock SKUs', 'out', 'number'),
     ],
     build: (d) => d.inventory.map((i) => {
       const sup = d.suppliers.find((s) => s.id === i.supplierId);
@@ -184,7 +197,11 @@ export const DATASETS: Dataset[] = [
           amount: i.currentStock * i.avgUnitCost, amountKind: 'money',
           tags: [status, `${i.currentStock} ${i.unitOfMeasure}`].filter(Boolean) as string[],
         },
-        sums: { value: i.currentStock * i.avgUnitCost, units: i.currentStock, price: i.baseSellingPrice, margin },
+        sums: {
+          value: i.currentStock * i.avgUnitCost, units: i.currentStock, price: i.baseSellingPrice, margin, unitCost: i.avgUnitCost,
+          retail: Math.max(i.currentStock, 0) * i.baseSellingPrice, potentialProfit: Math.max(i.currentStock, 0) * (i.baseSellingPrice - i.avgUnitCost),
+          low: status === 'Low' ? 1 : 0, out: status === 'Out of Stock' ? 1 : 0,
+        },
         ids: { sku: i.id },
         multi: {},
         dims: {
@@ -204,6 +221,7 @@ export const DATASETS: Dataset[] = [
     measures: [
       mCount('count', 'Suppliers'), mSum('spend', 'Procurement Spend', 'spend'), mSum('retailProfit', 'Retail Profit Generated', 'retailProfit'),
       mSum('openIssues', 'Open Issues', 'openIssues', 'number'), mAvg('rating', 'Avg Rating', 'rating', 'number'), mAvg('lead', 'Avg Lead Time', 'lead', 'number'),
+      mAvg('spendEach', 'Avg Spend per Supplier', 'spend'), mRatioSums('profitPerSpend', 'Retail Profit per ₦ Spent', 'retailProfit', 'spend', 'number'),
     ],
     build: (d) => d.suppliers.map((s) => {
       const purchases = d.stockLogs.filter((l) => l.type === PURCHASE && l.supplierId === s.id);
@@ -237,6 +255,8 @@ export const DATASETS: Dataset[] = [
     ],
     measures: [
       mCount('count', 'Movements'), mSum('qty', 'Quantity', 'qty', 'number'), mSum('value', 'Value', 'value'),
+      mSum('unitsIn', 'Units In', 'unitsIn', 'number'), mSum('unitsOut', 'Units Out', 'unitsOut', 'number'),
+      mSum('valueIn', 'Value In', 'valueIn'), mSum('valueOut', 'Value Out', 'valueOut'), mRatioSums('unitCost', 'Avg Unit Cost', 'value', 'qty', 'money'),
     ],
     build: (d) => {
       const itemById = Object.fromEntries(d.inventory.map((i) => [i.id, i]));
@@ -250,7 +270,12 @@ export const DATASETS: Dataset[] = [
             date: l.date, amount: Math.abs(l.quantity) * l.unitCost, amountKind: 'money',
             tags: [l.type, `${Math.abs(l.quantity)} units`].filter(Boolean) as string[],
           },
-          sums: { qty: Math.abs(l.quantity), value: Math.abs(l.quantity) * l.unitCost },
+          sums: (() => {
+            const qty = Math.abs(l.quantity);
+            // Purchases and returns come in, sales go out; adjustments and transfers go the way their sign says.
+            const incoming = l.type === PURCHASE || l.type === StockMovementType.RETURN || (l.type !== SALE && l.quantity > 0);
+            return { qty, value: qty * l.unitCost, unitsIn: incoming ? qty : 0, unitsOut: incoming ? 0 : qty, valueIn: incoming ? qty * l.unitCost : 0, valueOut: incoming ? 0 : qty * l.unitCost };
+          })(),
           ids: { log: l.id },
           multi: {},
           dims: {
@@ -271,6 +296,8 @@ export const DATASETS: Dataset[] = [
     ],
     measures: [
       mCount('count', 'Records'), mSum('owed', 'Amount Owed', 'owed'), mSum('original', 'Original Amount', 'original'),
+      mSum('paid', 'Amount Paid', 'paid'), mRatioSums('collected', 'Collection Rate %', 'paid', 'original', 'number', 100),
+      mSum('overdueOwed', 'Overdue Amount', 'overdueOwed'), mAvg('owedEach', 'Avg Amount Owed', 'owed'), mSum('flagged', 'Flagged Records', 'flagged', 'number'),
     ],
     build: (d) => {
       const custById = Object.fromEntries(d.customers.map((c) => [c.id, c]));
@@ -282,7 +309,10 @@ export const DATASETS: Dataset[] = [
           link: c.customerId ? `/customers?open=${c.customerId}` : undefined,
           tags: [c.status, c.flagged ? 'Flagged' : ''].filter(Boolean) as string[],
         },
-        sums: { owed: c.amountOwed, original: c.originalAmount ?? c.amountOwed },
+        sums: {
+          owed: c.amountOwed, original: c.originalAmount ?? c.amountOwed, paid: Math.max((c.originalAmount ?? c.amountOwed) - c.amountOwed, 0),
+          overdueOwed: c.status === 'Overdue' ? c.amountOwed : 0, flagged: c.flagged ? 1 : 0,
+        },
         ids: { credit: c.id },
         multi: {},
         dims: {
@@ -299,7 +329,7 @@ export const DATASETS: Dataset[] = [
       { key: 'Type', label: 'Issue Type' }, { key: 'Severity', label: 'Severity' }, { key: 'Status', label: 'Status' },
       { key: 'Supplier', label: 'Supplier' }, { key: 'Product', label: 'Related Product' }, { key: 'Month', label: 'Month', time: 'month' },
     ],
-    measures: [mCount('count', 'Issues')],
+    measures: [mCount('count', 'Issues'), mSum('open', 'Open Issues', 'open', 'number'), mSum('closed', 'Resolved or Closed', 'closed', 'number')],
     build: (d) => {
       const itemById = Object.fromEntries(d.inventory.map((i) => [i.id, i]));
       return d.supplierIssues.map((i) => ({
@@ -310,7 +340,7 @@ export const DATASETS: Dataset[] = [
           link: i.supplierId ? `/suppliers?open=${i.supplierId}` : undefined,
           tags: [i.status, i.severity].filter(Boolean) as string[],
         },
-        sums: {},
+        sums: { open: i.status === 'Open' ? 1 : 0, closed: i.status === 'Open' ? 0 : 1 },
         ids: { issue: i.id },
         multi: {},
         dims: {

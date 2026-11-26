@@ -18,7 +18,7 @@ import { SaveReportDialog } from './save-report-dialog';
 type Meta = { rangeLabel: string; locationLabel: string };
 
 /**
- * Build a report of your own: pick the data, how to break it down, up to six columns, filters and a
+ * Build a report of your own: pick the data, how to break it down, up to eight columns, filters and a
  * chart, with a live preview for the period and location in scope. With `initial`, it edits that report.
  */
 export function ReportBuilder({ scope, meta, initial, onBack, onSaved }: Readonly<{
@@ -78,7 +78,7 @@ export function ReportBuilder({ scope, meta, initial, onBack, onSaved }: Readonl
             const full = !on && measures.length >= MAX_REPORT_COLUMNS;
             return (
               <label key={m.key} className="flex min-h-9 cursor-pointer items-center gap-2 rounded-md px-2 text-sm hover:bg-muted has-data-disabled:cursor-not-allowed has-data-disabled:text-muted-foreground">
-                <Checkbox checked={on} disabled={full} onCheckedChange={(v) => toggle(m.key, v === true)} />
+                <Checkbox aria-label={m.label} checked={on} disabled={full} onCheckedChange={(v) => toggle(m.key, v === true)} />
                 <span className="min-w-0 flex-1">{m.label}</span>
                 {on && <span className="text-xs text-muted-foreground tabular-nums">{measures.indexOf(m.key) + 1}</span>}
               </label>

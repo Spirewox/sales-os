@@ -100,6 +100,10 @@ describe('reportKpiColumns', () => {
 });
 
 describe('custom reports with several columns', () => {
+  it('allows up to eight columns', () => {
+    assert.equal(MAX_REPORT_COLUMNS, 8);
+  });
+
   it('reads the columns, falling back to the single measure of an older report', () => {
     assert.deepEqual(savedReportMeasures(saved('a')), ['revenue']);
     assert.deepEqual(savedReportMeasures(saved('b', { measures: ['revenue', 'orders'] })), ['revenue', 'orders']);
@@ -134,6 +138,10 @@ describe('custom reports with several columns', () => {
     assert.equal(customReportName(['Revenue'], 'Location'), 'Revenue by location');
     assert.equal(customReportName(['Revenue', 'Orders'], 'Location'), 'Revenue and orders by location');
     assert.equal(customReportName(['Revenue', 'Orders', 'Avg Order Value'], 'Product'), 'Revenue, orders and avg order value by product');
+    assert.equal(customReportName(['Revenue', 'Orders', 'Credit Sales', 'Cash Sales', 'Gross Margin %'], 'Location'), 'Revenue, orders and 3 more by location');
+    const long = customReportName(['Retail Profit per ₦ Spent', 'Avg Spend per Supplier', 'Procurement Spend', 'Open Issues'], 'Category Supplied');
+    assert.ok(long.length <= 60, long);
+    assert.match(long, / by category supplied$/);
   });
 });
 

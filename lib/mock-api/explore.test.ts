@@ -67,3 +67,39 @@ describe('mockFieldValues', () => {
     assert.deepEqual(mockFieldValues(db, { dataset: 'inventory', field: 'Category' }, all), []);
   });
 });
+
+describe('more Sales measures', () => {
+  const run = (measure: string, groupBy = 'Location') => runMockExplore(db, { dataset: 'sales', measure, groupBy, filters: [] }, all);
+  const sum = (ns: number[]) => ns.reduce((a, b) => a + b, 0);
+
+  it('splits revenue into credit and cash sales', () => {
+    const credit = run('creditSales').total;
+    const cash = run('cashSales').total;
+    assert.ok(credit > 0 && cash > 0);
+    assert.equal(Math.round(credit + cash), Math.round(sum(live.map((s) => s.amount))));
+    assert.equal(Math.round(credit), Math.round(sum(live.filter((s) => s.payment_mode !== 'Full Payment').map((s) => s.amount))));
+  });
+
+  it('costs the goods sold from each line', () => {
+    assert.equal(Math.round(run('cost').total), Math.round(sum(live.map((s) => (s.item?.quantity ?? 0) * (s.item?.unit_cost ?? 0)))));
+  });
+
+  it('works the margin over all sales, not by adding each group', () => {
+    const margin = run('marginPct');
+    assert.equal(margin.measureKind, 'number');
+    const expected = (sum(live.map((s) => s.profit_amount ?? 0)) / sum(live.map((s) => s.amount))) * 100;
+    assert.equal(Math.round(margin.total * 10), Math.round(expected * 10));
+  });
+
+  it('averages the price per unit, the units per order and the revenue per customer', () => {
+    const units = sum(live.map((s) => s.item?.quantity ?? 0));
+    const revenue = sum(live.map((s) => s.amount));
+    assert.equal(Math.round(run('avgPrice').total), Math.round(revenue / units));
+    assert.equal(Math.round(run('unitsPerOrder').total * 100), Math.round((units / live.length) * 100));
+    assert.ok(run('revPerCustomer').total > 0);
+  });
+
+  it('counts each product once', () => {
+    assert.equal(run('products').total, new Set(live.map((s) => s.item?.product_name ?? s.product_details)).size);
+  });
+});

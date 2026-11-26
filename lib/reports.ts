@@ -37,8 +37,11 @@ export type SavedReport = {
   chart: 'column' | 'bar' | 'line' | 'table'; createdAt: string;
 };
 
+/** A report's name is at most this long. */
+export const REPORT_NAME_LIMIT = 60;
+
 /** A custom report shows at most this many columns. */
-export const MAX_REPORT_COLUMNS = 6;
+export const MAX_REPORT_COLUMNS = 8;
 
 /** A saved report's columns, in order. */
 export const savedReportMeasures = (r: Pick<SavedReport, 'measure' | 'measures'>): string[] => (r.measures?.length ? r.measures : [r.measure]);
@@ -52,8 +55,16 @@ export function reportDraftError(d: { measures: string[] }): string | null {
 
 /** "Revenue, orders and units by location": the suggested name, in sentence case. */
 export function customReportName(measureLabels: string[], groupLabel: string): string {
-  const cols = measureLabels.length > 1 ? `${measureLabels.slice(0, -1).join(', ')} and ${measureLabels.at(-1)}` : (measureLabels[0] ?? '');
-  const n = `${cols} by ${groupLabel}`.toLowerCase();
+  const [a, b, ...rest] = measureLabels;
+  const by = ` by ${groupLabel}`;
+  // Name every column while that stays short; past three, the first two and a count. Never longer than a name may be.
+  const all = measureLabels.length > 1 ? `${measureLabels.slice(0, -1).join(', ')} and ${measureLabels.at(-1)}` : (a ?? '');
+  const options = [
+    measureLabels.length <= 3 ? all : `${a}, ${b} and ${rest.length} more`,
+    measureLabels.length > 1 ? `${a} and ${measureLabels.length - 1} more` : (a ?? ''),
+  ];
+  const cols = options.find((o) => (o + by).length <= REPORT_NAME_LIMIT) ?? options[1];
+  const n = `${cols}${by}`.toLowerCase().slice(0, REPORT_NAME_LIMIT);
   return n.charAt(0).toUpperCase() + n.slice(1);
 }
 

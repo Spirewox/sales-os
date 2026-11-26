@@ -28,13 +28,17 @@ const DIMS: Record<string, (s: Sale) => string | undefined> = {
   Channel: (s) => s.channel,
   PaymentMode: (s) => s.payment_mode,
   PaymentType: (s) => s.payment_type,
-  CashCredit: (s) => (s.payment_mode === 'Credit' ? 'Credit' : 'Cash'),
+  CashCredit: (s) => (isCredit(s) ? 'Credit' : 'Cash'),
   Status: (s) => s.status,
   Agent: (s) => s.agent_name,
 };
 const dim = (s: Sale, field: string) => DIMS[field]?.(s) || '-';
 
 const customerId = (s: Sale) => (typeof s.customer === 'string' ? s.customer : (s.customer as { _id?: string } | null)?._id) ?? s.customer_name;
+
+const sumOf = (l: Sale[], f: (s: Sale) => number) => l.reduce((n, s) => n + f(s), 0);
+/** Anything but full payment is sold on credit, as the app maps it. */
+const isCredit = (s: Sale) => s.payment_mode !== 'Full Payment';
 
 /** Each measure: how it reads a group of sales, and whether it is an amount. */
 const MEASURES: Record<string, { kind: 'money' | 'number'; of: (list: Sale[]) => number; additive?: false }> = {
@@ -44,6 +48,14 @@ const MEASURES: Record<string, { kind: 'money' | 'number'; of: (list: Sale[]) =>
   profit: { kind: 'money', of: (l) => l.reduce((n, s) => n + (s.profit_amount ?? 0), 0) },
   aov: { kind: 'money', of: (l) => (l.length ? l.reduce((n, s) => n + s.amount, 0) / l.length : 0), additive: false },
   customers: { kind: 'number', of: (l) => new Set(l.map(customerId)).size, additive: false },
+  cost: { kind: 'money', of: (l) => sumOf(l, (s) => (s.item?.quantity ?? 0) * (s.item?.unit_cost ?? 0)) },
+  marginPct: { kind: 'number', of: (l) => { const rev = sumOf(l, (s) => s.amount); return rev ? (sumOf(l, (s) => s.profit_amount ?? 0) / rev) * 100 : 0; }, additive: false },
+  avgPrice: { kind: 'money', of: (l) => { const u = sumOf(l, (s) => s.item?.quantity ?? 0); return u ? sumOf(l, (s) => s.amount) / u : 0; }, additive: false },
+  unitsPerOrder: { kind: 'number', of: (l) => (l.length ? sumOf(l, (s) => s.item?.quantity ?? 0) / l.length : 0), additive: false },
+  revPerCustomer: { kind: 'money', of: (l) => { const n = new Set(l.map(customerId)).size; return n ? sumOf(l, (s) => s.amount) / n : 0; }, additive: false },
+  creditSales: { kind: 'money', of: (l) => sumOf(l.filter(isCredit), (s) => s.amount) },
+  cashSales: { kind: 'money', of: (l) => sumOf(l.filter((s) => !isCredit(s)), (s) => s.amount) },
+  products: { kind: 'number', of: (l) => new Set(l.map((s) => s.item?.product_name ?? s.product_details)).size, additive: false },
 };
 
 export function runMockExplore(db: Db, body: ExploreBody, ctx: ExploreContext): QueryResult {

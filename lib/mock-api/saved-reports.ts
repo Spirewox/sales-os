@@ -16,7 +16,7 @@ function check(list: SavedReport[], body: Body, self?: string): Result | { name:
   return { name, measures };
 }
 
-/** POST analytics/reports/saved: a name of 1 to 60 characters, unique for this person, and 1 to 6 columns. */
+/** POST analytics/reports/saved: a name of 1 to 60 characters, unique for this person, and 1 to 8 columns. */
 export function saveReport(list: SavedReport[], body: Body, now: string): Result {
   const ok = check(list, body);
   if ('status' in ok) return ok;

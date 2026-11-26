@@ -44,7 +44,8 @@ describe('saveReport columns', () => {
     assert.deepEqual(list[0].measures, ['revenue', 'orders']);
     assert.equal(list[0].measure, 'revenue');
     assert.equal(saveReport([], { ...body, measures: [] }, 'now').status, 400);
-    assert.equal(saveReport([], { ...body, measures: ['a', 'b', 'c', 'd', 'e', 'f', 'g'] }, 'now').status, 400);
+    assert.equal(saveReport([], { ...body, measures: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'] }, 'now').status, 200);
+    assert.equal(saveReport([], { ...body, measures: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'] }, 'now').status, 400);
   });
 });
 
