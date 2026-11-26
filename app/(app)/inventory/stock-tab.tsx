@@ -34,8 +34,8 @@ export type StockActions = {
   /** Present only with inventory.archive. */
   archive?: (item: InventoryItem) => void;
   restore?: (item: InventoryItem) => void;
-  /** Why a product cannot be archived yet, or null. */
-  archiveBlocker?: (item: InventoryItem) => string | null;
+  /** One line under "Archive product": why it is blocked, or the stock still on hand. */
+  archiveHint?: (item: InventoryItem) => string | null;
 };
 
 const STOCK_LABEL = { low: 'Low stock', out: 'Out of stock', below: 'At or below minimum', expiring: 'Expiring in 30 days' } as const;
@@ -157,7 +157,7 @@ export function StockTab({ hubScope, view, loading, pendingRequests, needsAction
           { label: 'Edit product', icon: <Pencil />, onSelect: () => actions.edit?.(i), hidden: !actions.edit },
           {
             label: 'Archive product', icon: <Archive />, destructive: true, onSelect: () => actions.archive?.(i),
-            description: actions.archiveBlocker?.(i) ?? undefined, hidden: !actions.archive,
+            description: actions.archiveHint?.(i) ?? undefined, hidden: !actions.archive,
           },
         ]}
       />

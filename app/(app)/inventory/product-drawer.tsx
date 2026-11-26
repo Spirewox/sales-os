@@ -28,8 +28,8 @@ export type DrawerActions = {
   /** Open the archive confirmation; present only with inventory.archive. */
   archive?: () => void;
   restore?: () => void;
-  /** Why archiving is blocked right now (stock on hand, open requests), or null. */
-  archiveBlocker?: string | null;
+  /** One line under "Archive product": why it is blocked (open requests), or the stock still on hand. */
+  archiveHint?: string | null;
 };
 
 /** One product: batches first (soonest expiry on top), purchase / transfer / adjust in the header. */
@@ -105,7 +105,7 @@ export function ProductDrawer({ item, onClose, actions, requestConfirm }: Readon
             { label: 'Edit product', icon: <Pencil />, onSelect: () => actions.edit?.(), hidden: archived || !actions.edit },
             {
               label: 'Archive product', icon: <Archive />, destructive: true, onSelect: () => actions.archive?.(),
-              description: actions.archiveBlocker ?? undefined, hidden: archived || !actions.archive,
+              description: actions.archiveHint ?? undefined, hidden: archived || !actions.archive,
             },
           ]}
         />

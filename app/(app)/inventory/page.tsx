@@ -14,7 +14,7 @@ import {
 } from '@/hooks/use-queries';
 import { ConfirmPreviewModal } from '@/components/confirm-preview-modal';
 import { ConfirmDialog, OverflowMenu, PageHeader, SectionErrorBoundary, SectionTabs, useSectionTab, type SectionTab } from '@/components/app';
-import { archiveBlocker, isArchived } from '@/lib/inventory-archive';
+import { archiveBlocker, archiveStockWarning, isArchived, stockOnHand } from '@/lib/inventory-archive';
 import { InventoryImportModal } from './inventory-import-modal';
 import { type ConfirmState } from './inventory-utils';
 import { useStockView } from './use-stock-view';
@@ -94,6 +94,8 @@ function InventoryWorkspace() {
   const [archiving, setArchiving] = useState<InventoryItem | null>(null);
   const openRequestsFor = (id: string) => requestScope.requests.filter((r) => isOpenRequest(r) && r.lines.some((l) => l.product_id === id)).length;
   const blockerFor = (i: InventoryItem) => archiveBlocker(i, openRequestsFor(i.id));
+  // The line under "Archive product": why it is blocked, else the stock it would take out of the list.
+  const archiveHintFor = (i: InventoryItem) => blockerFor(i) ?? (stockOnHand(i) ? `${stockOnHand(i)} still in stock` : null);
   const confirmArchive = () => {
     if (!archiving) return;
     const name = archiving.name;
@@ -114,7 +116,7 @@ function InventoryWorkspace() {
     bulkUpdate: canAdjust ? (list: InventoryItem[]) => setSheet({ kind: 'batch', items: list }) : undefined,
     archive: canArchive ? (i: InventoryItem) => setArchiving(i) : undefined,
     restore: canArchive ? restore : undefined,
-    archiveBlocker: blockerFor,
+    archiveHint: archiveHintFor,
   };
 
   /* ──────── Movement import (Excel) ──────── */
@@ -263,7 +265,7 @@ function InventoryWorkspace() {
             edit: itemActions.edit && (() => itemActions.edit!(drawerItem)),
             archive: itemActions.archive && (() => itemActions.archive!(drawerItem)),
             restore: itemActions.restore && (() => itemActions.restore!(drawerItem)),
-            archiveBlocker: blockerFor(drawerItem),
+            archiveHint: archiveHintFor(drawerItem),
           }}
         />
       )}
@@ -278,6 +280,21 @@ function InventoryWorkspace() {
             confirmLabel="OK"
             onCancel={() => setArchiving(null)}
             onConfirm={() => setArchiving(null)}
+          />
+        ) : archiveStockWarning(archiving) ? (
+          // Still in stock: say plainly what archiving does to it, and that a restore undoes it.
+          <ConfirmDialog
+            title={`Archive ${archiving.name} with stock on hand?`}
+            message={
+              <span className="block space-y-2">
+                <span className="block">{archiveStockWarning(archiving)}</span>
+                <span className="block">Its sales and movements stay in reports. You can restore it from Archived stock.</span>
+              </span>
+            }
+            confirmLabel="Archive with stock"
+            busy={archiveProduct.isPending}
+            onCancel={() => setArchiving(null)}
+            onConfirm={confirmArchive}
           />
         ) : (
           <ConfirmDialog

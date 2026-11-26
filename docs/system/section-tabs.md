@@ -23,7 +23,7 @@ Real uses, 8 call sites (`rg -n "<SectionTabs\b" app components lib --glob '*.{t
 - Engagement, interactions: `app/(app)/engagement/interactions.tsx:207`, URL mode on `param="view"`, warning counts.
 - Kitchen header: `app/(app)/kitchen/page.tsx:124`, URL mode, default "board".
 - Dashboard, needs attention card: `app/(app)/_dashboard/needs-attention.tsx:45`, controlled, danger, warning and neutral counts.
-- Inventory header: `app/(app)/inventory/page.tsx:234`, URL mode, warning count on Requests.
+- Inventory header: `app/(app)/inventory/page.tsx:236`, URL mode, warning count on Requests.
 - POS header: `app/(app)/pos/page.tsx:79`, controlled, so a tab change also clears the tab's filters.
 - Audit log header: `app/(app)/audit/page.tsx:185`, URL mode, default "all".
 

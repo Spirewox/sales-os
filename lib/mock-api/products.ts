@@ -28,7 +28,7 @@ export function archiveProduct(
 ): Result {
   const p = products.find((x) => x._id === id);
   if (!p) return { status: 404, data: { message: 'Product not found.' } };
-  if (Math.abs(p.current_stock ?? 0) > 1e-6) return { status: 409, data: { message: 'Stock must be 0 before this product can be archived.' } };
+  // Stock on hand does not block: the app warns before confirming, and the stock is kept for a restore.
   const open = requests.filter((r) => OPEN_REQUEST.has(r.status) && r.lines.some((l) => l.product_id === id)).length;
   if (open) return { status: 409, data: { message: `Close the ${open} open ${open === 1 ? 'request' : 'requests'} for this product first.` } };
   Object.assign(p, { is_active: false, archived_at: now, archived_by: user });

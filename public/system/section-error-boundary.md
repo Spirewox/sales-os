@@ -23,7 +23,7 @@ Real uses, 22 call sites (`rg -n "<SectionErrorBoundary\b" app components lib --
 - Kitchen, around the active section, reset by section: `app/(app)/kitchen/page.tsx:127`.
 - Dashboard, six sections each in their own boundary: `app/(app)/_dashboard/dashboard-content.tsx:120`, `app/(app)/_dashboard/dashboard-content.tsx:130`, `app/(app)/_dashboard/dashboard-content.tsx:142`, `app/(app)/_dashboard/dashboard-content.tsx:147`, `app/(app)/_dashboard/dashboard-content.tsx:159`, `app/(app)/_dashboard/dashboard-content.tsx:164`.
 - Sales, around the sales list: `app/(app)/sales/page.tsx:167`.
-- Inventory, around the active tab, reset by tab: `app/(app)/inventory/page.tsx:238`.
+- Inventory, around the active tab, reset by tab: `app/(app)/inventory/page.tsx:240`.
 - Suppliers, around the list, reset by the filter key: `app/(app)/suppliers/page.tsx:233`.
 - Customers, around the list, reset by the page key: `app/(app)/customers/page.tsx:218`.
 - Supplier drawer and customer panel, reset by record and tab: `app/(app)/suppliers/supplier-drawer.tsx:91`, `app/(app)/customers/customer-detail-panel.tsx:135`.

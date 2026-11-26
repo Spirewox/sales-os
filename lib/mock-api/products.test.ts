@@ -35,10 +35,11 @@ describe('archiveProduct', () => {
     assert.equal(rows[0].archived_at, '2026-11-26T10:00:00.000Z');
     assert.deepEqual(rows[0].archived_by, user);
   });
-  it('refuses while stock is on hand', () => {
-    const res = archiveProduct([product('a', { current_stock: 3 })], [], 'a', user, 'now');
-    assert.equal(res.status, 409);
-    assert.match(String((res.data as { message: string }).message), /stock/i);
+  it('archives a product with stock on hand and keeps the stock', () => {
+    const rows = [product('a', { current_stock: 3 })];
+    assert.equal(archiveProduct(rows, [], 'a', user, 'now').status, 200);
+    assert.equal(rows[0].is_active, false);
+    assert.equal(rows[0].current_stock, 3);
   });
   it('refuses while an open request names it', () => {
     const res = archiveProduct([product('a')], [openRequest], 'a', user, 'now');
@@ -54,6 +55,13 @@ describe('archiveProduct', () => {
 });
 
 describe('restoreProduct', () => {
+  it('brings back a product archived with stock, stock intact', () => {
+    const rows = [product('a', { current_stock: 7, is_active: false, archived_at: 'x' })];
+    assert.equal(restoreProduct(rows, 'a').status, 200);
+    assert.equal(rows[0].is_active, true);
+    assert.equal(rows[0].current_stock, 7);
+  });
+
   it('makes it active and clears the stamp', () => {
     const rows = [product('a', { is_active: false, archived_at: 'x', archived_by: { _id: 'u', full_name: 'U' } })];
     assert.equal(restoreProduct(rows, 'a').status, 200);

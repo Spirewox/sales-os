@@ -18,7 +18,7 @@
 
 | Call | Behaviour |
 |------|-----------|
-| `PATCH inventory/:id/archive` | Sets `is_active: false`, `archived_at: now` and `archived_by: user`. Writes an audit entry, `Archived product <name>`. Returns `{ data: ApiProduct }`. Returns 409 with a `message` when stock on hand is above 0 or when submitted or approved requests name the product. |
+| `PATCH inventory/:id/archive` | Sets `is_active: false`, `archived_at: now` and `archived_by: user`. Writes an audit entry, `Archived product <name>`. Returns `{ data: ApiProduct }`. Stock on hand does **not** block (updated 26 Nov at the user's request): the product keeps its `current_stock` and batches while archived, they drop out of stock totals and lists, and a restore brings them back. Returns 409 with a `message` only when submitted or approved requests name the product. |
 | `PATCH inventory/:id/restore` | Sets `is_active: true` and clears `archived_at` and `archived_by`. Writes an audit entry. Returns `{ data: ApiProduct }`. |
 | `GET inventory?status=active\|archived\|all` | Defaults to `active`. Pickers and the sale API reject an archived product id with 409 `This product is archived.` |
 | Stock changes on an archived product | Purchases, adjustments, transfers, batch (bulk) updates and "align stock to batches" are refused with 409 `This product is archived.` The app no longer offers them for archived products, but the server is the guard. |
@@ -38,9 +38,8 @@
   - **Restore:** `Restore`, the drawer's primary action when the product is archived, and a row action in the Archived view.
   - **Badge:** `StatusBadge` with tone `neutral`, reading `Archived`.
   - **Status filter:** a `FilterSelect` labelled `Status` with the options `Active` (default), `Archived` and `All`, kept in the URL as `status`.
-- **Blocked archiving:** the menu item stays visible but disabled, and its reason shows as the item's description.
-  - With stock on hand: `Stock must be 0 first. <stock display> on hand.`
-  - With open requests: `Close the <n> open requests first.`, or `request` when n is 1.
+- **Archiving with stock on hand (updated 26 Nov):** allowed after a stronger confirm. The menu item's description reads `<stock display> still in stock`. The dialog is titled `Archive <name> with stock on hand?`, says what is still in stock and its value at cost, that archiving takes it out of the stock list, stock value and pickers so it cannot be sold, transferred or adjusted, and that the stock stays recorded and comes back on restore. The confirm button reads `Archive with stock`.
+- **Blocked archiving:** only open requests block. The item stays selectable with the reason as its description (`Close the <n> open requests first.`, or `request` when n is 1), and choosing it explains again in a dialog.
 - **Nothing is removed:**
   - Stock KPIs and the stock summary count active products only, as today.
   - Analytics Inventory and Suppliers tabs count every product, so their history doesn't shrink.

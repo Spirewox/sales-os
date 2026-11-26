@@ -23,7 +23,7 @@ Real uses, 12 call sites (`rg -n "<PageHeader\b" app components lib --glob '!com
 - Kitchen, one secondary and one primary button, tabs: `app/(app)/kitchen/page.tsx:109`.
 - Dashboard, two secondary links and one primary link, two overflow menus split by width: `app/(app)/_dashboard/dashboard-content.tsx:68`.
 - Sales, one primary hidden below 768px, overflow with import, templates and export: `app/(app)/sales/page.tsx:98`.
-- Inventory, one primary that changes with the tab, overflow with four items gated by permissions, tabs: `app/(app)/inventory/page.tsx:220`.
+- Inventory, one primary that changes with the tab, overflow with four items gated by permissions, tabs: `app/(app)/inventory/page.tsx:222`.
 - Customers, one primary, overflow with import, template and export: `app/(app)/customers/page.tsx:151`.
 - Suppliers, one primary: `app/(app)/suppliers/page.tsx:167`.
 - Settings, title and description only: `app/(app)/settings/page.tsx:52`.
@@ -106,7 +106,7 @@ Not applicable: PageHeader has no variant prop. What changes between pages is wh
 | With actions | `actions` or `overflow` set (8 and 6 call sites) | Press the page's primary action, open the overflow menu | Cluster of controls right of the title at 640px and up | screenshot |
 | With tabs | `tabs` set (6 call sites) | Switch section | Tab row under the title row, inside the same `header` | screenshot |
 | Narrow | Viewport under 640px (`sm`) | Same as wide | Title block on top, cluster below it, left aligned and wrapping | by hand |
-| Overflow all hidden | `overflow` set and every item `hidden`, so OverflowMenu returns null (Inventory with no inventory permissions, `app/(app)/inventory/page.tsx:225`) | Nothing in the cluster | No trigger. The empty cluster box still renders and adds a 12px gap below the title under 640px | by hand |
+| Overflow all hidden | `overflow` set and every item `hidden`, so OverflowMenu returns null (Inventory with no inventory permissions, `app/(app)/inventory/page.tsx:227`) | Nothing in the cluster | No trigger. The empty cluster box still renders and adds a 12px gap below the title under 640px | by hand |
 
 Example: Customers header with one primary action and the secondary actions in the overflow menu (`docs/system/examples/page-header/with-actions.tsx`)
 
