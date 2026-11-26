@@ -1,7 +1,10 @@
 'use client';
 
 import { Receipt } from 'lucide-react';
-import { DataTable, EmptyState, MoreFilterField, type Column, type FilterChip } from '@/components/app';
+import { DataTable, EmptyState, MoreFilterField, OverflowMenu, type Column, type FilterChip } from '@/components/app';
+import { useExport } from '@/hooks/use-export';
+import { axiosGet } from '@/lib/api';
+import { posTransactionExportColumns } from '@/lib/exports/pos';
 import { plural } from '@/lib/format';
 import { usePosFilters } from './use-pos-filters';
 import { operationsQuery, useCursorPages, useOperationsList } from './operations';
@@ -23,6 +26,22 @@ export function TransactionsTab() {
   const { options: tillOptions, tillLabel } = useTillOptions(f);
   const cashierOptions = withSelected(useCashierOptions(f, rows), cashier, 'Selected cashier');
   const selected = rows?.find((r) => r._id === f.get('txn'));
+
+  // Every transaction matching the filters, following the API's cursor past the page on screen.
+  const exportTransactions = useExport({
+    module: 'pos-transactions',
+    noun: { one: 'transaction', many: 'transactions' },
+    columns: posTransactionExportColumns({
+      hubName: f.hubName,
+      tillLabel,
+      statusLabel: (s) => TRANSACTION_STATUSES.find((o) => o.value === s)?.label ?? s ?? '',
+    }),
+    fetchCursor: async (cursor) => {
+      const res = await axiosGet(`pos/operations/transactions?${operationsQuery({ ...base, before: cursor })}`, true) as { data?: PosRow[]; nextCursor?: string | null };
+      return { items: res.data ?? [], nextCursor: res.nextCursor };
+    },
+    disabled: !rows?.length,
+  });
 
   const label = (list: readonly { value: string; label: string }[], value: string | null) => list.find((o) => o.value === value)?.label ?? value;
   const chips: FilterChip[] = [
@@ -69,6 +88,7 @@ export function TransactionsTab() {
         moreActiveCount={[till, cashier, kind].filter(Boolean).length}
         chips={chips}
         resultLabel={rows ? `${plural(rows.length, 'transaction')}${list.data?.nextCursor || page.page > 1 ? ` on page ${page.page}` : ''}` : undefined}
+        trailing={<OverflowMenu label="More transaction actions" items={[exportTransactions.item]} />}
       />
       <LoadError show={list.isError} what="transactions" retry={() => void list.refetch()} />
       <DataTable

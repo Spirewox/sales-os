@@ -5,7 +5,7 @@ import { Download } from 'lucide-react';
 import { toast } from 'sonner';
 import type { OverflowItem } from '@/components/app';
 import {
-  buildCsv, exportFilename, exportToast, fetchExportRows, saveCsv,
+  buildCsv, exportFilename, exportToast, fetchExportRows, fetchExportRowsByCursor, saveCsv,
   type ExportColumn, type ExportNoun,
 } from '@/lib/export';
 
@@ -14,13 +14,16 @@ export type UseExportOptions<T> = {
   module: string;
   noun: ExportNoun;
   columns: ExportColumn<T>[];
-  /** One page of the same list the screen shows, with the screen's filters applied. */
-  fetchPage: (page: number, limit: number) => Promise<{ items: T[]; totalPages: number }>;
   disabled?: boolean;
-};
+} & (
+  /** One page of the same list the screen shows, with the screen's filters applied. */
+  | { fetchPage: (page: number, limit: number) => Promise<{ items: T[]; totalPages: number }>; fetchCursor?: never }
+  /** The same, for a list the API pages with a cursor. */
+  | { fetchCursor: (cursor?: string) => Promise<{ items: T[]; nextCursor: string | null | undefined }>; fetchPage?: never }
+);
 
 /** Export the list on screen as CSV, as an `⋯` menu item: `Export <noun>`. */
-export function useExport<T>({ module, noun, columns, fetchPage, disabled }: UseExportOptions<T>) {
+export function useExport<T>({ module, noun, columns, fetchPage, fetchCursor, disabled }: UseExportOptions<T>) {
   const [pending, setPending] = useState(false);
   const running = useRef(false);
 
@@ -30,7 +33,7 @@ export function useExport<T>({ module, noun, columns, fetchPage, disabled }: Use
     setPending(true);
     void (async () => {
       try {
-        const { rows, capped } = await fetchExportRows(fetchPage);
+        const { rows, capped } = fetchCursor ? await fetchExportRowsByCursor(fetchCursor) : await fetchExportRows(fetchPage!);
         saveCsv(exportFilename(module), buildCsv(columns, rows));
         if (capped) toast.warning(exportToast(rows.length, noun, true));
         else toast.success(exportToast(rows.length, noun, false));

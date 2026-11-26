@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { buildCsv, csvDate, exportFilename, exportToast, fetchExportRows, EXPORT_ROW_CAP, type ExportCell } from './export';
+import { buildCsv, csvDate, exportFilename, exportToast, fetchExportRows, fetchExportRowsByCursor, EXPORT_ROW_CAP, type ExportCell } from './export';
 
 describe('buildCsv', () => {
   it('quotes every cell and doubles quotes', () => {
@@ -84,6 +84,37 @@ describe('fetchExportRows', () => {
 
   it('defaults the cap to 10,000', () => {
     assert.equal(EXPORT_ROW_CAP, 10_000);
+  });
+});
+
+describe('fetchExportRowsByCursor', () => {
+  it('follows the cursor until there is none', async () => {
+    const seen: (string | undefined)[] = [];
+    const page = async (cursor?: string) => {
+      seen.push(cursor);
+      return cursor === undefined ? { items: [1, 2], nextCursor: 'a' } : cursor === 'a' ? { items: [3], nextCursor: 'b' } : { items: [4], nextCursor: null };
+    };
+    const { rows, capped } = await fetchExportRowsByCursor(page);
+    assert.deepEqual(rows, [1, 2, 3, 4]);
+    assert.deepEqual(seen, [undefined, 'a', 'b']);
+    assert.equal(capped, false);
+  });
+
+  it('stops at the cap', async () => {
+    let n = 0;
+    const page = async () => ({ items: Array(100).fill(0), nextCursor: `c${++n}` });
+    const { rows, capped } = await fetchExportRowsByCursor(page, 250);
+    assert.equal(rows.length, 250);
+    assert.equal(capped, true);
+    assert.equal(n, 3);
+  });
+
+  it('stops when the API repeats a cursor', async () => {
+    let calls = 0;
+    const page = async () => { calls += 1; return { items: [calls], nextCursor: 'same' }; };
+    const { rows } = await fetchExportRowsByCursor(page);
+    assert.equal(calls, 2);
+    assert.deepEqual(rows, [1, 2]);
   });
 });
 

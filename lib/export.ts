@@ -63,6 +63,24 @@ export async function fetchExportRows<T>(
   }
 }
 
+/** The same for a list paged by cursor: follow `nextCursor` until it runs out, repeats or the cap is reached. */
+export async function fetchExportRowsByCursor<T>(
+  fetchPage: (cursor?: string) => Promise<{ items: T[]; nextCursor: string | null | undefined }>,
+  cap: number = EXPORT_ROW_CAP,
+): Promise<{ rows: T[]; capped: boolean }> {
+  const rows: T[] = [];
+  const seen = new Set<string>();
+  let cursor: string | undefined;
+  for (;;) {
+    const { items, nextCursor } = await fetchPage(cursor);
+    rows.push(...items);
+    if (rows.length >= cap) return { rows: rows.slice(0, cap), capped: true };
+    if (!nextCursor || seen.has(nextCursor)) return { rows, capped: false };
+    seen.add(nextCursor);
+    cursor = nextCursor;
+  }
+}
+
 export function exportToast(count: number, noun: ExportNoun, capped: boolean): string {
   if (capped) return `Exported the first ${formatCount(count)} rows. Narrow the filters to get the rest.`;
   return `Exported ${plural(count, noun.one, noun.many)}.`;

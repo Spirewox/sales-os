@@ -2,27 +2,17 @@
 
 import { StatusBadge, type Tone } from '@/components/app';
 import { formatMoney } from '@/lib/format';
+import type { PosRow } from '@/lib/pos-rows';
 
 export type PosSection = 'transactions' | 'tills' | 'shifts' | 'reviews';
 export type PosTab = 'overview' | PosSection;
 
-/** One row from `pos/operations/{section}`; each section fills a different subset. */
-export type PosRow = {
-  _id: string; hub: string; device_id?: string; label?: string; registered?: boolean; revoked?: boolean;
-  client_sale_id?: string; client_shift_id?: string; cashier_id?: string; cashier_name?: string; kind?: string; status?: string;
-  total_kobo?: number; createdAt?: string; opened_at?: string; closed_at?: string; last_seen?: string; variance?: number;
-  receipt?: { lines?: { name: string; qty: number; lineTotal: number }[]; receiptPayment?: { checkoutReference?: string; provider?: string; actualMethod?: string } };
-  checkoutReference?: string;
-  review_reason?: string; evidence?: { amountKobo?: number; terminalSerial?: string; reference?: string; transactionReference?: string };
-};
+export type { PosRow } from '@/lib/pos-rows';
+export { rowMethod, rowReference } from '@/lib/pos-rows';
 
 /** POS amounts arrive in kobo. */
 export const formatKobo = (value?: number | null) => (value == null ? '-' : formatMoney(value / 100));
 
-export const rowReference = (row: PosRow) =>
-  row.client_sale_id || row.label || row.client_shift_id || row.evidence?.reference || row.device_id || row._id;
-
-export const rowMethod = (row: PosRow) => row.receipt?.receiptPayment?.actualMethod || row.receipt?.receiptPayment?.provider || '-';
 
 const TIME = new Intl.DateTimeFormat('en-GB', { timeZone: 'Africa/Lagos', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 export const posTime = (value?: string | null) => (value ? TIME.format(new Date(value)) : '-');

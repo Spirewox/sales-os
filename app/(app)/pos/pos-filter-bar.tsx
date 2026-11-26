@@ -10,8 +10,10 @@ import { useOperationsList } from './operations';
 import type { PosRow } from './pos-utils';
 
 /** The shared filter row: search, location, period (where data follows one), then tab filters. */
-export function PosFilterBar({ f, searchPlaceholder, withPeriod = true, filters, more, moreActiveCount, chips = [], resultLabel }: Readonly<{
+export function PosFilterBar({ f, searchPlaceholder, withPeriod = true, filters, more, moreActiveCount, chips = [], resultLabel, trailing }: Readonly<{
   f: PosFilters; searchPlaceholder: string; withPeriod?: boolean; filters?: ReactNode; more?: ReactNode; moreActiveCount?: number; chips?: FilterChip[]; resultLabel?: ReactNode;
+  /** Actions such as Export, pushed right of the filters. */
+  trailing?: ReactNode;
 }>) {
   const all: FilterChip[] = [
     ...(withPeriod && f.period.preset !== POS_PERIOD_DEFAULT ? [{ key: 'period', label: periodLabel(f.period), onRemove: () => f.set({ period: null, from: null, to: null }) }] : []),
@@ -35,6 +37,7 @@ export function PosFilterBar({ f, searchPlaceholder, withPeriod = true, filters,
       chips={all}
       onClearAll={clearAll}
       resultLabel={resultLabel}
+      trailing={trailing}
     />
   );
 }
