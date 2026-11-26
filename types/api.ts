@@ -313,6 +313,8 @@ export interface ApiProduct {
   last_stock_update?: string;
   hub: string | { _id: string; hub_name?: string } | null;
   is_active?: boolean;
+  archived_at?: string;
+  archived_by?: { _id: string; full_name?: string } | string | null;
   price_version?: string;
   supplier?: string;
   supplier_id?: string;

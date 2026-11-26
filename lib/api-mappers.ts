@@ -322,6 +322,8 @@ export function mapInventoryItem(p: ApiProduct, hubMap?: Record<string, string>)
     location: resolveHubName(p.hub, hubMap),
     hubId: refId(p.hub) || undefined,
     isActive: p.is_active !== false,
+    archivedAt: p.archived_at,
+    archivedByName: typeof p.archived_by === 'object' && p.archived_by ? p.archived_by.full_name : undefined,
     priceVersion: p.price_version,
     supplier: p.supplier,
     supplierId: typeof p.supplier_id === 'string' ? p.supplier_id : refId(p.supplier_id),

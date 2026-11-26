@@ -233,6 +233,9 @@ export interface InventoryItem {
   supplierId?: string;
   lastPurchasePrice?: number;
   isActive?: boolean;
+  /** When the product was archived (isActive false), and by whom. */
+  archivedAt?: string;
+  archivedByName?: string;
   priceHistory?: { date: string; cost: number; price: number }[];
   isExpensed?: boolean;
   expenseMode?: 'percent' | 'count';
