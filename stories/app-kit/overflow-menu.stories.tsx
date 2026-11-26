@@ -71,6 +71,17 @@ export const ExportTriggerDisabled: Story = {
   args: { label: 'Export suppliers', items: EXPORT_ITEMS, trigger: { text: 'Export', icon: <Download aria-hidden />, disabled: true } },
 };
 
+/** An item with a line under it: why Archive cannot run yet. The item stays selectable and explains itself again. */
+export const ItemWithDescription: Story = {
+  args: {
+    label: 'More product actions',
+    items: [
+      { label: 'Edit product', icon: <Pencil aria-hidden />, onSelect: fn() },
+      { label: 'Archive product', icon: <Archive aria-hidden />, onSelect: fn(), destructive: true, description: 'Stock must be 0 first. 12 Units on hand.' },
+    ],
+  },
+};
+
 /** Small trigger for table rows and drawers. */
 export const Small: Story = { args: { size: 'sm' } };
 

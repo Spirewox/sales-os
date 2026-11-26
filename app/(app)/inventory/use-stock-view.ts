@@ -3,22 +3,28 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { InventoryItem, StockLog } from '@/types';
 import { useUrlState } from '@/hooks/use-url-state';
+import { filterByArchiveStatus, parseArchiveStatus } from '@/lib/inventory-archive';
 import { buildFifoBatches, expiringOpenBatches, stockState, type FifoBatch, type ProductCategory } from './inventory-utils';
 
 export type StockFilter = 'low' | 'out' | 'below' | 'expiring';
 const STOCK_FILTERS: StockFilter[] = ['low', 'out', 'below', 'expiring'];
 
 /**
- * Stock tab filters (URL: ?q=, ?category=, ?stock=low|out|below|expiring, ?sku=id,id) and the rows they select.
- * `items` must already be limited to active products in the app location.
+ * Stock tab filters (URL: ?q=, ?category=, ?stock=low|out|below|expiring, ?sku=id,id, ?status=archived|all)
+ * and the rows they select. `items` is every product in the app location, archived ones included:
+ * the counts behind the KPIs use active products only, the list follows the Status filter.
  */
-export function useStockView(items: InventoryItem[], logs: StockLog[]) {
+export function useStockView(allItems: InventoryItem[], logs: StockLog[]) {
   const { get, set } = useUrlState();
   const urlSearch = get('q') ?? '';
   const category = (get('category') ?? 'All') as ProductCategory | 'All';
   const rawStock = get('stock') as StockFilter | null;
   const stockFilter = rawStock && STOCK_FILTERS.includes(rawStock) ? rawStock : null;
   const skuParam = get('sku') ?? '';
+  const status = parseArchiveStatus(get('status'));
+  // KPIs and alerts count active products; the list shows the chosen status.
+  const items = useMemo(() => filterByArchiveStatus(allItems, 'active'), [allItems]);
+  const listItems = useMemo(() => filterByArchiveStatus(allItems, status), [allItems, status]);
   const skuIds = useMemo(() => (skuParam ? skuParam.split(',').filter(Boolean) : []), [skuParam]);
 
   // Search types locally and writes the URL after a pause.
@@ -72,7 +78,7 @@ export function useStockView(items: InventoryItem[], logs: StockLog[]) {
 
   const filteredItems = useMemo(() => {
     const q = urlSearch.trim().toLowerCase();
-    return items.filter((i) => {
+    return listItems.filter((i) => {
       if (q && !i.name.toLowerCase().includes(q) && !i.sku.toLowerCase().includes(q)) return false;
       if (category !== 'All' && i.category !== category) return false;
       if (skuIds.length && !skuIds.includes(i.id)) return false;
@@ -82,16 +88,16 @@ export function useStockView(items: InventoryItem[], logs: StockLog[]) {
       if (stockFilter === 'expiring' && !expiringByItem.has(i.id)) return false;
       return true;
     });
-  }, [items, urlSearch, category, skuIds, stockFilter, expiringByItem]);
+  }, [listItems, urlSearch, category, skuIds, stockFilter, expiringByItem]);
 
   const skuOptions = useMemo(
     () =>
-      items
+      listItems
         .filter((item) => !!item.sku && (category === 'All' || item.category === category))
         .slice()
         .sort((a, b) => a.sku.localeCompare(b.sku) || a.name.localeCompare(b.name))
         .map((item) => ({ id: item.id, sku: item.sku, name: item.name, location: item.location })),
-    [items, category],
+    [listItems, category],
   );
 
   const toggleStockFilter = (f: StockFilter) => set({ stock: stockFilter === f ? null : f });
@@ -100,14 +106,16 @@ export function useStockView(items: InventoryItem[], logs: StockLog[]) {
   const setSkuIds = (ids: string[]) => set({ sku: ids.length ? ids.join(',') : null });
   const clearAll = () => {
     setSearch('');
-    set({ q: null, category: null, stock: null, sku: null });
+    set({ q: null, category: null, stock: null, sku: null, status: null });
   };
+  const setStatus = (v: string) => set({ status: v === 'active' ? null : v });
 
   return {
     search, setSearch, urlSearch,
     category, setCategory, showKitchen,
     stockFilter, toggleStockFilter, clearStockFilter: () => set({ stock: null }),
     skuIds, setSkuIds, skuOptions,
+    status, setStatus,
     filteredItems, counts, expiringByItem, nextExpiryByItem,
     clearAll,
   };

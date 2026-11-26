@@ -1,6 +1,7 @@
 'use client';
 
-import { ArrowRightLeft, ArrowUpRight, Package, RefreshCw, SlidersHorizontal, Pencil } from 'lucide-react';
+import { Archive, ArchiveRestore, ArrowRightLeft, ArrowUpRight, Package, RefreshCw, SlidersHorizontal, Pencil } from 'lucide-react';
+import { isArchived } from '@/lib/inventory-archive';
 import type { InventoryItem } from '@/types';
 import type { HubScopeFilter } from '@/hooks/use-hub-scope';
 import { formatCount, formatDate, formatMoney } from '@/lib/format';
@@ -30,6 +31,11 @@ export type StockActions = {
   adjust?: (item: InventoryItem) => void;
   edit?: (item: InventoryItem) => void;
   bulkUpdate?: (items: InventoryItem[]) => void;
+  /** Present only with inventory.archive. */
+  archive?: (item: InventoryItem) => void;
+  restore?: (item: InventoryItem) => void;
+  /** Why a product cannot be archived yet, or null. */
+  archiveBlocker?: (item: InventoryItem) => string | null;
 };
 
 const STOCK_LABEL = { low: 'Low stock', out: 'Out of stock', below: 'At or below minimum', expiring: 'Expiring in 30 days' } as const;
@@ -59,7 +65,7 @@ export function StockTab({ hubScope, view, loading, pendingRequests, needsAction
         <span className="flex items-center gap-2.5">
           <SkuPhoto url={i.imageUrl} className="hidden h-8 w-8 md:inline-grid" />
           <span className="min-w-0">
-            <span className="block">{i.name}</span>
+            <span className="flex items-center gap-1.5">{i.name}{isArchived(i) && <StatusBadge tone="neutral">Archived</StatusBadge>}</span>
             <span className="block text-xs font-normal text-muted-foreground">
               <span className="font-mono">{i.sku}</span>
               {i.supplier && <span className="hidden md:inline">, via {i.supplier}</span>}
@@ -134,7 +140,9 @@ export function StockTab({ hubScope, view, loading, pendingRequests, needsAction
     { id: 'value', header: 'Value', align: 'right', mobile: 'meta', cell: (i) => <span className="font-medium">{formatMoney(i.currentStock * i.avgUnitCost)}</span>, sortValue: (i) => i.currentStock * i.avgUnitCost },
   ];
 
-  const rowActions = (i: InventoryItem) => (
+  const rowActions = (i: InventoryItem) => (isArchived(i) ? (
+    actions.restore ? <RowAction onClick={() => actions.restore!(i)}><ArchiveRestore aria-hidden /> Restore</RowAction> : null
+  ) : (
     <>
       {actions.purchase && <RowAction onClick={() => actions.purchase!(i)}><ArrowUpRight aria-hidden /> Purchase</RowAction>}
       {actions.transfer && <RowAction onClick={() => actions.transfer!(i)}><ArrowRightLeft aria-hidden /> Transfer</RowAction>}
@@ -144,13 +152,18 @@ export function StockTab({ hubScope, view, loading, pendingRequests, needsAction
         items={[
           { label: 'Adjust stock', icon: <SlidersHorizontal />, onSelect: () => actions.adjust?.(i), hidden: !actions.adjust },
           { label: 'Edit product', icon: <Pencil />, onSelect: () => actions.edit?.(i), hidden: !actions.edit },
+          {
+            label: 'Archive product', icon: <Archive />, destructive: true, onSelect: () => actions.archive?.(i),
+            description: actions.archiveBlocker?.(i) ?? undefined, hidden: !actions.archive,
+          },
         ]}
       />
     </>
-  );
+  ));
 
   const categoryOptions = [{ value: 'All', label: 'All categories' }, ...PRODUCT_CATEGORIES.map((c) => ({ value: c, label: c }))];
   const chips: FilterChip[] = [
+    ...(view.status !== 'active' ? [{ key: 'status', label: view.status === 'archived' ? 'Archived' : 'Active and archived', onRemove: () => view.setStatus('active') }] : []),
     ...(stockFilter ? [{ key: 'stock', label: STOCK_LABEL[stockFilter], onRemove: view.clearStockFilter }] : []),
     ...(view.category !== 'All' ? [{ key: 'category', label: view.category, onRemove: () => view.setCategory('All') }] : []),
     ...(view.skuIds.length ? [{ key: 'sku', label: `${view.skuIds.length} SKU${view.skuIds.length === 1 ? '' : 's'}`, onRemove: () => view.setSkuIds([]) }] : []),
@@ -182,7 +195,8 @@ export function StockTab({ hubScope, view, loading, pendingRequests, needsAction
         ]}
       />
 
-      <StockPositionStrip items={filteredItems} loading={showLoading} />
+      {/* Its "Active products" and stock figures describe active products, even when the list shows archived ones. */}
+      <StockPositionStrip items={view.status === 'active' ? filteredItems : filteredItems.filter((i) => !isArchived(i))} loading={showLoading} />
 
       <FilterBar
         search={{ value: view.search, onChange: view.setSearch, placeholder: 'Search product or SKU', label: 'Search stock' }}
@@ -190,6 +204,13 @@ export function StockTab({ hubScope, view, loading, pendingRequests, needsAction
           <>
             <LocationSelect scope={hubScope} />
             <FilterSelect ariaLabel="Category" value={view.category} onChange={view.setCategory} className="h-9 w-auto min-w-40 data-[size=default]:h-9" options={categoryOptions} />
+            <FilterSelect
+              ariaLabel="Status"
+              value={view.status}
+              onChange={view.setStatus}
+              size="compact"
+              options={[{ value: 'active', label: 'Active' }, { value: 'archived', label: 'Archived' }, { value: 'all', label: 'Active and archived' }]}
+            />
           </>
         }
         more={

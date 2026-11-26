@@ -10,14 +10,15 @@ import { useHubScopeFilter } from '@/hooks/use-hub-scope';
 import { usePermissions } from '@/hooks/use-permissions';
 import { useUrlState } from '@/hooks/use-url-state';
 import {
-  useDownloadInventoryImportTemplate, useImportInventory, useInventory, useStockLogs, useValidateInventoryImport,
+  useArchiveProduct, useDownloadInventoryImportTemplate, useImportInventory, useInventory, useRestoreProduct, useStockLogs, useValidateInventoryImport,
 } from '@/hooks/use-queries';
 import { ConfirmPreviewModal } from '@/components/confirm-preview-modal';
-import { OverflowMenu, PageHeader, SectionErrorBoundary, SectionTabs, useSectionTab, type SectionTab } from '@/components/app';
+import { ConfirmDialog, OverflowMenu, PageHeader, SectionErrorBoundary, SectionTabs, useSectionTab, type SectionTab } from '@/components/app';
+import { archiveBlocker, isArchived } from '@/lib/inventory-archive';
 import { InventoryImportModal } from './inventory-import-modal';
 import { type ConfirmState } from './inventory-utils';
 import { useStockView } from './use-stock-view';
-import { useRequestScope } from './use-request-scope';
+import { isOpenRequest, useRequestScope } from './use-request-scope';
 import { StockTab } from './stock-tab';
 import { MovementsTab } from './movements-tab';
 import { RequestsTab } from './requests-tab';
@@ -53,14 +54,16 @@ function InventoryWorkspace() {
   const { can } = usePermissions();
   const { get, set } = useUrlState();
   const hubScope = useHubScopeFilter();
-  const { data: items = [], isFetching: itemsFetching } = useInventory({ hub_id: hubScope.hubIdForApi });
+  // Every product, archived included: the Stock list can show archived ones and a link to one still opens it.
+  const { data: items = [], isFetching: itemsFetching } = useInventory({ hub_id: hubScope.hubIdForApi, status: 'all' });
   const { data: hubLogsResult, isFetching: logsFetching } = useStockLogs({ hub_id: hubScope.hubIdForApi, limit: 200 });
   const logs = useMemo(() => hubLogsResult?.data ?? [], [hubLogsResult]);
 
-  // Active products in the app location; every tab and form works from this list.
+  // Products in the app location. Tabs and forms work from the active ones; the Stock list can show archived too.
   const { filterHub } = hubScope;
-  const scopedItems = useMemo(() => items.filter((i) => i.isActive !== false && (filterHub === 'All' || i.location === filterHub)), [items, filterHub]);
-  const stockView = useStockView(scopedItems, logs);
+  const locationItems = useMemo(() => items.filter((i) => filterHub === 'All' || i.location === filterHub), [items, filterHub]);
+  const scopedItems = useMemo(() => locationItems.filter((i) => !isArchived(i)), [locationItems]);
+  const stockView = useStockView(locationItems, logs);
   const requestScope = useRequestScope(hubScope.filterHub);
 
   const tabDefs: SectionTab<InventoryTab>[] = [
@@ -83,6 +86,25 @@ function InventoryWorkspace() {
   const canAdjust = can('inventory.adjust_stock');
   const canTransfer = can('inventory.transfer');
   const canEdit = can('inventory.edit');
+  const canArchive = can('inventory.archive');
+
+  // Archive and restore. Open requests that name a product block archiving it, as stock on hand does.
+  const archiveProduct = useArchiveProduct();
+  const restoreProduct = useRestoreProduct();
+  const [archiving, setArchiving] = useState<InventoryItem | null>(null);
+  const openRequestsFor = (id: string) => requestScope.requests.filter((r) => isOpenRequest(r) && r.lines.some((l) => l.product_id === id)).length;
+  const blockerFor = (i: InventoryItem) => archiveBlocker(i, openRequestsFor(i.id));
+  const confirmArchive = () => {
+    if (!archiving) return;
+    const name = archiving.name;
+    archiveProduct.mutate({ id: archiving.id }, {
+      onSuccess: () => { toast.success(`${name} archived.`); setArchiving(null); },
+      onError: (e) => { toast.error(e.message); setArchiving(null); },
+    });
+  };
+  const restore = (i: InventoryItem) =>
+    restoreProduct.mutate({ id: i.id }, { onSuccess: () => toast.success(`${i.name} restored.`), onError: (e) => toast.error(e.message) });
+
   const itemActions = {
     open: (i: InventoryItem) => openProduct(i.id),
     purchase: canAdjust ? (i: InventoryItem) => setSheet({ kind: 'purchase', item: i }) : undefined,
@@ -90,6 +112,9 @@ function InventoryWorkspace() {
     adjust: canAdjust ? (i: InventoryItem) => setSheet({ kind: 'adjust', item: i }) : undefined,
     edit: canEdit ? (i: InventoryItem) => setSheet({ kind: 'edit', item: i }) : undefined,
     bulkUpdate: canAdjust ? (list: InventoryItem[]) => setSheet({ kind: 'batch', items: list }) : undefined,
+    archive: canArchive ? (i: InventoryItem) => setArchiving(i) : undefined,
+    restore: canArchive ? restore : undefined,
+    archiveBlocker: blockerFor,
   };
 
   /* ──────── Movement import (Excel) ──────── */
@@ -236,9 +261,35 @@ function InventoryWorkspace() {
             transfer: itemActions.transfer && (() => itemActions.transfer!(drawerItem)),
             adjust: itemActions.adjust && (() => itemActions.adjust!(drawerItem)),
             edit: itemActions.edit && (() => itemActions.edit!(drawerItem)),
+            archive: itemActions.archive && (() => itemActions.archive!(drawerItem)),
+            restore: itemActions.restore && (() => itemActions.restore!(drawerItem)),
+            archiveBlocker: blockerFor(drawerItem),
           }}
         />
       )}
+
+      {archiving && (() => {
+        const blocker = blockerFor(archiving);
+        return blocker ? (
+          <ConfirmDialog
+            tone="default"
+            title={`${archiving.name} can't be archived yet`}
+            message={blocker}
+            confirmLabel="OK"
+            onCancel={() => setArchiving(null)}
+            onConfirm={() => setArchiving(null)}
+          />
+        ) : (
+          <ConfirmDialog
+            title={`Archive ${archiving.name}?`}
+            message="It leaves the stock list and the product pickers. Its sales and movements stay in reports. You can restore it from Archived stock."
+            confirmLabel="Archive"
+            busy={archiveProduct.isPending}
+            onCancel={() => setArchiving(null)}
+            onConfirm={confirmArchive}
+          />
+        );
+      })()}
 
       {sheet?.kind === 'create' && <CreateSkuForm hubScope={hubScope} onClose={closeSheet} requestConfirm={setConfirm} />}
       {sheet?.kind === 'edit' && (

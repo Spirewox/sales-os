@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { archiveBlocker, filterByArchiveStatus, isArchived, parseArchiveStatus } from './inventory-archive';
+import { archiveBlocker, filterByArchiveStatus, isArchived, isArchivedProductError, parseArchiveStatus } from './inventory-archive';
 import type { InventoryItem } from '@/types';
 
 const item = (p: Partial<InventoryItem>) => ({ id: 'p', name: 'Wings', currentStock: 0, unitOfMeasure: 'Units', isActive: true, ...p }) as InventoryItem;
@@ -42,5 +42,16 @@ describe('parseArchiveStatus', () => {
     assert.equal(parseArchiveStatus('all'), 'all');
     assert.equal(parseArchiveStatus('x'), 'active');
     assert.equal(parseArchiveStatus(null), 'active');
+  });
+});
+
+describe('isArchivedProductError', () => {
+  it('spots the server refusing an archived product', () => {
+    assert.equal(isArchivedProductError('This product is archived.'), true);
+    assert.equal(isArchivedProductError('Chicken wings is archived and cannot be sold'), true);
+  });
+  it('ignores other errors', () => {
+    assert.equal(isArchivedProductError('Insufficient stock'), false);
+    assert.equal(isArchivedProductError(undefined), false);
   });
 });

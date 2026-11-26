@@ -21,7 +21,7 @@ Real uses, 17 call sites (`rg -n "<EntityDrawer(\s|/|>|$)" app components lib --
 - Customers, customer drawer, opened from a list row, md, with stats and tabs: `app/(app)/customers/customer-detail-panel.tsx:107`
 - Credits, customer credit sheet, lg: `components/credits/customer-credit-sheet.tsx:85`
 - Inventory, request drawer, md: `app/(app)/inventory/request-drawer.tsx:27`
-- Inventory, product drawer, lg, with tabs: `app/(app)/inventory/product-drawer.tsx:77`
+- Inventory, product drawer, lg, with tabs: `app/(app)/inventory/product-drawer.tsx:85`
 - Kitchen, job form loading or failed shell, md: `app/(app)/kitchen/job-form.tsx:99`
 - Kitchen, recipe loading or failed shell, md: `app/(app)/kitchen/recipes.tsx:110`
 - Kitchen, recipe drawer, md: `app/(app)/kitchen/recipes.tsx:151`
@@ -31,7 +31,7 @@ Real uses, 17 call sites (`rg -n "<EntityDrawer(\s|/|>|$)" app components lib --
 - Sales, sale drawer, lg, with tabs: `app/(app)/sales/sale-detail-panel.tsx:87`
 - POS, transaction drawer, md: `app/(app)/pos/transaction-drawer.tsx:11`
 - Engagement, compensation drawer, md: `app/(app)/engagement/compensation-drawer.tsx:39`
-- Suppliers, supplier drawer, md, locked while an issue is being resolved: `app/(app)/suppliers/supplier-drawer.tsx:63`
+- Suppliers, supplier drawer, md, locked while an issue is being resolved: `app/(app)/suppliers/supplier-drawer.tsx:64`
 - Settings, location drawer, md: `app/(app)/settings/location-drawer.tsx:25`
 - Engagement, feedback drawer, md, locked while dirty: `app/(app)/engagement/feedback-drawer.tsx:65`
 - Engagement, enquiry drawer, md, locked while the note differs from the saved one: `app/(app)/engagement/enquiry-drawer.tsx:38`
@@ -90,10 +90,10 @@ gen-docs writes the table from `EntityDrawerProps` in `components/app/entity-dra
 - The person confirms one destructive step, such as voiding a sale. Use ConfirmDialog instead.
 
 ### Rules
-- `rule/entity-drawer-dismissible-dirty`: When the drawer holds typed text that is not saved yet, pass `dismissible` computed from that state, such as `dismissible={!dirty}`, instead of the default `true`, because an Escape or a backdrop click would close the drawer and drop the text. Evidence: app 4/5 drawers with in-drawer text entry pass it, `app/(app)/engagement/enquiry-drawer.tsx:40`, `app/(app)/engagement/feedback-drawer.tsx:67`, `app/(app)/suppliers/supplier-drawer.tsx:65`, `app/(app)/kitchen/job-panel.tsx:137`, stray `app/(app)/sales/sale-detail-panel.tsx:87` (edit mode with no `dismissible`). Check: review.
+- `rule/entity-drawer-dismissible-dirty`: When the drawer holds typed text that is not saved yet, pass `dismissible` computed from that state, such as `dismissible={!dirty}`, instead of the default `true`, because an Escape or a backdrop click would close the drawer and drop the text. Evidence: app 4/5 drawers with in-drawer text entry pass it, `app/(app)/engagement/enquiry-drawer.tsx:40`, `app/(app)/engagement/feedback-drawer.tsx:67`, `app/(app)/suppliers/supplier-drawer.tsx:66`, `app/(app)/kitchen/job-panel.tsx:137`, stray `app/(app)/sales/sale-detail-panel.tsx:87` (edit mode with no `dismissible`). Check: review.
   - Don't: `<EntityDrawer onClose={onClose} title={enquiry.subject}><textarea value={note} onChange={(e) => setNote(e.target.value)} /></EntityDrawer>`
   - Do: `<EntityDrawer onClose={onClose} dismissible={note === saved} title={enquiry.subject}><textarea value={note} onChange={(e) => setNote(e.target.value)} /></EntityDrawer>`
-- `rule/entity-drawer-destructive-overflow`: When a drawer action deletes, voids, cancels or deactivates the record, put it in `overflow` as an `OverflowMenu` item with `destructive: true` instead of in `actions`, because the actions row holds the frequent task and one slip there would destroy the record. Evidence: app 4/4 drawers with a destructive action put it in the overflow menu, `app/(app)/kitchen/job-panel.tsx:110`, `app/(app)/suppliers/supplier-drawer.tsx:82`, `app/(app)/sales/sale-detail-panel.tsx:108`, found by `rg -n "destructive: true"` over the 17 call-site files. Check: review.
+- `rule/entity-drawer-destructive-overflow`: When a drawer action deletes, voids, cancels or deactivates the record, put it in `overflow` as an `OverflowMenu` item with `destructive: true` instead of in `actions`, because the actions row holds the frequent task and one slip there would destroy the record. Evidence: app 4/4 drawers with a destructive action put it in the overflow menu, `app/(app)/kitchen/job-panel.tsx:110`, `app/(app)/suppliers/supplier-drawer.tsx:83`, `app/(app)/sales/sale-detail-panel.tsx:108`, found by `rg -n "destructive: true"` over the 17 call-site files. Check: review.
   - Don't: `<EntityDrawer onClose={onClose} title="Sale S-10482" actions={<RowAction onClick={voidSale}>Void sale</RowAction>}>{body}</EntityDrawer>`
   - Do: `<EntityDrawer onClose={onClose} title="Sale S-10482" overflow={<OverflowMenu items={[{ label: 'Void sale', destructive: true, onSelect: askToVoid }]} />}>{body}</EntityDrawer>`
 
@@ -106,7 +106,7 @@ gen-docs writes the table from `EntityDrawerProps` in `components/app/entity-dra
 - `rule/entity-drawer-whatsapp-not-call`: When the drawer shows a customer, put a "WhatsApp" action that opens `whatsappHref(phone)` in `actions` instead of a "Call" action on `tel:`, because customers are contacted by WhatsApp only and Call buttons were taken off every customer screen. Evidence: app 2/2 customer drawers carry WhatsApp and no Call, `app/(app)/customers/customer-detail-panel.tsx:114`, `components/credits/customer-credit-sheet.tsx:109`, the removal is the first left-out row of `docs/restoration/README.md`. Check: review, plus `rg -n "tel:" app/(app)/customers components/credits`.
   - Don't: `<EntityDrawer onClose={onClose} title="Mama Put Kitchen" actions={<RowAction href="tel:08031234567">Call</RowAction>}>{body}</EntityDrawer>`
   - Do: `<EntityDrawer onClose={onClose} title="Mama Put Kitchen" actions={<RowAction href={whatsappHref(phone)} external>WhatsApp</RowAction>}>{body}</EntityDrawer>`
-- `rule/entity-drawer-stat-tone-state`: When a stat's value is not in a real state (overdue, out, low, pending), leave `tone` unset instead of setting `tone: 'good'` to make a figure stand out, because status colour is kept for state and one green accent. Evidence: app 8/8 stat tones in the call sites are conditions on state, such as `tone: overdue ? 'danger' : 'default'` at `app/(app)/customers/customer-detail-panel.tsx:130` and `tone: openIssues > 0 ? 'warning' : 'default'` at `app/(app)/suppliers/supplier-drawer.tsx:46`, found by `rg -n "tone: "` over the call-site files. Check: review.
+- `rule/entity-drawer-stat-tone-state`: When a stat's value is not in a real state (overdue, out, low, pending), leave `tone` unset instead of setting `tone: 'good'` to make a figure stand out, because status colour is kept for state and one green accent. Evidence: app 8/8 stat tones in the call sites are conditions on state, such as `tone: overdue ? 'danger' : 'default'` at `app/(app)/customers/customer-detail-panel.tsx:130` and `tone: openIssues > 0 ? 'warning' : 'default'` at `app/(app)/suppliers/supplier-drawer.tsx:47`, found by `rg -n "tone: "` over the call-site files. Check: review.
   - Don't: `<EntityDrawer onClose={onClose} title="Mama Put Kitchen" stats={[{ label: 'Lifetime spend', value: '₦1,240,000', tone: 'good' }]}>{body}</EntityDrawer>`
   - Do: `<EntityDrawer onClose={onClose} title="Mama Put Kitchen" stats={[{ label: 'Outstanding', value: '₦45,000', tone: overdue ? 'danger' : 'default' }]}>{body}</EntityDrawer>`
 

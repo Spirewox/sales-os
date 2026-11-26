@@ -17,6 +17,8 @@ export type OverflowItem = {
   /** Destructive items render last, in red, after a separator. */
   destructive?: boolean;
   disabled?: boolean;
+  /** One short line under the label, such as why a disabled item cannot run yet. */
+  description?: string;
   hidden?: boolean;
 };
 
@@ -74,7 +76,12 @@ function Item({ item }: Readonly<{ item: OverflowItem }>) {
       )}
     >
       {item.icon}
-      {item.label}
+      {item.description ? (
+        <span className="flex min-w-0 flex-col">
+          <span>{item.label}</span>
+          <span className="max-w-60 text-xs text-muted-foreground">{item.description}</span>
+        </span>
+      ) : item.label}
     </Menu.Item>
   );
 }

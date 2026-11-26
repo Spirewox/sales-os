@@ -3,7 +3,8 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { toast } from 'sonner';
-import { ArrowRightLeft, ArrowUpRight, Pencil, SlidersHorizontal } from 'lucide-react';
+import { Archive, ArchiveRestore, ArrowRightLeft, ArrowUpRight, Pencil, SlidersHorizontal } from 'lucide-react';
+import { isArchived } from '@/lib/inventory-archive';
 import type { InventoryItem } from '@/types';
 import { usePermissions } from '@/hooks/use-permissions';
 import { useProductBatches, useProductSuppliers, useReconcileProductStock, useUpdatePurchaseBatch } from '@/hooks/use-queries';
@@ -24,6 +25,11 @@ export type DrawerActions = {
   transfer?: () => void;
   adjust?: () => void;
   edit?: () => void;
+  /** Open the archive confirmation; present only with inventory.archive. */
+  archive?: () => void;
+  restore?: () => void;
+  /** Why archiving is blocked right now (stock on hand, open requests), or null. */
+  archiveBlocker?: string | null;
 };
 
 /** One product: batches first (soonest expiry on top), purchase / transfer / adjust in the header. */
@@ -63,6 +69,8 @@ export function ProductDrawer({ item, onClose, actions, requestConfirm }: Readon
   const openBatches = batches.filter((b) => b.quantityRemaining > 0).length;
   const margin = marginPct(item);
   const state = stockState(item);
+  // An archived product shows its history only: no stock actions, Restore instead.
+  const archived = isArchived(item);
 
   const tabs: SectionTab<DrawerTab>[] = [
     { id: 'batches', label: 'Batches', count: openBatches },
@@ -79,15 +87,28 @@ export function ProductDrawer({ item, onClose, actions, requestConfirm }: Readon
       width="lg"
       title={<span className="inline-flex items-center gap-2"><SkuPhoto url={item.imageUrl} className="h-8 w-8" />{item.name}</span>}
       subtitle={<span><span className="font-mono">{item.sku}</span>, {item.location}</span>}
-      status={<StatusBadge domain="stock" status={state} />}
-      actions={
+      status={archived ? <StatusBadge tone="neutral">Archived</StatusBadge> : <StatusBadge domain="stock" status={state} />}
+      actions={archived ? (
+        actions.restore && <RowAction tone="primary" onClick={actions.restore}><ArchiveRestore aria-hidden /> Restore</RowAction>
+      ) : (
         <>
           {actions.purchase && <RowAction tone="primary" onClick={actions.purchase}><ArrowUpRight aria-hidden /> Purchase</RowAction>}
           {actions.transfer && <RowAction onClick={actions.transfer}><ArrowRightLeft aria-hidden /> Transfer</RowAction>}
           {actions.adjust && <RowAction onClick={actions.adjust}><SlidersHorizontal aria-hidden /> Adjust</RowAction>}
         </>
+      )}
+      overflow={
+        <OverflowMenu
+          label="More product actions"
+          items={[
+            { label: 'Edit product', icon: <Pencil />, onSelect: () => actions.edit?.(), hidden: !actions.edit },
+            {
+              label: 'Archive product', icon: <Archive />, destructive: true, onSelect: () => actions.archive?.(),
+              description: actions.archiveBlocker ?? undefined, hidden: archived || !actions.archive,
+            },
+          ]}
+        />
       }
-      overflow={<OverflowMenu label="More product actions" items={[{ label: 'Edit product', icon: <Pencil />, onSelect: () => actions.edit?.(), hidden: !actions.edit }]} />}
       stats={[
         { label: 'On hand', value: formatInventoryStockDisplay(item), tone: state === 'Out' ? 'danger' : state === 'Low' ? 'warning' : 'default' },
         { label: 'Stock value', value: formatMoney(item.currentStock * item.avgUnitCost) },

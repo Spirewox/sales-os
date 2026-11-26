@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
+import { isArchivedProductError } from '@/lib/inventory-archive';
 import { useCreateSale, useCustomer, useCustomers, useInventory } from '@/hooks/use-queries';
 import type { HubScopeFilter } from '@/hooks/use-hub-scope';
 import { DeliveryStatus, PaymentMode, PaymentTerms, PaymentType, SalesChannel, type Hub, type Sale } from '@/types';
@@ -83,6 +85,7 @@ export function useRecordSale({ open, presetCustomerId, hubScope, hubs, creditSu
   const { data: fetchedCustomer } = useCustomer(open && customerId && !inList ? customerId : null);
   const customers = fetchedCustomer && !listed.some((c) => c.id === fetchedCustomer.id) ? [fetchedCustomer, ...listed] : listed;
 
+  const queryClient = useQueryClient();
   const { data: inventory = [] } = useInventory(selectedHubId ? { hub_id: selectedHubId } : undefined, { enabled: open && !!selectedHubId });
   const selectedInventoryItem = inventory.find((i) => i.id === selectedProductId);
   const isMealSale = selectedProductId === MEAL_PRODUCT_ID;
@@ -320,7 +323,11 @@ export function useRecordSale({ open, presetCustomerId, hubScope, hubs, creditSu
           resetForm();
           onSaved();
         },
-        onError: (err) => toast.error(err.message || 'Failed to record sale.'),
+        onError: (err) => {
+          toast.error(err.message || 'Failed to record sale.');
+          // Archived while the form was open: reload the picker so the product leaves it.
+          if (isArchivedProductError(err.message)) void queryClient.invalidateQueries({ queryKey: ['inventory'] });
+        },
       },
     );
   };

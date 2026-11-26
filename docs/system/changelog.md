@@ -5,6 +5,7 @@ Changes to the design system docs and tokens, newest first.
 
 ## 2026-11-26
 
+- Move the Customers, Sales and Kitchen jobs exports onto the Export button (`e82a905`)
 - Put a visible Export button in every list's filter bar, with Excel, CSV and PDF (`0e616ff`)
 - Re-point design system citations after the export changes (`e81b444`)
 

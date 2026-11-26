@@ -28,3 +28,8 @@ export function filterByArchiveStatus<T extends Pick<InventoryItem, 'isActive'>>
 export function parseArchiveStatus(value: string | null | undefined): ArchiveStatus {
   return value === 'archived' || value === 'all' ? value : 'active';
 }
+
+/** The server refused a sale or transfer because its product was archived meanwhile. */
+export function isArchivedProductError(message: string | null | undefined): boolean {
+  return /\barchived\b/i.test(message ?? '');
+}

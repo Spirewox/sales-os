@@ -19,7 +19,7 @@ Default: `docs/system/examples/skeleton/default.tsx`.
 
 Real uses, 34 call sites (`rg -n "<Skeleton(\s|/|>|$)" app components lib --glob '*.tsx' --glob '!components/ui/**'`):
 - Analytics, Inventory tab, chart and ranked-bar placeholders: `app/(app)/analytics/inventory-tab.tsx:132`, `app/(app)/analytics/inventory-tab.tsx:148`, `app/(app)/analytics/inventory-tab.tsx:154`, `app/(app)/analytics/inventory-tab.tsx:157`, `app/(app)/analytics/inventory-tab.tsx:163`
-- Analytics, Suppliers tab, chart and ranked-bar placeholders: `app/(app)/analytics/suppliers-tab.tsx:183`, `app/(app)/analytics/suppliers-tab.tsx:201`, `app/(app)/analytics/suppliers-tab.tsx:204`, `app/(app)/analytics/suppliers-tab.tsx:211`
+- Analytics, Suppliers tab, chart and ranked-bar placeholders: `app/(app)/analytics/suppliers-tab.tsx:184`, `app/(app)/analytics/suppliers-tab.tsx:202`, `app/(app)/analytics/suppliers-tab.tsx:205`, `app/(app)/analytics/suppliers-tab.tsx:212`
 - KpiStrip, value and detail line per cell: `components/app/kpi-strip.tsx:59`, `components/app/kpi-strip.tsx:60`
 - Engagement, churn customer detail, avatar, name, meta, four stat cards and a panel: `app/(app)/engagement/churn.tsx:198`, `app/(app)/engagement/churn.tsx:200`, `app/(app)/engagement/churn.tsx:201`, `app/(app)/engagement/churn.tsx:205`, `app/(app)/engagement/churn.tsx:207`
 - DataTable, one bar per cell on desktop and two lines per card on phones: `components/app/data-table.tsx:186`, `components/app/data-table.tsx:223`, `components/app/data-table.tsx:224`
