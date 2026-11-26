@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { buildCsv, csvDate, exportFilename, exportToast, fetchExportRows, fetchExportRowsByCursor, EXPORT_ROW_CAP, type ExportCell } from './export';
+import { buildCsv, collectExportRows, csvDate, exportFilename, exportToast, fetchExportRows, fetchExportRowsByCursor, EXPORT_ROW_CAP, type ExportCell } from './export';
 
 describe('buildCsv', () => {
   it('quotes every cell and doubles quotes', () => {
@@ -13,6 +13,19 @@ describe('buildCsv', () => {
     assert.equal(buildCsv(cols, [{ a: '=SUM(A1)' }]).split('\r\n')[1], `"'=SUM(A1)"`);
     assert.equal(buildCsv(cols, [{ a: '@cmd' }]).split('\r\n')[1], `"'@cmd"`);
     assert.equal(buildCsv(cols, [{ a: -250 }]).split('\r\n')[1], '"-250"');
+  });
+
+  it('leaves phone numbers and dashes as they are', () => {
+    const cols = [{ header: 'A', value: (r: { a: ExportCell }) => r.a }];
+    assert.equal(buildCsv(cols, [{ a: '+234 803 123 4567' }]).split('\r\n')[1], '"+234 803 123 4567"');
+    assert.equal(buildCsv(cols, [{ a: '-' }]).split('\r\n')[1], '"-"');
+    assert.equal(buildCsv(cols, [{ a: '-1500.50' }]).split('\r\n')[1], '"-1500.50"');
+  });
+
+  it('neutralises cells that start with a tab or carriage return', () => {
+    const cols = [{ header: 'A', value: (r: { a: ExportCell }) => r.a }];
+    assert.equal(buildCsv(cols, [{ a: '\t=cmd' }]).split('\r\n')[1], `"'\t=cmd"`);
+    assert.equal(buildCsv(cols, [{ a: '+1+cmd' }]).split('\r\n')[1], `"'+1+cmd"`);
   });
 
   it('writes null and undefined as empty cells', () => {
@@ -82,6 +95,27 @@ describe('fetchExportRows', () => {
     assert.equal(capped, false);
   });
 
+  it('keeps going past a short page while totalPages says there are more', async () => {
+    const calls: number[] = [];
+    const page = async (p: number) => { calls.push(p); return { items: Array(100).fill(p), totalPages: 3 }; };
+    const { rows } = await fetchExportRows(page);
+    assert.deepEqual(calls, [1, 2, 3]);
+    assert.equal(rows.length, 300);
+  });
+
+  it('stops on an empty page', async () => {
+    const calls: number[] = [];
+    const page = async (p: number) => { calls.push(p); return { items: p === 1 ? [1] : [], totalPages: 50 }; };
+    await fetchExportRows(page);
+    assert.deepEqual(calls, [1, 2]);
+  });
+
+  it('asks for the page size it is given', async () => {
+    const limits: number[] = [];
+    await fetchExportRows(async (_p, limit) => { limits.push(limit); return { items: [], totalPages: 1 }; }, EXPORT_ROW_CAP, 100);
+    assert.deepEqual(limits, [100]);
+  });
+
   it('defaults the cap to 10,000', () => {
     assert.equal(EXPORT_ROW_CAP, 10_000);
   });
@@ -115,6 +149,27 @@ describe('fetchExportRowsByCursor', () => {
     const { rows } = await fetchExportRowsByCursor(page);
     assert.equal(calls, 2);
     assert.deepEqual(rows, [1, 2]);
+  });
+});
+
+describe('collectExportRows', () => {
+  it('filters after every page is fetched, not page by page', async () => {
+    const calls: number[] = [];
+    const fetchPage = async (p: number) => { calls.push(p); return { items: p === 1 ? ['a', 'b'] : ['match'], totalPages: 2 }; };
+    const { rows } = await collectExportRows({ fetchPage, select: (all) => all.filter((x) => x === 'match') });
+    assert.deepEqual(calls, [1, 2]);
+    assert.deepEqual(rows, ['match']);
+  });
+
+  it('uses the cursor fetcher when given one', async () => {
+    const fetchCursor = async (c?: string) => (c ? { items: [2], nextCursor: null } : { items: [1], nextCursor: 'n' });
+    assert.deepEqual((await collectExportRows({ fetchCursor })).rows, [1, 2]);
+  });
+
+  it('reports the cap from the fetched rows', async () => {
+    const fetchPage = async (_p: number, limit: number) => ({ items: Array(limit).fill(0), totalPages: 99 });
+    const { capped } = await collectExportRows({ fetchPage, cap: 300, select: (r) => r.slice(0, 5) });
+    assert.equal(capped, true);
   });
 });
 

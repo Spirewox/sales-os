@@ -5,8 +5,8 @@ import { Download } from 'lucide-react';
 import { toast } from 'sonner';
 import type { OverflowItem } from '@/components/app';
 import {
-  buildCsv, exportFilename, exportToast, fetchExportRows, fetchExportRowsByCursor, saveCsv,
-  type ExportColumn, type ExportNoun,
+  buildCsv, collectExportRows, exportFilename, exportToast, saveCsv,
+  type ExportColumn, type ExportNoun, type FetchCursor, type FetchPage,
 } from '@/lib/export';
 
 export type UseExportOptions<T> = {
@@ -15,15 +15,19 @@ export type UseExportOptions<T> = {
   noun: ExportNoun;
   columns: ExportColumn<T>[];
   disabled?: boolean;
+  /** The filter the screen applies in the browser, run once every page is fetched. */
+  select?: (rows: T[]) => T[];
+  /** Rows per request, for APIs that cap it (default 200). */
+  pageSize?: number;
 } & (
-  /** One page of the same list the screen shows, with the screen's filters applied. */
-  | { fetchPage: (page: number, limit: number) => Promise<{ items: T[]; totalPages: number }>; fetchCursor?: never }
+  /** One page of the same list the screen shows, with the screen's server filters applied. */
+  | { fetchPage: FetchPage<T>; fetchCursor?: never }
   /** The same, for a list the API pages with a cursor. */
-  | { fetchCursor: (cursor?: string) => Promise<{ items: T[]; nextCursor: string | null | undefined }>; fetchPage?: never }
+  | { fetchCursor: FetchCursor<T>; fetchPage?: never }
 );
 
 /** Export the list on screen as CSV, as an `⋯` menu item: `Export <noun>`. */
-export function useExport<T>({ module, noun, columns, fetchPage, fetchCursor, disabled }: UseExportOptions<T>) {
+export function useExport<T>({ module, noun, columns, fetchPage, fetchCursor, select, pageSize, disabled }: UseExportOptions<T>) {
   const [pending, setPending] = useState(false);
   const running = useRef(false);
 
@@ -33,7 +37,7 @@ export function useExport<T>({ module, noun, columns, fetchPage, fetchCursor, di
     setPending(true);
     void (async () => {
       try {
-        const { rows, capped } = fetchCursor ? await fetchExportRowsByCursor(fetchCursor) : await fetchExportRows(fetchPage!);
+        const { rows, capped } = await collectExportRows({ fetchPage, fetchCursor, select, pageSize });
         saveCsv(exportFilename(module), buildCsv(columns, rows));
         if (capped) toast.warning(exportToast(rows.length, noun, true));
         else toast.success(exportToast(rows.length, noun, false));

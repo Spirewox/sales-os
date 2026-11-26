@@ -7,6 +7,7 @@ import { downloadBulkExport, saveSalesWorkbook, submitBulkJob, waitForBulkJob } 
 import { axiosGet, axiosPost, axiosPatch, axiosDelete, axiosGetBlob, axiosPostForm } from '@/lib/api';
 import { customerTypeToApi, customerCompanyNameForApi, customerPhoneForApi } from '@/lib/customer-helpers';
 import { mapApiUser } from '@/lib/utils';
+import { readListMeta } from '@/lib/fetch-all-pages';
 import { readWhoAmICache, writeWhoAmICache } from '@/lib/whoami-cache';
 import { MOCK_AUTH, MOCK_USER, hasMockSession } from '@/lib/mock-auth';
 import {
@@ -95,6 +96,7 @@ import {
 import {
   Compensation,
   Enquiry,
+  Feedback,
   Hub,
   FeedbackType,
   FeedbackPriority,
@@ -1652,7 +1654,7 @@ const EMPTY_STOCK_LOGS_RESULT: StockLogsQueryResult = {
   meta: { page: 1, limit: 0, total: 0, totalPages: 1, hasMore: false },
 };
 
-export function useStockLogs(filters?: {
+export type StockLogFilters = {
   item_id?: string;
   hub_id?: string;
   type?: string;
@@ -1660,32 +1662,40 @@ export function useStockLogs(filters?: {
   date_to?: string;
   page?: number;
   limit?: number;
-} | null) {
+};
+
+/** One page of stock movements. Shared by the list and its CSV export. */
+export async function fetchStockLogs(filters?: StockLogFilters): Promise<StockLogsQueryResult> {
+  if (!HAS_API) return EMPTY_STOCK_LOGS_RESULT;
+  const hubMap = await fetchHubMap();
+  const res = (await axiosGet(
+    `inventory/stock-logs${buildQuery(filters ?? {})}`,
+    true,
+  )) as ApiListResponse<ApiStockLog[]>;
+  const rows = (res.data ?? []).map((l) => mapStockLog(l, hubMap));
+  const page = res.meta?.page ?? filters?.page ?? 1;
+  const limit = res.meta?.limit ?? filters?.limit ?? rows.length;
+  const total = res.meta?.total ?? rows.length;
+  const totalPages =
+    res.meta?.totalPages ?? Math.max(1, Math.ceil(total / Math.max(1, limit || 1)));
+  const hasMore =
+    typeof res.meta?.hasMore === 'boolean'
+      ? res.meta.hasMore
+      : page * Math.max(1, limit) < total;
+  return {
+    data: rows,
+    meta: { page, limit, total, totalPages, hasMore },
+  };
+}
+
+export function useStockLogs(filters?: StockLogFilters | null) {
   return useQuery({
     queryKey: ['stockLogs', filters],
     enabled: filters !== null,
     placeholderData: keepPreviousData,
     queryFn: async (): Promise<StockLogsQueryResult> => {
-      if (!HAS_API || filters === null) return EMPTY_STOCK_LOGS_RESULT;
-      const hubMap = await fetchHubMap();
-      const res = (await axiosGet(
-        `inventory/stock-logs${buildQuery(filters ?? {})}`,
-        true,
-      )) as ApiListResponse<ApiStockLog[]>;
-      const rows = (res.data ?? []).map((l) => mapStockLog(l, hubMap));
-      const page = res.meta?.page ?? filters?.page ?? 1;
-      const limit = res.meta?.limit ?? filters?.limit ?? rows.length;
-      const total = res.meta?.total ?? rows.length;
-      const totalPages =
-        res.meta?.totalPages ?? Math.max(1, Math.ceil(total / Math.max(1, limit || 1)));
-      const hasMore =
-        typeof res.meta?.hasMore === 'boolean'
-          ? res.meta.hasMore
-          : page * Math.max(1, limit) < total;
-      return {
-        data: rows,
-        meta: { page, limit, total, totalPages, hasMore },
-      };
+      if (filters === null) return EMPTY_STOCK_LOGS_RESULT;
+      return fetchStockLogs(filters);
     },
   });
 }
@@ -2458,6 +2468,25 @@ export function useResolveFeedback() {
 // --- Enquiries ---
 /** Backend list endpoints cap limit at 100 (see ListCompensationQueryDto). */
 const INTERACTION_LIST_LIMIT = 100;
+
+/**
+ * One page of feedback, enquiries or compensations, for a CSV export that needs every row.
+ * Pages are at most INTERACTION_LIST_LIMIT rows, the backend's cap.
+ */
+export async function fetchInteractionPage(kind: 'feedback', page: number, limit: number): Promise<{ items: Feedback[]; totalPages: number }>;
+export async function fetchInteractionPage(kind: 'enquiries', page: number, limit: number): Promise<{ items: Enquiry[]; totalPages: number }>;
+export async function fetchInteractionPage(kind: 'compensations', page: number, limit: number): Promise<{ items: Compensation[]; totalPages: number }>;
+export async function fetchInteractionPage(kind: 'feedback' | 'enquiries' | 'compensations', page: number, limit: number) {
+  const size = Math.min(limit, INTERACTION_LIST_LIMIT);
+  const path = kind === 'feedback' ? 'feedbacks' : kind;
+  const raw = await axiosGet(`${path}${buildQuery({ page, limit: size })}`, true);
+  const items = kind === 'feedback'
+    ? paginatedList<ApiFeedback>(raw).map(mapFeedback)
+    : kind === 'enquiries'
+      ? paginatedList<ApiEnquiry>(raw).map(mapEnquiry)
+      : paginatedList<ApiCompensation>(raw).map(mapCompensation);
+  return { items, totalPages: readListMeta(raw, items.length, size).totalPages };
+}
 
 export function useEnquiries(filters?: { status?: string }, options?: UseQueryEnabledOptions) {
   return useQuery({

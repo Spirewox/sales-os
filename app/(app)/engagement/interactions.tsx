@@ -1,15 +1,15 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { BarChart3, Plus } from 'lucide-react';
 import { KpiStrip, OverflowMenu, SectionTabs, useSectionTab, type SectionTab } from '@/components/app';
 import { useExport } from '@/hooks/use-export';
 import { COMPENSATION_EXPORT_COLUMNS, ENQUIRY_EXPORT_COLUMNS, FEEDBACK_EXPORT_COLUMNS } from '@/lib/exports/engagement';
 import { usePermissions } from '@/hooks/use-permissions';
 import { useUrlState } from '@/hooks/use-url-state';
-import { useCompensations, useCustomers, useEnquiries, useFeedback } from '@/hooks/use-queries';
+import { fetchInteractionPage, useCompensations, useCustomers, useEnquiries, useFeedback } from '@/hooks/use-queries';
 import { formatCount, formatMoneyShort, plural } from '@/lib/format';
-import { FeedbackType } from '@/types';
+import { FeedbackType, type Compensation, type Enquiry, type Feedback } from '@/types';
 import { CompensationDrawer } from './compensation-drawer';
 import { CompensationForm } from './compensation-form';
 import { CompensationTable } from './compensation-table';
@@ -81,14 +81,18 @@ export default function Interactions({ openFeedbackSignal = 0 }: Readonly<{
   const view = useSectionTab(views, 'feedback', 'view');
   const showView = (v: InteractionView) => set({ view: v === 'feedback' ? null : v });
 
-  const filteredFeedback = useMemo(() => feedbacks.filter((f) =>
+  // One filter per view for the table and its export, so both hold the same rows.
+  const selectFeedback = useCallback((all: Feedback[]) => all.filter((f) =>
     (fbFilters.status === 'All' || f.status === fbFilters.status)
     && (fbFilters.type === 'All' || f.type === fbFilters.type)
     && (fbFilters.priority === 'All' || f.priority === fbFilters.priority)
-    && matchesText(search, f.customerName, f.content)), [feedbacks, fbFilters, search]);
-  const filteredEnquiries = useMemo(() => enquiries.filter((e) =>
-    (enqStatus === 'All' || e.status === enqStatus) && matchesText(search, e.customerName, e.subject, e.message)), [enquiries, enqStatus, search]);
-  const filteredComps = useMemo(() => compensations.filter((c) => matchesText(search, c.customerName, c.reason)), [compensations, search]);
+    && matchesText(search, f.customerName, f.content)), [fbFilters, search]);
+  const selectEnquiries = useCallback((all: Enquiry[]) => all.filter((e) =>
+    (enqStatus === 'All' || e.status === enqStatus) && matchesText(search, e.customerName, e.subject, e.message)), [enqStatus, search]);
+  const selectComps = useCallback((all: Compensation[]) => all.filter((c) => matchesText(search, c.customerName, c.reason)), [search]);
+  const filteredFeedback = useMemo(() => selectFeedback(feedbacks), [feedbacks, selectFeedback]);
+  const filteredEnquiries = useMemo(() => selectEnquiries(enquiries), [enquiries, selectEnquiries]);
+  const filteredComps = useMemo(() => selectComps(compensations), [compensations, selectComps]);
 
   const kpisLoading = (feedbackFetching && feedbacks.length === 0)
     || (enquiriesFetching && enquiries.length === 0)
@@ -96,18 +100,18 @@ export default function Interactions({ openFeedbackSignal = 0 }: Readonly<{
   const complaintsActive = view === 'feedback' && fbFilters.status === 'Open' && fbFilters.type === FeedbackType.COMPLAINT;
 
   const canCreate = can('interactions.create');
-  // Each view exports the rows it shows, with its search and filters applied.
+  // Each view exports every row its filters match, paging through the API (100 a page, the backend cap).
   const exportFeedback = useExport({
     module: 'feedback', noun: { one: 'feedback item', many: 'feedback items' }, columns: FEEDBACK_EXPORT_COLUMNS,
-    fetchPage: async () => ({ items: filteredFeedback, totalPages: 1 }), disabled: filteredFeedback.length === 0,
+    fetchPage: (p, l) => fetchInteractionPage('feedback', p, l), select: selectFeedback, pageSize: 100, disabled: filteredFeedback.length === 0,
   });
   const exportEnquiries = useExport({
     module: 'enquiries', noun: { one: 'enquiry', many: 'enquiries' }, columns: ENQUIRY_EXPORT_COLUMNS,
-    fetchPage: async () => ({ items: filteredEnquiries, totalPages: 1 }), disabled: filteredEnquiries.length === 0,
+    fetchPage: (p, l) => fetchInteractionPage('enquiries', p, l), select: selectEnquiries, pageSize: 100, disabled: filteredEnquiries.length === 0,
   });
   const exportComps = useExport({
     module: 'compensations', noun: { one: 'compensation', many: 'compensations' }, columns: COMPENSATION_EXPORT_COLUMNS,
-    fetchPage: async () => ({ items: filteredComps, totalPages: 1 }), disabled: filteredComps.length === 0,
+    fetchPage: (p, l) => fetchInteractionPage('compensations', p, l), select: selectComps, pageSize: 100, disabled: filteredComps.length === 0,
   });
   const viewExport = view === 'enquiries'
     ? { label: 'More enquiry actions', item: exportEnquiries.item }

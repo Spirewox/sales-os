@@ -12,11 +12,13 @@ const PAGE_SIZE = 200;
 const BOM = '﻿';
 
 /** A text cell starting with these runs as a formula in Excel; a leading ' keeps it text. */
-const FORMULA_START = /^[=+\-@]/;
+const FORMULA_START = /^[=+\-@\t\r]/;
+/** Phone numbers, signed amounts and a lone "-" start with + or - but are not formulas. */
+const PLAIN_NUMBER = /^[+-]?[\d\s().-]+$/;
 
 function cell(value: ExportCell): string {
   let text = value == null ? '' : String(value);
-  if (typeof value === 'string' && FORMULA_START.test(text)) text = `'${text}`;
+  if (typeof value === 'string' && FORMULA_START.test(text) && !PLAIN_NUMBER.test(text)) text = `'${text}`;
   return `"${text.replace(/"/g, '""')}"`;
 }
 
@@ -49,23 +51,30 @@ export function exportFilename(module: string, now: Date = new Date()): string {
   return `fudfarmer-${module}-${lagosParts(now).date}.csv`;
 }
 
-/** Page through a list endpoint until it ends or the cap is reached. */
+export type FetchPage<T> = (page: number, limit: number) => Promise<{ items: T[]; totalPages: number }>;
+export type FetchCursor<T> = (cursor?: string) => Promise<{ items: T[]; nextCursor: string | null | undefined }>;
+
+/**
+ * Page through a list endpoint until it is empty, `totalPages` is reached or the cap is.
+ * A short page does not end it: an API may hand back fewer rows than asked for.
+ */
 export async function fetchExportRows<T>(
-  fetchPage: (page: number, limit: number) => Promise<{ items: T[]; totalPages: number }>,
+  fetchPage: FetchPage<T>,
   cap: number = EXPORT_ROW_CAP,
+  pageSize: number = PAGE_SIZE,
 ): Promise<{ rows: T[]; capped: boolean }> {
   const rows: T[] = [];
   for (let page = 1; ; page += 1) {
-    const { items, totalPages } = await fetchPage(page, PAGE_SIZE);
+    const { items, totalPages } = await fetchPage(page, pageSize);
     rows.push(...items);
     if (rows.length >= cap) return { rows: rows.slice(0, cap), capped: true };
-    if (items.length < PAGE_SIZE || page >= totalPages) return { rows, capped: false };
+    if (items.length === 0 || page >= totalPages) return { rows, capped: false };
   }
 }
 
 /** The same for a list paged by cursor: follow `nextCursor` until it runs out, repeats or the cap is reached. */
 export async function fetchExportRowsByCursor<T>(
-  fetchPage: (cursor?: string) => Promise<{ items: T[]; nextCursor: string | null | undefined }>,
+  fetchPage: FetchCursor<T>,
   cap: number = EXPORT_ROW_CAP,
 ): Promise<{ rows: T[]; capped: boolean }> {
   const rows: T[] = [];
@@ -79,6 +88,27 @@ export async function fetchExportRowsByCursor<T>(
     seen.add(nextCursor);
     cursor = nextCursor;
   }
+}
+
+/**
+ * Every row an export needs: fetch all pages (or follow the cursor), then apply `select`, the
+ * same filter the screen applies in the browser. Filtering after fetching keeps a page with no
+ * matches from ending the export early.
+ */
+export async function collectExportRows<T>(opts: {
+  fetchPage?: FetchPage<T>;
+  fetchCursor?: FetchCursor<T>;
+  select?: (rows: T[]) => T[];
+  cap?: number;
+  pageSize?: number;
+}): Promise<{ rows: T[]; capped: boolean }> {
+  const cap = opts.cap ?? EXPORT_ROW_CAP;
+  const fetched = opts.fetchCursor
+    ? await fetchExportRowsByCursor(opts.fetchCursor, cap)
+    : opts.fetchPage
+      ? await fetchExportRows(opts.fetchPage, cap, opts.pageSize)
+      : { rows: [] as T[], capped: false };
+  return { rows: opts.select ? opts.select(fetched.rows) : fetched.rows, capped: fetched.capped };
 }
 
 export function exportToast(count: number, noun: ExportNoun, capped: boolean): string {
@@ -97,3 +127,4 @@ export function saveCsv(filename: string, text: string): void {
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+

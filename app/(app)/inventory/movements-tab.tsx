@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ArrowRightLeft, History } from 'lucide-react';
 import { InventoryItem, StockLog, StockMovementType } from '@/types';
 import type { HubScopeFilter } from '@/hooks/use-hub-scope';
 import { useUrlState } from '@/hooks/use-url-state';
 import { formatDate, formatMoney, formatCount } from '@/lib/format';
-import { inPeriod, parsePeriod, periodLabel, periodToParams } from '@/lib/period';
+import { inPeriod, parsePeriod, periodLabel, periodRange, periodToParams } from '@/lib/period';
+import { fetchStockLogs } from '@/hooks/use-queries';
 import { FilterSelect } from '@/components/filter-select';
 import {
   DataTable, EmptyState, FilterBar, KpiStrip, LocationSelect, OverflowMenu, PeriodSelect, StatusBadge, type Column, type FilterChip,
@@ -37,8 +38,9 @@ export function MovementsTab({ hubScope, items, logs, loading, onOpenProduct }: 
     return () => clearTimeout(t);
   }, [search, urlSearch, set]);
 
-  const filteredLogs = useMemo(() => {
-    let rows = logs;
+  // One filter for the table and its export, so both hold the same movements.
+  const selectLogs = useCallback((all: StockLog[]) => {
+    let rows = all;
     if (hubScope.filterHub !== 'All') {
       const hub = hubScope.filterHub;
       const hubItemIds = new Set(items.filter((i) => i.location === hub).map((i) => i.id));
@@ -49,11 +51,22 @@ export function MovementsTab({ hubScope, items, logs, loading, onOpenProduct }: 
     const q = urlSearch.trim().toLowerCase();
     if (q) rows = rows.filter((l) => l.itemName.toLowerCase().includes(q) || (l.notes || '').toLowerCase().includes(q) || (l.batchNumber || '').toLowerCase().includes(q));
     return rows;
-  }, [logs, items, hubScope.filterHub, period, type, urlSearch]);
+  }, [items, hubScope.filterHub, period, type, urlSearch]);
+  const filteredLogs = useMemo(() => selectLogs(logs), [logs, selectLogs]);
 
+  // The table shows the newest loaded movements; the export pages through every one in the period.
+  const range = periodRange(period);
   const exportMovements = useExport({
     module: 'stock-movements', noun: { one: 'movement', many: 'movements' }, columns: MOVEMENT_EXPORT_COLUMNS,
-    fetchPage: async () => ({ items: filteredLogs, totalPages: 1 }), disabled: filteredLogs.length === 0,
+    fetchPage: async (page, limit) => {
+      const res = await fetchStockLogs({
+        hub_id: hubScope.hubIdForApi, type: type === 'All' ? undefined : type,
+        date_from: range.from ?? undefined, date_to: range.to ?? undefined, page, limit,
+      });
+      return { items: res.data, totalPages: res.meta.totalPages };
+    },
+    select: selectLogs,
+    disabled: filteredLogs.length === 0,
   });
 
   const stats = useMemo(() => {
