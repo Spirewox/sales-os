@@ -20,12 +20,12 @@ Default: `docs/system/examples/section-tabs/default.tsx`, kitchen sections synce
 Real uses, 8 call sites (`rg -n "<SectionTabs\b" app components lib --glob '*.{tsx,jsx}' --glob '!components/app/**'`):
 - Analytics header: `app/(app)/analytics/page.tsx:86`, URL mode, default "sales".
 - Engagement header: `app/(app)/engagement/page.tsx:63`, URL mode, `inlineOnMobile`, a tab hidden by permission.
-- Engagement, interactions: `app/(app)/engagement/interactions.tsx:174`, URL mode on `param="view"`, warning counts.
+- Engagement, interactions: `app/(app)/engagement/interactions.tsx:196`, URL mode on `param="view"`, warning counts.
 - Kitchen header: `app/(app)/kitchen/page.tsx:124`, URL mode, default "board".
 - Dashboard, needs attention card: `app/(app)/_dashboard/needs-attention.tsx:45`, controlled, danger, warning and neutral counts.
 - Inventory header: `app/(app)/inventory/page.tsx:220`, URL mode, warning count on Requests.
 - POS header: `app/(app)/pos/page.tsx:79`, controlled, so a tab change also clears the tab's filters.
-- Audit log header: `app/(app)/audit/page.tsx:184`, URL mode, default "all".
+- Audit log header: `app/(app)/audit/page.tsx:193`, URL mode, default "all".
 
 ### Example files
 | File | Covers | Caption |
@@ -104,7 +104,7 @@ Real uses, 8 call sites (`rg -n "<SectionTabs\b" app components lib --glob '*.{t
   - Do: `<SectionTabs label="Engagement sections" tabs={[{ id: 'interactions', label: 'Interactions', hidden: !canSee }]} defaultTab="overview" />`
 
 ### Content
-- `rule/section-tabs-label`: When rendering SectionTabs, set `label` to the name of the group, "{Page} sections" for a page header bar, because it names the tablist and the phone select, and a screen reader hears it before the first tab. Evidence: app 6/6 page header bars use "{Page} sections", such as `app/(app)/audit/page.tsx:178`. Check: review.
+- `rule/section-tabs-label`: When rendering SectionTabs, set `label` to the name of the group, "{Page} sections" for a page header bar, because it names the tablist and the phone select, and a screen reader hears it before the first tab. Evidence: app 6/6 page header bars use "{Page} sections", such as `app/(app)/audit/page.tsx:187`. Check: review.
   - Don't: `<SectionTabs label="Tabs" tabs={tabs} defaultTab="all" />`
   - Do: `<SectionTabs label="Audit sections" tabs={tabs} defaultTab="all" />`
 
