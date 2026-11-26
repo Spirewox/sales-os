@@ -19,11 +19,11 @@ Default: `docs/system/examples/period-select/default.tsx`, set to "Last 30 days"
 Real uses, 8 call sites (`rg -n "<PeriodSelect\b" app components lib --glob '*.{tsx,jsx}' --glob '!components/app/**'`), all with `value` and `onChange` only:
 - Analytics header: `app/(app)/analytics/page.tsx:96`, local state.
 - Inventory, sales trends card: `app/(app)/inventory/sales-trends.tsx:36`, local state.
-- Inventory, movements: `app/(app)/inventory/movements-tab.tsx:124`, written to the URL with `periodToParams`.
-- Audit log: `app/(app)/audit/page.tsx:198`, URL with fallback `'all'`.
+- Inventory, movements: `app/(app)/inventory/movements-tab.tsx:140`, written to the URL with `periodToParams`.
+- Audit log: `app/(app)/audit/page.tsx:190`, URL with fallback `'all'`.
 - POS tabs: `app/(app)/pos/pos-filter-bar.tsx:32`, shown when `withPeriod` is on.
 - Sales list: `app/(app)/sales/sales-filter-bar.tsx:26`.
-- Suppliers: `app/(app)/suppliers/page.tsx:200`.
+- Suppliers: `app/(app)/suppliers/page.tsx:202`.
 - Customers: `app/(app)/customers/page.tsx:200`.
 
 ### Example files
@@ -89,7 +89,7 @@ Real uses, 8 call sites (`rg -n "<PeriodSelect\b" app components lib --glob '*.{
 - Switching between two or three fixed windows on a small card where a popup is too heavy. Use Segmented instead.
 
 ### Rules
-- `rule/period-select-url-params`: When the screen's period belongs in the URL, write it with `periodToParams` and read it with `parsePeriod` using the same fallback, because the default preset is left out of the URL and a mismatched fallback turns a shared link into a different window. Evidence: app 2/2 URL call sites pair them, `app/(app)/inventory/movements-tab.tsx:117` and `app/(app)/audit/page.tsx:189` with fallback `'all'`. Check: review the fallback argument on both calls.
+- `rule/period-select-url-params`: When the screen's period belongs in the URL, write it with `periodToParams` and read it with `parsePeriod` using the same fallback, because the default preset is left out of the URL and a mismatched fallback turns a shared link into a different window. Evidence: app 2/2 URL call sites pair them, `app/(app)/inventory/movements-tab.tsx:133` and `app/(app)/audit/page.tsx:190` with fallback `'all'`. Check: review the fallback argument on both calls.
   - Don't: `<PeriodSelect value={parsePeriod(params, 'all')} onChange={(p) => set(periodToParams(p))} />`
   - Do: `<PeriodSelect value={parsePeriod(params, 'all')} onChange={(p) => set(periodToParams(p, 'all'))} />`
 - `rule/period-select-filter-slot`: When a screen has a FilterBar, put PeriodSelect in its `filters` slot instead of beside the bar, because the bar wraps it with search and the other filters on phones. Evidence: app 6/8 call sites sit inside a FilterBar `filters` slot, such as `app/(app)/customers/page.tsx:200`, and the other two sit on screens with no FilterBar, `app/(app)/analytics/page.tsx:96` and `app/(app)/inventory/sales-trends.tsx:36`. Check: review.

@@ -20,8 +20,15 @@ export type OverflowItem = {
   hidden?: boolean;
 };
 
+/** A visible, worded trigger in place of `⋯`, for a menu people should find without hunting, such as Export. */
+export type OverflowTrigger = { text: string; icon?: ReactNode; disabled?: boolean };
+
 /** The `⋯` menu for secondary and destructive actions (Import, Export, Void, Delete). */
-export function OverflowMenu({ items, label = 'More actions', className, size = 'default' }: Readonly<{ items: OverflowItem[]; label?: string; className?: string; size?: 'default' | 'sm' }>) {
+export function OverflowMenu({ items, label = 'More actions', className, size = 'default', trigger }: Readonly<{
+  items: OverflowItem[]; label?: string; className?: string; size?: 'default' | 'sm';
+  /** Show a worded outline button, such as "Export", instead of `⋯`. `label` stays its accessible name. */
+  trigger?: OverflowTrigger;
+}>) {
   const visible = items.filter((i) => !i.hidden);
   if (visible.length === 0) return null;
   const normal = visible.filter((i) => !i.destructive);
@@ -31,13 +38,16 @@ export function OverflowMenu({ items, label = 'More actions', className, size = 
       <Menu.Trigger
         aria-label={label}
         title={label}
+        disabled={trigger?.disabled}
         className={cn(
-          'inline-flex shrink-0 items-center justify-center rounded-md border bg-card text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring data-[popup-open]:bg-muted',
-          size === 'sm' ? 'size-8' : 'size-9',
+          'inline-flex shrink-0 items-center justify-center rounded-md border bg-card transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring data-[popup-open]:bg-muted disabled:pointer-events-none disabled:opacity-50',
+          trigger
+            ? cn('gap-1.5 px-3 text-sm font-medium text-foreground [&_svg]:size-4 [&_svg]:shrink-0', size === 'sm' ? 'h-8' : 'h-9')
+            : cn('text-muted-foreground', size === 'sm' ? 'size-8' : 'size-9'),
           className,
         )}
       >
-        <MoreHorizontal size={16} aria-hidden />
+        {trigger ? <>{trigger.icon}{trigger.text}</> : <MoreHorizontal size={16} aria-hidden />}
       </Menu.Trigger>
       <Menu.Portal>
         <Menu.Positioner align="end" sideOffset={4} className="z-50">

@@ -20,12 +20,12 @@ Default: `docs/system/examples/section-tabs/default.tsx`, kitchen sections synce
 Real uses, 8 call sites (`rg -n "<SectionTabs\b" app components lib --glob '*.{tsx,jsx}' --glob '!components/app/**'`):
 - Analytics header: `app/(app)/analytics/page.tsx:86`, URL mode, default "sales".
 - Engagement header: `app/(app)/engagement/page.tsx:63`, URL mode, `inlineOnMobile`, a tab hidden by permission.
-- Engagement, interactions: `app/(app)/engagement/interactions.tsx:196`, URL mode on `param="view"`, warning counts.
+- Engagement, interactions: `app/(app)/engagement/interactions.tsx:207`, URL mode on `param="view"`, warning counts.
 - Kitchen header: `app/(app)/kitchen/page.tsx:124`, URL mode, default "board".
 - Dashboard, needs attention card: `app/(app)/_dashboard/needs-attention.tsx:45`, controlled, danger, warning and neutral counts.
-- Inventory header: `app/(app)/inventory/page.tsx:220`, URL mode, warning count on Requests.
+- Inventory header: `app/(app)/inventory/page.tsx:209`, URL mode, warning count on Requests.
 - POS header: `app/(app)/pos/page.tsx:79`, controlled, so a tab change also clears the tab's filters.
-- Audit log header: `app/(app)/audit/page.tsx:193`, URL mode, default "all".
+- Audit log header: `app/(app)/audit/page.tsx:185`, URL mode, default "all".
 
 ### Example files
 | File | Covers | Caption |
@@ -93,7 +93,7 @@ Real uses, 8 call sites (`rg -n "<SectionTabs\b" app components lib --glob '*.{t
 - `rule/section-tabs-same-default`: When a bar uses URL mode, read the active tab with `useSectionTab` passing the same `defaultTab` and `param` as the bar, because the bar and the panel otherwise disagree on which section is open when the URL has no tab. Evidence: app 6/6 URL-mode bars pair them, such as `app/(app)/kitchen/page.tsx:55` with `app/(app)/kitchen/page.tsx:124`. Check: review both calls side by side.
   - Don't: `const tab = useSectionTab(tabs, 'stock'); <SectionTabs label="Inventory sections" tabs={tabs} defaultTab="movements" />`
   - Do: `const tab = useSectionTab(tabs, 'stock'); <SectionTabs label="Inventory sections" tabs={tabs} defaultTab="stock" />`
-- `rule/section-tabs-nested-param`: When a URL-mode bar sits inside a section of another URL-mode bar, pass a distinct `param` such as "view", because both default to `?tab=` and the inner bar would switch the page's section. Evidence: single use `app/(app)/engagement/interactions.tsx:174`. Check: review pages with two `SectionTabs` tags.
+- `rule/section-tabs-nested-param`: When a URL-mode bar sits inside a section of another URL-mode bar, pass a distinct `param` such as "view", because both default to `?tab=` and the inner bar would switch the page's section. Evidence: single use `app/(app)/engagement/interactions.tsx:185`. Check: review pages with two `SectionTabs` tags.
   - Don't: `<SectionTabs label="Interaction types" tabs={views} defaultTab="feedback" />`
   - Do: `<SectionTabs label="Interaction types" tabs={views} param="view" defaultTab="feedback" />`
 - `rule/section-tabs-local-controlled`: When tabs sit inside a card or drawer, or a tab change must also reset other URL params, pass `value` and `onChange` instead of `defaultTab`, because URL mode writes only its own param. Evidence: app 2/2 controlled bars, `app/(app)/_dashboard/needs-attention.tsx:45` (a card) and `app/(app)/pos/page.tsx:50` (clears the tab's filters in one `set`). Check: review.
@@ -104,7 +104,7 @@ Real uses, 8 call sites (`rg -n "<SectionTabs\b" app components lib --glob '*.{t
   - Do: `<SectionTabs label="Engagement sections" tabs={[{ id: 'interactions', label: 'Interactions', hidden: !canSee }]} defaultTab="overview" />`
 
 ### Content
-- `rule/section-tabs-label`: When rendering SectionTabs, set `label` to the name of the group, "{Page} sections" for a page header bar, because it names the tablist and the phone select, and a screen reader hears it before the first tab. Evidence: app 6/6 page header bars use "{Page} sections", such as `app/(app)/audit/page.tsx:187`. Check: review.
+- `rule/section-tabs-label`: When rendering SectionTabs, set `label` to the name of the group, "{Page} sections" for a page header bar, because it names the tablist and the phone select, and a screen reader hears it before the first tab. Evidence: app 6/6 page header bars use "{Page} sections", such as `app/(app)/audit/page.tsx:185`. Check: review.
   - Don't: `<SectionTabs label="Tabs" tabs={tabs} defaultTab="all" />`
   - Do: `<SectionTabs label="Audit sections" tabs={tabs} defaultTab="all" />`
 

@@ -15,11 +15,12 @@ import { periodLabel } from '@/lib/period';
 import { FilterSelect } from '@/components/filter-select';
 import { ConfirmPreviewModal } from '@/components/confirm-preview-modal';
 import {
-  DataTable, EmptyState, FilterBar, KpiStrip, LocationSelect, MoreFilterField, OverflowMenu, PageHeader, PeriodSelect,
+  DataTable, EmptyState, FilterBar, KpiStrip, LocationSelect, MoreFilterField, PageHeader, PeriodSelect,
   SectionErrorBoundary, fieldClass, type KpiCell,
 } from '@/components/app';
 import { useExport } from '@/hooks/use-export';
 import { SUPPLIER_EXPORT_COLUMNS } from '@/lib/exports/suppliers';
+import { filterLabels } from '@/lib/export';
 import type { Supplier } from '@/types';
 import { PurchaseForm } from '../inventory/forms/purchase-form';
 import type { ConfirmState } from '../inventory/inventory-utils';
@@ -57,6 +58,8 @@ function Suppliers() {
   // The page works out spend, last purchase and open issues itself, so export the rows it shows.
   const exportSuppliers = useExport({
     module: 'suppliers',
+    title: 'Suppliers',
+    filters: () => filterLabels({ location: hubScope.filterHub, period: periodLabel(f.period), chips: f.chips }),
     noun: { one: 'supplier', many: 'suppliers' },
     columns: SUPPLIER_EXPORT_COLUMNS,
     fetchPage: async () => ({ items: list.rows, totalPages: 1 }),
@@ -171,7 +174,6 @@ function Suppliers() {
             </button>
           ) : undefined
         }
-        overflow={<OverflowMenu label="More supplier actions" items={[exportSuppliers.item]} />}
       />
 
       <KpiStrip cells={kpiCells} loading={list.kpiLoading} label="Spend and issues" />
@@ -225,6 +227,7 @@ function Suppliers() {
         chips={f.chips}
         onClearAll={f.clearAll}
         resultLabel={list.listLoading ? undefined : plural(list.rows.length, 'supplier')}
+        trailing={exportSuppliers.menu}
       />
 
       <SectionErrorBoundary label="Supplier list" resetKey={f.key}>

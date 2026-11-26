@@ -18,17 +18,17 @@ Default: `docs/system/examples/page-header/default.tsx`.
 
 Real uses, 12 call sites (`rg -n "<PageHeader\b" app components lib --glob '!components/app/**'`):
 - Analytics, title, description and tabs: `app/(app)/analytics/page.tsx:83`.
-- Credits, title and description only: `app/(app)/credits/page.tsx:156`.
+- Credits, title and description only: `app/(app)/credits/page.tsx:159`.
 - Kitchen, one secondary and one primary button, tabs: `app/(app)/kitchen/page.tsx:109`.
 - Dashboard, two secondary links and one primary link, two overflow menus split by width: `app/(app)/_dashboard/dashboard-content.tsx:68`.
 - Sales, one primary hidden below 768px, overflow with import, templates and export: `app/(app)/sales/page.tsx:98`.
-- Inventory, one primary that changes with the tab, overflow with four items gated by permissions, tabs: `app/(app)/inventory/page.tsx:205`.
+- Inventory, one primary that changes with the tab, overflow with four items gated by permissions, tabs: `app/(app)/inventory/page.tsx:195`.
 - Customers, one primary, overflow with import, template and export: `app/(app)/customers/page.tsx:143`.
-- Suppliers, one primary: `app/(app)/suppliers/page.tsx:164`.
+- Suppliers, one primary: `app/(app)/suppliers/page.tsx:167`.
 - Settings, title and description only: `app/(app)/settings/page.tsx:52`.
 - POS, one primary on the Tills tab, overflow with Refresh, tabs: `app/(app)/pos/page.tsx:69`.
 - Engagement, description that changes with the tab, one primary, tabs: `app/(app)/engagement/page.tsx:57`.
-- Audit trail, overflow with one export item, tabs: `app/(app)/audit/page.tsx:179`, the pilot screen.
+- Audit trail, overflow with one export item, tabs: `app/(app)/audit/page.tsx:182`, the pilot screen.
 
 ### Example files
 | File | Covers | Caption |
@@ -50,7 +50,7 @@ Not applicable: PageHeader has no variant prop. What changes between pages is wh
 | With actions | `actions` or `overflow` set (8 and 6 call sites) | Press the page's primary action, open the overflow menu | Cluster of controls right of the title at 640px and up | screenshot |
 | With tabs | `tabs` set (6 call sites) | Switch section | Tab row under the title row, inside the same `header` | screenshot |
 | Narrow | Viewport under 640px (`sm`) | Same as wide | Title block on top, cluster below it, left aligned and wrapping | by hand |
-| Overflow all hidden | `overflow` set and every item `hidden`, so OverflowMenu returns null (Inventory with no inventory permissions, `app/(app)/inventory/page.tsx:210`) | Nothing in the cluster | No trigger. The empty cluster box still renders and adds a 12px gap below the title under 640px | by hand |
+| Overflow all hidden | `overflow` set and every item `hidden`, so OverflowMenu returns null (Inventory with no inventory permissions, `app/(app)/inventory/page.tsx:200`) | Nothing in the cluster | No trigger. The empty cluster box still renders and adds a 12px gap below the title under 640px | by hand |
 
 ### State precedence
 - With actions and Narrow: both show. The cluster moves under the title and wraps.
@@ -85,7 +85,7 @@ gen-docs writes the table from `PageHeaderProps`.
 - `rule/page-header-one-primary`: When `actions` is set, pass 1 primary action, placed last, and at most 1 secondary before it, and put every further action in `overflow` as an `OverflowMenu` instead, because the cluster is `shrink-0` beside the title, so each extra button takes width from the title and description before anything wraps. Evidence: app 8/8 call sites with `actions` pass exactly 1 primary, 7/8 pass at most 1 secondary, stray `app/(app)/_dashboard/dashboard-content.tsx:71` passes 2 secondaries at 640px and up; single use `components/app/page-header.tsx:7`, the JSDoc on `actions` states the same limit. Check: review.
   - Don't: `<PageHeader title="Sales" actions={<><Button variant="outline">Import sales</Button><Button variant="outline">Export sales</Button><Button>Record sale</Button></>} />`
   - Do: `<PageHeader title="Sales" actions={<Button>Record sale</Button>} overflow={<OverflowMenu items={[{ label: 'Import sales', onSelect: importSales }, { label: 'Export sales', onSelect: exportSales }]} />} />`
-- `rule/page-header-tabs-slot`: When a page has page-level sections, pass its `SectionTabs` through `tabs` instead of rendering it after `PageHeader` or inside `actions`, because `tabs` keeps the section switch inside the same `header` as the `h1`, under the title row at every width. Evidence: app 6/6 page-level `SectionTabs` on routes with a PageHeader go through `tabs` (Analytics, Kitchen, Inventory, POS, Engagement, Audit trail), and the other 2 `SectionTabs` are in-card filters at `app/(app)/_dashboard/needs-attention.tsx:45` and `app/(app)/engagement/interactions.tsx:196`. Check: review.
+- `rule/page-header-tabs-slot`: When a page has page-level sections, pass its `SectionTabs` through `tabs` instead of rendering it after `PageHeader` or inside `actions`, because `tabs` keeps the section switch inside the same `header` as the `h1`, under the title row at every width. Evidence: app 6/6 page-level `SectionTabs` on routes with a PageHeader go through `tabs` (Analytics, Kitchen, Inventory, POS, Engagement, Audit trail), and the other 2 `SectionTabs` are in-card filters at `app/(app)/_dashboard/needs-attention.tsx:45` and `app/(app)/engagement/interactions.tsx:207`. Check: review.
   - Don't: `<><PageHeader title="Inventory" /><SectionTabs label="Inventory sections" tabs={tabs} defaultTab="stock" /></>`
   - Do: `<PageHeader title="Inventory" tabs={<SectionTabs label="Inventory sections" tabs={tabs} defaultTab="stock" />} />`
 - `rule/page-header-one-per-route`: When a route under `app/(app)` renders its main content, render 1 `PageHeader` as the first child of the page wrapper instead of a hand-written `<h1>`, because PageHeader holds the page's only `h1` and screen reader users jump to it by heading. Evidence: app 12/12 main routes render exactly 1 PageHeader first; principle wcag: 2.4.6 Headings and labels, one `h1` per page names its topic. Strays with their own `h1`: `app/(app)/kitchen/board.tsx:185` (full-screen kitchen display), `app/(app)/jobs/[id]/page.tsx:24` (job status page), and the access-required screens `app/(app)/kitchen/page.tsx:28` and `app/(app)/pos/page.tsx:33`. Check: review.

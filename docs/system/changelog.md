@@ -3,6 +3,10 @@
 
 Changes to the design system docs and tokens, newest first.
 
+## 2026-11-26
+
+- Re-point design system citations after the export changes (`e81b444`)
+
 ## 2026-11-24
 
 - Migration run (partial): Sales detail and shared components onto the kit (`5cb0020`)

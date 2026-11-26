@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { buildCsv, collectExportRows, csvDate, exportFilename, exportToast, fetchExportRows, fetchExportRowsByCursor, EXPORT_ROW_CAP, type ExportCell } from './export';
+import { buildCsv, collectExportRows, exportTable, filterLabels, csvDate, exportFilename, exportToast, fetchExportRows, fetchExportRowsByCursor, EXPORT_ROW_CAP, type ExportCell } from './export';
 
 describe('buildCsv', () => {
   it('quotes every cell and doubles quotes', () => {
@@ -49,6 +49,29 @@ describe('buildCsv', () => {
 describe('exportFilename', () => {
   it('dates the filename in Lagos', () => {
     assert.equal(exportFilename('suppliers', new Date('2026-11-25T23:30:00Z')), 'fudfarmer-suppliers-2026-11-26.csv');
+  });
+});
+
+describe('exportFilename formats', () => {
+  it('ends in the format', () => {
+    assert.equal(exportFilename('suppliers', new Date('2026-11-26T10:00:00Z'), 'xlsx'), 'fudfarmer-suppliers-2026-11-26.xlsx');
+    assert.equal(exportFilename('suppliers', new Date('2026-11-26T10:00:00Z'), 'pdf'), 'fudfarmer-suppliers-2026-11-26.pdf');
+  });
+});
+
+describe('exportTable', () => {
+  it('gives headers and cell values', () => {
+    const t = exportTable([{ header: 'A', value: (r: { a: number }) => r.a * 2 }], [{ a: 1 }, { a: 2 }]);
+    assert.deepEqual(t, { headers: ['A'], cells: [[2], [4]] });
+  });
+});
+
+describe('filterLabels', () => {
+  it('puts location and period first and drops repeats', () => {
+    assert.deepEqual(filterLabels({ location: 'Ife Hub', period: 'Last 30 days', chips: [{ label: 'Last 30 days' }, { label: 'Status: Open' }] }), ['Ife Hub', 'Last 30 days', 'Status: Open']);
+  });
+  it('leaves out All locations', () => {
+    assert.deepEqual(filterLabels({ location: 'All', chips: [] }), []);
   });
 });
 

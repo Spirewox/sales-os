@@ -19,11 +19,11 @@ Foundation: `@base-ui/react` Menu, wrapped in `components/app/overflow-menu.tsx`
 ## Examples
 Default: `docs/system/examples/overflow-menu/default.tsx`.
 
-Real uses, 32 call sites (`rg -n "<OverflowMenu\b" app components lib --glob '!components/app/**'`):
-- Page headers, default size: Sales `app/(app)/sales/page.tsx:103`, Inventory `app/(app)/inventory/page.tsx:210`, Customers `app/(app)/customers/page.tsx:154`, Audit trail `app/(app)/audit/page.tsx:183`, POS `app/(app)/pos/page.tsx:78`, Suppliers `app/(app)/suppliers/page.tsx:174`, Credits `app/(app)/credits/page.tsx:159`, Dashboard phones `app/(app)/_dashboard/dashboard-content.tsx:93` and wider `app/(app)/_dashboard/dashboard-content.tsx:101`.
+Real uses, 24 call sites, plus one in `hooks/use-export.ts` that every list export shares (`rg -n "<OverflowMenu\b" app components lib --glob '!components/app/**'`):
+- Page headers, default size: Sales `app/(app)/sales/page.tsx:103`, Inventory `app/(app)/inventory/page.tsx:200`, Customers `app/(app)/customers/page.tsx:154`, POS `app/(app)/pos/page.tsx:78`, Dashboard phones `app/(app)/_dashboard/dashboard-content.tsx:93` and wider `app/(app)/_dashboard/dashboard-content.tsx:101`.
 - Drawer and panel headers: customer `app/(app)/customers/customer-detail-panel.tsx:121` (sm), sale `app/(app)/sales/sale-detail-panel.tsx:103` (sm), supplier `app/(app)/suppliers/supplier-drawer.tsx:77`, product `app/(app)/inventory/product-drawer.tsx:90`, job `app/(app)/kitchen/job-panel.tsx:102`, location `app/(app)/settings/locations-section.tsx:163`, customer credit `components/credits/customer-credit-sheet.tsx:115`.
-- Table rows, all `sm`: customers `app/(app)/customers/customer-columns.tsx:105`, suppliers `app/(app)/suppliers/supplier-columns.tsx:125`, stock `app/(app)/inventory/stock-tab.tsx:130`, requests `app/(app)/inventory/requests-tab.tsx:127`, feedback `app/(app)/engagement/feedback-table.tsx:105`, churn `app/(app)/engagement/churn.tsx:162`, tills `app/(app)/pos/tills.tsx:77`, roles matrix `app/(app)/settings/roles-matrix.tsx:54` (with `className="size-6 border-0 bg-transparent"`).
-- Filter bar `trailing`, default size, each holding one CSV export: interactions `app/(app)/engagement/interactions.tsx:129`, movements `app/(app)/inventory/movements-tab.tsx:137`, requests `app/(app)/inventory/requests-tab.tsx:163`, POS transactions `app/(app)/pos/transactions.tsx:91`, users `app/(app)/settings/users-section.tsx:138`.
+- Table rows, all `sm`: customers `app/(app)/customers/customer-columns.tsx:105`, suppliers `app/(app)/suppliers/supplier-columns.tsx:125`, stock `app/(app)/inventory/stock-tab.tsx:141`, requests `app/(app)/inventory/requests-tab.tsx:130`, feedback `app/(app)/engagement/feedback-table.tsx:105`, churn `app/(app)/engagement/churn.tsx:162`, tills `app/(app)/pos/tills.tsx:77`, roles matrix `app/(app)/settings/roles-matrix.tsx:54` (with `className="size-6 border-0 bg-transparent"`).
+- Export, with the worded `trigger`: `hooks/use-export.ts:94` builds one menu (Excel, CSV, PDF) that each list puts in its filter bar's `trailing`: suppliers, credits, interactions, stock, movements, requests, POS transactions, audit trail and users.
 - Section and settings menus: kitchen jobs export `app/(app)/kitchen/jobs.tsx:212`, roles reset `app/(app)/settings/roles-section.tsx:129`, the settings list wrapper `app/(app)/settings/settings-ui.tsx:25` (sm).
 
 ### Example files
@@ -38,12 +38,19 @@ Real uses, 32 call sites (`rg -n "<OverflowMenu\b" app components lib --glob '!c
 | `docs/system/examples/overflow-menu/all-hidden.tsx` | state:all-hidden | Request row for someone who did not raise the request, the only item hidden so nothing renders |
 | Not applicable: open, hover and highlighted are pointer and keyboard states of any example, opened by hand | state:open | none |
 | `docs/system/examples/overflow-menu/in-page-header.tsx` | composition:PageHeader | Sales page header, one primary button and the overflow menu as the last control |
+| Not applicable: `icon` is the trigger every other example shows | trigger=icon | none |
+| `docs/system/examples/overflow-menu/export-trigger.tsx` | trigger=worded | The Export menu in a filter bar, a worded trigger over the Excel, CSV and PDF formats |
+| `docs/system/examples/overflow-menu/matrix.tsx` | matrix:size,trigger | The icon trigger at both sizes beside the worded trigger at both sizes, for side-by-side review |
 
 ## Variants
 
 ### size
 - `default`: 36px square trigger (`size-9`), for page headers and drawer headers, beside 36px buttons. Used at 14 call sites.
 - `sm`: 32px square trigger (`size-8`), for table rows and settings lists, beside the 32px `RowAction`. Used at 11 call sites.
+
+### trigger
+- `icon`: no `trigger` prop, the `⋯` icon button, for secondary and destructive actions.
+- `worded`: `trigger={{ text, icon, disabled }}`, an outline button that shows its words, such as Download plus "Export", at the same 36px (or 32px) height, for a menu people come looking for. `label` stays its accessible name, and must start with the visible words ("Export suppliers"). `disabled` turns the whole trigger off, such as while an export runs. Used once, in `hooks/use-export.ts:94`.
 
 ## States
 | State | Trigger | What the user can do | Shown by, besides color | Checked by |
@@ -53,10 +60,10 @@ Real uses, 32 call sites (`rg -n "<OverflowMenu\b" app components lib --glob '!c
 | Focus visible | Keyboard focus on the trigger | Enter, Space or Down Arrow to open | 2px outline in `--ring` | by hand |
 | Open | Trigger pressed or opened by key | Move through items, select one, close with Escape or an outside press | Popup under the trigger, right edges aligned; trigger keeps the `bg-muted` fill; `aria-expanded="true"` | by hand |
 | Item highlighted | Pointer over an item, or arrow keys | Select it with Enter or a press | `data-highlighted` fill behind the row | by hand |
-| Item disabled | `disabled: true`, such as Export on an empty pilot page at `app/(app)/audit/page.tsx:188` | Nothing: the item takes no selection | 50% opacity, `aria-disabled="true"`, `data-disabled` | by hand |
+| Item disabled | `disabled: true`, such as the export formats while an export runs, `hooks/use-export.ts:87` | Nothing: the item takes no selection | 50% opacity, `aria-disabled="true"`, `data-disabled` | by hand |
 | Destructive | `destructive: true` on 14 items across 10 menus | Select it, which opens a confirm at 13 of 14 | Listed last, after a separator line | screenshot |
 | Item link | `href` set, `app/(app)/kitchen/job-panel.tsx:107` | Open it, or open it in a new tab from the browser | Renders `a`; `external` adds `target="_blank"` | by hand |
-| All hidden | Every item has `hidden: true`, such as the request row at `app/(app)/inventory/requests-tab.tsx:120` for someone else's request | Nothing | No trigger renders at all | by hand |
+| All hidden | Every item has `hidden: true`, such as the request row at `app/(app)/inventory/requests-tab.tsx:118` for someone else's request | Nothing | No trigger renders at all | by hand |
 | Item pending | A call site sets the label to "Exporting…" or "Preparing template…" and `disabled` while a file builds, `app/(app)/customers/page.tsx:159` | Wait | Label text changes and the item dims (`trap/loading-label-swap`, see findings) | by hand |
 
 ### State precedence
@@ -79,6 +86,7 @@ gen-docs writes the table from the props type and `OverflowItem`.
 - `items` is the whole menu. Order inside each group is the array order; destructive items always follow the rest.
 - `label` defaults to "More actions" and becomes the trigger's `aria-label` and `title`.
 - `size` is `default` or `sm`.
+- `trigger` swaps the `⋯` for a worded button (see Variants). Leave it out for row, drawer and header menus.
 - `className` lands on the trigger. One call site uses it to shrink the trigger to 24px with no border.
 - Each `OverflowItem` takes `onSelect` or `href`, not both; `external` only matters with `href`; `hidden` removes the item; items are keyed by `label`, so two items with the same label collide (finding).
 
@@ -94,18 +102,18 @@ gen-docs writes the table from the props type and `OverflowItem`.
 - A row has 1 or 2 everyday actions that people use on most visits. Use DataTable's `RowAction` instead, shown inline in the row
 
 ### Rules
-- `rule/overflow-menu-destructive-confirm`: When an item has `destructive: true`, its `onSelect` opens ConfirmDialog naming the record instead of acting at once, because the menu closes on select and nothing offers an undo. Evidence: app 13/14 destructive items confirm first, through ConfirmDialog, a confirm panel or `window.confirm`, and the stray `app/(app)/inventory/requests-tab.tsx:135` cancels the request at once. Check: review.
+- `rule/overflow-menu-destructive-confirm`: When an item has `destructive: true`, its `onSelect` opens ConfirmDialog naming the record instead of acting at once, because the menu closes on select and nothing offers an undo. Evidence: app 13/14 destructive items confirm first, through ConfirmDialog, a confirm panel or `window.confirm`, and the stray `app/(app)/inventory/requests-tab.tsx:138` cancels the request at once. Check: review.
   - Don't: `<OverflowMenu items={[{ label: 'Cancel request', destructive: true, onSelect: () => cancelRequest.mutateAsync(r._id) }]} />`
   - Do: `<OverflowMenu items={[{ label: 'Cancel request', destructive: true, onSelect: () => confirm('cancelRequest', r._id) }]} />`
 - `rule/overflow-menu-size-by-place`: When the menu sits in a table row or a settings list, pass `size="sm"`, and in a page header use the default size instead, because the trigger then matches the controls beside it: 32px `RowAction` in rows and 36px (`h-9`) buttons in headers. Evidence: app 8/8 table-row menus pass `size="sm"`, app 7/7 page-header menus use the default size. Check: review.
   - Don't: `<DataTable columns={[{ id: 'actions', header: '', cell: (s) => <OverflowMenu label={`Actions for ${s.name}`} items={items(s)} /> }]} />`
   - Do: `<DataTable columns={[{ id: 'actions', header: '', cell: (s) => <OverflowMenu size="sm" label={`Actions for ${s.name}`} items={items(s)} /> }]} />`
-- `rule/overflow-menu-hidden-flag`: When an item depends on a permission or the record's state, set `hidden` on it instead of building the array with conditions, because OverflowMenu then returns null when nothing is left and no empty `⋯` reaches the screen. Evidence: app 18/25 call sites gate items with `hidden`, and none builds its `items` with a spread or `.filter()`; single use `components/app/overflow-menu.tsx:25`, the null return. Check: review.
+- `rule/overflow-menu-hidden-flag`: When an item depends on a permission or the record's state, set `hidden` on it instead of building the array with conditions, because OverflowMenu then returns null when nothing is left and no empty `⋯` reaches the screen. Evidence: app 18/25 call sites gate items with `hidden`, and none builds its `items` with a spread or `.filter()`; single use `components/app/overflow-menu.tsx:32`, the null return. Check: review.
   - Don't: `<OverflowMenu items={[...(canVoid ? [{ label: 'Void sale', destructive: true, onSelect: voidSale }] : [])]} />`
   - Do: `<OverflowMenu items={[{ label: 'Void sale', destructive: true, onSelect: voidSale, hidden: !canVoid }]} />`
 
 ### Content
-- `rule/overflow-menu-record-label`: When the menu acts on one record, pass `label` as "Actions for {name}" or "More actions for {name}" instead of leaving the default "More actions", because in a table every trigger would otherwise share one accessible name. Evidence: app 10/11 per-record menus in rows and drawers name the record in `label`, and the stray `app/(app)/inventory/requests-tab.tsx:129` reads "More request actions" in every row. Check: review.
+- `rule/overflow-menu-record-label`: When the menu acts on one record, pass `label` as "Actions for {name}" or "More actions for {name}" instead of leaving the default "More actions", because in a table every trigger would otherwise share one accessible name. Evidence: app 10/11 per-record menus in rows and drawers name the record in `label`, and the stray `app/(app)/inventory/requests-tab.tsx:132` reads "More request actions" in every row. Check: review.
   - Don't: `<OverflowMenu size="sm" items={items(r)} />`
   - Do: `<OverflowMenu size="sm" label={`Actions for ${r.name}`} items={items(r)} />`
 - `rule/overflow-menu-item-sentence-case`: When writing an item `label`, use sentence case, such as "Export sales" or "Void sale", instead of Title Case, because the label is the item's only name and the app's labels are sentence case (`app/globals.css:10`). Evidence: app 25/25 call sites use sentence-case item labels. Check: review.

@@ -1,10 +1,12 @@
 'use client';
 
 import { Receipt } from 'lucide-react';
-import { DataTable, EmptyState, MoreFilterField, OverflowMenu, type Column, type FilterChip } from '@/components/app';
+import { DataTable, EmptyState, MoreFilterField, type Column, type FilterChip } from '@/components/app';
 import { useExport } from '@/hooks/use-export';
 import { axiosGet } from '@/lib/api';
 import { posTransactionExportColumns } from '@/lib/exports/pos';
+import { filterLabels } from '@/lib/export';
+import { periodLabel } from '@/lib/period';
 import { plural } from '@/lib/format';
 import { usePosFilters } from './use-pos-filters';
 import { operationsQuery, useCursorPages, useOperationsList } from './operations';
@@ -30,6 +32,8 @@ export function TransactionsTab() {
   // Every transaction matching the filters, following the API's cursor past the page on screen.
   const exportTransactions = useExport({
     module: 'pos-transactions',
+    title: 'POS transactions',
+    filters: () => filterLabels({ location: f.scope.filterHub, period: periodLabel(f.period), chips: [...chips, ...(f.urlSearch ? [{ label: `"${f.urlSearch}"` }] : [])] }),
     noun: { one: 'transaction', many: 'transactions' },
     columns: posTransactionExportColumns({
       hubName: f.hubName,
@@ -88,7 +92,7 @@ export function TransactionsTab() {
         moreActiveCount={[till, cashier, kind].filter(Boolean).length}
         chips={chips}
         resultLabel={rows ? `${plural(rows.length, 'transaction')}${list.data?.nextCursor || page.page > 1 ? ` on page ${page.page}` : ''}` : undefined}
-        trailing={<OverflowMenu label="More transaction actions" items={[exportTransactions.item]} />}
+        trailing={exportTransactions.menu}
       />
       <LoadError show={list.isError} what="transactions" retry={() => void list.refetch()} />
       <DataTable

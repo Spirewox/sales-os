@@ -10,10 +10,11 @@ import { inPeriod, parsePeriod, periodLabel, periodRange, periodToParams } from 
 import { fetchStockLogs } from '@/hooks/use-queries';
 import { FilterSelect } from '@/components/filter-select';
 import {
-  DataTable, EmptyState, FilterBar, KpiStrip, LocationSelect, OverflowMenu, PeriodSelect, StatusBadge, type Column, type FilterChip,
+  DataTable, EmptyState, FilterBar, KpiStrip, LocationSelect, PeriodSelect, StatusBadge, type Column, type FilterChip,
 } from '@/components/app';
 import { useExport } from '@/hooks/use-export';
 import { MOVEMENT_EXPORT_COLUMNS } from '@/lib/exports/inventory';
+import { filterLabels } from '@/lib/export';
 import { expiryTone } from './inventory-utils';
 
 const PAGE_SIZE = 25;
@@ -57,7 +58,9 @@ export function MovementsTab({ hubScope, items, logs, loading, onOpenProduct }: 
   // The table shows the newest loaded movements; the export pages through every one in the period.
   const range = periodRange(period);
   const exportMovements = useExport({
-    module: 'stock-movements', noun: { one: 'movement', many: 'movements' }, columns: MOVEMENT_EXPORT_COLUMNS,
+    module: 'stock-movements', title: 'Stock movements',
+    filters: () => filterLabels({ location: hubScope.filterHub, period: periodLabel(period), chips }),
+    noun: { one: 'movement', many: 'movements' }, columns: MOVEMENT_EXPORT_COLUMNS,
     fetchPage: async (page, limit) => {
       const res = await fetchStockLogs({
         hub_id: hubScope.hubIdForApi, type: type === 'All' ? undefined : type,
@@ -147,7 +150,7 @@ export function MovementsTab({ hubScope, items, logs, loading, onOpenProduct }: 
         chips={chips}
         onClearAll={clearAll}
         resultLabel={loading && logs.length === 0 ? undefined : `${formatCount(filteredLogs.length)} ${filteredLogs.length === 1 ? 'movement' : 'movements'}`}
-        trailing={<OverflowMenu label="More movement actions" items={[exportMovements.item]} />}
+        trailing={exportMovements.menu}
       />
       <DataTable
         // DataTable keeps its page internally; remount on filter change so it starts at page 1.

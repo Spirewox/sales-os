@@ -3,7 +3,7 @@
 import { Suspense, useMemo, useRef, useState } from 'react';
 import { useIsMutating } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Download, FileSpreadsheet, Plus, Upload, ArrowUpRight } from 'lucide-react';
+import { FileSpreadsheet, Plus, Upload, ArrowUpRight } from 'lucide-react';
 import type { InventoryItem } from '@/types';
 import type { InventoryImportPreviewRow } from '@/types/api';
 import { useHubScopeFilter } from '@/hooks/use-hub-scope';
@@ -15,7 +15,7 @@ import {
 import { ConfirmPreviewModal } from '@/components/confirm-preview-modal';
 import { OverflowMenu, PageHeader, SectionErrorBoundary, SectionTabs, useSectionTab, type SectionTab } from '@/components/app';
 import { InventoryImportModal } from './inventory-import-modal';
-import { downloadCsv, roundMoney2, type ConfirmState } from './inventory-utils';
+import { type ConfirmState } from './inventory-utils';
 import { useStockView } from './use-stock-view';
 import { useRequestScope } from './use-request-scope';
 import { StockTab } from './stock-tab';
@@ -171,16 +171,6 @@ function InventoryWorkspace() {
     setImportError(null);
   };
 
-  const exportCsv = () => {
-    const list = stockView.filteredItems;
-    downloadCsv(
-      `fudfarmer-inventory-${new Date().toISOString().split('T')[0]}.csv`,
-      ['SKU', 'Name', 'Category', 'Location', 'Stock', 'Unit', 'Min Stock', 'Cost Price', 'Selling Price'],
-      list.map((i) => [i.sku, i.name, i.category, i.location, i.currentStock, i.unitOfMeasure, i.minStockLevel, roundMoney2(i.avgUnitCost), roundMoney2(i.baseSellingPrice)]),
-    );
-    toast.success(`Exported ${list.length} items.`);
-  };
-
   if (!can('inventory.view')) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
@@ -213,7 +203,6 @@ function InventoryWorkspace() {
               { label: 'Create SKU', icon: <Plus />, onSelect: () => setSheet({ kind: 'create' }), hidden: !can('inventory.create') },
               { label: 'Import movements', icon: <Upload />, onSelect: () => importInputRef.current?.click(), hidden: !can('inventory.import') },
               { label: 'Download import template', icon: <FileSpreadsheet />, onSelect: handleDownloadInventoryTemplate, hidden: !can('inventory.import') },
-              { label: 'Export stock (CSV)', icon: <Download />, onSelect: exportCsv, hidden: !can('inventory.export') },
             ]}
           />
         }

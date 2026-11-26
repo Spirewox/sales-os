@@ -10,7 +10,7 @@ export { FormSheet, FormSection, FormField, fieldClass } from './form-sheet';
 export { StatusBadge, STATUS_TONES, type Tone } from './status-badge';
 export { EmptyState } from './empty-state';
 export { SectionErrorBoundary } from './error-boundary';
-export { OverflowMenu, type OverflowItem } from './overflow-menu';
+export { OverflowMenu, type OverflowItem, type OverflowTrigger } from './overflow-menu';
 export { Segmented } from './segmented';
 export { UnsavedBar } from './unsaved-bar';
 export { ConfirmDialog } from './confirm-dialog';

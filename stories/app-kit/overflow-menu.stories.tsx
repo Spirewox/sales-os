@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs';
-import { Archive, Ban, Download, FileSpreadsheet, Pencil, Trash2, Upload } from 'lucide-react';
+import { Archive, Ban, Download, FileSpreadsheet, FileText, Pencil, Sheet, Trash2, Upload } from 'lucide-react';
 import { fn } from 'storybook/test';
 import { OverflowMenu, type OverflowItem } from '@/components/app';
 
@@ -53,6 +53,22 @@ export const WithLinks: Story = {
       { label: 'Archive supplier', icon: <Archive aria-hidden />, onSelect: fn(), destructive: true },
     ],
   },
+};
+
+const EXPORT_ITEMS: OverflowItem[] = [
+  { label: 'Excel (.xlsx)', icon: <FileSpreadsheet aria-hidden />, onSelect: fn() },
+  { label: 'CSV (.csv)', icon: <Sheet aria-hidden />, onSelect: fn() },
+  { label: 'PDF (.pdf)', icon: <FileText aria-hidden />, onSelect: fn() },
+];
+
+/** A worded trigger in a filter bar: every list's Export, with the three file formats. */
+export const ExportTrigger: Story = {
+  args: { label: 'Export suppliers', items: EXPORT_ITEMS, trigger: { text: 'Export', icon: <Download aria-hidden /> } },
+};
+
+/** The worded trigger while an export runs: same words, turned off. */
+export const ExportTriggerDisabled: Story = {
+  args: { label: 'Export suppliers', items: EXPORT_ITEMS, trigger: { text: 'Export', icon: <Download aria-hidden />, disabled: true } },
 };
 
 /** Small trigger for table rows and drawers. */

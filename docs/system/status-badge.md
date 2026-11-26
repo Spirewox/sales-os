@@ -15,9 +15,9 @@ Default: `docs/system/examples/status-badge/default.tsx`.
 Real uses, 97 call sites (`rg -n "<StatusBadge\b" app components lib -g '!components/app/**'` lists 89 lines, some holding 2 tags; the check counts tags).
 
 - Sales list and sale panel, payment domain: `app/(app)/sales/page.tsx:63`, `app/(app)/sales/sale-detail-panel.tsx:91`, `app/(app)/customers/customer-purchases-tab.tsx:90`, `app/(app)/_dashboard/needs-attention.tsx:108`
-- Stock table and product drawer, stock domain: `app/(app)/inventory/stock-tab.tsx:80`, `app/(app)/inventory/product-drawer.tsx:82`, `app/(app)/analytics/inventory-tab.tsx:121`
-- Engagement, requests and supplier issues, work domain: `app/(app)/engagement/feedback-table.tsx:46`, `app/(app)/engagement/feedback-drawer.tsx:70`, `app/(app)/engagement/enquiry-table.tsx:50`, `app/(app)/engagement/enquiry-drawer.tsx:43`, `app/(app)/engagement/interaction-utils.tsx:41`, `app/(app)/inventory/requests-tab.tsx:101`, `app/(app)/inventory/request-drawer.tsx:31`, `app/(app)/suppliers/supplier-issues-tab.tsx:67`
-- Batch expiry with a computed label and `expiryTone`: `app/(app)/inventory/stock-tab.tsx:98`, `app/(app)/inventory/movements-tab.tsx:94`
+- Stock table and product drawer, stock domain: `app/(app)/inventory/stock-tab.tsx:91`, `app/(app)/inventory/product-drawer.tsx:82`, `app/(app)/analytics/inventory-tab.tsx:121`
+- Engagement, requests and supplier issues, work domain: `app/(app)/engagement/feedback-table.tsx:46`, `app/(app)/engagement/feedback-drawer.tsx:70`, `app/(app)/engagement/enquiry-table.tsx:50`, `app/(app)/engagement/enquiry-drawer.tsx:43`, `app/(app)/engagement/interaction-utils.tsx:41`, `app/(app)/inventory/requests-tab.tsx:104`, `app/(app)/inventory/request-drawer.tsx:31`, `app/(app)/suppliers/supplier-issues-tab.tsx:67`
+- Batch expiry with a computed label and `expiryTone`: `app/(app)/inventory/stock-tab.tsx:109`, `app/(app)/inventory/movements-tab.tsx:110`
 - Kitchen job stage and payment: `app/(app)/kitchen/kitchen-ui.tsx:40`, `app/(app)/kitchen/kitchen-ui.tsx:45`
 - Customer grades and interaction history: `app/(app)/customers/customer-grades.tsx:29`, `app/(app)/customers/customer-interactions-tab.tsx:62`, `app/(app)/customers/customer-interactions-tab.tsx:81`, `app/(app)/customers/customer-interactions-tab.tsx:100`
 - Customer import summary rows: `app/(app)/customers/customer-import-summary.tsx:65`

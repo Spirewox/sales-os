@@ -2,10 +2,11 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Box, Banknote, User, Shield, Upload, ScrollText, Download } from 'lucide-react';
+import { Box, Banknote, User, Shield, Upload, ScrollText } from 'lucide-react';
 import { fetchAuditLogs, useAuditLogs, useAgents } from '@/hooks/use-queries';
 import { useExport } from '@/hooks/use-export';
 import { auditListPage } from '@/lib/exports/audit';
+import { filterLabels } from '@/lib/export';
 import { useUrlState } from '@/hooks/use-url-state';
 import type { AuditLog } from '@/types';
 import { formatAuditAction, formatAuditEntity } from '@/lib/api-mappers';
@@ -14,10 +15,10 @@ import { parsePeriod, periodLabel, periodRange, periodToParams } from '@/lib/per
 import { FilterSelect } from '@/components/filter-select';
 import { usePageSize } from '@/hooks/use-page-size';
 import {
-  DataTable, EmptyState, FilterBar, MoreFilterField, OverflowMenu, PageHeader, PeriodSelect, SectionErrorBoundary,
+  DataTable, EmptyState, FilterBar, MoreFilterField, PageHeader, PeriodSelect, SectionErrorBoundary,
   SectionTabs, StatusBadge, useSectionTab, type Column, type FilterChip, type SectionTab,
 } from '@/components/app';
-import { AUDIT_EXPORT_COLUMNS, auditDetailsSummary, auditRecordHref, downloadAuditCsv } from './audit-details';
+import { AUDIT_EXPORT_COLUMNS, auditDetailsSummary, auditRecordHref } from './audit-details';
 import { AuditDrawer, timeOf } from './audit-drawer';
 
 type AuditTab = 'all' | 'bulk' | 'sales' | 'inventory' | 'customers';
@@ -123,6 +124,8 @@ function AuditTrail() {
   // Every entry matching the tab and filters, not just this page.
   const exportAll = useExport({
     module: `audit-trail-${tab}`,
+    title: 'Audit trail',
+    filters: () => filterLabels({ period: periodLabel(period), chips }),
     noun: { one: 'audit entry', many: 'audit entries' },
     columns: AUDIT_EXPORT_COLUMNS,
     fetchPage: (p, l) => auditListPage(fetchAuditLogs, matchFilters, p, l),
@@ -179,17 +182,6 @@ function AuditTrail() {
       <PageHeader
         title="Audit trail"
         description="Who changed what, and when, across sales, stock and customers."
-        overflow={
-          <OverflowMenu
-            label="Audit trail actions"
-            items={[{
-              label: 'Export this page (CSV)',
-              icon: <Download />,
-              disabled: !logs?.length,
-              onSelect: () => logs && downloadAuditCsv(logs, `audit-trail-${tab}-page-${meta.page}.csv`),
-            }, { ...exportAll.item, label: exportAll.pending ? 'Exporting…' : 'Export all matching (CSV)' }]}
-          />
-        }
         tabs={<SectionTabs label="Audit sections" tabs={tabs} defaultTab="all" />}
       />
 
@@ -213,6 +205,7 @@ function AuditTrail() {
         }
         moreActiveCount={(entity !== 'All' ? 1 : 0) + (agent !== 'All' ? 1 : 0) + (moduleFilter !== 'All' && tab === 'all' ? 1 : 0)}
         chips={chips}
+        trailing={exportAll.menu}
         onClearAll={clearAll}
         resultLabel={logs ? `${meta.total.toLocaleString()} ${meta.total === 1 ? 'entry' : 'entries'}` : undefined}
       />

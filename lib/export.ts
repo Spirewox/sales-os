@@ -46,9 +46,29 @@ export function csvDate(value: string | Date | null | undefined, withTime = fals
   return withTime ? `${p.date} ${p.time}` : p.date;
 }
 
-/** `fudfarmer-<module>-<YYYY-MM-DD>.csv`, dated in Lagos. */
-export function exportFilename(module: string, now: Date = new Date()): string {
-  return `fudfarmer-${module}-${lagosParts(now).date}.csv`;
+export type ExportFormat = 'csv' | 'xlsx' | 'pdf';
+
+/** `fudfarmer-<module>-<YYYY-MM-DD>.<ext>`, dated in Lagos. */
+export function exportFilename(module: string, now: Date = new Date(), format: ExportFormat = 'csv'): string {
+  return `fudfarmer-${module}-${lagosParts(now).date}.${format}`;
+}
+
+/** The header row and cell values of a table, for the Excel and PDF writers. */
+export function exportTable<T>(columns: ExportColumn<T>[], rows: T[]): { headers: string[]; cells: ExportCell[][] } {
+  return { headers: columns.map((c) => c.header), cells: rows.map((r) => columns.map((c) => c.value(r))) };
+}
+
+/**
+ * What a list is filtered by, in words, for the top of a PDF: the location when one is chosen,
+ * the period, then the filter chips. Repeats are dropped.
+ */
+export function filterLabels(input: { location?: string | null; period?: string | null; chips?: { label: string }[] }): string[] {
+  const out = [
+    ...(input.location && input.location !== 'All' ? [input.location] : []),
+    ...(input.period ? [input.period] : []),
+    ...(input.chips ?? []).map((c) => c.label),
+  ];
+  return [...new Set(out)];
 }
 
 export type FetchPage<T> = (page: number, limit: number) => Promise<{ items: T[]; totalPages: number }>;
@@ -118,7 +138,12 @@ export function exportToast(count: number, noun: ExportNoun, capped: boolean): s
 
 /** Save text as a CSV download in the browser. */
 export function saveCsv(filename: string, text: string): void {
-  const url = URL.createObjectURL(new Blob([text], { type: 'text/csv;charset=utf-8' }));
+  saveFile(filename, text, 'text/csv;charset=utf-8');
+}
+
+/** Save bytes or text as a download in the browser. */
+export function saveFile(filename: string, data: BlobPart, type: string): void {
+  const url = URL.createObjectURL(new Blob([data], { type }));
   const a = document.createElement('a');
   a.href = url;
   a.download = filename;

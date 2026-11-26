@@ -14,6 +14,10 @@ import {
   type Column, type FilterChip,
 } from '@/components/app';
 import { cn } from '@/lib/utils';
+import { usePermissions } from '@/hooks/use-permissions';
+import { useExport } from '@/hooks/use-export';
+import { filterLabels } from '@/lib/export';
+import { STOCK_EXPORT_COLUMNS } from '@/lib/exports/stock';
 import { expiryTone, getExpiryLabel, marginPct, nearMinimum, sellingPriceForMargin, stockState } from './inventory-utils';
 import type { StockView } from './use-stock-view';
 import { SalesTrendsSection } from './sales-trends';
@@ -40,6 +44,13 @@ export function StockTab({ hubScope, view, loading, pendingRequests, needsAction
   actions: StockActions;
 }>) {
   const { counts, stockFilter, filteredItems, nextExpiryByItem, expiringByItem } = view;
+  const { can } = usePermissions();
+  const exportStock = useExport({
+    module: 'stock', title: 'Stock', noun: { one: 'product', many: 'products' }, columns: STOCK_EXPORT_COLUMNS,
+    filters: () => filterLabels({ location: hubScope.filterHub, chips }),
+    fetchPage: async () => ({ items: filteredItems, totalPages: 1 }),
+    disabled: filteredItems.length === 0,
+  });
 
   const columns: Column<InventoryItem>[] = [
     {
@@ -188,6 +199,7 @@ export function StockTab({ hubScope, view, loading, pendingRequests, needsAction
         }
         moreActiveCount={view.skuIds.length ? 1 : 0}
         chips={chips}
+        trailing={can('inventory.export') ? exportStock.menu : undefined}
         onClearAll={view.clearAll}
         resultLabel={showLoading ? undefined : `${formatCount(filteredItems.length)} ${filteredItems.length === 1 ? 'product' : 'products'}`}
       />

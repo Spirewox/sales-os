@@ -17,6 +17,7 @@ import {
 } from '@/components/app';
 import { useExport } from '@/hooks/use-export';
 import { REQUEST_EXPORT_COLUMNS, requestExportRows } from '@/lib/exports/inventory';
+import { filterLabels } from '@/lib/export';
 import { REQUEST_STATUS_LABEL as STATUS_LABEL, formatRequestLine as formatLineDisplay, hubRefName, isOpenRequest, type RequestScope } from './use-request-scope';
 import { RequestDrawer } from './request-drawer';
 
@@ -55,7 +56,9 @@ export function RequestsTab({ hubScope, scope }: Readonly<{ hubScope: HubScopeFi
   });
 
   const exportRequests = useExport({
-    module: 'stock-requests', noun: { one: 'request line', many: 'request lines' }, columns: REQUEST_EXPORT_COLUMNS,
+    module: 'stock-requests', title: 'Stock requests',
+    filters: () => filterLabels({ location: hubScope.filterHub, chips }),
+    noun: { one: 'request line', many: 'request lines' }, columns: REQUEST_EXPORT_COLUMNS,
     fetchPage: async () => ({ items: requestExportRows(rows), totalPages: 1 }), disabled: rows.length === 0,
   });
 
@@ -160,7 +163,7 @@ export function RequestsTab({ hubScope, scope }: Readonly<{ hubScope: HubScopeFi
         }
         chips={chips}
         resultLabel={scope.isLoading ? undefined : `${rows.length} ${rows.length === 1 ? 'request' : 'requests'}`}
-        trailing={<OverflowMenu label="More request actions" items={[exportRequests.item]} />}
+        trailing={exportRequests.menu}
       />
       <DataTable
         label="Inventory requests"

@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { BarChart3, Plus } from 'lucide-react';
-import { KpiStrip, OverflowMenu, SectionTabs, useSectionTab, type SectionTab } from '@/components/app';
+import { KpiStrip, SectionTabs, useSectionTab, type SectionTab } from '@/components/app';
 import { useExport } from '@/hooks/use-export';
 import { COMPENSATION_EXPORT_COLUMNS, ENQUIRY_EXPORT_COLUMNS, FEEDBACK_EXPORT_COLUMNS } from '@/lib/exports/engagement';
 import { usePermissions } from '@/hooks/use-permissions';
@@ -102,22 +102,29 @@ export default function Interactions({ openFeedbackSignal = 0 }: Readonly<{
   const canCreate = can('interactions.create');
   // Each view exports every row its filters match, paging through the API (100 a page, the backend cap).
   const exportFeedback = useExport({
-    module: 'feedback', noun: { one: 'feedback item', many: 'feedback items' }, columns: FEEDBACK_EXPORT_COLUMNS,
+    module: 'feedback', title: 'Feedback',
+    filters: () => [
+      ...(fbFilters.status !== 'All' ? [`Status: ${fbFilters.status}`] : []),
+      ...(fbFilters.type !== 'All' ? [`Type: ${fbFilters.type}`] : []),
+      ...(fbFilters.priority !== 'All' ? [`Priority: ${fbFilters.priority}`] : []),
+      ...(search.trim() ? [`"${search.trim()}"`] : []),
+    ],
+    noun: { one: 'feedback item', many: 'feedback items' }, columns: FEEDBACK_EXPORT_COLUMNS,
     fetchPage: (p, l) => fetchInteractionPage('feedback', p, l), select: selectFeedback, pageSize: 100, disabled: filteredFeedback.length === 0,
   });
   const exportEnquiries = useExport({
-    module: 'enquiries', noun: { one: 'enquiry', many: 'enquiries' }, columns: ENQUIRY_EXPORT_COLUMNS,
+    module: 'enquiries', title: 'Enquiries',
+    filters: () => [...(enqStatus !== 'All' ? [`Status: ${enqStatus}`] : []), ...(search.trim() ? [`"${search.trim()}"`] : [])],
+    noun: { one: 'enquiry', many: 'enquiries' }, columns: ENQUIRY_EXPORT_COLUMNS,
     fetchPage: (p, l) => fetchInteractionPage('enquiries', p, l), select: selectEnquiries, pageSize: 100, disabled: filteredEnquiries.length === 0,
   });
   const exportComps = useExport({
-    module: 'compensations', noun: { one: 'compensation', many: 'compensations' }, columns: COMPENSATION_EXPORT_COLUMNS,
+    module: 'compensations', title: 'Compensations',
+    filters: () => (search.trim() ? [`"${search.trim()}"`] : []),
+    noun: { one: 'compensation', many: 'compensations' }, columns: COMPENSATION_EXPORT_COLUMNS,
     fetchPage: (p, l) => fetchInteractionPage('compensations', p, l), select: selectComps, pageSize: 100, disabled: filteredComps.length === 0,
   });
-  const viewExport = view === 'enquiries'
-    ? { label: 'More enquiry actions', item: exportEnquiries.item }
-    : view === 'compensations'
-      ? { label: 'More compensation actions', item: exportComps.item }
-      : { label: 'More feedback actions', item: exportFeedback.item };
+  const viewExport = view === 'enquiries' ? exportEnquiries.menu : view === 'compensations' ? exportComps.menu : exportFeedback.menu;
 
   const trailing = (
     <>
@@ -130,7 +137,7 @@ export default function Interactions({ openFeedbackSignal = 0 }: Readonly<{
       {canCreate && view === 'compensations' && (
         <button type="button" onClick={() => setForm({ kind: 'compensation' })} className={TOOL_BTN}><Plus size={16} aria-hidden /> Record compensation</button>
       )}
-      <OverflowMenu label={viewExport.label} items={[viewExport.item]} />
+      {viewExport}
     </>
   );
 
