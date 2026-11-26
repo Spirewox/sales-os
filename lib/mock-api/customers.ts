@@ -22,7 +22,8 @@ export function customerSearchFields(c: ApiCustomer): string[] {
 export function saveCustomer(customers: ApiCustomer[], id: string | null, body: Body): { status: number; data: unknown } {
   const contacts = body.contacts?.map((x) => ({ ...x, _id: x._id ?? nextId('ct') }));
   if (id === null) {
-    const created = { ...body, _id: nextId('cust'), contacts, customer_type: String(body.customer_type ?? 'b2c').toUpperCase() } as ApiCustomer;
+    // joined_date and totals as a real new customer has them; customer analytics reads joined_date.
+    const created = { total_orders: 0, total_spent: 0, joined_date: new Date().toISOString(), ...body, _id: nextId('cust'), contacts, customer_type: String(body.customer_type ?? 'b2c').toUpperCase() } as ApiCustomer;
     customers.push(created);
     return { status: 200, data: created };
   }

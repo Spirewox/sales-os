@@ -1,5 +1,6 @@
 import type { Customer } from '@/types';
 import { csvDate, type ExportColumn } from '@/lib/export';
+import { primaryFirst } from '@/lib/customer-contacts';
 
 /** The customer list; `outstanding` gives each customer's unpaid credit, when the credit summary loaded. */
 export function customerExportColumns(outstanding: (customerId: string) => number | undefined): ExportColumn<Customer>[] {
@@ -19,5 +20,13 @@ export function customerExportColumns(outstanding: (customerId: string) => numbe
     { header: 'Last purchase', value: (c) => csvDate(c.lastPurchaseDate) },
     { header: 'Joined', value: (c) => c.joinedDate },
     { header: 'Added by', value: (c) => c.addedByAgentName },
+    { header: 'Business address', value: (c) => c.businessAddress },
+    // "Name (Role) phone [primary]; …", primary first, for a business's saved contacts.
+    {
+      header: 'Contacts',
+      value: (c) => primaryFirst(c.contacts ?? [])
+        .map((x) => `${x.name}${x.role ? ` (${x.role})` : ''} ${x.phone}${x.isPrimary ? ' [primary]' : ''}`)
+        .join('; '),
+    },
   ];
 }

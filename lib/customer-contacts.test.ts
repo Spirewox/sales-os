@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  addContact, contactsOf, contactsToIndividual, normalisePhone, primaryContact, removeContact, setPrimary, toApiContacts, validateContacts,
+  addContact, contactsOf, contactsToIndividual, normalisePhone, primaryContact, removeContact, restoreBusinessContacts, setPrimary, toApiContacts, validateContacts,
   type CustomerContact,
 } from './customer-contacts';
 import type { Customer } from '@/types';
@@ -89,5 +89,30 @@ describe('contactsToIndividual', () => {
   });
   it('is empty with no contacts', () => {
     assert.deepEqual(contactsToIndividual([]), { name: '', phone: '', email: undefined });
+  });
+});
+
+describe('review fixes', () => {
+  it('blanks a placeholder phone when building the legacy primary', () => {
+    assert.equal(contactsOf({ type: B2B, name: 'Old Co', phone: 'N/A' })[0].phone, '');
+  });
+  it('lets an older business keep a primary with no phone when asked', () => {
+    const legacy = contactsOf({ type: B2B, name: 'Old Co', phone: '' });
+    assert.equal(validateContacts(legacy), 'Each contact needs a name and a WhatsApp number.');
+    assert.equal(validateContacts(legacy, { legacyMayLackPhone: true }), null);
+  });
+  it('rejects placeholder and digit-free phones', () => {
+    assert.equal(validateContacts([c('a', 'n/a', true)]), 'Each contact needs a name and a WhatsApp number.');
+    assert.equal(validateContacts([c('a', 'abc', true), c('b', 'xyz')]), 'Each contact needs a name and a WhatsApp number.');
+  });
+  it('brings the business contacts back after a switch to individual and back, with the primary updated', () => {
+    const parked = [{ ...c('a', '0803', true, 'Owner Name'), role: 'Owner' }, c('b', '0812')];
+    const back = restoreBusinessContacts(parked, { name: 'Edited Name', phone: '0809', email: 'e@x.ng' });
+    assert.deepEqual(back.map((x) => [x.id, x.name, x.phone, x.isPrimary]), [['a', 'Edited Name', '0809', true], ['b', 'Person b', '0812', false]]);
+    assert.equal(back[0].role, 'Owner');
+  });
+  it('starts from the individual when there is nothing to bring back', () => {
+    const back = restoreBusinessContacts([], { name: 'Solo', phone: '0700' });
+    assert.deepEqual(back.map((x) => [x.name, x.phone, x.isPrimary]), [['Solo', '0700', true]]);
   });
 });

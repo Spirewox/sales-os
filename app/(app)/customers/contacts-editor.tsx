@@ -1,5 +1,6 @@
 'use client';
 
+import { useRef } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +21,9 @@ export function ContactsEditor({ contacts, onChange, idPrefix }: Readonly<{
   idPrefix: string;
 }>) {
   const update = (id: string, patch: Partial<CustomerContact>) => onChange(contacts.map((c) => (c.id === id ? { ...c, ...patch } : c)));
+  // Removing a contact takes its button away: move focus to Add contact so keyboard users keep their place.
+  const addRef = useRef<HTMLButtonElement>(null);
+  const remove = (id: string) => { onChange(removeContact(contacts, id)); requestAnimationFrame(() => addRef.current?.focus()); };
   const rolesId = `${idPrefix}-contact-roles`;
 
   return (
@@ -28,12 +32,12 @@ export function ContactsEditor({ contacts, onChange, idPrefix }: Readonly<{
       {contacts.map((c, i) => {
         const fid = `${idPrefix}-contact-${i}`;
         return (
-          <div key={c.id} className="space-y-3 rounded-md border p-3">
+          <div key={c.id} role="group" aria-label={`Contact ${i + 1}${c.name.trim() ? `, ${c.name.trim()}` : ''}${c.isPrimary ? ', primary' : ''}`} className="space-y-3 rounded-md border p-3">
             <div className="flex min-h-8 items-center justify-between gap-2">
               {c.isPrimary ? (
                 <StatusBadge tone="good">Primary</StatusBadge>
               ) : (
-                <Button type="button" variant="ghost" size="xs" onClick={() => onChange(setPrimary(contacts, c.id))}>Make primary</Button>
+                <Button type="button" variant="ghost" size="xs" aria-label={`Make ${c.name.trim() || `contact ${i + 1}`} primary`} onClick={() => onChange(setPrimary(contacts, c.id))}>Make primary</Button>
               )}
               {contacts.length > 1 && (
                 <Button
@@ -41,7 +45,7 @@ export function ContactsEditor({ contacts, onChange, idPrefix }: Readonly<{
                   variant="ghost"
                   size="icon-sm"
                   aria-label={`Remove ${c.name.trim() || 'this contact'}`}
-                  onClick={() => onChange(removeContact(contacts, c.id))}
+                  onClick={() => remove(c.id)}
                 >
                   <Trash2 aria-hidden />
                 </Button>
@@ -64,7 +68,7 @@ export function ContactsEditor({ contacts, onChange, idPrefix }: Readonly<{
           </div>
         );
       })}
-      <Button type="button" variant="ghost" size="sm" disabled={contacts.length >= MAX_CONTACTS} onClick={() => onChange(addContact(contacts))}>
+      <Button ref={addRef} type="button" variant="ghost" size="sm" disabled={contacts.length >= MAX_CONTACTS} onClick={() => onChange(addContact(contacts))}>
         <Plus aria-hidden /> Add contact
       </Button>
     </div>

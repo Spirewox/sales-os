@@ -2,7 +2,7 @@
 
 import { useId, useState } from 'react';
 import { toast } from 'sonner';
-import { useAgents, useCreateCustomer, useHubs, useUpdateCustomer } from '@/hooks/use-queries';
+import { useAgents, useCreateCustomer, useCustomer, useHubs, useUpdateCustomer } from '@/hooks/use-queries';
 import { usePermissions } from '@/hooks/use-permissions';
 import { useHubScopeFilter } from '@/hooks/use-hub-scope';
 import {
@@ -19,7 +19,7 @@ import { Input } from '@/components/ui/input';
 import { SegmentChips } from './customer-segments';
 import { ContactsEditor } from './contacts-editor';
 import {
-  contactsOf, contactsToIndividual, primaryContact, toApiContacts, validateContacts, type CustomerContact,
+  contactsOf, contactsToIndividual, primaryContact, restoreBusinessContacts, toApiContacts, validateContacts, type CustomerContact,
 } from '@/lib/customer-contacts';
 
 /** Display label for the stored B2B / B2C type. */
@@ -127,16 +127,30 @@ export function CustomerFormSheet({ customer, onClose, onSaved, existingCustomer
   // A business's people. Its primary contact is saved as the customer's own name, phone and email.
   const [contacts, setContacts] = useState<CustomerContact[]>(() => (customer ? contactsOf(customer) : []));
   const wasBusiness = isB2bCustomerType(customer?.type);
+  // The list row may not carry contacts: load the customer itself and take its contacts, unless
+  // the person has already started editing them.
+  const [contactsTouched, setContactsTouched] = useState(false);
+  const { data: fresh } = useCustomer(isEdit && wasBusiness ? customer.id : null);
+  const [syncedFrom, setSyncedFrom] = useState<Customer | null>(null);
+  if (fresh && fresh !== syncedFrom && !contactsTouched) {
+    setSyncedFrom(fresh);
+    setContacts(contactsOf(fresh));
+  }
+  const editContacts = (next: CustomerContact[]) => { setContactsTouched(true); setContacts(next); };
+  // Contacts set aside while the type reads Individual, so switching back loses nobody.
+  const [parked, setParked] = useState<CustomerContact[]>([]);
   const primary = primaryContact(contacts);
-  const contactsProblem = isB2b ? validateContacts(contacts) : null;
+  // Older businesses saved without a phone stay editable, as older individuals do.
+  const contactsProblem = isB2b ? validateContacts(contacts, { legacyMayLackPhone: isEdit }) : null;
   const changeType = (type: CustomerType) => {
     if (type === CustomerType.B2B && !isB2b) {
-      // Start the list from whoever was entered as the individual.
-      setContacts(contactsOf({ type, name: form.name ?? '', phone: form.phone === 'N/A' ? '' : form.phone ?? '', email: form.email }));
+      // Bring back the business's people, or start from whoever was entered as the individual.
+      editContacts(restoreBusinessContacts(parked, { name: form.name ?? '', phone: form.phone === 'N/A' ? '' : form.phone ?? '', email: form.email }));
     }
     if (type === CustomerType.B2C && isB2b) {
       patch(contactsToIndividual(contacts));
-      setContacts([]);
+      setParked(contacts);
+      editContacts([]);
     }
     patch({ type, companyName: type === CustomerType.B2C ? '' : form.companyName, ...clearOppositeProfileFields(type) });
   };
@@ -147,7 +161,8 @@ export function CustomerFormSheet({ customer, onClose, onSaved, existingCustomer
       customer_phone: customerPhoneForApi(primary?.phone),
       customer_email: customerEmailForApi(primary?.email) ?? '',
       contacts: toApiContacts(contacts),
-      business_address: optionalStringForApi(form.businessAddress),
+      // Editing sends an empty address to clear it; a new customer leaves it out.
+      business_address: isEdit ? (form.businessAddress?.trim() ?? '') : optionalStringForApi(form.businessAddress),
     }
     : {
       customer_name: form.name ?? '',
@@ -301,7 +316,7 @@ export function CustomerFormSheet({ customer, onClose, onSaved, existingCustomer
 
       {isB2b && (
         <FormSection title="Contacts" description="The people you deal with. The primary contact is who the business is listed under.">
-          <ContactsEditor contacts={contacts} onChange={setContacts} idPrefix={id} />
+          <ContactsEditor contacts={contacts} onChange={editContacts} idPrefix={id} />
         </FormSection>
       )}
 

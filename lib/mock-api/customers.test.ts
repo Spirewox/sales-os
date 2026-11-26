@@ -37,6 +37,7 @@ describe('saveCustomer', () => {
     assert.equal(rows.length, 1);
     assert.match(rows[0]._id, /^cust_/);
     assert.equal(rows[0].contacts?.[0].name, 'X');
+    assert.ok(rows[0].joined_date, 'a new customer has a joined date, which analytics reads');
   });
   it('answers 404 for an unknown customer', () => {
     assert.equal(saveCustomer([], 'zz', {}).status, 404);

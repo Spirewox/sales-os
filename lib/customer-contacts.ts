@@ -1,4 +1,5 @@
 import type { Customer, CustomerContact } from '@/types';
+import { isPlaceholderPhone } from '@/lib/customer-helpers';
 
 export type { CustomerContact };
 /** What the API takes: the full list, replacing the old one. New contacts have no `_id`. */
@@ -16,7 +17,7 @@ export function normalisePhone(phone: string): string {
 }
 
 const isBusiness = (type: Customer['type']) => String(type) === 'B2B';
-const primaryFirst = (list: CustomerContact[]) => [...list].sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary));
+export const primaryFirst = (list: CustomerContact[]) => [...list].sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary));
 
 /**
  * A customer's contacts, primary first. A business saved before contacts existed gets one primary
@@ -25,15 +26,26 @@ const primaryFirst = (list: CustomerContact[]) => [...list].sort((a, b) => Numbe
 export function contactsOf(c: Pick<Customer, 'type' | 'name' | 'phone' | 'email' | 'contacts'>): CustomerContact[] {
   if (!isBusiness(c.type)) return [];
   if (c.contacts?.length) return primaryFirst(c.contacts);
-  return [{ id: LEGACY_ID, name: c.name, phone: c.phone, ...(c.email ? { email: c.email } : {}), isPrimary: true }];
+  // Older records store a missing phone as a placeholder such as N/A: show an empty field instead.
+  const phone = isPlaceholderPhone(c.phone) ? '' : c.phone;
+  return [{ id: LEGACY_ID, name: c.name, phone, ...(c.email ? { email: c.email } : {}), isPrimary: true }];
 }
 
-/** The first problem with a business's contact list, worded for the form, or null. */
-export function validateContacts(list: CustomerContact[]): string | null {
+/** A number WhatsApp can reach: some digits, and not a placeholder such as N/A. */
+const isRealPhone = (phone: string) => /\d/.test(phone) && !isPlaceholderPhone(phone);
+
+/**
+ * The first problem with a business's contact list, worded for the form, or null. With
+ * `legacyMayLackPhone`, an older business's synthesised primary may have no number, as older
+ * records without a phone stay editable.
+ */
+export function validateContacts(list: CustomerContact[], opts: { legacyMayLackPhone?: boolean } = {}): string | null {
   if (list.length === 0) return 'Add at least one contact.';
-  if (list.some((x) => !x.name.trim() || !x.phone.trim())) return 'Each contact needs a name and a WhatsApp number.';
+  const phoneOk = (x: CustomerContact) => isRealPhone(x.phone) || (opts.legacyMayLackPhone === true && x.id === LEGACY_ID && !x.phone.trim());
+  if (list.some((x) => !x.name.trim() || !phoneOk(x))) return 'Each contact needs a name and a WhatsApp number.';
   const seen = new Set<string>();
   for (const x of list) {
+    if (!x.phone.trim()) continue;
     const key = normalisePhone(x.phone);
     if (seen.has(key)) return `${x.phone.trim()} is listed twice.`;
     seen.add(key);
@@ -78,4 +90,13 @@ export function toApiContacts(list: CustomerContact[]): ApiCustomerContactInput[
 export function contactsToIndividual(list: CustomerContact[]): { name: string; phone: string; email?: string } {
   const p = primaryContact(list) ?? list[0];
   return { name: p?.name ?? '', phone: p?.phone ?? '', email: p?.email };
+}
+
+/**
+ * Switching an individual back to a business in the same form: bring back the contacts set aside
+ * on the way to individual, with the primary taking the individual's edited name, phone and email.
+ */
+export function restoreBusinessContacts(parked: CustomerContact[], individual: { name: string; phone: string; email?: string }): CustomerContact[] {
+  if (!parked.length) return contactsOf({ type: 'B2B' as Customer['type'], ...individual });
+  return parked.map((x) => (x.isPrimary ? { ...x, name: individual.name, phone: individual.phone, email: individual.email } : x));
 }

@@ -20,11 +20,11 @@
 
 | Item | Shape and behaviour |
 |------|---------------------|
-| `ApiCustomer.contacts` | `{ _id: string; name: string; role?: string; phone: string; email?: string; is_primary: boolean }[]`. Present for `b2b` and absent or empty for `b2c`. |
+| `ApiCustomer.contacts` | `{ _id: string; name: string; role?: string; phone: string; email?: string; is_primary: boolean }[]`. Present for `b2b` and absent or empty for `b2c`, on `GET customers/:id` **and on every row of `GET customers`** (the edit form starts from the list row; it also reloads the customer by id, but a list without contacts shows the wrong people until then). |
 | `ApiCustomer.business_address` | `string`, optional, for `b2b` only. |
 | `POST customers`, `PATCH customers/:id` | Accept `contacts` (the full list, which replaces the old one; new contacts have no `_id`) and `business_address`. For `b2b`, the server sets `customer_name`, `customer_phone` and `customer_email` from the primary contact. It answers 400 when a `b2b` customer has no contacts, has other than exactly one primary, or lists a phone twice. |
 | `GET customers?search=` | Also matches contact names and phones. |
-| `GET customers/export` | Adds the columns `Contacts` (`Name (Role) phone; …`) and `Business address`. |
+| Customer export | Built in the browser since Plan 1 (Excel, CSV, PDF): it adds `Business address` and `Contacts` (`Name (Role) phone [primary]; …`) from the list rows, so the list must carry contacts. |
 
 ## Global Constraints
 

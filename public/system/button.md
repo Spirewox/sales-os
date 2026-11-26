@@ -24,7 +24,7 @@ Default: `docs/system/examples/button/default.tsx`.
 Real uses, 13 call sites (`rg -n "<Button(\s|/|>|$)" app components lib --glob '*.tsx' --glob '!components/ui/**'`):
 - Sales detail drawer, the migration's first screens: Save changes `app/(app)/sales/sale-detail-panel.tsx:74`, the void confirm `app/(app)/sales/sale-detail-panel.tsx:135` (`destructive-solid`) and the tab's save `app/(app)/sales/sale-detail-tabs.tsx:60`, all `size="control"` with `loading` in place of SubmitButton.
 - Customer profile, a contact's WhatsApp: `app/(app)/customers/customer-overview-tab.tsx:147` (`outline`, `sm`, rendered as a link with `nativeButton={false}`).
-- Customer contacts editor: Make primary `app/(app)/customers/contacts-editor.tsx:36` (`ghost`, `xs`), remove a contact `app/(app)/customers/contacts-editor.tsx:39` (`ghost`, `icon-sm`) and Add contact `app/(app)/customers/contacts-editor.tsx:67` (`ghost`, `sm`).
+- Customer contacts editor: Make primary `app/(app)/customers/contacts-editor.tsx:40` (`ghost`, `xs`), remove a contact `app/(app)/customers/contacts-editor.tsx:43` (`ghost`, `icon-sm`) and Add contact `app/(app)/customers/contacts-editor.tsx:71` (`ghost`, `sm`).
 - Confirm preview modal, its confirm action: `components/confirm-preview-modal.tsx:94`.
 - Sign-in: Sign in `app/login/page.tsx:122` (`size="control"`, `loading`) and the show or hide password toggle `app/login/page.tsx:101` (`ghost`, `icon-sm`).
 - Analytics Locations head to head: the swap button `app/(app)/analytics/location-head-to-head.tsx:164` (`outline`, `icon`) and Select all and Reset `app/(app)/analytics/location-head-to-head.tsx:177`, `app/(app)/analytics/location-head-to-head.tsx:178` (`ghost`, `xs`).
