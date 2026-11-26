@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  REPORTS, reportExportColumns, reportQueryKey, reportRowsWithTotal, resolveReportParam, savedReportRunnable, summableColumns, visibleReports,
+  REPORTS, reportExportColumns, reportKpiColumns, savedReportTotal, scopedResult, reportQueryKey, reportRowsWithTotal, resolveReportParam, savedReportRunnable, summableColumns, visibleReports,
   type ReportResult, type SavedReport,
 } from './reports';
 import { buildCsv } from './export';
@@ -79,5 +79,40 @@ describe('savedReportRunnable', () => {
 describe('reportQueryKey', () => {
   it('changes with the scope', () => {
     assert.notDeepEqual(reportQueryKey('x', { period: 'month' }), reportQueryKey('x', { period: 'year' }));
+  });
+});
+
+describe('reportKpiColumns', () => {
+  it('keeps every summable total, so no aging bucket is hidden', () => {
+    const keys = ['outstanding', 'notDue', 'd30', 'd60', 'd90', 'over90'];
+    const aging: ReportResult = {
+      ...RESULT,
+      columns: [{ key: 'customer', label: 'Customer', kind: 'text' }, ...keys.map((k) => ({ key: k, label: k, kind: 'money' as const }))],
+      rows: [], totals: Object.fromEntries(keys.map((k) => [k, 1])),
+    };
+    assert.deepEqual(reportKpiColumns(aging).map((c) => c.key), keys);
+  });
+
+  it('labels a total once', () => {
+    const spend: ReportResult = { ...RESULT, columns: [{ key: 's', label: 'Supplier', kind: 'text' }, { key: 'spend', label: 'Total spend', kind: 'money' }, { key: 'orders', label: 'Orders', kind: 'number' }], totals: { spend: 5, orders: 2 } };
+    assert.deepEqual(reportKpiColumns(spend).map((c) => c.label), ['Total spend', 'Total orders']);
+  });
+});
+
+describe('savedReportTotal', () => {
+  it('uses the total from the server for a measure that adds up', () => {
+    assert.equal(savedReportTotal({ rows: [{ value: 1 }, { value: 2 }], total: 3 }, true), 3);
+  });
+  it('gives no total for averages and distinct counts', () => {
+    assert.equal(savedReportTotal({ rows: [{ value: 10 }, { value: 20 }], total: 15 }, false), null);
+  });
+});
+
+describe('scopedResult', () => {
+  it('shows a result only for the scope it was fetched for', () => {
+    const stored = { key: 'a', data: 1 };
+    assert.equal(scopedResult(stored, 'a'), 1);
+    assert.equal(scopedResult(stored, 'b'), null);
+    assert.equal(scopedResult(null, 'a'), null);
   });
 });

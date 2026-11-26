@@ -43,5 +43,5 @@ export function ReportsTab({ scope, rangeLabel, locationLabel }: Readonly<{ scop
   if (param?.startsWith('saved:') && saved.isPending) return <ReportLibrary reports={visibleReports(can)} saved={[]} savedLoading hrefFor={hrefFor} />;
   if (resolved.kind === 'builtin') return <ReportViewer key={resolved.def.key} def={resolved.def} scope={scope} meta={meta} onBack={back} />;
   if (resolved.kind === 'saved') return <SavedReportViewer key={resolved.report.id} report={resolved.report} scope={scope} meta={meta} onBack={back} />;
-  return <ReportLibrary reports={visibleReports(can)} saved={saved.data ?? []} savedLoading={saved.isPending} hrefFor={hrefFor} />;
+  return <ReportLibrary reports={visibleReports(can)} saved={saved.data ?? []} savedLoading={saved.isPending && !saved.isError} savedError={saved.isError} onRetrySaved={() => void saved.refetch()} hrefFor={hrefFor} />;
 }

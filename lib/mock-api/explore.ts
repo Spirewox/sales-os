@@ -37,13 +37,13 @@ const dim = (s: Sale, field: string) => DIMS[field]?.(s) || '-';
 const customerId = (s: Sale) => (typeof s.customer === 'string' ? s.customer : (s.customer as { _id?: string } | null)?._id) ?? s.customer_name;
 
 /** Each measure: how it reads a group of sales, and whether it is an amount. */
-const MEASURES: Record<string, { kind: 'money' | 'number'; of: (list: Sale[]) => number }> = {
+const MEASURES: Record<string, { kind: 'money' | 'number'; of: (list: Sale[]) => number; additive?: false }> = {
   revenue: { kind: 'money', of: (l) => l.reduce((n, s) => n + s.amount, 0) },
   orders: { kind: 'number', of: (l) => l.length },
   units: { kind: 'number', of: (l) => l.reduce((n, s) => n + (s.item?.quantity ?? 0), 0) },
   profit: { kind: 'money', of: (l) => l.reduce((n, s) => n + (s.profit_amount ?? 0), 0) },
-  aov: { kind: 'money', of: (l) => (l.length ? l.reduce((n, s) => n + s.amount, 0) / l.length : 0) },
-  customers: { kind: 'number', of: (l) => new Set(l.map(customerId)).size },
+  aov: { kind: 'money', of: (l) => (l.length ? l.reduce((n, s) => n + s.amount, 0) / l.length : 0), additive: false },
+  customers: { kind: 'number', of: (l) => new Set(l.map(customerId)).size, additive: false },
 };
 
 export function runMockExplore(db: Db, body: ExploreBody, ctx: ExploreContext): QueryResult {
@@ -62,5 +62,7 @@ export function runMockExplore(db: Db, body: ExploreBody, ctx: ExploreContext): 
   else if (body.groupBy === 'Month') rows.sort((a, b) => a.key.localeCompare(b.key));
   else rows.sort((a, b) => b.value - a.value);
 
-  return { rows, total: rows.reduce((n, r) => n + r.value, 0), measureKind: measure.kind };
+  // Averages and distinct counts are worked out over every sale, not added up across groups.
+  const total = measure.additive === false ? Math.round(measure.of(list) * 100) / 100 : rows.reduce((n, r) => n + r.value, 0);
+  return { rows, total, measureKind: measure.kind };
 }

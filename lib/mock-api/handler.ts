@@ -59,6 +59,9 @@ function periodStart(period: string | null): Date | null {
   }
 }
 
+/** The last moment a period covers: the end of `date_to`, or now for a period that runs to today. */
+const periodEnd = (q: URLSearchParams) => (q.get('date_to') ? new Date(`${q.get('date_to')}T23:59:59`) : NOW);
+
 function inRange(date: string, q: URLSearchParams) {
   const from = q.get('date_from') ? new Date(q.get('date_from')!) : periodStart(q.get('period'));
   const to = q.get('date_to') ? new Date(`${q.get('date_to')}T23:59:59`) : null;
@@ -516,7 +519,7 @@ const GET_ROUTES: Route[] = [
   [/^dashboard\/revenue-by-category$/, (_m, q) => revenueByCategory(q)],
   [/^analytics\/overview$/, (_m, q) => ok(analyticsOverview(q))],
   [/^analytics\/reports\/saved$/, () => ok(savedReports)],
-  [/^analytics\/reports\/([^/]+)$/, (m, q) => ok(buildReport(m[1], db, { inRange: (d) => inRange(d, q), inScope: (h) => inScope(q, h), now: NOW }))],
+  [/^analytics\/reports\/([^/]+)$/, (m, q) => ok(buildReport(m[1], db, { inRange: (d) => inRange(d, q), inScope: (h) => inScope(q, h), now: NOW, periodEnd: periodEnd(q) }))],
   [/^customers$/, (_m, q) => customerList(q)],
   [/^customers\/segments$/, () => ok(db.segments)],
   [/^customers\/engagement$/, (_m, q) => engagement(q)],

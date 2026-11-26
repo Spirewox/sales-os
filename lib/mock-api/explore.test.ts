@@ -43,4 +43,17 @@ describe('runMockExplore', () => {
     assert.deepEqual(res.rows, []);
     assert.equal(res.total, 0);
   });
+
+  it('totals an average over all sales, not the sum of each group', () => {
+    const res = runMockExplore(db, { dataset: 'sales', measure: 'aov', groupBy: 'Location', filters: [] }, all);
+    const expected = live.reduce((n, s) => n + s.amount, 0) / live.length;
+    assert.equal(Math.round(res.total), Math.round(expected));
+  });
+
+  it('counts each customer once in the total', () => {
+    const res = runMockExplore(db, { dataset: 'sales', measure: 'customers', groupBy: 'Location', filters: [] }, all);
+    const ids = new Set(live.map((s) => (typeof s.customer === 'string' ? s.customer : (s.customer as { _id?: string } | null)?._id) ?? s.customer_name));
+    assert.equal(res.total, ids.size);
+  });
 });
+

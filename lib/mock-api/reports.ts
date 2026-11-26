@@ -7,7 +7,8 @@ import { csvDate } from '@/lib/export';
 import type { ReportColumn, ReportResult, ReportRow } from '@/lib/reports';
 
 type Db = Pick<typeof Data, 'sales' | 'products' | 'stockLogs' | 'credits' | 'customers' | 'hubs'>;
-export type ReportContext = { inRange: (date: string) => boolean; inScope: (hubId: string | null | undefined) => boolean; now: Date };
+/** `periodEnd` is the last moment the period covers (now, for a period that runs to today). */
+export type ReportContext = { inRange: (date: string) => boolean; inScope: (hubId: string | null | undefined) => boolean; now: Date; periodEnd: Date };
 
 const refId = (v: unknown) => (typeof v === 'string' ? v : (v as { _id?: string } | null)?._id);
 const money = (n: number) => Math.round(n * 100) / 100;
@@ -157,7 +158,7 @@ const BUILDERS: Record<string, (db: Db, ctx: ReportContext) => ReportResult> = {
       .map(([id, list]) => {
         const p = product.get(id);
         const inPeriod = list.filter((l) => ctx.inRange(String(l.date)));
-        const after = list.filter((l) => !ctx.inRange(String(l.date)) && new Date(String(l.date)) > ctx.now);
+        const after = list.filter((l) => new Date(String(l.date)) > ctx.periodEnd);
         const signed = (l: (typeof list)[number]) => (l.type === 'Sale' || l.type === 'Spoilage' ? -Math.abs(l.quantity) : l.quantity);
         const by = (t: string, sign?: 1 | -1) => sum(inPeriod.filter((l) => l.type === t && (!sign || Math.sign(l.quantity) === sign)).map((l) => Math.abs(l.quantity)));
         const closing = (p?.current_stock ?? 0) - sum(after.map(signed));

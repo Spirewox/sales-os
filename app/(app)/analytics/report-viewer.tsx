@@ -11,7 +11,7 @@ import { useDeleteSavedReport, useReport } from '@/hooks/use-reports';
 import { DATASETS } from '@/lib/explore';
 import { formatCount, formatDate, formatMoney } from '@/lib/format';
 import {
-  reportExportColumns, reportRowsWithTotal, savedReportRunnable, summableColumns,
+  reportExportColumns, reportKpiColumns, reportRowsWithTotal, savedReportRunnable, savedReportTotal, scopedResult,
   type ReportColumn, type ReportDef, type ReportRow, type SavedReport,
 } from '@/lib/reports';
 import { ResultChart, fmtShort } from './explore-shared';
@@ -72,7 +72,7 @@ export function ReportViewer({ def, scope, meta, onBack }: Readonly<{ def: Repor
     mobile: i === 0 ? 'title' : c.key === firstValue ? 'value' : i <= 2 ? 'subtitle' : 'meta',
   }));
   const cells: KpiCell[] = result
-    ? summableColumns(result).slice(0, 4).map((c) => ({ label: `Total ${c.label.toLowerCase()}`, value: showValue(c.kind, result.totals[c.key]) }))
+    ? reportKpiColumns(result).map((c) => ({ label: c.label, value: showValue(c.kind, result.totals[c.key]) }))
     : [];
 
   return (
@@ -103,7 +103,9 @@ export function ReportViewer({ def, scope, meta, onBack }: Readonly<{ def: Repor
 export function SavedReportViewer({ report, scope, meta, onBack }: Readonly<{ report: SavedReport; scope: InsightScopeParams; meta: Meta; onBack: () => void }>) {
   const runnable = savedReportRunnable(report, DATASETS);
   const explore = useExploreQuery();
-  const [result, setResult] = useState<{ rows: { key: string; label: string; value: number }[]; measureLabel: string; groupLabel: string; measureKind: 'money' | 'number' } | null>(null);
+  type Result = { rows: { key: string; label: string; value: number }[]; total: number; measureLabel: string; groupLabel: string; measureKind: 'money' | 'number' };
+  // Kept with the scope it was run for, so a period change never shows (or exports) the last period's figures.
+  const [stored, setStored] = useState<{ key: string; data: Result } | null>(null);
   const del = useDeleteSavedReport();
   const [confirming, setConfirming] = useState(false);
   const { mutate } = explore;
@@ -113,14 +115,22 @@ export function SavedReportViewer({ report, scope, meta, onBack }: Readonly<{ re
     if (!runnable) return;
     mutate(
       { dataset: report.dataset, measure: report.measure, groupBy: report.groupBy, filters: report.filters, ...JSON.parse(scopeKey) },
-      { onSuccess: (data) => setResult(data as typeof result) },
+      { onSuccess: (data) => setStored({ key: scopeKey, data: data as Result }) },
     );
   }, [runnable, mutate, report, scopeKey]);
 
+  const result = scopedResult(stored, scopeKey);
   const ds = DATASETS.find((d) => d.key === report.dataset);
+  const measure = ds?.measures.find((m) => m.key === report.measure);
   const measureLabel = result?.measureLabel || ds?.measures.find((m) => m.key === report.measure)?.label || 'Value';
   const groupLabel = result?.groupLabel || ds?.fields.find((f) => f.key === report.groupBy)?.label || 'Group';
-  const kind = result?.measureKind ?? ds?.measures.find((m) => m.key === report.measure)?.kind ?? 'number';
+  const kind = result?.measureKind ?? measure?.kind ?? 'number';
+  // Averages and distinct counts have no total; their strongest group stands in.
+  const total = result ? savedReportTotal(result, measure?.additive !== false) : null;
+  const top = result?.rows.reduce<Result['rows'][number] | undefined>((best, r) => (!best || r.value > best.value ? r : best), undefined);
+  const cells: KpiCell[] = total != null
+    ? [{ label: `Total ${measureLabel.toLowerCase()}`, value: fmtShort(total, kind) }]
+    : [{ label: `Top ${groupLabel.toLowerCase()}`, value: top?.label ?? '-', detail: top ? fmtShort(top.value, kind) : undefined }];
 
   const exp = useExport<{ label: string; value: number }>({
     module: 'saved-report',
@@ -129,7 +139,7 @@ export function SavedReportViewer({ report, scope, meta, onBack }: Readonly<{ re
     columns: [{ header: groupLabel, value: (r) => r.label }, { header: measureLabel, value: (r) => r.value }],
     filters: () => [meta.rangeLabel, meta.locationLabel],
     fetchPage: async () => ({ items: result?.rows ?? [], totalPages: 1 }),
-    disabled: !result?.rows.length,
+    disabled: !result?.rows.length || explore.isPending,
   });
 
   const remove = () => del.mutate(report.id, {
@@ -158,7 +168,7 @@ export function SavedReportViewer({ report, scope, meta, onBack }: Readonly<{ re
         <KpiStrip cells={[]} loading label={`${report.name} totals`} />
       ) : (
         <div className="space-y-4">
-          <KpiStrip label={`${report.name} totals`} cells={[{ label: `Total ${measureLabel.toLowerCase()}`, value: fmtShort(result.rows.reduce((n, r) => n + r.value, 0), kind) }]} />
+          <KpiStrip label={`${report.name} totals`} cells={cells} />
           <div className="rounded-xl border bg-card p-4">
             <ResultChart rows={result.rows} chart={report.chart} measureLabel={measureLabel} measureKind={kind} groupLabel={groupLabel} />
           </div>

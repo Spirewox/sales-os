@@ -12,7 +12,7 @@ Not applicable: hand-rolled. The component is 10 lines of flex layout in `compon
 ## Examples
 Default: `docs/system/examples/empty-state/default.tsx`.
 
-Real uses, 60 call sites (`rg -n "<EmptyState\b" app components lib -g '!components/app/**'`). 25 of them sit in a DataTable `empty` slot, the rest in drawer panels, tabs and whole sections.
+Real uses, 61 call sites (`rg -n "<EmptyState\b" app components lib -g '!components/app/**'`). 25 of them sit in a DataTable `empty` slot, the rest in drawer panels, tabs and whole sections.
 
 - Analytics page, whole section, default size: no access `app/(app)/analytics/page.tsx:79`, needs the API `app/(app)/analytics/page.tsx:114`, load failed `app/(app)/analytics/page.tsx:147`
 - Kitchen analytics, whole tab, default size: `components/kitchen-analytics-tab.tsx:34`

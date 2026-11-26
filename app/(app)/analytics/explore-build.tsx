@@ -13,6 +13,11 @@ import { CHART_KINDS, Pending, ResultChart, TwoPane, fmtShort, selectClass, type
 import type { SeedQuery } from './explore-ask';
 import { SaveReportDialog } from './save-report-dialog';
 
+/** "Avg order value by location": the controls as they are now, in sentence case. */
+const reportName = (measure: string, group: string) => {
+  const n = `${measure} by ${group}`.toLowerCase();
+  return n.charAt(0).toUpperCase() + n.slice(1);
+};
 type ExploreApiResult = QueryResult & { measureLabel: string; groupLabel: string; measureKind: 'money' | 'number' };
 
 export function ExploreBuild({ scope, seed }: Readonly<{ scope: InsightScopeParams; seed: SeedQuery | null }>) {
@@ -156,7 +161,7 @@ export function ExploreBuild({ scope, seed }: Readonly<{ scope: InsightScopePara
       {saving && (
         <SaveReportDialog
           query={{ dataset: dsKey, measure, groupBy, filters, chart }}
-          defaultName={`${measureLabel} by ${groupLabel.toLowerCase()}`}
+          defaultName={reportName(ds.measures.find((m) => m.key === measure)?.label ?? measureLabel, ds.fields.find((f) => f.key === groupBy)?.label ?? groupLabel)}
           onClose={() => setSaving(false)}
         />
       )}

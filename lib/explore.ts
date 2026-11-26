@@ -20,7 +20,8 @@ const extractHub = (pd?: string): string => { const mm = pd?.match(/^\[([^\]]+)\
 
 export type FieldTime = 'month' | 'dow' | undefined;
 export interface FieldDef { key: string; label: string; multi?: boolean; time?: FieldTime }
-export interface MeasureDef { key: string; label: string; kind: 'money' | 'number'; resolve: (acc: Acc) => number }
+/** `additive: false` for averages and distinct counts, whose groups do not add up to a total. */
+export interface MeasureDef { key: string; label: string; kind: 'money' | 'number'; resolve: (acc: Acc) => number; additive?: false }
 
 /** A single real record, for "find" mode, a concrete order/customer/supplier/credit the user can open. */
 export interface RecordMeta {
@@ -57,9 +58,9 @@ export interface Dataset {
 // measure helpers
 const mCount = (key: string, label: string): MeasureDef => ({ key, label, kind: 'number', resolve: (a) => a.count });
 const mSum = (key: string, label: string, field: string, kind: 'money' | 'number' = 'money'): MeasureDef => ({ key, label, kind, resolve: (a) => a.sums[field] || 0 });
-const mDistinct = (key: string, label: string, id: string): MeasureDef => ({ key, label, kind: 'number', resolve: (a) => a.distinct[id]?.size || 0 });
-const mAvg = (key: string, label: string, field: string, kind: 'money' | 'number' = 'money'): MeasureDef => ({ key, label, kind, resolve: (a) => (a.count ? (a.sums[field] || 0) / a.count : 0) });
-const mRatioDistinct = (key: string, label: string, field: string, id: string, kind: 'money' | 'number' = 'money'): MeasureDef => ({ key, label, kind, resolve: (a) => { const dn = a.distinct[id]?.size || 0; return dn ? (a.sums[field] || 0) / dn : 0; } });
+const mDistinct = (key: string, label: string, id: string): MeasureDef => ({ key, label, kind: 'number', additive: false, resolve: (a) => a.distinct[id]?.size || 0 });
+const mAvg = (key: string, label: string, field: string, kind: 'money' | 'number' = 'money'): MeasureDef => ({ key, label, kind, additive: false, resolve: (a) => (a.count ? (a.sums[field] || 0) / a.count : 0) });
+const mRatioDistinct = (key: string, label: string, field: string, id: string, kind: 'money' | 'number' = 'money'): MeasureDef => ({ key, label, kind, additive: false, resolve: (a) => { const dn = a.distinct[id]?.size || 0; return dn ? (a.sums[field] || 0) / dn : 0; } });
 
 export const DATASETS: Dataset[] = [
   // ─────────── SALES (line items) ───────────

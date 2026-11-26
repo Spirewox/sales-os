@@ -54,6 +54,18 @@ export function resolveReportParam(
 export const summableColumns = (result: ReportResult) =>
   result.columns.filter((c) => (c.kind === 'money' || c.kind === 'number') && result.totals[c.key] != null);
 
+/** The KPI for each summable total, all of them (Credit aging has six), labelled "Total …" once. */
+export const reportKpiColumns = (result: ReportResult) =>
+  summableColumns(result).map((c) => ({ ...c, label: /^total\b/i.test(c.label) ? c.label : `Total ${c.label.toLowerCase()}` }));
+
+/** A saved report's total: the server's, and only for a measure whose groups add up (not averages or distinct counts). */
+export const savedReportTotal = (result: { rows: { value: number }[]; total: number }, additive: boolean): number | null =>
+  additive ? result.total : null;
+
+/** A stored result, only while the scope it was fetched for is still the one on screen. */
+export const scopedResult = <T>(stored: { key: string; data: T } | null, key: string): T | null =>
+  stored && stored.key === key ? stored.data : null;
+
 const exportValue = (kind: ReportKind, v: string | number | null | undefined) =>
   kind === 'percent' && typeof v === 'number' ? Math.round(v * 10) / 10 : v;
 

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 import { Bookmark, FileBarChart } from 'lucide-react';
 import { EmptyState } from '@/components/app';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -11,10 +12,13 @@ const groupTitle = 'mb-2 text-xs font-medium text-muted-foreground';
 const card = 'flex h-full w-full flex-col items-start gap-1 rounded-xl border bg-card p-4 text-left transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring';
 
 /** The ready-made reports by group, then the person's saved Explore reports. */
-export function ReportLibrary({ reports, saved, savedLoading, hrefFor }: Readonly<{
+export function ReportLibrary({ reports, saved, savedLoading, savedError, onRetrySaved, hrefFor }: Readonly<{
   reports: ReportDef[];
   saved: SavedReport[];
   savedLoading: boolean;
+  /** The saved list failed to load: say so, rather than claiming there are none. */
+  savedError?: boolean;
+  onRetrySaved?: () => void;
   /** The link to a report, keeping the page's period and location: `?report=<key>` or `saved:<id>`. */
   hrefFor: (param: string) => string;
 }>) {
@@ -44,6 +48,14 @@ export function ReportLibrary({ reports, saved, savedLoading, hrefFor }: Readonl
         <h3 id="reports-saved" className={groupTitle}>Saved reports</h3>
         {savedLoading ? (
           <Skeleton className="h-20 w-full" />
+        ) : savedError ? (
+          <EmptyState
+            size="compact"
+            icon={<Bookmark />}
+            title="Saved reports did not load"
+            description="Check your connection and try again."
+            action={<Button variant="outline" size="sm" onClick={onRetrySaved}>Try again</Button>}
+          />
         ) : saved.length === 0 ? (
           <EmptyState
             size="compact"
