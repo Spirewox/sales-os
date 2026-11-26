@@ -15,9 +15,11 @@ import { periodLabel } from '@/lib/period';
 import { FilterSelect } from '@/components/filter-select';
 import { ConfirmPreviewModal } from '@/components/confirm-preview-modal';
 import {
-  DataTable, EmptyState, FilterBar, KpiStrip, LocationSelect, MoreFilterField, PageHeader, PeriodSelect,
+  DataTable, EmptyState, FilterBar, KpiStrip, LocationSelect, MoreFilterField, OverflowMenu, PageHeader, PeriodSelect,
   SectionErrorBoundary, fieldClass, type KpiCell,
 } from '@/components/app';
+import { useExport } from '@/hooks/use-export';
+import { SUPPLIER_EXPORT_COLUMNS } from '@/lib/exports/suppliers';
 import type { Supplier } from '@/types';
 import { PurchaseForm } from '../inventory/forms/purchase-form';
 import type { ConfirmState } from '../inventory/inventory-utils';
@@ -52,6 +54,14 @@ function Suppliers() {
   const hubScope = useHubScopeFilter();
   const f = useSupplierFilters();
   const list = useSupplierList(f, hubScope);
+  // The page works out spend, last purchase and open issues itself, so export the rows it shows.
+  const exportSuppliers = useExport({
+    module: 'suppliers',
+    noun: { one: 'supplier', many: 'suppliers' },
+    columns: SUPPLIER_EXPORT_COLUMNS,
+    fetchPage: async () => ({ items: list.rows, totalPages: 1 }),
+    disabled: list.listLoading || list.rows.length === 0,
+  });
   const updateSupplier = useUpdateSupplier();
   const { data: inventory = [] } = useInventory();
   const purchasableItems = useMemo(() => inventory.filter((i) => i.isActive !== false), [inventory]);
@@ -161,6 +171,7 @@ function Suppliers() {
             </button>
           ) : undefined
         }
+        overflow={<OverflowMenu label="More supplier actions" items={[exportSuppliers.item]} />}
       />
 
       <KpiStrip cells={kpiCells} loading={list.kpiLoading} label="Spend and issues" />
