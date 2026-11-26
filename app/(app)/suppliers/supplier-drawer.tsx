@@ -28,7 +28,8 @@ export function SupplierDrawer({ supplier: s, onClose, actions, canResolve }: Re
   const { data: purchaseData, isLoading: purchasesLoading } = useSupplierPurchases(s.id);
   const purchases = purchaseData?.items ?? [];
   const { data: issues = [], isLoading: issuesLoading } = useSupplierIssues(s.id);
-  const { data: inventory = [] } = useInventory();
+  // Purchases, issues and products are history: archived products still need their names.
+  const { data: inventory = [] } = useInventory({ status: 'all' });
   const { data: agents = [] } = useAgents();
   const agentName = (id?: string) => agents.find((a) => a.id === id)?.name || id || '-';
 

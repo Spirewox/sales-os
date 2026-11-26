@@ -51,7 +51,8 @@ export function SuppliersTab({ scope, prevScope, period }: Readonly<{ scope: Ins
     ...(ranged ? { date_from: scope.date_from, date_to: scope.date_to } : {}),
   });
   const { data: prevResult } = useStockLogs(prevScope ? { type: 'PURCHASE', hub_id: hubId, limit: LOG_LIMIT, date_from: prevScope.date_from, date_to: prevScope.date_to } : null);
-  const { data: inventory } = useInventory({ hub_id: hubId });
+  // Names and categories for past purchases, so archived products still count (history, not stock).
+  const { data: inventory } = useInventory({ hub_id: hubId, status: 'all' });
   const supplierIds = useMemo(() => suppliers.map((s) => s.id), [suppliers]);
   const { data: issues } = useAllSupplierIssues(supplierIds);
 

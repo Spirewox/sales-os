@@ -47,7 +47,8 @@ export function useSalesPage() {
   const queryClient = useQueryClient();
 
   // SKU options for the "More filters" SKU picker (scoped to location and chosen categories).
-  const { data: skuInventory = [], isFetched: skuInventoryFetched } = useInventory(hubScope.hubIdForApi ? { hub_id: hubScope.hubIdForApi } : undefined);
+  // The product filter narrows past sales, so archived products stay choosable (and links to them keep working).
+  const { data: skuInventory = [], isFetched: skuInventoryFetched } = useInventory({ hub_id: hubScope.hubIdForApi, status: 'all' });
   const { data: agents = [] } = useAgents();
   const catParam = get('cat') ?? '';
   const skuOptions = useMemo(() => {
