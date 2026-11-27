@@ -1,7 +1,15 @@
 {
-  "name": "@fudfarmer/ui",
-  "version": "0.1.0",
+  "name": "@spirewox/ui",
+  "version": "0.2.0",
   "description": "The Sales OS design system: tokens, primitives and app kit components for React 19 and Tailwind CSS v4.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Spirewox/sales-os.git",
+    "directory": "packages/ui"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "type": "module",
   "sideEffects": [
     "*.css"

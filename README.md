@@ -47,6 +47,7 @@ npm run lint
 | [docs/features](docs/features/README.md) | Features added in November 2026: data export, inventory archiving, customer contacts, multi-location managers, reports. Each page has what a person sees, the rules and the backend API contract. |
 | [docs/restoration](docs/restoration/README.md) | Every KPI, chart, column and field of the old UI, and where it is now |
 | [docs/system](docs/system) and [public/system](public/system) | The design system: one page per component, and the rules |
+| [packages/ui](packages/ui/README.md) | The design system as an npm package, `@spirewox/ui`, published to GitHub Packages for use in other projects |
 | [docs/superpowers/plans](docs/superpowers/plans/2026-11-26-README.md) | The implementation plans the November features were built from |
 | [AGENTS.md](AGENTS.md) | Rules for anyone (or any agent) changing the UI |
 

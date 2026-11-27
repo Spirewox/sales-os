@@ -1,0 +1,55 @@
+# Publishes the design system, @spirewox/ui, to GitHub Packages.
+#
+# To release: raise "version" in packages/ui/package.json, commit, then push a tag that matches it:
+#   git tag ui-v0.2.0 && git push origin ui-v0.2.0
+# It can also be run by hand from the Actions tab once this file is on the default branch.
+#
+# It publishes with the workflow's own GITHUB_TOKEN, so no personal token is stored in the repo.
+name: Publish design system
+
+on:
+  push:
+    tags: ['ui-v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: publish-ui
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          registry-url: https://npm.pkg.github.com
+          scope: '@spirewox'
+
+      - name: Install
+        run: npm ci
+
+      - name: Check the tag matches the package version
+        if: startsWith(github.ref, 'refs/tags/ui-v')
+        run: |
+          version="$(node -p "require('./packages/ui/package.json').version")"
+          if [ "ui-v${version}" != "${GITHUB_REF_NAME}" ]; then
+            echo "Tag ${GITHUB_REF_NAME} does not match packages/ui/package.json version ${version}." >&2
+            exit 1
+          fi
+
+      - name: Build the package
+        run: node scripts/build-ui-package.mjs
+
+      - name: Publish
+        working-directory: packages/ui
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

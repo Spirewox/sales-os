@@ -1,15 +1,16 @@
 #!/usr/bin/env node
 /**
- * Builds the installable design system package, @fudfarmer/ui, from the app's own components so
+ * Builds the installable design system package, @spirewox/ui, from the app's own components so
  * the app stays the single source:
  *
- *   components/ui/*.tsx       -> primitives   (import from '@fudfarmer/ui/button' and so on)
- *   components/app/*          -> app kit      (import from '@fudfarmer/ui')
- *   app/globals.css tokens    -> styles.css   (import '@fudfarmer/ui/styles.css')
+ *   components/ui/*.tsx       -> primitives   (import from '@spirewox/ui/button' and so on)
+ *   components/app/*          -> app kit      (import from '@spirewox/ui')
+ *   app/globals.css tokens    -> styles.css   (import '@spirewox/ui/styles.css')
  *
  * It copies the sources into packages/ui/.stage, points '@/' imports at package files, swaps the
  * Next.js ties for the adapters in packages/ui/adapters, compiles with tsc to packages/ui/dist,
- * and with --pack writes packages/ui/fudfarmer-ui-<version>.tgz for `npm install <file>`.
+ * and with --pack writes packages/ui/spirewox-ui-<version>.tgz for `npm install <file>`.
+ * .github/workflows/publish-ui.yml runs it and publishes the package to GitHub Packages.
  *
  *   node scripts/build-ui-package.mjs [--pack]
  */
@@ -157,9 +158,10 @@ for (const line of imports) tokens = tokens.replace(line, '');
 // The app sets --font-geist through next/font. Elsewhere it is undefined, which would void the
 // whole font stack, so give it a fallback: the Geist family if installed, else the system sans.
 tokens = tokens.replaceAll('var(--font-geist-mono)', 'var(--font-geist-mono, "Geist Mono")').replaceAll('var(--font-geist)', 'var(--font-geist, "Geist")');
+const { name: PKG_NAME } = JSON.parse(fs.readFileSync(path.join(PKG, 'package.json'), 'utf8'));
 const styles = [
-  '/* @fudfarmer/ui: Sales OS tokens and base layer. Generated from app/globals.css by scripts/build-ui-package.mjs. */',
-  '/* Use after Tailwind: @import "tailwindcss"; @import "@fudfarmer/ui/styles.css"; */',
+  `/* ${PKG_NAME}: Sales OS tokens and base layer. Generated from app/globals.css by scripts/build-ui-package.mjs. */`,
+  `/* Use after Tailwind: @import "tailwindcss"; @import "${PKG_NAME}/styles.css"; */`,
   imports.join('').trim(),
   '@source "./";',
   tokens.trim(),
